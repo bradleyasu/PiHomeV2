@@ -23,7 +23,7 @@ class PiHome(App):
     def build(self):
         self.setup()
         button = Button(text=self.base_config.get('test', 'phrase', 'hello'))
-        button.bind(on_press=lambda _: print("hello"))
+        button.bind(on_press=lambda _: PiHome.get_running_app().stop())
         return button
 
 
