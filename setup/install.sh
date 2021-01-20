@@ -55,6 +55,9 @@ make -j$(nproc)
 sudo make install
 popd
 
+
+sudo apt install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
+
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] kivy_examples
 
