@@ -1,6 +1,6 @@
 import kivy
 from kivy.app import App
-from kivy.uix.label import Label
+from kivy.uix.button import Button
 from util.configuration import Configuration
 from kivy.core.window import Window
 
@@ -22,7 +22,9 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
-        return Label(text=self.base_config.get('test', 'phrase', 'hello'))
+        button = Button(text=self.base_config.get('test', 'phrase', 'hello'))
+        button.bind(on_press=lambda _: quit)
+        return button
 
 
 # Start PiHome
