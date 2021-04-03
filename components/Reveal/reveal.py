@@ -1,8 +1,16 @@
+from random import randint
+
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.relativelayout import RelativeLayout
+
 from kivy.animation import Animation
 from kivy.core.window import Window
+from kivy.lang import Builder
+
+Builder.load_file("./components/Reveal/reveal.kv")
 
 class RevealTop(BoxLayout):
     def __init__(self, **kwargs):
@@ -47,7 +55,7 @@ class RevealTop(BoxLayout):
             anim.start(self)
             self.__revealed = False
         else:
-            pos = -Window.width/2
+            pos = -self.width/2
             anim = Animation(x=pos, duration=0.3)
             anim.start(self)
             self.__revealed = True
@@ -56,15 +64,16 @@ class RevealBottom(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def add_child(self, child):
+        self.ids.parent_bottom.add_widget(child)
 
 
 class Reveal(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.size_hint_y = .1
+        self.__wrapper = RelativeLayout()
 
-        self.__wrapper = FloatLayout()
         self.add_widget(self.__wrapper)
 
         self.__revealTop = RevealTop()
@@ -73,7 +82,16 @@ class Reveal(BoxLayout):
         self.__wrapper.add_widget(self.__revealBottom)
         self.__wrapper.add_widget(self.__revealTop)
 
+    def add_top_widget(self, widget):
+        self.__revealTop.add_widget(widget)
 
+    def add_bottom_widget(self, widget):
+        self.__revealBottom.add_child(widget)
+
+
+
+
+# For testing python ./reveal.py -size WxH
 class RevealApp(App):
     def build(self):
         return Reveal()
