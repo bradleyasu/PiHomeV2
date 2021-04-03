@@ -1,6 +1,8 @@
 import kivy
 from kivy.app import App
 from kivy.uix.button import Button
+
+from components.Reveal.reveal import Reveal
 from util.configuration import Configuration
 from kivy.core.window import Window
 
@@ -22,9 +24,9 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
-        button = Button(text=self.base_config.get('test', 'phrase', 'hello'))
-        button.bind(on_press=lambda _: PiHome.get_running_app().stop())
-        return button
+        # button = Button(text=self.base_config.get('test', 'phrase', 'hello'))
+        # button.bind(on_press=lambda _: PiHome.get_running_app().stop())
+        return Reveal()
 
 
 # Start PiHome
