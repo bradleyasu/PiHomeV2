@@ -2,28 +2,31 @@
     id: reveal
     canvas.before:
         Color:
-            rgb: (1,.6,1)
-        Rectangle:
+            rgba: (1,1,1,0)
+        RoundedRectangle:
             pos: self.pos
             size: self.size
+            radius: [0,]
 
 <RevealTop>:
     id: reveal
     canvas.before:
         Color:
-            rgba: (.5,0,.5,1)
-        Rectangle:
+            rgba: (.4,.4,.4,1)
+        RoundedRectangle:
             pos: self.pos
             size: self.size
+            radius: [0,]
 
 <RevealBottom>:
     id: reveal
     canvas.before:
         Color:
-            rgba: (1,.6,.6,1)
-        Rectangle:
+            rgba: (.8,.8,.8,1)
+        RoundedRectangle:
             pos: self.pos
             size: self.size
+            radius: [0,]
 
     AnchorLayout:
         anchor_x: "right"

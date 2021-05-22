@@ -62,3 +62,5 @@ echo "Installing Kivy..."
 python3 -m pip install kivy[base] kivy_examples
 
 echo "Setting up PiHome..."
+
+python3 -m pip install lifxlan
