@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Install Script: sudo curl -sSL https://pihome.io/install | bash
+
 echo "Base Configurations..."
 
 sudo apt -y update
@@ -57,7 +59,7 @@ popd
 
 
 sudo apt -y install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
-sudo apt -y install 
+sudo apt -y install libmtdev1
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] kivy_examples
