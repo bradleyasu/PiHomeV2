@@ -14,6 +14,9 @@ from kivy.core.window import Window
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
 
+# Hide Cursor
+Window.show_cursor = False
+
 
 class PiHome(App):
 
