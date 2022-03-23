@@ -9,7 +9,7 @@ PINK=`tput setaf 200`
 ENDCOLOR=`tput sgr0`
 
 # Vars
-PROFILE=~/.bashrc
+PROFILE=/home/$USER/.bashrc
 PIHOME=/usr/local/PiHome
 LOG=$PIHOME/install.log
 
