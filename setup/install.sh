@@ -97,7 +97,7 @@ echo "" >> $PROFILE
 echo "alias pihome=\"cd ${PIHOME}/ && ./launch.sh\"" >> $PROFILE
 echo "alias pihome-update=\"cd ${PIHOME}/ && ./update.sh\"" >> $PROFILE
 echo "" >> $PROFILE
-
+source $PROFILE
 clear
 
 echo $PINK
