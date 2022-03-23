@@ -95,6 +95,7 @@ echo "Setting up environment..."
 
 echo "" >> $PROFILE
 echo alias pihome="cd ${PIHOME}/ && ./launch.sh" >> $PROFILE
+echo alias pihome-update="cd ${PIHOME}/ && ./update.sh" >> $PROFILE
 echo "" >> $PROFILE
 
 clear
@@ -105,5 +106,5 @@ echo "Preparing to launch PiHome..."
 echo ""
 echo $ENDCOLOR
 cd ..
-chmod 755 ./launch.sh
+chmod 755 ./*.sh
 ./launch.sh
