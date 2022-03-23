@@ -94,8 +94,8 @@ python3 -m pip install kivy[base] >> $LOG
 echo "Setting up environment..."
 
 echo "" >> $PROFILE
-echo alias pihome="cd ${PIHOME}/ && ./launch.sh" >> $PROFILE
-echo alias pihome-update="cd ${PIHOME}/ && ./update.sh" >> $PROFILE
+echo "alias pihome=\"cd ${PIHOME}/ && ./launch.sh\"" >> $PROFILE
+echo "alias pihome-update=\"cd ${PIHOME}/ && ./update.sh\"" >> $PROFILE
 echo "" >> $PROFILE
 
 clear
