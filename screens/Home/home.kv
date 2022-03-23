@@ -6,3 +6,4 @@
             on_press: root.manager.current = 'settings'
         Button:
             text: 'Quit'
+            on_press: root.get_running_app().stop()
