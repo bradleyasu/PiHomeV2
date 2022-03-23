@@ -1,0 +1,13 @@
+[
+    {
+        "type": "title",
+        "title": "General"
+    },
+    {
+        "type": "string",
+        "title": "Require PIN to unlock",
+        "desc": "If resuming from the lock screen, a PIN will be required if configured",
+        "section": "security",
+        "key": "pin"
+    }
+]
