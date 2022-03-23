@@ -30,12 +30,12 @@ cd $PIHOME
 
 
 echo "Preparing system..."
-sudo apt -y update  >> $LOG
+sudo apt-get -y update  >> $LOG
 
 echo "Installing Dependencies, this may take a few minutes..."
-sudo apt -y install python3-setuptools git-core python3-dev python3-pip >> $LOG
+sudo apt-get -y install python3-setuptools git-core python3-dev python3-pip >> $LOG
 
-sudo apt -y install pkg-config libgl1-mesa-dev libgles2-mesa-dev \
+sudo apt-get -y install pkg-config libgl1-mesa-dev libgles2-mesa-dev \
    libgstreamer1.0-dev \
    gstreamer1.0-plugins-{bad,base,good,ugly} \
    gstreamer1.0-{omx,alsa} libmtdev-dev \
@@ -85,8 +85,8 @@ sudo make install
 popd
 
 
-sudo apt -y install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev >> $LOG
-sudo apt -y install libmtdev1 >> $LOG
+sudo apt-get -y install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev >> $LOG
+sudo apt-get -y install libmtdev1 >> $LOG
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
@@ -106,5 +106,6 @@ echo "Preparing to launch PiHome..."
 echo ""
 echo $ENDCOLOR
 cd ..
-chmod 755 ./*.sh
+chmod 755 ./launch.sh
+chmod 755 ./update.sh
 ./launch.sh
