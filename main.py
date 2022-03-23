@@ -6,13 +6,14 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
+from components.Button.circlebutton import CircleButton
 
 from components.Reveal.reveal import Reveal
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
 from util.configuration import Configuration
 from kivy.core.window import Window
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import ScreenManager, SwapTransition 
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -40,9 +41,11 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
-        screenManager = ScreenManager()
-        # button = Button(text=self.base_config.get('test', 'phrase', 'quit'))
-        # button.bind(on_press=lambda _: PiHome.get_running_app().stop())
+        layout = FloatLayout()
+        screenManager = ScreenManager(transition=SwapTransition())
+        # button = Button(text=self.base_config.get('test', 'phrase', 'quit'),  size=(200, 50), size_hint=(None, None), pos=(0, 50))
+        button = CircleButton(text='2', size=(250, 250), pos=(50, 50))
+        # button.bind(on_release=lambda _: PiHome.get_running_app().stop())
         # reveal = Reveal()
         # reveal2 = Reveal()
         # reveal3 = Reveal()
@@ -64,7 +67,9 @@ class PiHome(App):
             # screen.add_widget(HomeScreen(name = 'home'))
             screenManager.add_widget(screen)
 
-        return screenManager
+        layout.add_widget(screenManager)
+        layout.add_widget(button)
+        return layout
 
 
 # Start PiHome
