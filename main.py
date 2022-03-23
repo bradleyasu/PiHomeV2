@@ -44,7 +44,7 @@ class PiHome(App):
         layout = FloatLayout()
         screenManager = ScreenManager(transition=SwapTransition())
         # button = Button(text=self.base_config.get('test', 'phrase', 'quit'),  size=(200, 50), size_hint=(None, None), pos=(0, 50))
-        button = CircleButton(text='2', size=(250, 250), pos=(50, 50))
+        button = CircleButton(text='X', size=(50, 50), pos=(50, 50))
         # button.bind(on_release=lambda _: PiHome.get_running_app().stop())
         # reveal = Reveal()
         # reveal2 = Reveal()
