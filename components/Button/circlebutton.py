@@ -7,6 +7,7 @@ from kivy.uix.label import Label
 from util.tools import hex
 from kivy.properties import ColorProperty, NumericProperty
 from kivy.animation import Animation
+from kivy.clock import Clock
 
 
 Builder.load_file("./components/Button/circlebutton.kv")
@@ -17,15 +18,18 @@ class CircleButton(ButtonBehavior, Label):
     primary_color = ColorProperty(hex('#ffffff', 0))
     down_color = ColorProperty(hex('#ffffff', 0.3))
     transition_duration = NumericProperty(0.5)
-    zoom = NumericProperty(1)
+    zoom = NumericProperty(0)
     def __init__(self, **kwargs):
         super(CircleButton, self).__init__(**kwargs)
         self.bind(
             state=lambda *args: self.animate_color()
         )
         self.color = self.primary_color
+        Clock.schedule_once(lambda _: self.start(), 1)
 
-
+    def start(self):
+        animation = Animation(zoom=1, t='out_elastic', d=.5)
+        animation.start(self)
 
     def animate_color(self):
         if self.state == 'down':
@@ -35,3 +39,4 @@ class CircleButton(ButtonBehavior, Label):
             animation = Animation(color=self.primary_color, duration=self.transition_duration)
             animation &= Animation(zoom=1, t='out_elastic', d=.5)
         animation.start(self)
+
