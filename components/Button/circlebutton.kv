@@ -11,8 +11,8 @@
             rgba: self.color
         RoundedRectangle:
             radius: sp(self.height/2),
-            size: sp(self.size)
-            pos: sp(self.pos)
+            size: self.size
+            pos: self.pos
         Color:
             rgba: self.stroke_color
         Line:
@@ -23,7 +23,7 @@
 
     Label: 
         text: root.text
-        pos: sp(root.width/2, root.width/2)
+        pos: (root.width/2, root.width/2)
         font_size: sp(root.height / 4)
         size_hint: None, None
         color: root.text_color
