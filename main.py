@@ -46,7 +46,6 @@ class PiHome(App):
         layout = FloatLayout()
         screenManager = ScreenManager(transition=SwapTransition())
         # button = Button(text=self.base_config.get('test', 'phrase', 'quit'),  size=(200, 50), size_hint=(None, None), pos=(0, 50))
-        button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(20), dp(20)))
         # button.bind(on_release=lambda _: PiHome.get_running_app().stop())
         # reveal = Reveal()
         # reveal2 = Reveal()
@@ -70,6 +69,12 @@ class PiHome(App):
             screenManager.add_widget(screen)
 
         layout.add_widget(screenManager)
+
+        for i in range (10):
+            button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
+            layout.add_widget(button)
+        
+        button = CircleButton(text='a', size=(dp(50), dp(50)), pos=(dp(20), dp(90)))
         layout.add_widget(button)
         return layout
 

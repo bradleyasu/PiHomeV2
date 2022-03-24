@@ -16,12 +16,13 @@ Builder.load_file("./components/Button/circlebutton.kv")
 class CircleButton(ButtonBehavior, Widget):
     text = StringProperty()
     color = ColorProperty()
+    font_size = NumericProperty('28sp')
     stroke_color = ColorProperty(hex('#ffffff'))
     text_color = ColorProperty(hex('#ffffff'))
     primary_color = ColorProperty(hex('#ffffff', 0))
     down_color = ColorProperty(hex('#ffffff', 0.3))
     transition_duration = NumericProperty(0.5)
-    zoom = NumericProperty(0)
+    zoom = NumericProperty(1)
     def __init__(self, **kwargs):
         super(CircleButton, self).__init__(**kwargs)
         self.bind(
@@ -37,9 +38,9 @@ class CircleButton(ButtonBehavior, Widget):
     def animate_color(self):
         if self.state == 'down':
             animation = Animation(color=self.down_color, duration=self.transition_duration)
-            animation &= Animation(zoom=.9, t='out_quad', d=.2)
+            # animation &= Animation(zoom=.9, t='out_quad', d=.2)
         else:
             animation = Animation(color=self.primary_color, duration=self.transition_duration)
-            animation &= Animation(zoom=1, t='out_elastic', d=.5)
+            # animation &= Animation(zoom=1, t='out_elastic', d=.5)
         animation.start(self)
 
