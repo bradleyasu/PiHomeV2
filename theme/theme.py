@@ -1,16 +1,31 @@
+from theme.color import Color
 from util.configuration import Configuration
 from util.tools import hex
 from kivy.clock import Clock
 
 class Theme():
     ''' ENUM VALUES, KEY, DEFAULT_LIGHT, SECTION'''
-    COLOR_PRIMARY       = ['primary', '#FFFFFF', '#424242', 'colors']
-    COLOR_SECONDARY     = ['secondary', '#eaeaea', '#424242', 'colors']
+    COLOR_PRIMARY             = ['primary', Color.GRAY_100, Color.DARK_GRAY_100, 'colors']
+    COLOR_SECONDARY           = ['secondary', Color.GRAY_75, Color.DARK_GRAY_75, 'colors']
 
-    ALERT_DANER         = ['danger', '#FF0000', '#FF0000', 'alerts']
-    ALERT_WARNING       = ['warning', '#FF0000', '#FF0000','alerts']
-    ALERT_CAUTION       = ['caution', '#FF0000', '#FF0000','alerts']
-    ALERT_SUCCESS       = ['success', '#FF0000', '#FF0000','alerts']
+    BACKGROUND_PRIMARY        = ['primary',Color.GRAY_100, Color.DARK_GRAY_100,  'backgrounds']
+    BACKGROUND_SECONDARY      = ['secondary', Color.GRAY_75, Color.DARK_GRAY_75, 'backgrounds']
+
+    TEXT_PRIMARY              = ['primary', Color.GRAY_900, Color.DARK_GRAY_900, 'text']
+    TEXT_SECONDARY            = ['secondary', Color.GRAY_800, Color.DARK_GRAY_800, 'text']
+    TEXT_DANGER               = ['danger', Color.RED_400, Color.DARK_RED_400, 'text']
+    TEXT_SUCCESS              = ['success', Color.GREEN_400, Color.DARK_GREEN_400, 'text']
+
+
+    BUTTON_PRIMARY            = ['primary', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
+    BUTTON_SECONDARY          = ['secondary', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
+    BUTTON_DANGER             = ['danger', '', '', 'buttons']
+    BUTTON_SUCCESS            = ['success', '', '', 'buttons']
+
+    ALERT_DANGER              = ['danger', Color.RED_400, Color.DARK_RED_400, 'alerts']
+    ALERT_WARNING             = ['warning', Color.ORANGE_400, Color.DARK_ORANGE_400,'alerts']
+    ALERT_INFO                = ['info', Color.BLUE_400, Color.DARK_BLUE_400,'alerts']
+    ALERT_SUCCESS             = ['success', Color.GREEN_400, Color.DARK_GREEN_400,'alerts']
 
     def __init__(self, **kwargs):
         super(Theme, self).__init__(**kwargs)
