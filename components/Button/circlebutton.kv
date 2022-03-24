@@ -10,15 +10,15 @@
         Color:
             rgba: self.color
         RoundedRectangle:
-            radius: sp(self.height/2),
-            size: sp(self.width), sp(self.height)
+            radius: dp(self.height/2),
+            size: self.size
             pos: self.pos
         Color:
             rgba: self.stroke_color
         Line:
             width: 2.
             circle:
-                (self.center_x, self.center_y, sp(min(sp(self.width), sp(self.height)) / 2), 0, 360) 
+                (self.center_x, self.center_y, min(self.width, self.height) / 2, 0, 360) 
     
 
     Label: 
