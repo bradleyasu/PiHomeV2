@@ -70,12 +70,10 @@ class PiHome(App):
 
         layout.add_widget(screenManager)
 
-        for i in range (10):
-            button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
-            layout.add_widget(button)
+        # for i in range (10):
+        #     button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
+        #     layout.add_widget(button)
         
-        button = CircleButton(text='a', size=(dp(50), dp(50)), pos=(dp(20), dp(90)))
-        layout.add_widget(button)
         return layout
 
     def restart(self):

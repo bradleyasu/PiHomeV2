@@ -1,9 +1,10 @@
 #:kivy 2.0.0
 <HomeScreen>:
-    BoxLayout:
-        Button:
-            text: 'Goto settings'
-            on_press: root.manager.current = 'settings'
-        Button:
-            text: 'Quit'
-            on_press: root.get_running_app().stop()
+    size: 800, 480
+    canvas.before:
+        Color:
+            rgba: self.color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
