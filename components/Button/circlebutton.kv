@@ -2,7 +2,11 @@
 
 <CircleButton>:
     size_hint: None, None
+
     canvas:
+        Scale:
+            origin: self.center
+            xyz: [self.zoom, self.zoom, 1]
         Color:
             rgba: self.color
         RoundedRectangle:
@@ -15,6 +19,7 @@
             width: 2.
             circle:
                 (self.center_x, self.center_y, min(self.width, self.height) / 2, 0, 360) 
+    
 
     Label: 
         text: root.text
