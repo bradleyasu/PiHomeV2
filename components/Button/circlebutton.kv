@@ -18,12 +18,12 @@
         Line:
             width: 2.
             circle:
-                (dp(self.center_x), dp(self.center_y), dp(min(self.width, self.height) / 2), 0, 360) 
+                (dp(self.center_x), dp(self.center_y), min(dp(self.width), dp(self.height) / 2), 0, 360) 
     
 
     Label: 
         text: root.text
-        pos: dp(root.width/2), dp(root.width/2)
-        font_size: sp(root.height / 4)
+        pos: (dp(root.center_x) - dp(self.width) / 4), (dp(root.center_y) - dp(self.height) / 4)
+        font_size: sp(root.height / 2)
         size_hint: None, None
         color: root.text_color
