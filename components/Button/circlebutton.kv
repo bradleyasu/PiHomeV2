@@ -16,7 +16,7 @@
         Color:
             rgba: self.stroke_color
         Line:
-            width: 2.
+            width: dp(1.)
             circle:
                 self.center_x, self.center_y, min(self.width, self.height) / 2, 0, 360
     
@@ -25,4 +25,5 @@
         pos: root.pos
         font_size: sp(root.height / 4)
         size_hint: None, None
+        size: root.size
         color: root.text_color
