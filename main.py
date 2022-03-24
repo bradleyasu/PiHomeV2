@@ -15,6 +15,7 @@ from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SwapTransition 
 from util.tools import hex
+from kivy.metrics import dp
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -45,7 +46,7 @@ class PiHome(App):
         layout = FloatLayout()
         screenManager = ScreenManager(transition=SwapTransition())
         # button = Button(text=self.base_config.get('test', 'phrase', 'quit'),  size=(200, 50), size_hint=(None, None), pos=(0, 50))
-        button = CircleButton(text='X', size=(50, 50), pos=(20, 20))
+        button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(20), dp(20)))
         # button.bind(on_release=lambda _: PiHome.get_running_app().stop())
         # reveal = Reveal()
         # reveal2 = Reveal()
