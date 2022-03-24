@@ -11,19 +11,19 @@
             rgba: self.color
         RoundedRectangle:
             radius: dp(self.height/2),
-            size: self.size
-            pos: self.pos
+            size: (dp(self.width), dp(self.height))
+            pos: (dp(self.x), dp(self.y))
         Color:
             rgba: self.stroke_color
         Line:
             width: 2.
             circle:
-                (self.center_x, self.center_y, min(self.width, self.height) / 2, 0, 360) 
+                (dp(self.center_x), dp(self.center_y), dp(min(self.width, self.height) / 2), 0, 360) 
     
 
     Label: 
         text: root.text
-        pos: (root.width/2, root.width/2)
-        font_size: (root.height / 2)
+        pos: dp(root.width/2), dp(root.width/2)
+        font_size: sp(root.height / 4)
         size_hint: None, None
         color: root.text_color
