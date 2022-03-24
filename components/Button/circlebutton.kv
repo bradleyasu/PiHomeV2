@@ -10,8 +10,8 @@
         Color:
             rgba: self.color
         RoundedRectangle:
-            radius: (self.height/2),
-            size: self.size
+            size: (sp(self.width), sp(self.height))
+            radius: sp(self.height/2),
             pos: self.pos
         Color:
             rgba: self.stroke_color
