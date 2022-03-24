@@ -1,4 +1,5 @@
 import os
+from kivy.clock import Clock
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen
@@ -11,6 +12,7 @@ class SettingsScreen(Screen):
         super(SettingsScreen, self).__init__(**kwargs)
         config = ConfigParser()
         config.read('base.ini')
+        config.add_callback(self.updated)
         s = SettingsWithSidebar()
 
         # Read all of the json configuations and add them to the screen
@@ -25,3 +27,7 @@ class SettingsScreen(Screen):
 
         s.on_close = on_close
         self.add_widget(s)
+    
+    def updated(self, section, key, value):
+        if (section == 'theme' and key == 'dark_mode'):
+           print("restart required") 

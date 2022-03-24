@@ -78,6 +78,11 @@ class PiHome(App):
         layout.add_widget(button)
         return layout
 
+    def restart(self):
+        self.root.clear_widgets()
+        self.stop()
+        return PiHome().run()
+
 
 # Start PiHome
 PiHome().run()

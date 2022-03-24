@@ -4,7 +4,7 @@ from kivy.uix.button import Button
 from kivy.uix.behaviors import ButtonBehavior 
 from kivy.uix.image import Image  
 from kivy.uix.label import Label
-from util.tools import hex
+from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
@@ -14,13 +14,14 @@ from kivy.uix.widget import Widget
 Builder.load_file("./components/Button/circlebutton.kv")
 
 class CircleButton(ButtonBehavior, Widget):
+    theme = Theme()
     text = StringProperty()
     color = ColorProperty()
     font_size = NumericProperty('28sp')
-    stroke_color = ColorProperty(hex('#ffffff'))
-    text_color = ColorProperty(hex('#ffffff'))
-    primary_color = ColorProperty(hex('#ffffff', 0))
-    down_color = ColorProperty(hex('#ffffff', 0.3))
+    stroke_color = ColorProperty(theme.get_color(theme.COLOR_PRIMARY))
+    text_color = ColorProperty(theme.get_color(theme.COLOR_PRIMARY))
+    primary_color = ColorProperty(theme.get_color(theme.COLOR_PRIMARY, 0))
+    down_color = ColorProperty(theme.get_color(theme.COLOR_SECONDARY, 0.3))
     transition_duration = NumericProperty(0.5)
     zoom = NumericProperty(1)
     def __init__(self, **kwargs):

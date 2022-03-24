@@ -9,5 +9,12 @@
         "desc": "If resuming from the lock screen, a PIN will be required if configured",
         "section": "security",
         "key": "pin"
+    },
+    {
+        "type": "bool",
+        "title": "Dark Mode",
+        "desc": "Bugs are attracted to the light, use dark mode just to be safe.  Restarting PiHome is required for this setting to be fully applied",
+        "section": "theme",
+        "key": "dark_mode"
     }
 ]

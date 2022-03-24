@@ -1,4 +1,5 @@
 /venv/
 /base.ini
+/theme.ini
 /.idea/
 *.pyc
