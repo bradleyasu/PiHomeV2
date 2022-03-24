@@ -5,14 +5,17 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image  
 from kivy.uix.label import Label
 from util.tools import hex
-from kivy.properties import ColorProperty, NumericProperty
+from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
+from kivy.uix.widget import Widget
 
 
 Builder.load_file("./components/Button/circlebutton.kv")
 
-class CircleButton(ButtonBehavior, Label):
+class CircleButton(ButtonBehavior, Widget):
+    text = StringProperty()
+    color = ColorProperty()
     stroke_color = ColorProperty(hex('#ffffff'))
     text_color = ColorProperty(hex('#ffffff'))
     primary_color = ColorProperty(hex('#ffffff', 0))
