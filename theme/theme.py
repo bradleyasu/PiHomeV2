@@ -2,6 +2,7 @@ from theme.color import Color
 from util.configuration import Configuration
 from util.tools import hex
 from kivy.clock import Clock
+from kivy.core.text import LabelBase
 
 class Theme():
     ''' ENUM VALUES, KEY, DEFAULT_LIGHT, SECTION'''
@@ -31,6 +32,7 @@ class Theme():
         super(Theme, self).__init__(**kwargs)
         self.theme  = Configuration('./theme.ini')
         self.mode = Configuration('./base.ini').get_int('theme', 'dark_mode', 0)
+        LabelBase.register(name='Nunito', fn_regular='./theme/fonts/Nunito-Regular.ttf')
 
     def get_color(self, color, opacity = 1):
         if (self.mode == 0):
