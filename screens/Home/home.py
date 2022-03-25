@@ -40,6 +40,7 @@ class HomeScreen(Screen):
         label = Label(text='PiHome')
         label.color = self.theme.get_color(self.theme.TEXT_PRIMARY)
         label.pos_hint = {'center_y': 0.5, 'center_x': 0.5}
+        label.font_name = 'Nunito'
         label.font_size = '72sp'
         layout.add_widget(label)
 
