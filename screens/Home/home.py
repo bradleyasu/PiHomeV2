@@ -9,8 +9,10 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
+from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
+from util.tools import hex
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -49,6 +51,12 @@ class HomeScreen(Screen):
 
         button2 = SimpleButton(text='Test Button', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
         layout.add_widget(button2)
+
+        for i in range(9):
+            testButton = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (i * 55)), dp(self.height - 200)))
+            testButton.stroke_color = hex(Color.DARK_INDIGO_500)
+            testButton.text_color = hex(Color.DARK_INDIGO_700)
+            layout.add_widget(testButton)
 
         self.add_widget(layout)
 

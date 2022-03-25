@@ -38,10 +38,10 @@ class CircleButton(ButtonBehavior, Widget):
 
     def animate_color(self):
         if self.state == 'down':
-            animation = Animation(color=self.down_color, duration=self.transition_duration)
+            animation = Animation(color=self.down_color, duration=0.2)
             # animation &= Animation(zoom=.9, t='out_quad', d=.2)
         else:
-            animation = Animation(color=self.primary_color, duration=self.transition_duration)
+            animation = Animation(color=self.primary_color, duration=1)
             # animation &= Animation(zoom=1, t='out_elastic', d=.5)
         animation.start(self)
 
