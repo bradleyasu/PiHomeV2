@@ -12,6 +12,7 @@ from components.Button.circlebutton import CircleButton
 from components.Reveal.reveal import Reveal
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
+from screens.Pin.pin import PinScreen 
 from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SwapTransition 
@@ -38,7 +39,8 @@ class PiHome(App):
         Window.size = (self.width, self.height)
         self.screens = {
             'home': HomeScreen(name = 'home'),
-            'settings': SettingsScreen(name = 'settings')
+            'settings': SettingsScreen(name = 'settings'),
+            'pin': PinScreen(name = 'pin')
         }
 
     # the root widget

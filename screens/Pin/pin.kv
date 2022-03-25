@@ -1,0 +1,24 @@
+#:kivy 2.0.0
+<PinScreen>:
+    size: 800, 480
+    canvas.before:
+        Color:
+            rgba: self.color if self.image is not None else (0,0,0,0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: self.image
+    canvas:
+        Color:
+            rgba: self.slime
+        Rectangle:
+            pos: self.width - self.width / 3, 0
+            size: self.width / 3, self.height
+        Color:
+            rgba: self.slime
+        Ellipse:
+            pos: self.width - self.width / 3 - 100, 0
+            size: dp(880), dp(880) 
+            angle_start: 0
+            angle_end: 360 
+            

@@ -46,7 +46,8 @@ class HomeScreen(Screen):
         label.font_size = '72sp'
         layout.add_widget(label)
 
-        button = SimpleButton(text='Test Button', size=(dp(200), dp(50)), pos=(dp(10), dp(10)))
+        button = SimpleButton(text='Pin Screen Test', size=(dp(200), dp(50)), pos=(dp(10), dp(10)))
+        button.bind(on_release=lambda _: self.open_pin())
         layout.add_widget(button)
 
         button2 = SimpleButton(text='Test Button', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
@@ -62,6 +63,9 @@ class HomeScreen(Screen):
 
     def open_settings(self):
         self.manager.current = 'settings'
+    
+    def open_pin(self):
+        self.manager.current = 'pin'
 
 
     def download_image(self): 
