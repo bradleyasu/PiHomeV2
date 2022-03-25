@@ -2,17 +2,17 @@
 
 <SimpleButton>:
     size_hint: None, None
-    canvas.before:
+    canvas:
+        PushMatrix:
         Scale:
             origin: self.center
             xyz: [self.zoom, self.zoom, 1]
-
-    canvas:
         Color:
             rgba: self.background_color
         RoundedRectangle:
             size: self.size
             pos: self.pos
+        PopMatrix:
     
     Label: 
         text: root.text
