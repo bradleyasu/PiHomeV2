@@ -25,10 +25,6 @@ class HomeScreen(Screen):
 
     def build(self):
         layout = FloatLayout()
-        for i in range (10):
-            button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
-            layout.add_widget(button)
-        
         button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
         button.bind(on_release=lambda _: self.open_settings())
         layout.add_widget(button)
