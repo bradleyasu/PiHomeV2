@@ -22,6 +22,12 @@ class Theme():
     BUTTON_SECONDARY          = ['secondary', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
     BUTTON_DANGER             = ['danger', '', '', 'buttons']
     BUTTON_SUCCESS            = ['success', '', '', 'buttons']
+    
+    BUTTON_PRIMARY_ACCENT     = ['primary_accent', Color.BLUE_700, Color.DARK_BLUE_700, 'buttons']
+    BUTTON_SECONDARY_ACCENT   = ['secondary_accent', Color.GRAY_200, Color.DARK_GRAY_200, 'buttons']
+
+    BUTTON_PRIMARY_TEXT       = ['primary_accent', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
+    BUTTON_SECONDARY_TEXT     = ['secondary_accent', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
 
     ALERT_DANGER              = ['danger', Color.RED_400, Color.DARK_RED_400, 'alerts']
     ALERT_WARNING             = ['warning', Color.ORANGE_400, Color.DARK_ORANGE_400,'alerts']
@@ -41,5 +47,4 @@ class Theme():
         else:
             key = color[0] + '_dark'
             default = color[2]
-
         return hex(str(self.theme.get(color[3], key, default)), opacity)
