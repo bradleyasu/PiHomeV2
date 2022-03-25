@@ -22,7 +22,7 @@ from kivy.metrics import dp
 kivy.require('2.0.0')
 
 # Hide Cursor
-Window.show_cursor = platform.system() is not 'Linux'
+Window.show_cursor = platform.system() == 'Darwin'
 
 
 class PiHome(App):
