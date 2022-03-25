@@ -1,5 +1,5 @@
 import kivy
-import os
+import platform
 from kivy.app import App
 from kivy.uix.button import Button
 
@@ -22,7 +22,7 @@ from kivy.metrics import dp
 kivy.require('2.0.0')
 
 # Hide Cursor
-Window.show_cursor = os.system is not 'Linux'
+Window.show_cursor = platform.system() is not 'Linux'
 
 
 class PiHome(App):
