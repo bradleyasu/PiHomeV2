@@ -8,6 +8,7 @@ from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty
 
 from components.Button.circlebutton import CircleButton
+from components.Button.simplebutton import SimpleButton
 from theme.theme import Theme
 from kivy.factory import Factory
 
@@ -42,6 +43,12 @@ class HomeScreen(Screen):
         label.font_name = 'Nunito'
         label.font_size = '72sp'
         layout.add_widget(label)
+
+        button = SimpleButton(text='Test Button', size=(dp(200), dp(50)), pos=(dp(10), dp(10)))
+        layout.add_widget(button)
+
+        button2 = SimpleButton(text='Test Button', type=Theme().BUTTON_SECONDARY, size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        layout.add_widget(button2)
 
         self.add_widget(layout)
 

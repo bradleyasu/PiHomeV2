@@ -1,0 +1,24 @@
+#:kivy 2.0.0
+
+<SimpleButton>:
+    size_hint: None, None
+    canvas.before:
+        Scale:
+            origin: self.center
+            xyz: [self.zoom, self.zoom, 1]
+
+    canvas:
+        Color:
+            rgba: self.background_color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+    
+    Label: 
+        text: root.text
+        pos: root.pos
+        font_size: '16sp'
+        font_name: 'Nunito'
+        size_hint: None, None
+        size: root.size
+        color: root.foreground_color
