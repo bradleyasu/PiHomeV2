@@ -24,12 +24,13 @@ class CircleButton(ButtonBehavior, Widget):
     down_color = ColorProperty(theme.get_color(theme.TEXT_SECONDARY, 0.3))
     transition_duration = NumericProperty(0.5)
     zoom = NumericProperty(1)
-    def __init__(self, size = (dp(55), dp(55)), **kwargs):
+    def __init__(self, size = (dp(50), dp(50)), **kwargs):
         super(CircleButton, self).__init__(**kwargs)
         self.bind(
             state=lambda *args: self.animate_color()
         )
         self.color = self.primary_color
+        self.size = size
         Clock.schedule_once(lambda _: self.start(), 1)
 
     def start(self):
