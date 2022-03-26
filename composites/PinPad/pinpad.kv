@@ -1,4 +1,5 @@
 #:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
 <PinPad>:
     # size: 800, 480
     canvas.before:
@@ -7,6 +8,7 @@
         Rectangle:
             pos: self.pos
             size: self.size
+
     canvas:
         Color:
             rgba: self.pinpad_background_color
@@ -43,14 +45,21 @@
         id: pin_pad_float_container
         pos: 0, 0
         size_hint: None, None
-        
+
+        Label:
+            text: 'PIN REQUIRED'
+            pos: self.width/2 , self.height / 2 + dp(370/2) + root.y_position
+            font_size: '12sp'
+            color: root.pinpad_button_color
+            font_name: 'Nunito'
+
         GridLayout:
             # canvas:
             #     Color:
             #         rgba: (1, 1, 0, 1)
             #     Rectangle:
             #         size: self.size
-            #         pos: root.width / 2 -  dp(105),  root.y_position
+            #         pos: root.width / 2 -  dp(120),  root.y_position
             id: pin_pad_layout
             cols: 3
             rows: 4
