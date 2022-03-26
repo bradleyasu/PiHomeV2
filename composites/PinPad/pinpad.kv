@@ -1,0 +1,53 @@
+#:kivy 2.0.0
+<PinPad>:
+    size: 800, 480
+    canvas.before:
+        Color:
+            rgba: self.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    canvas:
+        Color:
+            rgba: self.pinpad_background_color
+        RoundedRectangle:
+            size: dp(350), dp(450)
+            pos: self.width / 2 -  dp(175), self.y_position
+
+    canvas.after:
+        Color:
+            rgba: self.pinpad_button_color
+        Ellipse:
+            angle_start: 0
+            angle_end: self.pin_one
+            size: dp(20), dp(20)
+            pos: self.width /2 - dp(100), self.height - dp(80)
+        Ellipse:
+            angle_start: 0
+            angle_end: self.pin_two
+            size: dp(20), dp(20)
+            pos: self.width /2 - dp(40), self.height - dp(80)
+        Ellipse:
+            angle_start: 0
+            angle_end: self.pin_three
+            size: dp(20), dp(20)
+            pos: self.width /2 + dp(20), self.height - dp(80)
+        Ellipse:
+            angle_start: 0
+            angle_end: self.pin_four
+            size: dp(20), dp(20)
+            pos: self.width /2 + dp(80), self.height - dp(80)
+
+
+    FloatLayout:
+        size: root.size
+        pos: 0, 0
+        size_hint: None, None
+        
+        GridLayout:
+            id: pin_pad_layout
+            cols: 3
+            spacing: 60
+            size: dp(200), dp(350)
+            pos: root.width / 2 -  dp(105), dp(root.y_position - 170)
+            opacity: root.pinpad_opacity

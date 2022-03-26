@@ -10,6 +10,8 @@ from kivy.uix.gridlayout import GridLayout
 from components.Button.circlebutton import CircleButton
 
 from components.Reveal.reveal import Reveal
+
+from composites.PinPad.pinpad import PinPad
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
 from screens.Pin.pin import PinScreen 
@@ -28,11 +30,14 @@ Window.show_cursor = platform.system() == 'Darwin'
 
 class PiHome(App):
 
+    layout = FloatLayout()
+
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
         self.base_config = Configuration('base.ini')
         self.height = self.base_config.get_int('window', 'height', 480)
         self.width = self.base_config.get_int('window', 'width', 800)
+        self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0)
         # Create the Screenmanager
 
     def setup(self):
@@ -46,7 +51,6 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
-        layout = FloatLayout()
         screenManager = ScreenManager(transition=SwapTransition())
         # button = Button(text=self.base_config.get('test', 'phrase', 'quit'),  size=(200, 50), size_hint=(None, None), pos=(0, 50))
         # button.bind(on_release=lambda _: PiHome.get_running_app().stop())
@@ -71,18 +75,27 @@ class PiHome(App):
             # screen.add_widget(HomeScreen(name = 'home'))
             screenManager.add_widget(screen)
 
-        layout.add_widget(screenManager)
+        self.layout.add_widget(screenManager)
 
+        self.layout.add_widget(self.pinpad)
         # for i in range (10):
         #     button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
         #     layout.add_widget(button)
         
-        return layout
+        return self.layout
 
     def restart(self):
         self.root.clear_widgets()
         self.stop()
         return PiHome().run()
+
+    def show_pinpad(self):
+        self.pinpad.opacity = 1
+        self.pinpad.animate()
+
+    def remove_pinpad(self, *args):
+        self.pinpad.opacity = 0
+        self.pinpad.reset()
 
 
 # Start PiHome

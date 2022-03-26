@@ -50,14 +50,9 @@ class HomeScreen(Screen):
         button.bind(on_release=lambda _: self.open_pin())
         layout.add_widget(button)
 
-        button2 = SimpleButton(text='Test Button', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        button2 = SimpleButton(text='Pin Overlay Test', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        button2.bind(on_release=lambda _: App.get_running_app().show_pinpad())
         layout.add_widget(button2)
-
-        for i in range(9):
-            testButton = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (i * 55)), dp(self.height - 200)))
-            testButton.stroke_color = hex(Color.DARK_INDIGO_500)
-            testButton.text_color = hex(Color.DARK_INDIGO_700)
-            layout.add_widget(testButton)
 
         self.add_widget(layout)
 
