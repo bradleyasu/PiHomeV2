@@ -9,7 +9,7 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
-
+from kivy.metrics import dp
 
 Builder.load_file("./components/Button/circlebutton.kv")
 
@@ -24,7 +24,7 @@ class CircleButton(ButtonBehavior, Widget):
     down_color = ColorProperty(theme.get_color(theme.TEXT_SECONDARY, 0.3))
     transition_duration = NumericProperty(0.5)
     zoom = NumericProperty(1)
-    def __init__(self, **kwargs):
+    def __init__(self, size = (dp(55), dp(55)), **kwargs):
         super(CircleButton, self).__init__(**kwargs)
         self.bind(
             state=lambda *args: self.animate_color()
