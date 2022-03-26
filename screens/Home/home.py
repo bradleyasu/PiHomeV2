@@ -50,7 +50,7 @@ class HomeScreen(Screen):
         button.bind(on_release=lambda _: self.open_pin())
         layout.add_widget(button)
 
-        button2 = SimpleButton(text='Pin Overlay Test', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        button2 = SimpleButton(text='Lock Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
         button2.bind(on_release=lambda _: App.get_running_app().show_pinpad())
         layout.add_widget(button2)
 

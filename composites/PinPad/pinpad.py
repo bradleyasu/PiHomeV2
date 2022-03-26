@@ -46,10 +46,11 @@ class PinPad(Widget):
            button.bind(on_release=lambda x: self.update_code(x.text))
            pin_grid.add_widget(button)
 
-        button = CircleButton(text='<')
+        button = CircleButton(text='DELETE')
         button.bind(on_release=self.backspace)
-        button.stroke_color = self.pinpad_button_color
+        button.stroke_color = self.pinpad_background_color
         button.text_color = self.pinpad_button_color
+        button.font_size = '10sp'
         pin_grid.add_widget(button)
 
         button = CircleButton(text='0')
@@ -57,9 +58,10 @@ class PinPad(Widget):
         button.text_color = self.pinpad_button_color
         pin_grid.add_widget(button)
 
-        button = CircleButton(text='>')
-        button.stroke_color = self.pinpad_button_color
+        button = CircleButton(text='UNLOCK')
+        button.stroke_color = self.pinpad_background_color
         button.text_color = self.pinpad_button_color
+        button.font_size = '10sp'
         button.bind(on_release=self.verify_pin)
         pin_grid.add_widget(button)
 
