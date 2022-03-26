@@ -36,7 +36,7 @@ class CircleButton(ButtonBehavior, Widget):
     def start(self):
         animation = Animation(zoom=1, t='out_elastic', d=.5)
         animation.start(self)
-
+    
     def animate_color(self):
         if self.state == 'down':
             animation = Animation(color=self.down_color, duration=0.2)

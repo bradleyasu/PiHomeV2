@@ -37,7 +37,8 @@ class PiHome(App):
         self.base_config = Configuration('base.ini')
         self.height = self.base_config.get_int('window', 'height', 480)
         self.width = self.base_config.get_int('window', 'width', 800)
-        self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0)
+        pin = self.base_config.get('security', 'pin', '')
+        self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
         # Create the Screenmanager
 
     def setup(self):

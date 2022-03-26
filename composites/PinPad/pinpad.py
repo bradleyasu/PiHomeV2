@@ -31,19 +31,23 @@ class PinPad(Widget):
     pin_three = NumericProperty(0)
     pin_four  = NumericProperty(0)
 
-    def __init__(self, on_enter = lambda _: print('enter'), **kwargs):
+    def __init__(self, pin = '', on_enter = lambda _: print('enter'), **kwargs):
         super(PinPad, self).__init__(**kwargs)
+        self.pin = pin
+        self.on_enter = on_enter
 
         pin_grid = self.ids.pin_pad_layout 
+        pin_grid.bind(on_touch_down=lambda x,y:self.touch_check(x,y))
 
         for i in range(9):
            button = CircleButton(text=str(i + 1))
            button.stroke_color = self.pinpad_button_color
            button.text_color = self.pinpad_button_color
-           button.bind(on_release=lambda _: self.update_code(str(i + 1)))
+           button.bind(on_release=lambda x: self.update_code(x.text))
            pin_grid.add_widget(button)
 
         button = CircleButton(text='<')
+        button.bind(on_release=self.backspace)
         button.stroke_color = self.pinpad_button_color
         button.text_color = self.pinpad_button_color
         pin_grid.add_widget(button)
@@ -56,12 +60,24 @@ class PinPad(Widget):
         button = CircleButton(text='>')
         button.stroke_color = self.pinpad_button_color
         button.text_color = self.pinpad_button_color
-        button.bind(on_release=on_enter)
+        button.bind(on_release=self.verify_pin)
         pin_grid.add_widget(button)
 
+    def verify_pin(self, *args):
+        if self.code == self.pin:
+            self.on_enter()
+        else:
+            self.code = ""
+            self.refresh_pins()
+        
+    def backspace(self, *args):
+        self.code = self.code[:-1]
+        self.refresh_pins()
 
     def update_code(self, ch):
         self.code = self.code + ch
+        if len(self.code) > 4:
+            self.verify_pin()
         self.refresh_pins()
 
     def refresh_pins(self):
@@ -85,3 +101,11 @@ class PinPad(Widget):
         animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='out_quad', d=.2)
         animation &= Animation(pinpad_opacity=1, t='out_quad', d=.2)
         animation.start(self)
+
+    def touch_check(self, widget, touch):
+        if self.opacity == 0:
+            return False
+        if widget.collide_point(*touch.pos):
+            return False
+        else:
+            return True 
