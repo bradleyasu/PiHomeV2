@@ -62,12 +62,17 @@ class PinPad(Widget):
 
     def update_code(self, ch):
         self.code = self.code + ch
+        self.refresh_pins()
+
+    def refresh_pins(self):
         self.pin_one = 360 if len(self.code) > 0 else 0
         self.pin_two = 360 if len(self.code) > 1 else 0
         self.pin_three = 360 if len(self.code) > 2 else 0
         self.pin_four = 360 if len(self.code) > 3 else 0
 
     def reset(self):
+        self.code = ""
+        self.refresh_pins()
         self.background_color = (0,0,0,0)
         self.pinpad_background_color = Theme().get_color(Theme().BACKGROUND_SECONDARY, 0)
         self.pinpad_opacity = 0
