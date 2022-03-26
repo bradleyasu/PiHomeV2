@@ -45,9 +45,18 @@
         size_hint: None, None
         
         GridLayout:
+            # canvas:
+            #     Color:
+            #         rgba: (1, 1, 0, 1)
+            #     Rectangle:
+            #         size: self.size
+            #         pos: root.width / 2 -  dp(105),  root.y_position
             id: pin_pad_layout
             cols: 3
+            rows: 4
             spacing: dp(32)
-            size: dp(200), dp(350)
-            pos: root.width / 2 -  dp(105), root.height / 2  - dp(125) - root.y_position
+            size_hint: None, None
+            size: dp(215), dp(330)
+            pos: root.width / 2 -  dp(105), root.y_position
             opacity: root.pinpad_opacity
+

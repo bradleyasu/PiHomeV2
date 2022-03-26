@@ -36,7 +36,8 @@ class PinPad(Widget):
         self.pin = pin
         self.on_enter = on_enter
 
-        self.ids.pin_pad_float_container.size = App.get_running_app().get_size()
+        app_size = App.get_running_app().get_size()
+        self.ids.pin_pad_float_container.size = app_size
         pin_grid = self.ids.pin_pad_layout 
         pin_grid.bind(on_touch_down=lambda x,y:self.touch_check(x,y))
 
@@ -57,6 +58,7 @@ class PinPad(Widget):
         button = CircleButton(text='0')
         button.stroke_color = self.pinpad_button_color
         button.text_color = self.pinpad_button_color
+        button.bind(on_release=lambda x: self.update_code(x.text))
         pin_grid.add_widget(button)
 
         button = CircleButton(text='UNLOCK')
