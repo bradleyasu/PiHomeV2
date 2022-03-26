@@ -98,6 +98,9 @@ class PiHome(App):
         self.pinpad.opacity = 0
         self.pinpad.reset()
 
+    def get_size(self):
+        return (self.width, self.height)
+
 
 # Start PiHome
 PiHome().run()

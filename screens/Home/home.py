@@ -23,6 +23,7 @@ class HomeScreen(Screen):
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY)
+        self.size = App.get_running_app().get_size()
         # self.download_image()
         self.build()
 

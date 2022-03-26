@@ -36,6 +36,7 @@ class PinPad(Widget):
         self.pin = pin
         self.on_enter = on_enter
 
+        self.ids.pin_pad_float_container.size = App.get_running_app().get_size()
         pin_grid = self.ids.pin_pad_layout 
         pin_grid.bind(on_touch_down=lambda x,y:self.touch_check(x,y))
 
