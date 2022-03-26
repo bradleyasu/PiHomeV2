@@ -42,14 +42,23 @@
 
 
     FloatLayout:
+        # canvas:
+        #     Color:
+        #         rgba: (1, 1, 0, 0.1)
+        #     Rectangle:
+        #         size: root.size
+        #         pos: 0, 0
         id: pin_pad_float_container
         pos: 0, 0
         size_hint: None, None
+        size: root.size
 
         Label:
             text: 'PIN REQUIRED'
-            pos: self.width/2 , self.height / 2 + dp(370/2) + root.y_position
+            pos: 0, 0
+            pos: root.width/2 - self.width / 2, root.y_position + dp(400)
             font_size: '12sp'
+            size_hint: None, None
             color: root.pinpad_button_color
             font_name: 'Nunito'
 
