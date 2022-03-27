@@ -82,7 +82,8 @@ class PiHome(App):
         # for i in range (10):
         #     button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
         #     layout.add_widget(button)
-        
+
+        self.manager = screenManager
         return self.layout
 
     def restart(self):
@@ -100,6 +101,16 @@ class PiHome(App):
 
     def get_size(self):
         return (self.width, self.height)
+
+    
+    ''' Navigate to a specific scren '''
+    def goto_screen(self, screen, pin_required = False):
+        if pin_required:
+            self.show_pinpad()
+            self.pinpad.on_enter = lambda *args: self.goto_screen(screen, False)
+        else:
+            self.remove_pinpad()
+            self.manager.current = screen
 
 
 # Start PiHome

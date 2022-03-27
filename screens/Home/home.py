@@ -58,14 +58,13 @@ class HomeScreen(Screen):
         self.add_widget(layout)
 
     def open_settings(self):
-        self.manager.current = 'settings'
+        # self.manager.current = 'settings'
+        App.get_running_app().goto_screen('settings', True)
     
     def open_pin(self):
         self.manager.current = 'pin'
 
-
     def download_image(self): 
-
         img_data = requests.get('https://cdn.pixabay.com/photo/2018/08/14/13/23/ocean-3605547_1280.jpg').content
         with open('background.jpg', 'wb') as handler:
             handler.write(img_data)
