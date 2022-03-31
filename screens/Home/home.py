@@ -9,6 +9,7 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
+from components.SmartLight.smartlight import SmartLight
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
@@ -47,13 +48,16 @@ class HomeScreen(Screen):
         label.font_size = '72sp'
         layout.add_widget(label)
 
-        button = SimpleButton(text='Pin Screen Test', size=(dp(200), dp(50)), pos=(dp(10), dp(10)))
-        button.bind(on_release=lambda _: self.open_pin())
-        layout.add_widget(button)
+        light = SmartLight(size=(dp(200), dp(200)))
+        layout.add_widget(light)
 
-        button2 = SimpleButton(text='Lock Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
-        button2.bind(on_release=lambda _: App.get_running_app().show_pinpad())
-        layout.add_widget(button2)
+        light2 = SmartLight(size=(dp(200), dp(200)))
+        light2.pos = 500, 0
+        layout.add_widget(light2)
+
+        # button2 = SimpleButton(text='Lock Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        # button2.bind(on_release=lambda _: App.get_running_app().show_pinpad())
+        # layout.add_widget(button2)
 
         self.add_widget(layout)
 

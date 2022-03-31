@@ -1,0 +1,48 @@
+#:kivy 2.0.0
+
+<SmartLight>:
+    size_hint: None, None
+    pos: self.pos
+    GridLayout:
+        canvas:
+            Color: 
+                rgba: 1, 0, 1, 0.4
+            Rectangle:
+                size: root.size
+                pos: root.pos 
+        size: root.size
+        size_hint: None, None
+        cols: 1
+        rows: 1
+    Widget:
+        size_hint: None, None
+        pos_hint: None, None
+        pos: self.pos
+        # canvas:
+        #     Color:
+        #         rgba: 0, 1, 0, 1
+        #     Ellipse:
+        #         angle_start: 0
+        #         angle_end: 360 
+        #         size: root.width - dp(20), root.height - dp(20)
+        #         pos: dp(10), dp(10)
+        canvas.after:
+            Color:
+                rgba: 0, 0, 1, 1
+            Ellipse:
+                angle_start: 0
+                angle_end: 360 
+                size: root.width - dp(100), root.height - dp(100)
+                pos: root.x + dp(50), root.y + dp(50)
+        Image:
+            source: './assets/images/rgb_color_wheel.png'
+            size_hint: None, None
+            size: root.width - dp(20), root.height - dp(20)
+            pos: root.x + dp(10), root.y + dp(10)
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: root.degrees
+                    origin: self.center
+            canvas.after:
+                PopMatrix
