@@ -1,7 +1,7 @@
 [
     {
         "type": "title",
-        "title": "Transportation"
+        "title": "Bus"
     },
     {
         "type": "string",
@@ -12,9 +12,37 @@
     },
     {
         "type": "string",
-        "title": "Bus ETA key",
-        "desc": "The above URL should return a JSON object.  Specify the response JSON key for the ETA value",
+        "title": "ETA Key",
+        "desc": "The API URL should return a JSON object.  Specify the response JSON key for the ETA value",
         "section": "bus",
         "key": "bus_eta_key"
+    },
+    {
+        "type": "string",
+        "title": "Route",
+        "desc": "Bus number or route.  Surround with {} if a key exists in the object that provides this information",
+        "section": "bus",
+        "key": "route"
+    },
+    {
+        "type": "string",
+        "title": "Stop",
+        "desc": "Bus stop name.  Surround with {} if a key exists in the object that provides this information",
+        "section": "bus",
+        "key": "name"
+    },
+    {
+        "type": "string",
+        "title": "Direction Bound",
+        "desc": "Bus direction.  Surround with {} if a key exists in the object that provides this information",
+        "section": "bus",
+        "key": "direction"
+    },
+    {
+        "type": "string",
+        "title": "Service Logo",
+        "desc": "URL to Bus/Transportation services logo",
+        "section": "bus",
+        "key": "logo"
     }
 ]

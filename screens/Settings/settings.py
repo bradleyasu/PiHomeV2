@@ -1,3 +1,4 @@
+import json
 import os
 from kivy.clock import Clock
 from kivy.app import App
@@ -17,8 +18,17 @@ class SettingsScreen(Screen):
 
         # Read all of the json configuations and add them to the screen
         dir = './screens/Settings/json/' 
+
+        # Set defaults
         for file in os.listdir(dir):
             if file.endswith(".json"):
+                with open(dir+file, 'r') as f:
+                    conf = json.load(f)
+                    for c in conf:
+                        if "section" in c and "key" in c:
+                            config.setdefault(c['section'], c['key'], '')
+
+                # Add configuration panel to UI
                 s.add_json_panel(file.replace("_", " ").replace(".json", "").capitalize(), config, dir+file)
         
         # Override on_close event to return to the previous screen

@@ -39,8 +39,6 @@ class BusScreen(Screen):
     def build(self):
         layout = FloatLayout()
 
-
-
         homeBtn = CircleButton(text='→', size=(dp(50), dp(50)), pos=(dp(get_app().width - 70), dp(get_app().height - 70)))
         homeBtn.bind(on_release=lambda _: goto_screen('home'))
         layout.add_widget(homeBtn)
