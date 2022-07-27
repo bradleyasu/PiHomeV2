@@ -4,7 +4,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
-from kivy.metrics import dp
+from kivy.metrics import dp,sp
 from kivy.properties import ColorProperty, StringProperty
 
 from kivy.uix.scrollview import ScrollView
@@ -54,7 +54,7 @@ class BusScreen(PiHomeScreen):
         homeBtn.bind(on_release=lambda _: self.goto('home'))
         layout.add_widget(homeBtn)
 
-        self.logo = NetworkImage(url=self.logo, size=(dp(216), dp(112)), pos=(dp(get_app().width - 200), dp(0)))
+        self.logo = NetworkImage(url=self.logo, size=(sp(216), sp(112)), pos=(dp(get_app().width - 200), dp(0)))
         layout.add_widget(self.logo)
 
         self.add_widget(layout)
