@@ -29,7 +29,7 @@
         "title": "Stop",
         "desc": "Bus stop name.  Surround with {} if a key exists in the object that provides this information",
         "section": "bus",
-        "key": "name"
+        "key": "stop"
     },
     {
         "type": "string",
