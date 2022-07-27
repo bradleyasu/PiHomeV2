@@ -12,6 +12,7 @@ from kivy.core.window import Window
 
 from components.Button.circlebutton import CircleButton
 from components.Image.networkimage import NetworkImage
+from composites.BusEta.buseta import BusEta
 from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
@@ -35,7 +36,7 @@ class BusScreen(PiHomeScreen):
         self.logo= get_config().get('bus', 'logo', '')
 
         # Register API to be polled every 200 seconds
-        get_poller().register_api(self.api, self.key, 200, lambda json: self.update(json))
+        get_poller().register_api(self.api, self.key, 60, lambda json: self.update(json))
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY)
         self.build()
@@ -59,6 +60,16 @@ class BusScreen(PiHomeScreen):
         self.add_widget(layout)
 
     def update(self, payload):
-        for i in range(100):
-            l = Label(text="Hello "+str(i), font_size="20sp")
-            self.grid.add_widget(l)
+        resp = payload['bustime-response']
+        self.grid.clear_widgets()
+        
+        if "prd" in resp:
+            arr = resp['prd']
+            for i in arr:
+                if "prdtm" in i:
+                    r = i["rt"]
+                    s = i["stpnm"]
+                    d = i['rtdir']
+                    e = i['prdtm'].split(' ')[-1]
+                    b = BusEta(route=r, stop=s, dest=d, eta=e)
+                    self.grid.add_widget(b)

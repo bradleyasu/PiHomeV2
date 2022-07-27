@@ -1,0 +1,58 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<BusEta>:
+    # size: 800, 480
+    size_hint: None, None
+
+    canvas.before:
+        Color:
+            rgba: (1, 0, 1, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+    GridLayout:
+        rows: 1
+        spacing: 20
+        size: root.size
+        padding: 20, 20, 20, 20
+        pos: root.pos
+
+        BoxLayout:
+            size: 200, 200
+            canvas.before:
+                Color:
+                    rgba: root.route_background_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Label: 
+                text: root.route
+                font_size: '122sp'
+                font_name: 'Nunito'
+                color: root.route_color
+
+        GridLayout:
+            cols: 1
+            spacing: 5
+
+            Label: 
+                text: root.stop
+                font_size: '30sp'
+                font_name: 'Nunito'
+                color: root.route_color
+
+            Label: 
+                text: root.eta
+                font_size: '42sp'
+                font_name: 'Nunito'
+                color: root.time_color
+            
+            # Label: 
+            #     text: root.dest
+            #     font_size: '12sp'
+            #     font_name: 'Nunito'
+            #     color: root.route_color
+
