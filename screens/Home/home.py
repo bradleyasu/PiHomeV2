@@ -10,6 +10,7 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
+from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
@@ -18,7 +19,7 @@ from util.tools import hex
 
 Builder.load_file("./screens/Home/home.kv")
 
-class HomeScreen(Screen):
+class HomeScreen(PiHomeScreen):
     theme = Theme()
     color = ColorProperty()
     image = StringProperty()

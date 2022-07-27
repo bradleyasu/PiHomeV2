@@ -12,14 +12,15 @@ from kivy.core.window import Window
 
 from components.Button.circlebutton import CircleButton
 from components.Image.networkimage import NetworkImage
+from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
-from util.helpers import get_app, get_config, get_poller, goto_screen
+from util.helpers import get_app, get_config, get_poller 
 from util.tools import hex
 
 Builder.load_file("./screens/Bus/bus.kv")
 
-class BusScreen(Screen):
+class BusScreen(PiHomeScreen):
     theme = Theme()
     color = ColorProperty()
     image = StringProperty()
@@ -44,17 +45,17 @@ class BusScreen(Screen):
         self.grid = GridLayout(cols=1, spacing=50, size_hint_y=None)
         self.grid.bind(minimum_height=self.grid.setter('height'))
 
+        view = ScrollView(size_hint=(1, 1), size=(get_app().width, get_app().height))
+        view.add_widget(self.grid);
+        layout.add_widget(view)
+        
         homeBtn = CircleButton(text='>', size=(dp(50), dp(50)), pos=(dp(get_app().width - 70), dp(get_app().height - 70)))
-        homeBtn.bind(on_release=lambda _: goto_screen('home'))
+        homeBtn.bind(on_release=lambda _: self.goto('home'))
         layout.add_widget(homeBtn)
 
         self.logo = NetworkImage(url=self.logo, size=(dp(216), dp(112)), pos=(dp(get_app().width - 200), dp(0)))
         layout.add_widget(self.logo)
 
-        view = ScrollView(size_hint=(1, 1), size=(get_app().width, get_app().height))
-        view.add_widget(self.grid);
-
-        layout.add_widget(view)
         self.add_widget(layout)
 
     def update(self, payload):
