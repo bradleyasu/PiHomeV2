@@ -20,19 +20,18 @@
         pos: root.pos
 
         BoxLayout:
-            size: 200, 200
-            canvas.before:
-                Color:
-                    rgba: root.route_background_color
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
+            # canvas.before:
+            #     Color:
+            #         rgba: root.route_background_color
+            #     RoundedRectangle:
+            #         pos: self.pos
+            #         size: self.size
 
             Label: 
                 text: root.route
                 font_size: '122sp'
                 font_name: 'Nunito'
-                color: root.route_color
+                color: root.route_background_color
 
         GridLayout:
             cols: 1

@@ -1,3 +1,5 @@
+from datetime import datetime as dt, timedelta
+import math
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
@@ -54,7 +56,7 @@ class BusScreen(PiHomeScreen):
         homeBtn.bind(on_release=lambda _: self.goto('home'))
         layout.add_widget(homeBtn)
 
-        self.logo = NetworkImage(url=self.logo, size=((216), (112)), pos=(dp(get_app().width - 200), dp(0)))
+        self.logo = NetworkImage(url=self.logo, size=(dp(216), dp(112)), pos=(dp(get_app().width - 200), dp(0)))
         layout.add_widget(self.logo)
 
         self.add_widget(layout)
@@ -70,6 +72,10 @@ class BusScreen(PiHomeScreen):
                     r = i["rt"]
                     s = i["stpnm"]
                     d = i['rtdir']
-                    e = i['prdtm'].split(' ')[-1]
-                    b = BusEta(route=r, stop=s, dest=d, eta=e)
+                    e = i['prdtm']
+                    dts = dt.now()
+                    dte = dt.strptime(e, '%Y%m%d %H:%M')
+                    est = math.floor((dte - dts).total_seconds() / 60.0)
+                   
+                    b = BusEta(route=r, stop=s, dest=d, eta=str(est)+" min")
                     self.grid.add_widget(b)
