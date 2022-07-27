@@ -12,17 +12,23 @@ from components.Button.simplebutton import SimpleButton
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
+from util.helpers import get_config, get_poller
 from util.tools import hex
 
-Builder.load_file("./screens/Pin/pin.kv")
+Builder.load_file("./screens/Bus/bus.kv")
 
-class PinScreen(Screen):
+class BusScreen(Screen):
     theme = Theme()
     color = ColorProperty()
     slime = ColorProperty()
     image = StringProperty()
     def __init__(self, **kwargs):
-        super(PinScreen, self).__init__(**kwargs)
+        super(BusScreen, self).__init__(**kwargs)
+        api = get_config().get('bus', 'bus_eta_url', '')
+        key = get_config().get('bus', 'bus_eta_key', '')
+
+        get_poller().register_api(api, key, 60, lambda json: print(json))
+
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY)
         self.slime = Color.DARK_INDIGO_500
         self.build()

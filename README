@@ -1,0 +1,18 @@
+
+#PIHOME
+
+###Requirements:
+
+- Raspberry Pi 3+
+- Official 7" LCD Touch Screen
+- Raspberry  PI  OS Lite (No Desktop Environment)
+
+###Installation
+
+- Install RaspPI Lite OS
+- Setup Wifi through RaspPi setup tools
+- Install PiHome with:
+
+```
+curl -sSL https://pihome.io/install | bash
+```

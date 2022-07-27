@@ -13,6 +13,7 @@ from components.SmartLight.smartlight import SmartLight
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
+from util.helpers import get_app
 from util.tools import hex
 
 Builder.load_file("./screens/Home/home.kv")
@@ -38,7 +39,7 @@ class HomeScreen(Screen):
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
-        button.bind(on_release=lambda _: App.get_running_app().stop())
+        button.bind(on_release=lambda _: get_app().quit())
         layout.add_widget(button)
 
         label = Label(text='PiHome')
@@ -48,12 +49,17 @@ class HomeScreen(Screen):
         label.font_size = '72sp'
         layout.add_widget(label)
 
-        light = SmartLight(size=(dp(200), dp(200)))
-        layout.add_widget(light)
+        # light = SmartLight(size=(dp(200), dp(200)))
+        # layout.add_widget(light)
 
-        light2 = SmartLight(size=(dp(200), dp(200)))
-        light2.pos = 500, 0
-        layout.add_widget(light2)
+        # light2 = SmartLight(size=(dp(200), dp(200)))
+        # light2.pos = 500, 0
+        # layout.add_widget(light2)
+
+
+        button1 = SimpleButton(text='Test Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        button1.bind(on_release=lambda _: App.get_running_app().goto_screen('bus', False))
+        layout.add_widget(button1)
 
         # button2 = SimpleButton(text='Lock Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
         # button2.bind(on_release=lambda _: App.get_running_app().show_pinpad())
@@ -69,6 +75,9 @@ class HomeScreen(Screen):
         self.manager.current = 'pin'
 
     def download_image(self): 
+        """
+        Hard coded background image download for now - just testing
+        """
         img_data = requests.get('https://cdn.pixabay.com/photo/2018/08/14/13/23/ocean-3605547_1280.jpg').content
         with open('background.jpg', 'wb') as handler:
             handler.write(img_data)

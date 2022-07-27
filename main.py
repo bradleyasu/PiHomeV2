@@ -12,12 +12,14 @@ from components.Button.circlebutton import CircleButton
 from components.Reveal.reveal import Reveal
 
 from composites.PinPad.pinpad import PinPad
+from networking.poller import Poller
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
-from screens.Pin.pin import PinScreen 
+from screens.Bus.bus import BusScreen 
 from util.configuration import Configuration
 from kivy.core.window import Window
-from kivy.uix.screenmanager import ScreenManager, SwapTransition 
+from kivy.uix.screenmanager import ScreenManager, SwapTransition
+from util.helpers import get_app 
 from util.tools import hex
 from kivy.metrics import dp
 
@@ -34,19 +36,27 @@ class PiHome(App):
 
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
+        self.poller = Poller();
         self.base_config = Configuration('base.ini')
         self.height = self.base_config.get_int('window', 'height', 480)
         self.width = self.base_config.get_int('window', 'width', 800)
         pin = self.base_config.get('security', 'pin', '')
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
+        
+        # Flag to indicate the application is running
+        self.is_running = True
         # Create the Screenmanager
 
     def setup(self):
+        """
+        Setup default windowing positions and initialize 
+        application Screens
+        """
         Window.size = (self.width, self.height)
         self.screens = {
             'home': HomeScreen(name = 'home'),
             'settings': SettingsScreen(name = 'settings'),
-            'pin': PinScreen(name = 'pin')
+            'bus': BusScreen(name = 'bus')
         }
 
     # the root widget
@@ -87,11 +97,17 @@ class PiHome(App):
         return self.layout
 
     def restart(self):
+        """
+        Clean kivy widgets and restart the application
+        """
         self.root.clear_widgets()
         self.stop()
         return PiHome().run()
 
     def show_pinpad(self):
+        """
+        Show the lock screen/pin pad view
+        """
         self.pinpad.opacity = 1
         self.pinpad.animate()
 
@@ -103,8 +119,11 @@ class PiHome(App):
         return (self.width, self.height)
 
     
-    ''' Navigate to a specific scren '''
     def goto_screen(self, screen, pin_required = False):
+        """
+        Navigate to a specific screen.  If the PIN is required to access the
+        screen, the pin pad will be displayed prompting the user to enter PIN
+        """
         if pin_required:
             self.show_pinpad()
             self.pinpad.on_enter = lambda *args: self.goto_screen(screen, False)
@@ -112,6 +131,18 @@ class PiHome(App):
             self.remove_pinpad()
             self.manager.current = screen
 
+    def get_config(self):
+        return self.base_config;
+
+    def get_poller(self):
+        return self.poller;
+
+    """
+    Quit PiHome and clean up resources
+    """
+    def quit(self):
+        self.is_running = False
+        get_app().stop()
 
 # Start PiHome
 PiHome().run()
