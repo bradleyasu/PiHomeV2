@@ -1,3 +1,4 @@
+from asyncio import subprocess
 import requests
 from kivy.app import App
 from kivy.lang import Builder
@@ -32,9 +33,9 @@ class HomeScreen(PiHomeScreen):
 
     def build(self):
         layout = FloatLayout()
-        # button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
-        # button.bind(on_release=lambda _: self.open_settings())
-        # layout.add_widget(button)
+        button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
+        button.bind(on_release=lambda _: self.trigger_update())
+        layout.add_widget(button)
 
         button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 70)))
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
@@ -83,3 +84,7 @@ class HomeScreen(PiHomeScreen):
         with open('background.jpg', 'wb') as handler:
             handler.write(img_data)
         self.image = 'background.jpg'
+
+
+    def trigger_update(self):
+        subprocess.call(['sh', './update_and_restart.sh'])
