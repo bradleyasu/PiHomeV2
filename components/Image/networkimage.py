@@ -4,7 +4,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import AsyncImage  
 from kivy.uix.label import Label
 from theme.theme import Theme
-from kivy.properties import ColorProperty, NumericProperty, StringProperty
+from kivy.properties import ColorProperty, BooleanProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
@@ -17,11 +17,15 @@ class NetworkImage(Widget):
 
     color = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
     url = StringProperty()
-    def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), **kwargs):
+    stretch = BooleanProperty(False)
+    k_ratio = BooleanProperty(True)
+    def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), enable_stretch = False, **kwargs):
         super(NetworkImage, self).__init__(**kwargs)
         self.url = url
         self.size = size
         self.pos = pos
+        self.stretch = enable_stretch
+        self.k_ratio = not enable_stretch
 
 
 

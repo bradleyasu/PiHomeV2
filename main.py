@@ -10,6 +10,7 @@ from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from components.Button.circlebutton import CircleButton
+from components.Image.networkimage import NetworkImage
 
 from components.Reveal.reveal import Reveal
 from composites.AppMenu.appmenu import AppMenu
@@ -47,6 +48,8 @@ class PiHome(App):
         pin = self.base_config.get('security', 'pin', '')
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
 
+        self.background = NetworkImage("", size=(dp(self.width), dp(self.height)), pos=(0,0), enable_stretch=True)
+
         
         # Flag to indicate the application is running
         self.is_running = True
@@ -66,9 +69,14 @@ class PiHome(App):
 
         self.appmenu = AppMenu(self.screens)
 
+        self.poller.register_api("https://cdn.pihome.io/conf.json", "", 60 * 60, self.update_conf)
+
     # the root widget
     def build(self):
         self.setup()
+
+        self.layout.add_widget(self.background)
+
         screenManager = ScreenManager(transition=SwapTransition())
 
         # layout.add_widget(Button(text="test"))
@@ -157,6 +165,11 @@ class PiHome(App):
         self.is_running = False
         get_app().stop()
         sys.exit("PiHome Terminated")
+
+
+    def update_conf(self, json):
+        if "background" in json:
+            self.background.url = json["background"]
 
 # Start PiHome
 PiHome().run()
