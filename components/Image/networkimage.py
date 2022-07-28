@@ -16,10 +16,10 @@ class NetworkImage(Widget):
     theme = Theme()
 
     color = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
+    url = StringProperty()
     def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), **kwargs):
         super(NetworkImage, self).__init__(**kwargs)
-        self.image = AsyncImage(source=url, pos=pos, size=size)
-        self.add_widget(self.image)
+        self.url = url
         self.size = size
         self.pos = pos
 

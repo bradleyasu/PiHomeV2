@@ -1,29 +1,24 @@
 #:kivy 2.0.0
 
 <NetworkImage>:
-    size_hint: None, None
     pos: root.pos
     size: root.size
-    canvas:
+    size_hint: None, None
+    canvas.before:
         Color:
-            rgba: root.color
+            rgba: (0, 1, 0, 0) 
         Rectangle:
             pos: root.pos
             size: root.size
     
-    GridLayout:
-        cols: 1
-        rows: 1
+    AsyncImage:
+        canvas.before:
+            Color:
+                rgba: (1, 1, 0, 0)
+            Rectangle:
+                pos: root.pos
+                size: root.size
+        size_hint: None, None
+        source: root.url
         pos: root.pos
         size: root.size
-        size_hint: None, None
-        AsyncImage:
-            canvas:
-                Color:
-                    rgba: root.color
-                Rectangle:
-                    pos: root.pos
-                    size: root.size
-            size_hint: None, None
-            pos: root.pos
-            size: root.size
