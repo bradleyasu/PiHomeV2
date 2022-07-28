@@ -32,9 +32,9 @@ class HomeScreen(PiHomeScreen):
 
     def build(self):
         layout = FloatLayout()
-        button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
-        button.bind(on_release=lambda _: self.open_settings())
-        layout.add_widget(button)
+        # button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
+        # button.bind(on_release=lambda _: self.open_settings())
+        # layout.add_widget(button)
 
         button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 70)))
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
@@ -58,13 +58,13 @@ class HomeScreen(PiHomeScreen):
         # layout.add_widget(light2)
 
 
-        button1 = SimpleButton(text='Test Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
-        button1.bind(on_release=lambda _: goto_screen('bus'))
-        layout.add_widget(button1)
+        # button1 = SimpleButton(text='Test Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
+        # button1.bind(on_release=lambda _: goto_screen('bus'))
+        # layout.add_widget(button1)
 
-        button2 = SimpleButton(text='App Menu', type='secondary', size=(dp(200), dp(50)), pos=(dp(300), dp(200)))
-        button2.bind(on_release=lambda _: get_app().set_app_menu_open(True))
-        layout.add_widget(button2)
+        # button2 = SimpleButton(text='App Menu', type='secondary', size=(dp(200), dp(50)), pos=(dp(300), dp(200)))
+        # button2.bind(on_release=lambda _: get_app().set_app_menu_open(True))
+        # layout.add_widget(button2)
 
         self.add_widget(layout)
 

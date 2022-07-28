@@ -7,7 +7,7 @@ Builder.load_file("./composites/AppMenu/appicon.kv")
 
 class AppIcon(Widget):
 
-    background_color = ColorProperty((0,1, 0, 0.1))
+    background_color = ColorProperty((0,1, 0, 0.0))
 
 
     icon = StringProperty()

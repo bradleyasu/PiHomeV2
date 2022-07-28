@@ -37,7 +37,7 @@ Window.show_cursor = platform.system() == 'Darwin'
 class PiHome(App):
 
     layout = FloatLayout()
-
+    app_menu_open = False
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
         self.poller = Poller();
@@ -61,7 +61,7 @@ class PiHome(App):
         self.screens = {
             'home': HomeScreen(name = 'home'),
             'settings': SettingsScreen(name = 'settings', requires_pin = True),
-            'bus': BusScreen(name = 'bus')
+            'bus': BusScreen(name = 'bus', icon = self.base_config.get('bus', 'logo', ''))
         }
 
         self.appmenu = AppMenu(self.screens)
@@ -89,6 +89,8 @@ class PiHome(App):
 
 
         self.manager = screenManager
+
+        self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         return self.layout
 
     def restart(self):
@@ -136,11 +138,15 @@ class PiHome(App):
         return self.poller;
 
     def set_app_menu_open(self, open):
+        self.app_menu_open = open
         if open == True:
             self.layout.add_widget(self.appmenu)
         else:
             self.layout.remove_widget(self.appmenu)
 
+    def on_touch_down(self, touch):
+        if touch.is_double_tap:
+            self.set_app_menu_open(not self.app_menu_open)
 
     """
     Quit PiHome and clean up resources
