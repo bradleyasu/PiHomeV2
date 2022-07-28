@@ -8,12 +8,18 @@
         Rectangle:
             pos: root.pos
             size: root.size
-    AsyncImage:
-        canvas:
-            Color:
-                rgba: root.color
-            Rectangle:
-                pos: self.pos
-                size: self.size
+    
+    GridLayout:
+        cols: 1
+        rows: 1
         pos: root.pos
         size: root.size
+        AsyncImage:
+            canvas:
+                Color:
+                    rgba: root.color
+                Rectangle:
+                    pos: root.pos
+                    size: root.size
+            pos: root.pos
+            size: root.size

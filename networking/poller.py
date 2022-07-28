@@ -27,7 +27,7 @@ class ApiCall(Thread):
         self.on_resp = on_resp
 
     def run(self):
-        while get_app().is_running:
+        while True:
             d = requests.get(self.url)
             if(d.status_code == 200):
                 json = d.json()

@@ -29,7 +29,6 @@ kivy.require('2.0.0')
 # Hide Cursor
 Window.show_cursor = platform.system() == 'Darwin'
 
-
 class PiHome(App):
 
     layout = FloatLayout()
