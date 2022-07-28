@@ -64,11 +64,12 @@ class BusScreen(PiHomeScreen):
     def update(self, payload):
         resp = payload['bustime-response']
         self.grid.clear_widgets()
-        
+        no_data = True
         if "prd" in resp:
             arr = resp['prd']
             for i in arr:
                 if "prdtm" in i:
+                    no_data = False
                     r = i["rt"]
                     s = i["stpnm"]
                     d = i['rtdir']
@@ -79,3 +80,6 @@ class BusScreen(PiHomeScreen):
                    
                     b = BusEta(route=r, stop=s, dest=d, eta=str(est)+" min")
                     self.grid.add_widget(b)
+
+        if no_data == True:
+            print("No Bus Data Found")

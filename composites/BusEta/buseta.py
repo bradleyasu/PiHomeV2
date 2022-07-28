@@ -15,6 +15,7 @@ from kivy.metrics import dp, sp
 from util.helpers import get_app
 from util.tools import hex
 from kivy.uix.widget import Widget
+from kivy.clock import Clock
 
 Builder.load_file("./composites/BusEta/buseta.kv")
 
@@ -26,7 +27,9 @@ class BusEta(Widget):
     stop = StringProperty()
     route_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     route_background_color = ColorProperty(theme.get_color(theme.ALERT_INFO))
-    time_color = ColorProperty(theme.get_color(theme.ALERT_DANGER))
+    time_color = ColorProperty(theme.get_color(theme.ALERT_SUCCESS))
+    danger_color = ColorProperty(theme.get_color(theme.ALERT_DANGER))
+    blinkOpacity = NumericProperty(1)
     
     def __init__(self, stop = "--", route = "--", dest = "BOUND", eta = "Unknown", **kwargs):
         super(BusEta, self).__init__(**kwargs)
@@ -35,3 +38,11 @@ class BusEta(Widget):
         self.stop = stop
         self.dest = dest
         self.eta = eta
+        if int(eta.split(" ")[0]) < 10:
+            self.time_color = self.danger_color
+            self.blink()
+
+    def blink(self):
+        animation = Animation(blinkOpacity=.1, t='in_out_cubic', d=1) + Animation(blinkOpacity=1, t='in_out_cubic', d=1)
+        animation.repeat = True
+        animation.start(self)
