@@ -25,7 +25,7 @@ Builder.load_file("./composites/AppMenu/appmenu.kv")
 
 class AppMenu(Widget):
 
-    background_color = ColorProperty((0,0,0, 0.5))
+    background_color = ColorProperty((0,0,0, 0.8))
 
     def __init__(self, screens, **kwargs):
         super(AppMenu, self).__init__(**kwargs)
