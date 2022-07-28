@@ -11,24 +11,14 @@
             pos: root.pos
             size: root.size
     
-    GridLayout:
+    AsyncImage:
         canvas.before:
             Color:
-                rgba: (1, 1, 0, 0.2)
+                rgba: (1, 0, 1, 0)
             Rectangle:
                 pos: root.pos
                 size: root.size
-        rows: 1
+        size_hint: None, None
+        source: root.url
         pos: root.pos
         size: root.size
-        AsyncImage:
-            canvas.before:
-                Color:
-                    rgba: (1, 0, 1, 0.5)
-                Rectangle:
-                    pos: root.pos
-                    size: root.size
-            size_hint: None, None
-            source: root.url
-            pos: root.pos
-            size: root.size
