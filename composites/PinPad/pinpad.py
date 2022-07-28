@@ -12,6 +12,7 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
+from util.helpers import get_app
 from util.tools import hex
 from kivy.uix.widget import Widget
 
@@ -23,7 +24,7 @@ class PinPad(Widget):
     pinpad_background_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_SECONDARY, 0))
     pinpad_button_color = ColorProperty(hex(Color.INDIGO_600, 1))
     pinpad_opacity = NumericProperty(0)
-    y_position = NumericProperty(dp(0))
+    y_position = NumericProperty(0)
     code = StringProperty()
 
     pin_one   = NumericProperty(0)
@@ -67,6 +68,7 @@ class PinPad(Widget):
         button.font_size = '10sp'
         button.bind(on_release=self.verify_pin)
         pin_grid.add_widget(button)
+        self.reset()
 
     def verify_pin(self, *args):
         if self.code == self.pin:
@@ -97,12 +99,13 @@ class PinPad(Widget):
         self.background_color = (0,0,0,0)
         self.pinpad_background_color = Theme().get_color(Theme().BACKGROUND_SECONDARY, 0)
         self.pinpad_opacity = 0
-        self.y_position = dp(0)
+        self.y_position = dp(get_app().width - 100)
+        self.height = dp(get_app().height/3 - 40)
 
 
     def animate(self):
         animation = Animation(background_color=(0,0,0,0.6), t='out_quad', d=.2)
-        animation &= Animation(y_position=(self.height / 2 - dp(225)), t='out_elastic', d=1)
+        animation &= Animation(y_position=(dp(self.height /2 - 40)), t='out_elastic', d=1)
         animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='out_quad', d=.2)
         animation &= Animation(pinpad_opacity=1, t='out_quad', d=.2)
         animation.start(self)

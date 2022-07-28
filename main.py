@@ -1,3 +1,5 @@
+import sys
+import time
 import kivy
 import platform
 from kivy.app import App
@@ -10,6 +12,7 @@ from kivy.uix.gridlayout import GridLayout
 from components.Button.circlebutton import CircleButton
 
 from components.Reveal.reveal import Reveal
+from composites.AppMenu.appmenu import AppMenu
 
 from composites.PinPad.pinpad import PinPad
 from networking.poller import Poller
@@ -19,9 +22,11 @@ from screens.Bus.bus import BusScreen
 from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SwapTransition
+from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from util.helpers import get_app 
 from util.tools import hex
 from kivy.metrics import dp
+from kivy.clock import Clock
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -41,6 +46,8 @@ class PiHome(App):
         self.width = self.base_config.get_int('window', 'width', 800)
         pin = self.base_config.get('security', 'pin', '')
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
+
+        self.appmenu = AppMenu()
         
         # Flag to indicate the application is running
         self.is_running = True
@@ -62,35 +69,23 @@ class PiHome(App):
     def build(self):
         self.setup()
         screenManager = ScreenManager(transition=SwapTransition())
-        # button = Button(text=self.base_config.get('test', 'phrase', 'quit'),  size=(200, 50), size_hint=(None, None), pos=(0, 50))
-        # button.bind(on_release=lambda _: PiHome.get_running_app().stop())
-        # reveal = Reveal()
-        # reveal2 = Reveal()
-        # reveal3 = Reveal()
-        # reveal.add_top_widget(Label(text="PiHome"))
-        # reveal.add_bottom_widget(button)
-
-        # reveal2.add_top_widget(Label(text="Another one"))
-        # reveal2.add_bottom_widget(Label(text="bottom"))
-
-        # layout = GridLayout(rows=4)
 
         # layout.add_widget(Button(text="test"))
         # layout.add_widget(reveal)
         # layout.add_widget(reveal2)
         # layout.add_widget(Reveal())
-        # Add few screens
+
+        # Add Registered Screens to screenmanager 
         for screen in self.screens.values():
-            # screen = Screen(name='Title %d' % i)
-            # screen.add_widget(HomeScreen(name = 'home'))
             screenManager.add_widget(screen)
 
+
+        # Add primary screen manager
         self.layout.add_widget(screenManager)
 
-        self.layout.add_widget(self.pinpad)
-        # for i in range (10):
-        #     button = CircleButton(text=str(i), size=(dp(50), dp(50)), pos=(dp(20 + (55 * i)), dp(20)))
-        #     layout.add_widget(button)
+        # Add global accessible pinpad widget
+        # self.layout.add_widget(self.pinpad)
+
 
         self.manager = screenManager
         return self.layout
@@ -107,10 +102,12 @@ class PiHome(App):
         """
         Show the lock screen/pin pad view
         """
+        self.layout.add_widget(self.pinpad)
         self.pinpad.opacity = 1
         self.pinpad.animate()
 
     def remove_pinpad(self, *args):
+        self.layout.remove_widget(self.pinpad)
         self.pinpad.opacity = 0
         self.pinpad.reset()
 
@@ -136,12 +133,21 @@ class PiHome(App):
     def get_poller(self):
         return self.poller;
 
+    def set_app_menu_open(self, open):
+        if open == True:
+            self.layout.add_widget(self.appmenu)
+        else:
+            self.layout.remove_widget(self.appmenu)
+        Clock.schedule_once(lambda _: self.layout.remove_widget(self.appmenu), 10)
+
+
     """
     Quit PiHome and clean up resources
     """
     def quit(self):
         self.is_running = False
         get_app().stop()
+        sys.exit("PiHome Terminated")
 
 # Start PiHome
 PiHome().run()

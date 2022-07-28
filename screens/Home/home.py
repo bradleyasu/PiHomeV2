@@ -14,7 +14,7 @@ from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import get_app
+from util.helpers import appmenu_open, get_app
 from util.tools import hex
 
 Builder.load_file("./screens/Home/home.kv")
@@ -62,9 +62,9 @@ class HomeScreen(PiHomeScreen):
         button1.bind(on_release=lambda _: App.get_running_app().goto_screen('bus', False))
         layout.add_widget(button1)
 
-        # button2 = SimpleButton(text='Lock Screen', type='secondary', size=(dp(200), dp(50)), pos=(dp(10), dp(70)))
-        # button2.bind(on_release=lambda _: App.get_running_app().show_pinpad())
-        # layout.add_widget(button2)
+        button2 = SimpleButton(text='App Menu', type='secondary', size=(dp(200), dp(50)), pos=(dp(300), dp(200)))
+        button2.bind(on_release=lambda _: get_app().set_app_menu_open(True))
+        layout.add_widget(button2)
 
         self.add_widget(layout)
 

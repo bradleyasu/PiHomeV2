@@ -6,9 +6,11 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen
 from kivy.config import ConfigParser
 from kivy.uix.settings import SettingsWithSidebar
+
+from interface.pihomescreen import PiHomeScreen
 Builder.load_file("./screens/Settings/settings.kv")
 
-class SettingsScreen(Screen):
+class SettingsScreen(PiHomeScreen):
     def __init__(self, **kwargs):
         super(SettingsScreen, self).__init__(**kwargs)
         config = ConfigParser()

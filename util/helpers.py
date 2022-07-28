@@ -11,3 +11,7 @@ def get_poller():
 
 def goto_screen(screen, pin_required = False):
     get_app().goto_screen(screen, pin_required)
+
+
+def appmenu_open(open = True):
+    get_app().set_app_menu_open(open)
