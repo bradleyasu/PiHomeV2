@@ -33,15 +33,15 @@ class HomeScreen(PiHomeScreen):
 
     def build(self):
         layout = FloatLayout()
-        button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
-        button.bind(on_release=lambda _: self.trigger_update())
-        layout.add_widget(button)
+        # button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
+        # button.bind(on_release=lambda _: self.trigger_update())
+        # layout.add_widget(button)
 
         button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 70)))
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
-        button.bind(on_release=lambda _: get_app().quit())
+        button.bind(on_release=lambda _: self.trigger_update())
         layout.add_widget(button)
 
         label = Label(text='PiHome')
