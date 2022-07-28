@@ -1,0 +1,21 @@
+#:kivy 2.0.0
+
+<Empty>:
+    size_hint: None, None
+    canvas:
+        Color:
+            rgba: (0,0,0,0)
+        Rectangle:
+            pos: root.pos
+            size: root.size
+
+    GridLayout:
+        size_hint: 1, 1 
+        size: root.size
+        rows: 1
+        cols: 1
+        Label:
+            color: (1,1,1,1)
+            text: root.message
+            font_size: '20sp'
+            font_name: 'Nunito'

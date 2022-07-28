@@ -13,6 +13,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 
 from components.Button.circlebutton import CircleButton
+from components.Empty.empty import Empty
 from components.Image.networkimage import NetworkImage
 from composites.BusEta.buseta import BusEta
 from interface.pihomescreen import PiHomeScreen
@@ -48,6 +49,11 @@ class BusScreen(PiHomeScreen):
         self.grid = GridLayout(cols=1, spacing=50, size_hint_y=None)
         self.grid.bind(minimum_height=self.grid.setter('height'))
 
+
+        self.empty_state = Empty(message = "There are no busses coming anytime soon", size=(dp(get_app().width), dp(get_app().height)))
+        self.empty_state.opacity = 0
+        self.add_widget(self.empty_state)
+
         view = ScrollView(size_hint=(1, 1), size=(get_app().width, get_app().height))
         view.add_widget(self.grid);
         layout.add_widget(view)
@@ -82,4 +88,4 @@ class BusScreen(PiHomeScreen):
                     self.grid.add_widget(b)
 
         if no_data == True:
-            print("No Bus Data Found")
+            self.empty_state.opacity = 1
