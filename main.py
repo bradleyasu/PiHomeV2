@@ -69,7 +69,7 @@ class PiHome(App):
 
         self.appmenu = AppMenu(self.screens)
 
-        self.poller.register_api("https://cdn.pihome.io/conf.json", "", 60 * 60, self.update_conf)
+        self.poller.register_api("https://cdn.pihome.io/conf.json", "", 60 * 2, self.update_conf)
 
     # the root widget
     def build(self):
