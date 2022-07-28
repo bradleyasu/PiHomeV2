@@ -58,9 +58,6 @@ class BusScreen(PiHomeScreen):
         view.add_widget(self.grid);
         layout.add_widget(view)
         
-        homeBtn = CircleButton(text='>', size=(dp(50), dp(50)), pos=(dp(get_app().width - 70), dp(get_app().height - 70)))
-        homeBtn.bind(on_release=lambda _: goto_screen('home'))
-        layout.add_widget(homeBtn)
 
         self.logo = NetworkImage(url=self.logo, size=(dp(108), dp(56)), pos=(dp(get_app().width - 112), dp(0)))
         layout.add_widget(self.logo)
