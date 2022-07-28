@@ -3,7 +3,7 @@ from kivy.properties import ColorProperty, StringProperty
 from kivy.metrics import dp
 from kivy.uix.widget import Widget
 
-Builder.load_file("./composites/AppMenu/AppIcon.kv")
+Builder.load_file("./composites/AppMenu/appicon.kv")
 
 class AppIcon(Widget):
 
