@@ -89,3 +89,5 @@ class BusScreen(PiHomeScreen):
 
         if no_data == True:
             self.empty_state.opacity = 1
+        else:
+            self.empty_state.opacity = 0
