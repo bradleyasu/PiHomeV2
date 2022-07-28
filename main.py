@@ -47,7 +47,6 @@ class PiHome(App):
         pin = self.base_config.get('security', 'pin', '')
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
 
-        self.appmenu = AppMenu()
         
         # Flag to indicate the application is running
         self.is_running = True
@@ -64,6 +63,8 @@ class PiHome(App):
             'settings': SettingsScreen(name = 'settings', requires_pin = True),
             'bus': BusScreen(name = 'bus')
         }
+
+        self.appmenu = AppMenu(self.screens)
 
     # the root widget
     def build(self):
