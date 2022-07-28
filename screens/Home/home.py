@@ -1,4 +1,4 @@
-from asyncio import subprocess
+import subprocess
 import requests
 from kivy.app import App
 from kivy.lang import Builder
