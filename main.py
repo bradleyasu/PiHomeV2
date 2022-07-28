@@ -59,9 +59,9 @@ class PiHome(App):
         """
         Window.size = (self.width, self.height)
         self.screens = {
-            'home': HomeScreen(name = 'home'),
-            'settings': SettingsScreen(name = 'settings', requires_pin = True),
-            'bus': BusScreen(name = 'bus', icon = self.base_config.get('bus', 'logo', ''))
+            'home': HomeScreen(name = 'home', label = "Home"),
+            'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings"),
+            'bus': BusScreen(name = 'bus', icon = self.base_config.get('bus', 'logo', ''), label="Bus ETA")
         }
 
         self.appmenu = AppMenu(self.screens)

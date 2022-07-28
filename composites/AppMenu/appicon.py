@@ -9,12 +9,13 @@ Builder.load_file("./composites/AppMenu/appicon.kv")
 
 class AppIcon(Widget):
 
-    background_color = ColorProperty((0,1, 0, 0.0))
+    background_color = ColorProperty((0,1, 0, 0))
 
     y_pos_offset = NumericProperty(-20)
     opacity = NumericProperty(0)
     zoom = NumericProperty(0.7)
     icon = StringProperty()
+    label = StringProperty()
     def __init__(self, icon, label, app_key, on_select, size=(dp(100), dp(100)), delay = 0, **kwargs):
         super(AppIcon, self).__init__(**kwargs)
         self.icon = icon

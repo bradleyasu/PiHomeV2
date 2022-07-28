@@ -54,5 +54,6 @@ class AppMenu(Widget):
         count = 0
         for i in self.screens:
             icon = self.screens[i].icon
-            self.grid.add_widget(AppIcon(delay=count*0.100, icon=icon, label = "test", app_key = i, on_select=(lambda key: self.open_app(key))))
+            label = self.screens[i].label
+            self.grid.add_widget(AppIcon(delay=count*0.100, icon=icon, label = label, app_key = i, on_select=(lambda key: self.open_app(key))))
             count += 1
