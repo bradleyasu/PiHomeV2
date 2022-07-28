@@ -141,7 +141,9 @@ class PiHome(App):
         self.app_menu_open = open
         if open == True:
             self.layout.add_widget(self.appmenu)
+            self.appmenu.show_apps()
         else:
+            self.appmenu.reset()
             self.layout.remove_widget(self.appmenu)
 
     def on_touch_down(self, touch):

@@ -35,18 +35,24 @@ class AppMenu(Widget):
 
     def build(self):
         view = ScrollView(size_hint=(1, 1), size=(get_app().width, get_app().height))
-        grid = GridLayout(cols=4, padding=(80, 80, 80, 80), spacing=80, size_hint_y=None)
-        grid.bind(minimum_height=grid.setter('height'))
+        self.grid = GridLayout(cols=4, padding=(80, 80, 80, 80), spacing=80, size_hint_y=None)
+        self.grid.bind(minimum_height=self.grid.setter('height'))
 
-        for i in self.screens:
-            icon = self.screens[i].icon
-            grid.add_widget(AppIcon(icon=icon, label = "test", app_key = i, on_select=(lambda key: self.open_app(key))))
-
-
-        view.add_widget(grid)
+        view.add_widget(self.grid)
         self.add_widget(view)
 
 
     def open_app(self, key):
         get_app().set_app_menu_open(False)
         goto_screen(key)
+
+
+    def reset(self):
+        self.grid.clear_widgets()
+
+    def show_apps(self):
+        count = 0
+        for i in self.screens:
+            icon = self.screens[i].icon
+            self.grid.add_widget(AppIcon(delay=count*0.100, icon=icon, label = "test", app_key = i, on_select=(lambda key: self.open_app(key))))
+            count += 1
