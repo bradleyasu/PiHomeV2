@@ -19,7 +19,7 @@ from composites.BusEta.buseta import BusEta
 from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
-from util.helpers import get_app, get_config, get_poller 
+from util.helpers import get_app, get_config, get_poller, goto_screen 
 from util.tools import hex
 
 Builder.load_file("./screens/Bus/bus.kv")
@@ -59,7 +59,7 @@ class BusScreen(PiHomeScreen):
         layout.add_widget(view)
         
         homeBtn = CircleButton(text='>', size=(dp(50), dp(50)), pos=(dp(get_app().width - 70), dp(get_app().height - 70)))
-        homeBtn.bind(on_release=lambda _: self.goto('home'))
+        homeBtn.bind(on_release=lambda _: goto_screen('home'))
         layout.add_widget(homeBtn)
 
         self.logo = NetworkImage(url=self.logo, size=(dp(108), dp(56)), pos=(dp(get_app().width - 112), dp(0)))

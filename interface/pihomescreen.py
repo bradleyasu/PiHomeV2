@@ -4,10 +4,9 @@ from util.helpers import goto_screen
 
 class PiHomeScreen(Screen):
 
-    def __init__(self, **kwargs):
+    def __init__(self, icon = "", label = "PiHome App", is_hidden = False, requires_pin = False, **kwargs):
         super(PiHomeScreen, self).__init__(**kwargs)
-        self.icon = ""
-        self.is_hidden_app = False
-
-    def goto(self, screen, protected = False):
-        goto_screen(screen, protected)
+        self.icon = icon
+        self.label = label
+        self.is_hidden = is_hidden 
+        self.requires_pin = requires_pin

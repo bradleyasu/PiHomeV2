@@ -9,8 +9,8 @@ def get_config():
 def get_poller():
     return get_app().get_poller()
 
-def goto_screen(screen, pin_required = False):
-    get_app().goto_screen(screen, pin_required)
+def goto_screen(screen):
+    get_app().goto_screen(screen, True)
 
 
 def appmenu_open(open = True):

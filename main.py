@@ -61,7 +61,7 @@ class PiHome(App):
         Window.size = (self.width, self.height)
         self.screens = {
             'home': HomeScreen(name = 'home'),
-            'settings': SettingsScreen(name = 'settings'),
+            'settings': SettingsScreen(name = 'settings', requires_pin = True),
             'bus': BusScreen(name = 'bus')
         }
 
@@ -115,11 +115,12 @@ class PiHome(App):
         return (self.width, self.height)
 
     
-    def goto_screen(self, screen, pin_required = False):
+    def goto_screen(self, screen, pin_required = True):
         """
         Navigate to a specific screen.  If the PIN is required to access the
         screen, the pin pad will be displayed prompting the user to enter PIN
         """
+        pin_required = pin_required and self.screens[screen].requires_pin
         if pin_required:
             self.show_pinpad()
             self.pinpad.on_enter = lambda *args: self.goto_screen(screen, False)
