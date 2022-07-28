@@ -22,7 +22,7 @@ from screens.Settings.settings import SettingsScreen
 from screens.Bus.bus import BusScreen 
 from util.configuration import Configuration
 from kivy.core.window import Window
-from kivy.uix.screenmanager import ScreenManager, SwapTransition
+from kivy.uix.screenmanager import ScreenManager, SwapTransition, FallOutTransition, SwapTransition, WipeTransition, RiseInTransition
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from util.helpers import get_app 
 from util.tools import hex
@@ -77,7 +77,7 @@ class PiHome(App):
 
         self.layout.add_widget(self.background)
 
-        screenManager = ScreenManager(transition=SwapTransition())
+        screenManager = ScreenManager(transition=WipeTransition())
 
         # layout.add_widget(Button(text="test"))
         # layout.add_widget(reveal)
