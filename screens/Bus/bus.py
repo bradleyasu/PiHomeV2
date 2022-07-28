@@ -41,7 +41,7 @@ class BusScreen(PiHomeScreen):
         # Register API to be polled every 200 seconds
         get_poller().register_api(self.api, self.key, 60, lambda json: self.update(json))
 
-        self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY)
+        self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.8)
         self.build()
 
     def build(self):
