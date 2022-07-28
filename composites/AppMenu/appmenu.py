@@ -6,6 +6,7 @@ from kivy.uix.label import Label
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage
+from composites.AppMenu.appicon import AppIcon
 from theme.color import Color
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
@@ -15,7 +16,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
-from util.helpers import get_app
+from util.helpers import get_app, goto_screen
 from util.tools import hex
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -38,8 +39,14 @@ class AppMenu(Widget):
         grid.bind(minimum_height=grid.setter('height'))
 
         for i in self.screens:
-            grid.add_widget(NetworkImage(url=self.screens[i].icon))
+            icon = self.screens[i].icon
+            grid.add_widget(AppIcon(icon=icon, label = "test", app_key = i, on_select=(lambda key: self.open_app(key))))
 
 
         view.add_widget(grid)
         self.add_widget(view)
+
+
+    def open_app(self, key):
+        get_app().set_app_menu_open(False)
+        goto_screen(key)

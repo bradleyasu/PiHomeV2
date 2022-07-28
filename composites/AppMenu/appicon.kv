@@ -1,0 +1,19 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<AppIcon>:
+    size_hint: None, None
+    size: self.size
+    canvas:
+        Color:
+            rgba: self.background_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+
+    GridLayout:
+        cols: 1
+        spacing: 10
+        pos: root.pos
+        NetworkImage:
+            url: root.icon
+            size: root.size

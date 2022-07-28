@@ -140,7 +140,6 @@ class PiHome(App):
             self.layout.add_widget(self.appmenu)
         else:
             self.layout.remove_widget(self.appmenu)
-        Clock.schedule_once(lambda _: self.layout.remove_widget(self.appmenu), 10)
 
 
     """
