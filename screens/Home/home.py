@@ -42,7 +42,7 @@ class HomeScreen(PiHomeScreen):
         self.icon = "https://cdn.pihome.io/assets/default_home_icon.png"
         # self.download_image()
         self.build()
-        Clock.schedule_once(lambda _: self.startup_animation(), 4)
+        Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
     def build(self):
