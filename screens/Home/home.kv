@@ -22,6 +22,7 @@
 
         Label:
             id: home_pihome_logo
+            color: root.text_color
             text: "PiHome"
             # pos_hint: 0.5, 0.5
             font_size: '72sp'
@@ -34,11 +35,13 @@
             pos: 120, 30 + root.date_time_y_offset
             opacity: root.date_time_opacity
             Label:
+                color: root.text_color
                 id: home_date
                 text: root.date
                 font_size: '24sp'
                 font_name: 'Nunito'
             Label:
+                color: root.text_color
                 id: home_time
                 text: root.time
                 font_size: '72sp'
