@@ -27,12 +27,31 @@ Builder.load_file("./screens/DevTools/devtools.kv")
 
 class DevTools(PiHomeScreen):
     local_ip = StringProperty("0.0.0.0")
+    theme = Theme()
     def __init__(self, **kwargs):
         super(DevTools, self).__init__(**kwargs)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         self.local_ip = s.getsockname()[0]
         s.close()
+        self.build()
+
+    
+    def build(self):
+        layout = FloatLayout()
+
+        button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 70)))
+        button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
+        button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
+        button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
+        button.bind(on_release=lambda _: self.trigger_update())
+        layout.add_widget(button)
+
+        self.add_widget(layout)
+
+    
+    def trigger_update(self):
+        subprocess.call(['sh', './update_and_restart.sh'])
 
 
   

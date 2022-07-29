@@ -41,32 +41,9 @@ class HomeScreen(PiHomeScreen):
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
         self.icon = "https://cdn.pihome.io/assets/default_home_icon.png"
-        # self.download_image()
-        self.build()
         Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
-    def build(self):
-        layout = FloatLayout()
-        # button = CircleButton(text='#', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 70)))
-        # button.bind(on_release=lambda _: self.trigger_update())
-        # layout.add_widget(button)
-
-        button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 70)))
-        button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
-        button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
-        button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
-        button.bind(on_release=lambda _: self.trigger_update())
-        layout.add_widget(button)
-
-        # label = Label(text='PiHome')
-        # label.color = self.theme.get_color(self.theme.TEXT_PRIMARY)
-        # label.pos_hint = {'center_y': 0.5, 'center_x': 0.5}
-        # label.font_name = 'Nunito'
-        # label.font_size = '72sp'
-        # layout.add_widget(label)
-
-        self.add_widget(layout)
 
     def open_settings(self):
         # self.manager.current = 'settings'
@@ -84,9 +61,6 @@ class HomeScreen(PiHomeScreen):
             handler.write(img_data)
         self.image = 'background.jpg'
 
-
-    def trigger_update(self):
-        subprocess.call(['sh', './update_and_restart.sh'])
 
     def startup_animation(self):
         animation = Animation(logo_opacity = 0, t='linear', d=1)
