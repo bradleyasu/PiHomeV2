@@ -15,3 +15,6 @@ def goto_screen(screen):
 
 def appmenu_open(open = True):
     get_app().set_app_menu_open(open)
+
+def toast(label, level = "info", timeout = 5):
+    get_app().show_toast(label = label, level = level, timeout = timeout);

@@ -8,6 +8,7 @@ from kivy.config import ConfigParser
 from kivy.uix.settings import SettingsWithSidebar
 
 from interface.pihomescreen import PiHomeScreen
+from util.helpers import get_app, toast
 Builder.load_file("./screens/Settings/settings.kv")
 
 class SettingsScreen(PiHomeScreen):
@@ -42,4 +43,4 @@ class SettingsScreen(PiHomeScreen):
     
     def updated(self, section, key, value):
         if (section == 'theme' and key == 'dark_mode'):
-           print("restart required") 
+            toast(label="PiHome needs to be restarted for new settings to take effect")

@@ -13,6 +13,7 @@ from components.Button.circlebutton import CircleButton
 from components.Image.networkimage import NetworkImage
 
 from components.Reveal.reveal import Reveal
+from components.Toast.toast import Toast
 from composites.AppMenu.appmenu import AppMenu
 
 from composites.PinPad.pinpad import PinPad
@@ -47,6 +48,7 @@ class PiHome(App):
         self.width = self.base_config.get_int('window', 'width', 800)
         pin = self.base_config.get('security', 'pin', '')
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
+        self.toast = Toast(on_reset=self.remove_toast)
 
         self.background = NetworkImage("", size=(dp(self.width), dp(self.height)), pos=(0,0), enable_stretch=True)
 
@@ -97,6 +99,7 @@ class PiHome(App):
 
 
         self.manager = screenManager
+
 
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         return self.layout
@@ -170,6 +173,14 @@ class PiHome(App):
     def update_conf(self, json):
         if "background" in json:
             self.background.url = json["background"]
+
+
+    def remove_toast(self):
+        self.layout.remove_widget(self.toast)
+
+    def show_toast(self, label, level = "info", timeout = 5):
+        self.layout.add_widget(self.toast)
+        self.toast.pop(label=label, level=level, timeout=timeout)
 
 # Start PiHome
 PiHome().run()
