@@ -53,6 +53,6 @@ class Toast(Widget):
 
     def reset(self):
         animation = Animation(y_pos_offset = -20, t='out_elastic', d=1)
-        animation &= Animation(opacity = 0, t='out_elastic', d=1)
+        animation &= Animation(opacity = 0, t='linear', d=1)
         animation &= Animation(zoom = 0.8, t='out_elastic', d=1)
         animation.start(self)

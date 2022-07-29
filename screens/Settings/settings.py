@@ -18,6 +18,7 @@ class SettingsScreen(PiHomeScreen):
         config.read('base.ini')
         config.add_callback(self.updated)
         s = SettingsWithSidebar()
+        self.icon = "https://cdn.pihome.io/assets/default_settings_icon.png"
 
         # Read all of the json configuations and add them to the screen
         dir = './screens/Settings/json/' 

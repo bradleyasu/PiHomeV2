@@ -7,3 +7,39 @@
             pos: self.pos
             size: self.size
             source: self.image
+    
+    FloatLayout:
+        size_hint: 1, 1
+        pos: root.pos
+        size: root.size
+
+        canvas:
+            Color: 
+                rgba: (0,0,1, 0.0)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            id: home_pihome_logo
+            text: "PiHome"
+            # pos_hint: 0.5, 0.5
+            font_size: '72sp'
+            font_name: 'Nunito'
+            opacity: root.logo_opacity
+        
+        GridLayout:
+            cols: 1
+            size_hint: None, None
+            pos: 120, 30 + root.date_time_y_offset
+            opacity: root.date_time_opacity
+            Label:
+                id: home_date
+                text: root.date
+                font_size: '24sp'
+                font_name: 'Nunito'
+            Label:
+                id: home_time
+                text: root.time
+                font_size: '72sp'
+                font_name: 'Nunito'
