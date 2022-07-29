@@ -24,4 +24,4 @@ echo ""
 
 echo "Starting PiHome..."
 cd /usr/local/PiHome
-sudo python3 main.py
+sudo -E python3 main.py
