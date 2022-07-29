@@ -1,4 +1,5 @@
 import socket
+import os
 import subprocess
 import requests
 import time
@@ -33,4 +34,5 @@ class DevTools(PiHomeScreen):
         self.local_ip = s.getsockname()[0]
         s.close()
 
-    
+
+  

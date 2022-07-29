@@ -24,7 +24,7 @@ class SettingsScreen(PiHomeScreen):
         dir = './screens/Settings/json/' 
 
         # Set defaults
-        for file in os.listdir(dir):
+        for file in sorted(os.listdir(dir)):
             if file.endswith(".json"):
                 with open(dir+file, 'r') as f:
                     conf = json.load(f)
