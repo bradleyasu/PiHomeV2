@@ -37,6 +37,7 @@ class BusScreen(PiHomeScreen):
         self.route = get_config().get('bus', 'route', '--')
         self.direction = get_config().get('bus', 'direction', '--')
         self.logo= get_config().get('bus', 'logo', '')
+        self.icon = get_config().get('bus', 'logo', '')
 
         # Register API to be polled every 200 seconds
         get_poller().register_api(self.api, self.key, 60, lambda json: self.update(json))

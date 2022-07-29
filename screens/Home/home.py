@@ -28,6 +28,7 @@ class HomeScreen(PiHomeScreen):
         super(HomeScreen, self).__init__(**kwargs)
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
+        # self.icon = "https://img.icons8.com/external-colored-outline-lafs/452/external-raspberry-flavors-colored-outline-part-3-colored-outline-lafs-2.png"
         # self.download_image()
         self.build()
 

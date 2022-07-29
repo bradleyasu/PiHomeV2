@@ -66,7 +66,7 @@ class PiHome(App):
         self.screens = {
             'home': HomeScreen(name = 'home', label = "Home"),
             'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings"),
-            'bus': BusScreen(name = 'bus', icon = self.base_config.get('bus', 'logo', ''), label="Bus ETA")
+            'bus': BusScreen(name = 'bus', label="Bus ETA")
         }
 
         self.appmenu = AppMenu(self.screens)
