@@ -1,0 +1,21 @@
+#:kivy 2.0.0
+<DevTools>:
+    canvas.before:
+        Color:
+            rgba: (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    FloatLayout:
+        size_hint: 1, 1
+        pos: 0, 0
+
+        Label:
+            id: ip_addr
+            text: "PiHome IP Address: " + root.local_ip
+            font_size: "20sp"
+            color: (1, 1, 1, 1)
+            size_hint: None, None
+            pos: root.width / 2 - self.width / 2, 10
+    

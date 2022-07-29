@@ -18,6 +18,7 @@ from composites.AppMenu.appmenu import AppMenu
 
 from composites.PinPad.pinpad import PinPad
 from networking.poller import Poller
+from screens.DevTools.devtools import DevTools
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
 from screens.Bus.bus import BusScreen 
@@ -66,7 +67,8 @@ class PiHome(App):
         self.screens = {
             'home': HomeScreen(name = 'home', label = "Home"),
             'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings"),
-            'bus': BusScreen(name = 'bus', label="Bus ETA")
+            'bus': BusScreen(name = 'bus', label="Bus ETA"),
+            'devtools': DevTools(name = 'devtools', label="Dev Tools"),
         }
 
         self.appmenu = AppMenu(self.screens)
