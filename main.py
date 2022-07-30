@@ -1,3 +1,6 @@
+from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+
 import sys
 import time
 import kivy
@@ -30,7 +33,6 @@ from util.helpers import get_app
 from util.tools import hex
 from kivy.metrics import dp
 from kivy.clock import Clock
-from kivy.config import Config
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -39,7 +41,6 @@ kivy.require('2.0.0')
 Window.show_cursor = platform.system() == 'Darwin'
 Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = 'below_target'
-Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 
 class PiHome(App):
 
