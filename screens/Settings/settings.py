@@ -6,6 +6,7 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen
 from kivy.config import ConfigParser
 from kivy.uix.settings import SettingsWithSidebar
+from composites.PinPad.pinpad import PinPad
 
 from interface.pihomescreen import PiHomeScreen
 from util.helpers import get_app, toast
@@ -18,6 +19,7 @@ class SettingsScreen(PiHomeScreen):
         config.read('base.ini')
         config.add_callback(self.updated)
         s = SettingsWithSidebar()
+        # s.register_type("pin", PinPad)
         self.icon = "https://cdn.pihome.io/assets/default_settings_icon.png"
 
         # Read all of the json configuations and add them to the screen

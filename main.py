@@ -1,5 +1,6 @@
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+Config.set('graphics', 'verify_gl_main_thread', '0')
 
 import sys
 import time
@@ -78,7 +79,7 @@ class PiHome(App):
 
         self.appmenu = AppMenu(self.screens)
 
-        self.poller.register_api("https://cdn.pihome.io/conf.json", "", 60 * 2, self.update_conf)
+        self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
 
     # the root widget
     def build(self):
