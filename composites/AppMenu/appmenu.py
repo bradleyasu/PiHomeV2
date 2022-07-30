@@ -34,8 +34,8 @@ class AppMenu(Widget):
 
 
     def build(self):
-        view = ScrollView(size_hint=(1, 1), size=(get_app().width, get_app().height))
-        self.grid = GridLayout(cols=4, padding=(80, 80, 80, 80), spacing=80, size_hint_y=None)
+        view = ScrollView(size_hint=(1, 1), size=(dp(get_app().width), dp(get_app().height)))
+        self.grid = GridLayout(cols=4, padding=(dp(80), dp(80), dp(80), dp(80)), spacing=(dp(80)), size_hint_y=None)
         self.grid.bind(minimum_height=self.grid.setter('height'))
 
         view.add_widget(self.grid)

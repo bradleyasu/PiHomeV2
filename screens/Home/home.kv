@@ -30,9 +30,16 @@
             opacity: root.logo_opacity
         
         GridLayout:
+            canvas:
+                Color: 
+                    rgba: (0,0,1, 0.0)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             cols: 1
             size_hint: None, None
-            pos: 120, 30 + root.date_time_y_offset
+            pos: dp(10), dp(10 + root.date_time_y_offset)
+            size: dp(300), dp(100)
             opacity: root.date_time_opacity
             Label:
                 color: root.text_color
