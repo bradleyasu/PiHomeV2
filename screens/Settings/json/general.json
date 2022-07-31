@@ -16,5 +16,30 @@
         "desc": "Bugs are attracted to the light, use dark mode just to be safe.  Restarting PiHome is required for this setting to be fully applied",
         "section": "theme",
         "key": "dark_mode"
+    },
+    {
+        "type": "title",
+        "title": "Weather"
+    },
+    {
+        "type": "string",
+        "title": "tomorrow.io API Key",
+        "desc": "Weather data is pulled from tomorrow.io and an API key is required",
+        "section": "weather",
+        "key": "api_key"
+    },
+    {
+        "type": "string",
+        "title": "Latitude Coordinate",
+        "desc": "Your current location's latitude coordinate",
+        "section": "weather",
+        "key": "latitude"
+    },
+    {
+        "type": "string",
+        "title": "Longitude Coordinate",
+        "desc": "Your current location's Longitude coordinate",
+        "section": "weather",
+        "key": "longitude"
     }
 ]

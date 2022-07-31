@@ -1,4 +1,6 @@
 from kivy.config import Config
+
+from services.weather.weather import Weather
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 
@@ -47,10 +49,13 @@ class PiHome(App):
 
     layout = FloatLayout()
     app_menu_open = False
+    toast_open = False
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
-        self.poller = Poller();
+
+        #Init Base configuration
         self.base_config = Configuration('base.ini')
+
         self.height = self.base_config.get_int('window', 'height', 480)
         self.width = self.base_config.get_int('window', 'width', 800)
         pin = self.base_config.get('security', 'pin', '')
@@ -59,10 +64,21 @@ class PiHome(App):
 
         self.background = NetworkImage("", size=(dp(self.width), dp(self.height)), pos=(0,0), enable_stretch=True)
 
-        
+
+        #Last step is to init services
+        self.init_services()
+
         # Flag to indicate the application is running
         self.is_running = True
         # Create the Screenmanager
+
+
+    def init_services(self):
+        # Init Poller Service
+        self.poller = Poller()
+
+        #Init Weather Services
+        self.weather = Weather()
 
     def setup(self):
         """
@@ -184,9 +200,13 @@ class PiHome(App):
 
 
     def remove_toast(self):
+        self.toast_open = False
         self.layout.remove_widget(self.toast)
 
     def show_toast(self, label, level = "info", timeout = 5):
+        if self.toast_open is True:
+            self.remove_toast()
+        self.toast_open = True
         self.layout.add_widget(self.toast)
         self.toast.pop(label=label, level=level, timeout=timeout)
 

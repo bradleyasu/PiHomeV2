@@ -25,6 +25,11 @@ from util.tools import hex
 Builder.load_file("./screens/Bus/bus.kv")
 
 class BusScreen(PiHomeScreen):
+    """
+    Bus Screen Dedicated to PortAuthority Service in Pittsburgh Area.  Can be used as a tempalte
+    for pulling Bus Service information from other open API's.
+    """
+    api_url = ""
     theme = Theme()
     color = ColorProperty()
     image = StringProperty()

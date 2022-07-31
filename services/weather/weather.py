@@ -1,0 +1,87 @@
+import os
+import time
+import requests
+from threading import Thread
+from kivy.clock import Clock
+from kivy.network.urlrequest import UrlRequest
+from util.helpers import get_app, get_config, get_poller, toast
+
+class Weather:
+    """
+    Weather interface with tomorrow.io api to fetch current weather information
+    based on latitude and longitude location 
+    """
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection&timesteps=current,1d&units=imperial&apikey={}"
+    latitude = 0
+    longitude = 0 
+    api_key = ""
+
+    data_avail = False
+    interval = 60 * 30 # 60 seconds time 30 for 30 minute update interval 
+
+    weather_code = 0 # Current weather Code
+    weather_code_day = 0 # Weather for today, sunrise to sunset
+    weather_code_night = 0 # Weather code during the night
+    temperature = 0
+    feels_like = 0
+    humidity = 0
+    wind_speed = 0
+    wind_direction = 0
+    wind_gust = 0
+    sunrise = 0
+    sunset = 0
+    precip_propability = 0
+    precip_intensity = 0
+    cloud_cover = 0
+    moon_phase = 0
+    uv_index = 0
+
+    epa_air_quality = 0 # Lower is better
+
+    moon_phase_lookup = [
+        "New", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full", "Waning Gibbous", "Third Quarter", "Waning Crescent"
+    ]
+
+    epa_air_lookup = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"]
+
+    def __init__(self, **kwargs):
+        super(Weather, self).__init__(**kwargs)
+        self.api_key = get_config().get("weather", "api_key", '')
+        self.latitude = get_config().get("weather", "latitude", '0')
+        self.longitude = get_config().get("weather", "longitude", '0')
+        if self.api_key != "":
+            self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)
+        else:
+            Clock.schedule_once(lambda _: toast("Weather API key is not set, please configure in settings", "warn", 10), 15)
+            
+        
+
+    def register_weather_api_call(self, url, interval, on_resp):
+        get_poller().register_api(url, interval, on_resp);
+
+    def update_weather(self, weather_data):
+        data = weather_data["data"]["timelines"]
+        for value in data:
+            if value["timestep"] is "1d":
+                self.proc_forcast(value)
+            if value["timestep"] is "current":
+                self.proc_current(value)
+
+
+
+    def proc_forcast(self, forcast):
+        pass
+
+    def proc_current(self, data):
+        data = data["intervals"]["values"]
+        self.data_avail = True
+        self.uv_index = data.uvIndex;
+        self.precip_propability = data.precipitationProbability
+        self.precip_intensity = data.precipitationIntensity
+        self.temperature = data.temperature
+        self.wind_speed = data.windSpeed
+        self.wind_direction = data.windDirection
+        self.humidity = data.humidity
+        self.weather_code = data.weatherCode
+        self.weather_code_day = self.weatherCodeDay
+        self.weather_code_night = self.weatherCodeNight

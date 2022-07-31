@@ -19,4 +19,4 @@ class Poller:
 
     def api_call(self, url, on_resp):
         url = url.replace(" ", "%20")
-        UrlRequest(url=url, on_success = lambda request, result: on_resp(result), on_error=lambda r, d: print(d))
+        UrlRequest(url=url, on_success = lambda request, result: on_resp(result), on_error=lambda r, d: print(d), on_failure=lambda r, d: print(d))
