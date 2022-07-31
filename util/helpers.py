@@ -18,3 +18,6 @@ def appmenu_open(open = True):
 
 def toast(label, level = "info", timeout = 5):
     get_app().show_toast(label = label, level = level, timeout = timeout);
+
+def weather():
+    return get_app().weather

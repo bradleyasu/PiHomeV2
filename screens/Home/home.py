@@ -16,7 +16,7 @@ from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, get_app, goto_screen
+from util.helpers import appmenu_open, get_app, goto_screen, weather
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -35,6 +35,8 @@ class HomeScreen(PiHomeScreen):
 
     date_time_y_offset = NumericProperty(-100)
     date_time_opacity = NumericProperty(0)
+
+    weather_code = StringProperty("--")
 
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
@@ -73,3 +75,4 @@ class HomeScreen(PiHomeScreen):
         time.ctime()
         self.time = time.strftime("%l:%M%p")
         self.date = time.strftime("%A %B %d, %Y")
+        self.weather_code = str(weather().weather_code)

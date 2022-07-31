@@ -48,8 +48,28 @@
                 font_size: '24sp'
                 font_name: 'Nunito'
             Label:
-                color: root.text_color
                 id: home_time
+                color: root.text_color
                 text: root.time
                 font_size: '72sp'
                 font_name: 'Nunito'
+
+        GridLayout:
+            canvas:
+                Color: 
+                    rgba: (0,0,1, 0.0)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size 
+            cols: 1
+            size_hint: None, None
+            pos: dp(10), root.height - dp(220)
+            size: dp(300), dp(200)
+            opacity: root.date_time_opacity
+            Label:
+                id: weather
+                color: root.text_color
+                text: root.weather_code
+                font_size: '72sp'
+                font_name: 'Nunito'
+            

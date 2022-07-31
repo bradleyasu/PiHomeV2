@@ -204,6 +204,9 @@ class PiHome(App):
         self.layout.remove_widget(self.toast)
 
     def show_toast(self, label, level = "info", timeout = 5):
+        if self.toast is None:
+            print("Failed to show toast: {}".format(label))
+            return
         if self.toast_open is True:
             self.remove_toast()
         self.toast_open = True

@@ -62,26 +62,26 @@ class Weather:
     def update_weather(self, weather_data):
         data = weather_data["data"]["timelines"]
         for value in data:
-            if value["timestep"] is "1d":
+            if value["timestep"] == '1d':
                 self.proc_forcast(value)
-            if value["timestep"] is "current":
+            if value["timestep"] == 'current':
                 self.proc_current(value)
 
 
 
-    def proc_forcast(self, forcast):
-        pass
+    def proc_forcast(self, data):
+        data = data["intervals"][0]["values"]
+        self.weather_code_day = data["weatherCodeDay"]
+        self.weather_code_night = data["weatherCodeNight"]
 
     def proc_current(self, data):
-        data = data["intervals"]["values"]
+        data = data["intervals"][0]["values"]
         self.data_avail = True
-        self.uv_index = data.uvIndex;
-        self.precip_propability = data.precipitationProbability
-        self.precip_intensity = data.precipitationIntensity
-        self.temperature = data.temperature
-        self.wind_speed = data.windSpeed
-        self.wind_direction = data.windDirection
-        self.humidity = data.humidity
-        self.weather_code = data.weatherCode
-        self.weather_code_day = self.weatherCodeDay
-        self.weather_code_night = self.weatherCodeNight
+        self.uv_index = data["uvIndex"];
+        self.precip_propability = data["precipitationProbability"]
+        self.precip_intensity = data["precipitationIntensity"]
+        self.temperature = data["temperature"]
+        self.wind_speed = data["windSpeed"]
+        self.wind_direction = data["windDirection"]
+        self.humidity = data["humidity"]
+        self.weather_code = data["weatherCode"]
