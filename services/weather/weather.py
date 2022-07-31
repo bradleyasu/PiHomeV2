@@ -46,16 +46,16 @@ class Weather:
 
     def __init__(self, **kwargs):
         super(Weather, self).__init__(**kwargs)
+        self.enabled = get_config().get_int("weather", "enabled", 0)
         self.api_key = get_config().get("weather", "api_key", '')
         self.latitude = get_config().get("weather", "latitude", '0')
         self.longitude = get_config().get("weather", "longitude", '0')
-        if self.api_key != "":
-            self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)
-        else:
-            Clock.schedule_once(lambda _: toast("Weather API key is not set, please configure in settings", "warn", 10), 15)
-            
-        
-
+        if self.enabled == 1:
+            if self.api_key != "":
+                self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)
+            else:
+                Clock.schedule_once(lambda _: toast("Weather API key is not set, please configure in settings", "warn", 10), 15)
+                
     def register_weather_api_call(self, url, interval, on_resp):
         get_poller().register_api(url, interval, on_resp);
 

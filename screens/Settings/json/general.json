@@ -22,6 +22,13 @@
         "title": "Weather"
     },
     {
+        "type": "bool",
+        "title": "Enable Weather via tomorrow.io",
+        "desc": "If enabled, weather data will be fetched from tomorrow.io and displayed",
+        "section": "weather",
+        "key": "enabled"
+    },
+    {
         "type": "string",
         "title": "tomorrow.io API Key",
         "desc": "Weather data is pulled from tomorrow.io and an API key is required",
