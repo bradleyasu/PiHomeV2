@@ -12,6 +12,7 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty, Numeri
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
+from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme

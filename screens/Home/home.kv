@@ -38,7 +38,7 @@
                     size: self.size
             cols: 1
             size_hint: None, None
-            pos: dp(10), dp(10 + root.date_time_y_offset)
+            pos: dp(10), dp(20 + root.date_time_y_offset)
             size: dp(300), dp(100)
             opacity: root.date_time_opacity
             Label:
@@ -63,13 +63,15 @@
                     size: self.size 
             cols: 1
             size_hint: None, None
-            pos: dp(10), root.height - dp(220)
-            size: dp(300), dp(200)
-            opacity: root.date_time_opacity
-            Label:
-                id: weather
-                color: root.text_color
-                text: root.weather_code
-                font_size: '72sp'
-                font_name: 'Nunito'
+            pos: root.width - dp(120), root.height - dp(50)
+            size: dp(100), dp(50)
+            # Label:
+            #     id: weather
+            #     color: root.text_color
+            #     text: root.weather_code
+            #     font_size: '72sp'
+            #     font_name: 'Nunito'
+            WeatherWidget:
+                # pos: dp(10), root.height - dp(220)
+                # size: dp(100), dp(50)
             

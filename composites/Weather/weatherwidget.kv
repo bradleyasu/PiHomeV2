@@ -1,0 +1,42 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<WeatherWidget>:
+    size_hint: None, None
+    size: self.size
+
+    GridLayout:
+        canvas:
+            Color: 
+                rgba: (0,1,0, 0.0)
+            Rectangle:
+                pos: self.pos
+                size: self.size 
+        rows: 1
+        pos: root.pos 
+        size: root.size
+        size_hint: None, None
+        NetworkImage:
+            canvas:
+                Color: 
+                    rgba: (1,0,0, 0.0)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size 
+            url: root.icon
+            size: dp(50), dp(50)
+            enable_stretch: True
+        GridLayout:
+            canvas:
+                Color: 
+                    rgba: (1,1,0, 0.0)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size 
+            cols: 1
+            size_hint: None, None
+            size: dp(50), dp(50)
+            Label:
+                text: "72\u00B0F" 
+                color: (1,1,1,1)
+                font_size: '24sp'
+                font_name: 'Nunito'
