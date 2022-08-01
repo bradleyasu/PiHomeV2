@@ -27,9 +27,9 @@ class Wallpaper:
         source = get_config().get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = get_config().get_int("wallpaper", "allow_stretch", 1)
         if source == "Reddit":
-            subs = get_config().get("wallpaper", "subreddits", "wallpapers")
+            subs = get_config().get("wallpaper", "subreddits", "wallpaper")
             if subs == "":
-                subs = "wallpapers"
+                subs = "wallpaper"
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
             get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif source == "Custom":
