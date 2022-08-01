@@ -2,11 +2,10 @@
 <HomeScreen>:
     canvas.before:
         Color:
-            rgba: self.color if self.image is not None else (0,0,0,0)
+            rgba: (0,0,0,0)
         Rectangle:
             pos: self.pos
             size: self.size
-            source: self.image
     
     FloatLayout:
         size_hint: 1, 1

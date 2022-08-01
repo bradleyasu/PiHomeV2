@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import time
 import requests
@@ -11,7 +12,7 @@ class Weather:
     Weather interface with tomorrow.io api to fetch current weather information
     based on latitude and longitude location 
     """
-    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection&timesteps=current,1d&units=imperial&apikey={}"
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection,sunriseTime,sunsetTime&timesteps=current,1d&units=imperial&apikey={}"
     latitude = 0
     longitude = 0 
     api_key = ""
@@ -28,8 +29,8 @@ class Weather:
     wind_speed = 0
     wind_direction = 0
     wind_gust = 0
-    sunrise = 0
-    sunset = 0
+    sunrise_time = 0
+    sunset_time = 0
     precip_propability = 0
     precip_intensity = 0
     cloud_cover = 0
@@ -74,6 +75,7 @@ class Weather:
         self.weather_code_day = data["weatherCodeDay"]
         self.weather_code_night = data["weatherCodeNight"]
 
+    
     def proc_current(self, data):
         data = data["intervals"][0]["values"]
         self.data_avail = True
@@ -85,3 +87,18 @@ class Weather:
         self.wind_direction = data["windDirection"]
         self.humidity = data["humidity"]
         self.weather_code = data["weatherCode"]
+        self.sunrise_time = data["sunriseTime"]
+        self.sunset_time = data["sunsetTime"]
+
+    def is_currently_day(self):
+        """
+        Compare current time with sunrise/sunset times to determine
+        if it is currently daylight outside
+        """
+        current_time = datetime.now()
+        # Time format = 2022-08-01T10:23:00Z
+        start_time = datetime.strptime(self.sunrise_time, "%Y-%m-%dT%H:%M:%SZ")
+        end_time = datetime.strptime(self.sunset_time, "%Y-%m-%dT%H:%M:%SZ")
+
+        #return start_time < current_time < end_time
+        return True

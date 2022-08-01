@@ -4,6 +4,19 @@
     size_hint: None, None
     size: self.size
 
+    FloatLayout:
+        size_hint: 1, 1
+        size: root.overlay_size
+        pos: dp(20), dp(20 + root.overlay_y_offset)
+        opacity: root.overlay_opacity
+        canvas:
+            Color: 
+                rgba: root.background
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size 
+
+
     GridLayout:
         canvas:
             Color: 
@@ -12,9 +25,10 @@
                 pos: self.pos
                 size: self.size 
         rows: 1
-        pos: root.pos 
+        pos: root.x, root.y + dp(root.y_offset) 
         size: root.size
         size_hint: None, None
+        on_touch_down: root.handle_touch()
         NetworkImage:
             canvas:
                 Color: 
@@ -36,7 +50,7 @@
             size_hint: None, None
             size: dp(50), dp(50)
             Label:
-                text: "72\u00B0F" 
-                color: (1,1,1,1)
+                text: root.temp + "\u00B0F" 
+                color: root.text_color
                 font_size: '24sp'
                 font_name: 'Nunito'

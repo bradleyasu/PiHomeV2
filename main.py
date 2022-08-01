@@ -50,6 +50,7 @@ class PiHome(App):
     layout = FloatLayout()
     app_menu_open = False
     toast_open = False
+    web_conf = None
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
 
@@ -62,7 +63,7 @@ class PiHome(App):
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
         self.toast = Toast(on_reset=self.remove_toast)
 
-        self.background = NetworkImage("", size=(dp(self.width), dp(self.height)), pos=(0,0), enable_stretch=True)
+        self.background = NetworkImage("", size=(dp(self.width), dp(self.height)), pos=(0,0), enable_stretch=True, loader="./assets/images/default_background.jpg",  error="./assets/images/default_background.jpg")
 
 
         #Last step is to init services
@@ -105,11 +106,6 @@ class PiHome(App):
 
         screenManager = ScreenManager(transition=WipeTransition())
 
-        # layout.add_widget(Button(text="test"))
-        # layout.add_widget(reveal)
-        # layout.add_widget(reveal2)
-        # layout.add_widget(Reveal())
-
         # Add Registered Screens to screenmanager 
         for screen in self.screens.values():
             screenManager.add_widget(screen)
@@ -118,12 +114,7 @@ class PiHome(App):
         # Add primary screen manager
         self.layout.add_widget(screenManager)
 
-        # Add global accessible pinpad widget
-        # self.layout.add_widget(self.pinpad)
-
-
         self.manager = screenManager
-
 
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         return self.layout
@@ -195,8 +186,10 @@ class PiHome(App):
 
 
     def update_conf(self, json):
-        if "background" in json:
-            self.background.url = json["background"]
+        # TODO validate json
+        self.web_conf = json
+        host = json["host"]
+        self.background.url = host + json["background"]
 
 
     def remove_toast(self):
@@ -215,3 +208,4 @@ class PiHome(App):
 
 # Start PiHome
 PiHome().run()
+

@@ -27,7 +27,6 @@ Builder.load_file("./screens/Home/home.kv")
 class HomeScreen(PiHomeScreen):
     theme = Theme()
     color = ColorProperty()
-    image = StringProperty()
     time = StringProperty("--:-- -M")
     date = StringProperty("Saturday July 29, 2022")
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
@@ -55,15 +54,6 @@ class HomeScreen(PiHomeScreen):
     def open_pin(self):
         self.manager.current = 'pin'
 
-    def download_image(self): 
-        """
-        Hard coded background image download for now - just testing
-        """
-        img_data = requests.get('https://cdn.pixabay.com/photo/2018/08/14/13/23/ocean-3605547_1280.jpg').content
-        with open('background.jpg', 'wb') as handler:
-            handler.write(img_data)
-        self.image = 'background.jpg'
-
 
     def startup_animation(self):
         animation = Animation(logo_opacity = 0, t='linear', d=1)
@@ -76,4 +66,5 @@ class HomeScreen(PiHomeScreen):
         time.ctime()
         self.time = time.strftime("%l:%M%p")
         self.date = time.strftime("%A %B %d, %Y")
+
         self.weather_code = str(weather().weather_code)
