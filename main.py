@@ -65,7 +65,12 @@ class PiHome(App):
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
         self.toast = Toast(on_reset=self.remove_toast)
 
-        self.background = NetworkImage("", size=(dp(self.width), dp(self.height)), pos=(0,0), enable_stretch=True, loader="./assets/images/default_background.jpg",  error="./assets/images/default_background.jpg")
+        self.background = NetworkImage(
+            "", 
+            size=(dp(self.width), dp(self.height)), 
+            pos=(0,0), enable_stretch=True, 
+            loader="./assets/images/default_background.jpg",  
+            error="./assets/images/default_background.jpg")
 
 
         #Last step is to init services
