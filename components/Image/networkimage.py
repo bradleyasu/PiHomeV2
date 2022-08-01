@@ -41,7 +41,7 @@ class NetworkImage(Widget):
         self.k_ratio = not enable_stretch
 
 
-    def on_error(self, a, b):
+    def on_error(self, a = None, b = None):
         if self.error is not None:
             self.url = self.error
     

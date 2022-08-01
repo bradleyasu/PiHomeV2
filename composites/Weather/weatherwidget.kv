@@ -15,6 +15,116 @@
             RoundedRectangle:
                 pos: self.pos
                 size: self.size 
+        
+        GridLayout:
+            cols: 1
+            spacing: dp(20)
+            size: root.overlay_size
+            pos: dp(20), dp(20 + root.overlay_y_offset)
+            canvas:
+                Color: 
+                    rgba: (0,1,0, 0)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size 
+            
+            GridLayout:
+                cols: 2
+                spacing: dp(20)
+                GridLayout:
+                    rows: 3
+                    spacing: dp(20)
+                    size: dp(100), dp(100)
+                    NetworkImage:
+                        canvas:
+                            Color: 
+                                rgba: (1,0,0, 0.0)
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size 
+                        url: root.icon
+                        size: dp(50), dp(50)
+                        size_hint: None, None
+                        enable_stretch: True
+                    Label:
+                        text: root.temp + "\u00B0F" 
+                        color: root.text_color
+                        font_size: '24sp'
+                        font_name: 'Nunito'
+                    Label:
+                        text: "Feels Like: " +root.feelsLike + "\u00B0F" 
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+                GridLayout:
+                    cols: 2
+                    spacing: dp(20)
+                    Label:
+                        text: "UV Index: "+root.uvIndex
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+                    Label:
+                        text: "Precip Chance: "+root.precipPercent
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+                    Label:
+                        text: "Wind Speed: "+root.windSpeed
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+                    Label:
+                        text: "Cloud Cover: "
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+                    Label:
+                        text: "Humidity: "+root.humidity
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+                    Label:
+                        text: "Air Quality: "+root.airQuality
+                        color: root.text_color
+                        font_size: '12sp'
+                        font_name: 'Nunito'
+
+            GridLayout:
+                cols: 6
+                spacing: dp(20)
+                Label:
+                    text: "1 Hour"
+                    color: root.text_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                Label:
+                    text: "2 Hour"
+                    color: root.text_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                Label:
+                    text: "3 Hour"
+                    color: root.text_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                Label:
+                    text: "4 Hour"
+                    color: root.text_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                Label:
+                    text: "5 Hour"
+                    color: root.text_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                Label:
+                    text: "6 Hour"
+                    color: root.text_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+
+
 
 
     GridLayout:

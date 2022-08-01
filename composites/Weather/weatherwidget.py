@@ -19,6 +19,19 @@ class WeatherWidget(Widget):
     icon = StringProperty("")
     temp = StringProperty("--")
 
+    uvIndex = StringProperty("--")
+    windSpeed = StringProperty("--")
+    precipPercent = StringProperty("--")
+    humidity = StringProperty("--")
+    airQuality = StringProperty("--")
+    cloudCover = StringProperty("--")
+    dayIcon = StringProperty("")
+    nightIcon = StringProperty("")
+    sunrise = StringProperty("")
+    sunset = StringProperty("")
+    feelsLike = StringProperty("")
+
+
     overlay_opacity = NumericProperty(0)
     overlay_y_offset = NumericProperty(10)
     overlay_active = False
@@ -59,6 +72,15 @@ class WeatherWidget(Widget):
 
     def update(self):
         self.temp = str(round(weather().temperature))
+        self.uvIndex = str(weather().uv_index)
+        self.windSpeed = "{} MPH".format(weather().wind_speed)
+        self.precipPercent = "{}%".format(weather().precip_propability)
+        self.humidity = "{}%".format(weather().humidity)
+        self.airQuality = weather().epa_air_lookup[weather().epa_air_quality]
+        self.sunrise = "{}".format(weather().sunrise_time)
+        self.sunset = "{}".format(weather().sunset_time)
+        self.feelsLike = "{}".format(weather().feels_like)
+
 
         conf = get_app().web_conf
         if conf != None:
@@ -68,6 +90,8 @@ class WeatherWidget(Widget):
             if weather().is_currently_day() == False:
                 day_code = 1
             self.icon = "{}{}{}{}.png".format(host, path, str(weather().weather_code), str(day_code))
+            self.dayIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_day))
+            self.nightIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_night))
         
         if self.is_loaded == False:
             self.animate_in()
