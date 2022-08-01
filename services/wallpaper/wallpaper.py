@@ -20,15 +20,17 @@ class Wallpaper:
 
     current = "https://cdn.pihome.io/assets/background.jpg"
     default = "https://cdn.pihome.io/assets/background.jpg"
+    allow_stretch = 1 
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
         source = get_config().get("wallpaper", "source", "PiHome CDN")
+        self.allow_stretch = get_config().get_int("wallpaper", "allow_stretch", 1)
         if source == "Reddit":
             subs = get_config().get("wallpaper", "subreddits", "wallpapers")
             if subs == "":
                 subs = "wallpapers"
-            reddit_url = "https://www.reddit.com/r/{}.json".format(subs)
+            reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
             get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif source == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)

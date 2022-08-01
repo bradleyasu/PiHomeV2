@@ -21,8 +21,8 @@ class NetworkImage(Widget):
     url = StringProperty()
     stretch = BooleanProperty(False)
     k_ratio = BooleanProperty(True)
-    loader = ObjectProperty()
-    error = ObjectProperty()
+    loader = None
+    error = None
 
     def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), enable_stretch = False, loader = None, error = None, **kwargs):
         super(NetworkImage, self).__init__(**kwargs)
@@ -32,15 +32,21 @@ class NetworkImage(Widget):
         self.pos = pos
         self.stretch = enable_stretch
         self.k_ratio = not enable_stretch
-        self.loader = None
-        self.error = None
+        self.loader = loader
+        self.error = error
         
-        if loader is not None:
-            self.loader = Image(source=loader)
 
-        
-        if error is not None:
-            self.error = Image(source=error)
+    def set_stretch(self, enable_stretch):
+        self.stretch = enable_stretch
+        self.k_ratio = not enable_stretch
 
+
+    def on_error(self, a, b):
+        if self.error is not None:
+            self.url = self.error
+    
+    def on_load(self):
+        if self.loader is not None:
+            self.url = self.loader
 
 

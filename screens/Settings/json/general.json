@@ -76,6 +76,13 @@
         "key": "custom_url"
     },
     {
+        "type": "bool",
+        "title": "Allow Stretch",
+        "desc": "Default True.  If enabled, wallpaper will fit the screen.  If False, wallpaper will be scaled, but there may be a black border",
+        "section": "wallpaper",
+        "key": "allow_stretch"
+    },
+    {
         "type": "title",
         "title": "News/Feed"
     },

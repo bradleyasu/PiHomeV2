@@ -68,7 +68,8 @@ class PiHome(App):
         self.background = NetworkImage(
             "", 
             size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), enable_stretch=True, 
+            pos=(0,0), 
+            enable_stretch=True, 
             loader="./assets/images/default_background.jpg",  
             error="./assets/images/default_background.jpg")
 
@@ -218,6 +219,7 @@ class PiHome(App):
         # Update background url from wallpaper service
         # Other regular updates
         self.background.url = self.wallpaper_service.current
+        self.background.set_stretch(self.wallpaper_service.allow_stretch)
 
 # Start PiHome
 PiHome().run()
