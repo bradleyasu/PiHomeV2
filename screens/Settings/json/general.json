@@ -48,5 +48,31 @@
         "desc": "Your current location's Longitude coordinate",
         "section": "weather",
         "key": "longitude"
+    },
+    {
+        "type": "title",
+        "title": "Wallpaper"
+    },
+    {
+        "type": "options",
+        "title": "Wallpaper Source",
+        "desc": "Set your preferred wallpaper source",
+        "section": "wallpaper",
+        "key": "source",
+        "options": ["PiHome CDN", "Reddit", "Custom"]
+    },
+    {
+        "type": "string",
+        "title": "Subreddits",
+        "desc": "Use + to combine multiple subreddits",
+        "section": "wallpaper",
+        "key": "subreddits"
+    },
+    {
+        "type": "string",
+        "title": "Custom URL",
+        "desc": "Enter a custom URL to set your background",
+        "section": "wallpaper",
+        "key": "custom_url"
     }
 ]

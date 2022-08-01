@@ -71,3 +71,4 @@ class WeatherWidget(Widget):
         
         if self.is_loaded == False:
             self.animate_in()
+            self.is_loaded = True

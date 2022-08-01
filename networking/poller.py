@@ -15,7 +15,6 @@ class Poller:
     def register_api(self, url, interval, on_resp):
         Clock.schedule_once(lambda _: self.api_call(url, on_resp), 2)
         Clock.schedule_interval(lambda _: self.api_call(url, on_resp), interval)
-        pass
 
     def api_call(self, url, on_resp):
         url = url.replace(" ", "%20")

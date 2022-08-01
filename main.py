@@ -1,6 +1,7 @@
 from kivy.config import Config
 
 from services.weather.weather import Weather
+from services.wallpaper.wallpaper import Wallpaper 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 
@@ -51,6 +52,7 @@ class PiHome(App):
     app_menu_open = False
     toast_open = False
     web_conf = None
+    wallpaper_service = None
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
 
@@ -81,6 +83,9 @@ class PiHome(App):
         #Init Weather Services
         self.weather = Weather()
 
+        #Init Weather Services
+        self.wallpaper_service = Wallpaper()
+
     def setup(self):
         """
         Setup default windowing positions and initialize 
@@ -97,6 +102,7 @@ class PiHome(App):
         self.appmenu = AppMenu(self.screens)
 
         self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
+        Clock.schedule_interval(lambda _: self._run(), 1)
 
     # the root widget
     def build(self):
@@ -184,14 +190,6 @@ class PiHome(App):
         get_app().stop()
         sys.exit("PiHome Terminated")
 
-
-    def update_conf(self, json):
-        # TODO validate json
-        self.web_conf = json
-        host = json["host"]
-        self.background.url = host + json["background"]
-
-
     def remove_toast(self):
         self.toast_open = False
         self.layout.remove_widget(self.toast)
@@ -205,6 +203,18 @@ class PiHome(App):
         self.toast_open = True
         self.layout.add_widget(self.toast)
         self.toast.pop(label=label, level=level, timeout=timeout)
+
+
+    def update_conf(self, json):
+        # TODO validate json
+        self.web_conf = json
+        # host = json["host"]
+        # self.background.url = host + json["background"]
+
+    def _run(self):
+        # Update background url from wallpaper service
+        # Other regular updates
+        self.background.url = self.wallpaper_service.current
 
 # Start PiHome
 PiHome().run()
