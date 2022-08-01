@@ -208,8 +208,6 @@ class PiHome(App):
     def update_conf(self, json):
         # TODO validate json
         self.web_conf = json
-        # host = json["host"]
-        # self.background.url = host + json["background"]
 
     def _run(self):
         # Update background url from wallpaper service

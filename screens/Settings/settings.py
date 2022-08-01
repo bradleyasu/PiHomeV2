@@ -32,6 +32,7 @@ class SettingsScreen(PiHomeScreen):
                     conf = json.load(f)
                     for c in conf:
                         if "section" in c and "key" in c:
+                            config.adddefaultsection(c['section'])
                             config.setdefault(c['section'], c['key'], '')
 
                 # Add configuration panel to UI

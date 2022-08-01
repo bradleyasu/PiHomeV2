@@ -74,5 +74,24 @@
         "desc": "Enter a custom URL to set your background",
         "section": "wallpaper",
         "key": "custom_url"
+    },
+    {
+        "type": "title",
+        "title": "News/Feed"
+    },
+    {
+        "type": "options",
+        "title": "News Source",
+        "desc": "Set the source you would like to use for your news feed",
+        "section": "news",
+        "key": "source",
+        "options": ["Reddit", "Disabled News"]
+    },
+    {
+        "type": "string",
+        "title": "Subreddits",
+        "desc": "Use + to combine multiple subreddits",
+        "section": "news",
+        "key": "subreddits"
     }
 ]
