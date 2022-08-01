@@ -28,7 +28,7 @@ class Wallpaper:
             subs = get_config().get("wallpaper", "subreddits", "wallpapers")
             if subs == "":
                 subs = "wallpapers"
-            reddit_url = "https://www.reddit.com/r/{}/rising.json".format(subs)
+            reddit_url = "https://www.reddit.com/r/{}.json".format(subs)
             get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif source == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)
@@ -38,7 +38,10 @@ class Wallpaper:
             get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
     def parse_reddit(self, json):
-        self.current = json["data"]["children"][0]["data"]["url"]
+        for value in json["data"]["children"]:
+            if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg") or value["data"]["url"].endswith(".gif")):
+                self.current = value["data"]["url"]
+                break
 
     def parse_cdn(self, json):
         host = json["host"]
