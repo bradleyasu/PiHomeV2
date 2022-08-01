@@ -46,5 +46,4 @@ class SettingsScreen(PiHomeScreen):
         self.add_widget(s)
     
     def updated(self, section, key, value):
-        if (section == 'theme' and key == 'dark_mode'):
-            toast(label="PiHome needs to be restarted for new settings to take effect")
+        toast(label="PiHome needs to be restarted for new settings to take effect")
