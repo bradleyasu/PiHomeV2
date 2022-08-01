@@ -38,6 +38,8 @@ class WeatherWidget(Widget):
 
    
     def on_touch_down(self, touch):
+        if self.is_loaded == False:
+            return False
         if self.collide_point(*touch.pos):
             if self.overlay_active == True:
                 self.overlay_animate(opacity = 0, offset = 10)

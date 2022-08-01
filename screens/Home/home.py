@@ -30,6 +30,7 @@ class HomeScreen(PiHomeScreen):
     time = StringProperty("--:-- -M")
     date = StringProperty("Saturday July 29, 2022")
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
+    background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.3))
 
     logo_opacity = NumericProperty(1)
 
