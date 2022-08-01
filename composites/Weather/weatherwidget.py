@@ -32,7 +32,9 @@ class WeatherWidget(Widget):
         self.size = size
         self.pos = pos
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
-        Clock.schedule_interval(lambda _: self.update(), 10)
+
+        if(weather().enabled):
+            Clock.schedule_interval(lambda _: self.update(), 10)
 
    
     def on_touch_down(self, touch):
