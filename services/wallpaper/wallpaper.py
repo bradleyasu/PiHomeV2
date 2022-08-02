@@ -1,4 +1,5 @@
 from datetime import datetime
+import random
 import os
 import time
 import requests
@@ -40,10 +41,13 @@ class Wallpaper:
             get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
     def parse_reddit(self, json):
+        skip_count = random.randint(0, 9)
+        print("skip count: {}".format(skip_count))
         for value in json["data"]["children"]:
-            if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
+            if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 self.current = value["data"]["url"]
                 break
+            skip_count = skip_count - 1
 
     def parse_cdn(self, json):
         host = json["host"]

@@ -34,7 +34,8 @@
                 GridLayout:
                     rows: 3
                     spacing: dp(20)
-                    size: dp(100), dp(100)
+                    size: dp(200), dp(140)
+                    size_hint: None, None
                     NetworkImage:
                         canvas:
                             Color: 
@@ -43,7 +44,7 @@
                                 pos: self.pos
                                 size: self.size 
                         url: root.icon
-                        size: dp(50), dp(50)
+                        size: dp(200), dp(100)
                         size_hint: None, None
                         enable_stretch: True
                     Label:
@@ -51,14 +52,22 @@
                         color: root.text_color
                         font_size: '24sp'
                         font_name: 'Nunito'
+                        size: dp(200), dp(20)
                     Label:
                         text: "Feels Like: " +root.feelsLike + "\u00B0F" 
                         color: root.text_color
                         font_size: '12sp'
                         font_name: 'Nunito'
+                        size: dp(200), dp(20)
                 GridLayout:
                     cols: 2
                     spacing: dp(20)
+                    FloatLayout:
+                        size_hint: None, None
+                        size: dp(50), dp(50)
+                    FloatLayout:
+                        size_hint: None, None
+                        size: dp(50), dp(50)
                     Label:
                         text: "UV Index: "+root.uvIndex
                         color: root.text_color
@@ -89,11 +98,18 @@
                         color: root.text_color
                         font_size: '12sp'
                         font_name: 'Nunito'
+                    FloatLayout:
+                        size_hint: None, None
+                        size: dp(50), dp(50)
+                    FloatLayout:
+                        size_hint: None, None
+                        size: dp(50), dp(50)
+
 
             GridLayout:
                 cols: 6
                 spacing: dp(20)
-                padding: dp(20), dp(20), dp(20), dp(20)
+                padding: dp(30), dp(20), dp(20), dp(20)
                 WeatherDetails:
                     details:  root.future[1] if len(root.future) > 0 else {}
                 WeatherDetails:

@@ -13,26 +13,26 @@
 
     GridLayout:
         cols: 1
-        spacing: dp(2)
+        spacing: dp(10)
         size_hint: None, None
         size: root.size
         pos: root.pos
 
         NetworkImage:
             url: root.icon
-            size: root.width, dp(100)
+            size: root.width, dp(80)
             size_hint: None, None
             enable_stretch: True
         
         Label:
             text: root.temp + " | " + root.precip
             color: root.text_color
-            font_size: '12sp'
+            font_size: '14sp'
             font_name: 'Nunito'
             width: root.width
         Label:
             text: root.day
             color: root.text_color
-            font_size: '16sp'
+            font_size: '12sp'
             font_name: 'Nunito'
             width: root.width
