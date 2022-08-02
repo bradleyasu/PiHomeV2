@@ -30,6 +30,7 @@ class RedditWidget(Widget):
     background_image_opacity = NumericProperty(0)
 
     thumbnail = StringProperty("./assets/images/blank.png")
+    qr = StringProperty("./assets/images/blank.png")
     title = StringProperty("")
     guilded = BooleanProperty(False)
     text = StringProperty("")
@@ -37,6 +38,8 @@ class RedditWidget(Widget):
 
     background_image = StringProperty("")
 
+    qr_api = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data="
+    qr_enabled = False
     item = 0
     item_max = 10
     data = None
@@ -84,6 +87,8 @@ class RedditWidget(Widget):
         self.source = post["domain"]
         thumbnail = post["thumbnail"]
         url = post["url"]
+        if self.qr_enabled:
+            self.qr = self.qr_api + url
         if thumbnail.endswith(".jpg") or thumbnail.endswith(".png"):
             self.thumbnail = thumbnail
         else:
