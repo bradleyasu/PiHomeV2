@@ -42,12 +42,12 @@ class Wallpaper:
 
     def parse_reddit(self, json):
         skip_count = random.randint(0, 9)
-        print("skip count: {}".format(skip_count))
         for value in json["data"]["children"]:
             if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 self.current = value["data"]["url"]
                 break
-            skip_count = skip_count - 1
+            if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
+                skip_count = skip_count - 1
 
     def parse_cdn(self, json):
         host = json["host"]
