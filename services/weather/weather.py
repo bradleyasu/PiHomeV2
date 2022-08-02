@@ -45,6 +45,8 @@ class Weather:
 
     epa_air_lookup = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"]
 
+    future = []
+
     def __init__(self, **kwargs):
         super(Weather, self).__init__(**kwargs)
         self.enabled = get_config().get_int("weather", "enabled", 0)
@@ -71,6 +73,7 @@ class Weather:
 
 
     def proc_forcast(self, data):
+        self.future = data["intervals"]
         data = data["intervals"][0]["values"]
         self.weather_code_day = data["weatherCodeDay"]
         self.weather_code_night = data["weatherCodeNight"]

@@ -41,7 +41,7 @@ class Wallpaper:
 
     def parse_reddit(self, json):
         for value in json["data"]["children"]:
-            if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg") or value["data"]["url"].endswith(".gif")):
+            if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 self.current = value["data"]["url"]
                 break
 

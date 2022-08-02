@@ -1,5 +1,6 @@
+from composites.Weather.weatherdetails import WeatherDetails
 from kivy.lang import Builder
-from kivy.properties import ColorProperty, StringProperty, NumericProperty
+from kivy.properties import Property, ColorProperty, StringProperty, NumericProperty, DictProperty, ListProperty, ObjectProperty, ReferenceListProperty
 from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.animation import Animation
@@ -30,7 +31,7 @@ class WeatherWidget(Widget):
     sunrise = StringProperty("")
     sunset = StringProperty("")
     feelsLike = StringProperty("")
-
+    future = ListProperty([])
 
     overlay_opacity = NumericProperty(0)
     overlay_y_offset = NumericProperty(10)
@@ -80,6 +81,8 @@ class WeatherWidget(Widget):
         self.sunrise = "{}".format(weather().sunrise_time)
         self.sunset = "{}".format(weather().sunset_time)
         self.feelsLike = "{}".format(weather().feels_like)
+        self.future = weather().future
+        self.day = weather().future[1]
 
 
         conf = get_app().web_conf
