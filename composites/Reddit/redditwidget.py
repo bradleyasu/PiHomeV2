@@ -29,7 +29,7 @@ class RedditWidget(Widget):
     opacity = NumericProperty(0)
     background_image_opacity = NumericProperty(0)
 
-    thumbnail = StringProperty("")
+    thumbnail = StringProperty("./assets/images/blank.png")
     title = StringProperty("")
     guilded = BooleanProperty(False)
     text = StringProperty("")
@@ -86,6 +86,8 @@ class RedditWidget(Widget):
         url = post["url"]
         if thumbnail.endswith(".jpg") or thumbnail.endswith(".png"):
             self.thumbnail = thumbnail
+        else:
+            self.thumbnail = "./assets/images/blank.png"
 
         if url.endswith(".jpg") or url.endswith(".png"):
             self.background_image = url
