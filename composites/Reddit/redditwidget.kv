@@ -1,0 +1,60 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<RedditWidget>:
+    # size: 800, 480
+    size: dp(400), dp(200)
+    pos: self.pos
+    opacity: self.opacity
+    canvas.before:
+        Color:
+            rgba: self.background_color if root.background_image_opacity == 0 else (0,0,0,0)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+    
+    NetworkImage:
+        url: root.background_image
+        size: root.size
+        pos: root.pos
+        opacity: root.background_image_opacity
+
+    GridLayout:
+        rows: 1
+        spacing: dp(20)
+        size_hint: None, None
+        size: root.size
+        pos: root.pos
+        opacity: root.content_opacity if root.background_image_opacity == 0 else 0
+        NetworkImage:
+            url: root.thumbnail
+            size: dp(140), dp(140)
+            enable_stretch: True
+        
+        GridLayout:
+            cols: 1
+            size_hint: None, None
+            width: root.width - dp(180)
+            height: root.height - dp(40)
+            Label:
+                text: ""
+                color: root.text_color
+                font_size: '14sp'
+                font_name: 'Nunito'
+                size_hint_y: None
+                text_size: self.width, None
+            Label:
+                text: root.title
+                color: root.text_color
+                font_size: '14sp'
+                font_name: 'Nunito'
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+            Label:
+                text: "source: " + root.source
+                color: root.text_color_secondary
+                font_size: '10sp'
+                font_name: 'Nunito'
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]

@@ -1,4 +1,6 @@
 import subprocess
+
+from composites.Reddit.redditwidget import RedditWidget
 import requests
 import time
 from kivy.app import App
