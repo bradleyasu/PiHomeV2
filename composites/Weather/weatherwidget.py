@@ -81,6 +81,7 @@ class WeatherWidget(Widget):
         self.sunrise = "{}".format(weather().sunrise_time)
         self.sunset = "{}".format(weather().sunset_time)
         self.feelsLike = "{}".format(weather().feels_like)
+        self.cloudCover = "{}%".format(weather().cloud_cover)
         self.future = weather().future
         self.day = weather().future[1]
 

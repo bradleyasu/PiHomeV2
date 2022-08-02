@@ -12,7 +12,7 @@ class Weather:
     Weather interface with tomorrow.io api to fetch current weather information
     based on latitude and longitude location 
     """
-    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection,sunriseTime,sunsetTime&timesteps=current,1d&units=imperial&apikey={}"
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,temperatureApparent,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection,sunriseTime,sunsetTime&timesteps=current,1d&units=imperial&apikey={}"
     latitude = 0
     longitude = 0 
     api_key = ""
@@ -92,6 +92,7 @@ class Weather:
         self.weather_code = data["weatherCode"]
         self.sunrise_time = data["sunriseTime"]
         self.sunset_time = data["sunsetTime"]
+        self.feels_like = data["temperatureApparent"]
 
     def is_currently_day(self):
         """
