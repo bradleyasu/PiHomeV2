@@ -61,7 +61,8 @@ class DevTools(PiHomeScreen):
 
     def set_brightness(self, level):
         # echo 32 > /sys/class/backlight/rpi_backlight/brightness
-        subprocess.call(['sh', './set_brightness.sh', level])
+        # subprocess.call(['sh', './set_brightness.sh', level])
+        print(level)
 
 
   
