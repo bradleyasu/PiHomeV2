@@ -1,4 +1,5 @@
 from kivy.config import Config
+from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 
 from services.weather.weather import Weather
 from services.wallpaper.wallpaper import Wallpaper 
@@ -38,6 +39,7 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from util.helpers import get_app 
 from util.tools import hex
 from kivy.metrics import dp
+from kivy.base import ExceptionManager 
 from kivy.clock import Clock
 
 # Run PiHome on Kivy 2.0.0
@@ -114,6 +116,9 @@ class PiHome(App):
 
         # auto update every 3 hours
         Clock.schedule_once(lambda _: self._update(), 60 * 60 * 3) 
+
+        # Add a custom error handler for pihome
+        ExceptionManager.add_handler(PiHomeErrorHandler())
 
     # the root widget
     def build(self):
@@ -242,14 +247,14 @@ class PiHome(App):
     def _reload_background(self):
         self.background.reload()
 
-    def on_start(self):
-        self.profile = cProfile.Profile()
-        self.profile.enable()
+    # def on_start(self):
+    #     self.profile = cProfile.Profile()
+    #     self.profile.enable()
 
-    def on_stop(self):
-        self.profile.disable()
-        self.profile.dump_stats('pihome.profile')
-        self.profile.print_stats()
+    # def on_stop(self):
+    #     self.profile.disable()
+    #     self.profile.dump_stats('pihome.profile')
+    #     self.profile.print_stats()
 
 # Start PiHome
 app = PiHome()

@@ -40,7 +40,7 @@ class BusEta(Widget):
         self.eta = eta
         if int(eta.split(" ")[0]) < 10:
             self.time_color = self.danger_color
-            self.blink()
+            # self.blink()
 
     def blink(self):
         animation = Animation(blinkOpacity=.1, t='in_out_cubic', d=1) + Animation(blinkOpacity=1, t='in_out_cubic', d=1)
