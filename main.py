@@ -1,3 +1,4 @@
+from threading import Thread
 from kivy.config import Config
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 
@@ -57,6 +58,12 @@ class PiHome(App):
     toast_open = False
     web_conf = None
     wallpaper_service = None
+
+
+    # App menu trigger events
+    _td_ticks = 0
+    _td_down = False
+
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
 
@@ -132,13 +139,11 @@ class PiHome(App):
         for screen in self.screens.values():
             screenManager.add_widget(screen)
 
-
         # Add primary screen manager
         self.layout.add_widget(screenManager)
-
         self.manager = screenManager
-
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
+        self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
         return self.layout
 
     def reload_configuration(self):
@@ -198,13 +203,11 @@ class PiHome(App):
             self.layout.remove_widget(self.appmenu)
 
     def on_touch_down(self, touch):
-        if touch.is_double_tap:
-            self.set_app_menu_open(not self.app_menu_open)
-        if ((touch.time_end - touch.time_start) > 0.2):
-            self.set_app_menu_open(not self.app_menu_open)
-            touch.grab(self)
-            touch.ud[self] = True
-            return True
+        self._td_down = True
+
+    def on_touch_up(self, touch):
+        self._td_down = False
+        self._td_ticks = 0
 
     """
     Quit PiHome and clean up resources
@@ -238,6 +241,16 @@ class PiHome(App):
         # Other regular updates
         self.background.url = self.wallpaper_service.current
         self.background.set_stretch(self.wallpaper_service.allow_stretch)
+
+        # Start counter if holding down
+        if self._td_down == True:
+            self._td_ticks = self._td_ticks + 1
+
+        # If holding down for period, open menu
+        if self._td_ticks >= 1:
+            self.set_app_menu_open(not self.app_menu_open)
+            self._td_down = False 
+            self._td_ticks = 0
 
     def _update(self):
         self.show_toast("PiHole will update in less than 10 seconds", level = "warn", timeout = 10)
