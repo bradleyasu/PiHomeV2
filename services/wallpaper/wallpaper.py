@@ -37,6 +37,12 @@ class Wallpaper:
                 subs = "wallpaper"
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
             get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
+        elif source == "Wallhaven":
+            search = get_config().get("wallpaper", "whsearch", "landscape")
+            if search == "":
+                search = "landscape"
+            wh_url = "https://wallhaven.cc/api/v1/search?q={}".format(search)
+            get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif source == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)
             if self.current == "":
@@ -49,15 +55,28 @@ class Wallpaper:
         for value in json["data"]["children"]:
             if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 self.current = self.resize_image(value["data"]["url"], 1024, 1024)
+                get_app()._reload_background()
                 # self.current = value["data"]["url"]
                 break
             if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
+                skip_count = skip_count - 1
+
+    def parse_wallhaven(self, json): 
+        skip_count = random.randint(0, 9)
+        for value in json["data"]:
+            if skip_count <= 0 and "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
+                self.current = self.resize_image(value["path"], 1024, 1024)
+                get_app()._reload_background()
+                # self.current = value["data"]["url"]
+                break
+            if "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
                 skip_count = skip_count - 1
 
     def parse_cdn(self, json):
         host = json["host"]
         background = json["background"]
         self.current = "{}{}".format(host, background)
+        get_app()._reload_background()
 
 
     def resize_image(self, url, width, height):

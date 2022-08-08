@@ -59,7 +59,7 @@
         "desc": "Set your preferred wallpaper source",
         "section": "wallpaper",
         "key": "source",
-        "options": ["PiHome CDN", "Reddit", "Custom"]
+        "options": ["PiHome CDN", "Reddit", "Wallhaven", "Custom"]
     },
     {
         "type": "string",
@@ -67,6 +67,13 @@
         "desc": "Use + to combine multiple subreddits",
         "section": "wallpaper",
         "key": "subreddits"
+    },
+    {
+        "type": "string",
+        "title": "Wallhaven Search",
+        "desc": "Search phrase to pass to wallhaven.  A random wallpaper will be selected from the results.  (default: landscape)",
+        "section": "wallpaper",
+        "key": "whsearch"
     },
     {
         "type": "string",

@@ -238,6 +238,10 @@ class PiHome(App):
         self.show_toast("PiHole will update in less than 10 seconds", level = "warn", timeout = 10)
         Clock.schedule_once(lambda : subprocess.call(['sh', './update_and_restart.sh']), 12)
 
+    
+    def _reload_background(self):
+        self.background.reload()
+
     # def on_start(self):
     #     self.profile = cProfile.Profile()
     #     self.profile.enable()
