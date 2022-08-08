@@ -7,6 +7,7 @@ Config.set('graphics', 'verify_gl_main_thread', '0')
 
 import cProfile
 import sys
+import subprocess
 import time
 import kivy
 import platform
@@ -101,7 +102,7 @@ class PiHome(App):
         Window.size = (self.width, self.height)
         self.screens = {
             'home': HomeScreen(name = 'home', label = "Home"),
-            'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings"),
+            'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             'bus': BusScreen(name = 'bus', label="Bus ETA"),
             'devtools': DevTools(name = 'devtools', label="Dev Tools"),
         }
@@ -110,6 +111,9 @@ class PiHome(App):
 
         self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
+
+        # auto update every 3 hours
+        Clock.schedule_once(lambda _: self._update(), 60 * 60 * 3) 
 
     # the root widget
     def build(self):
@@ -131,6 +135,9 @@ class PiHome(App):
 
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         return self.layout
+
+    def reload_configuration(self):
+        pass
 
     def restart(self):
         """
@@ -227,7 +234,9 @@ class PiHome(App):
         self.background.url = self.wallpaper_service.current
         self.background.set_stretch(self.wallpaper_service.allow_stretch)
 
-
+    def _update(self):
+        self.show_toast("PiHole will update in less than 10 seconds", level = "warn", timeout = 10)
+        Clock.schedule_once(lambda : subprocess.call(['sh', './update_and_restart.sh']), 12)
 
     # def on_start(self):
     #     self.profile = cProfile.Profile()

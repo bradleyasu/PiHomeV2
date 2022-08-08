@@ -13,12 +13,13 @@ from util.helpers import get_app, toast
 Builder.load_file("./screens/Settings/settings.kv")
 
 class SettingsScreen(PiHomeScreen):
-    def __init__(self, **kwargs):
+    def __init__(self, callback = None, **kwargs):
         super(SettingsScreen, self).__init__(**kwargs)
         config = ConfigParser()
         config.read('base.ini')
         config.add_callback(self.updated)
         s = SettingsWithSidebar()
+        self.callback = callback
         # s.register_type("pin", PinPad)
         self.icon = "https://cdn.pihome.io/assets/default_settings_icon.png"
 
@@ -47,3 +48,5 @@ class SettingsScreen(PiHomeScreen):
     
     def updated(self, section, key, value):
         toast(label="PiHome needs to be restarted for new settings to take effect")
+        if self.callback is not None:
+            self.callback()
