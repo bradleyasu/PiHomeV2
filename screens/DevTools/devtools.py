@@ -50,8 +50,16 @@ class DevTools(PiHomeScreen):
         layout.add_widget(button)
 
 
-        self.slider = Slider(on_touch_move=lambda x,y: self.set_brightness(self.slider.value), orientation='horizontal', min=20, max = 255, pos=(dp(self.width - 10), dp(self.height - 100)), size=(dp(40), dp(200)), step=1)
-        layout.add_widget(self.slider)
+        stopbutton = CircleButton(text='!', size=(dp(50), dp(50)), pos=(dp(100), dp(self.height - 70)))
+        stopbutton.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
+        stopbutton.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
+        stopbutton.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
+        stopbutton.bind(on_release=lambda _: get_app().stop())
+        layout.add_widget(stopbutton)
+
+
+        # self.slider = Slider(on_touch_move=lambda x,y: self.set_brightness(self.slider.value), orientation='horizontal', min=20, max = 255, pos=(dp(self.width - 10), dp(self.height - 100)), size=(dp(40), dp(200)), step=1)
+        # layout.add_widget(self.slider)
         
         self.add_widget(layout)
 
