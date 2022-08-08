@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import time
-import pytz
+# import pytz
 import requests
 from threading import Thread
 from kivy.clock import Clock
