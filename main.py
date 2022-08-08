@@ -247,7 +247,7 @@ class PiHome(App):
             self._td_ticks = self._td_ticks + 1
 
         # If holding down for period, open menu
-        if self._td_ticks >= 1:
+        if self._td_ticks > 1:
             self.set_app_menu_open(not self.app_menu_open)
             self._td_down = False 
             self._td_ticks = 0
