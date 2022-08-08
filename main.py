@@ -5,6 +5,7 @@ from services.wallpaper.wallpaper import Wallpaper
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 
+import cProfile
 import sys
 import time
 import kivy
@@ -187,6 +188,11 @@ class PiHome(App):
     def on_touch_down(self, touch):
         if touch.is_double_tap:
             self.set_app_menu_open(not self.app_menu_open)
+        if ((touch.time_end - touch.time_start) > 0.2):
+            self.set_app_menu_open(not self.app_menu_open)
+            touch.grab(self)
+            touch.ud[self] = True
+            return True
 
     """
     Quit PiHome and clean up resources
@@ -220,6 +226,17 @@ class PiHome(App):
         # Other regular updates
         self.background.url = self.wallpaper_service.current
         self.background.set_stretch(self.wallpaper_service.allow_stretch)
+
+
+
+    # def on_start(self):
+    #     self.profile = cProfile.Profile()
+    #     self.profile.enable()
+
+    # def on_stop(self):
+    #     self.profile.disable()
+    #     self.profile.dump_stats('pihome.profile')
+    #     self.profile.print_stats()
 
 # Start PiHome
 PiHome().run()

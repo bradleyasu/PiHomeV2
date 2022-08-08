@@ -1,12 +1,16 @@
+import base64
 from datetime import datetime
+from io import BytesIO
 import random
 import os
 import time
 import requests
 from threading import Thread
 from kivy.clock import Clock
+from PIL import Image as PILImage, ImageOps
 from kivy.network.urlrequest import UrlRequest
 from util.helpers import get_app, get_config, get_poller, toast
+from kivy.uix.image import Image, CoreImage
 
 class Wallpaper:
     """
@@ -44,7 +48,8 @@ class Wallpaper:
         skip_count = random.randint(0, 9)
         for value in json["data"]["children"]:
             if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
-                self.current = value["data"]["url"]
+                self.current = self.resize_image(value["data"]["url"], 1024, 1024)
+                # self.current = value["data"]["url"]
                 break
             if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 skip_count = skip_count - 1
@@ -53,3 +58,13 @@ class Wallpaper:
         host = json["host"]
         background = json["background"]
         self.current = "{}{}".format(host, background)
+
+
+    def resize_image(self, url, width, height):
+        r = requests.get(url)
+
+        pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
+        # pilImage = pilImage.resize((width, height), PILImage.ANTIALIAS)
+        pilImage = ImageOps.contain(pilImage, (width, height))
+        pilImage.save(fp="_rsz_.png", format="png")
+        return "./_rsz_.png"
