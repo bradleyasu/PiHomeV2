@@ -88,6 +88,10 @@ popd
 sudo apt-get -y install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev >> $LOG
 sudo apt-get -y install libmtdev1 >> $LOG
 
+# Image manipulation
+sudo apt-get install libopenjp2-7 >> $LOG
+
+
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
 
