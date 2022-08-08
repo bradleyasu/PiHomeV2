@@ -242,15 +242,17 @@ class PiHome(App):
     def _reload_background(self):
         self.background.reload()
 
-    # def on_start(self):
-    #     self.profile = cProfile.Profile()
-    #     self.profile.enable()
+    def on_start(self):
+        self.profile = cProfile.Profile()
+        self.profile.enable()
 
-    # def on_stop(self):
-    #     self.profile.disable()
-    #     self.profile.dump_stats('pihome.profile')
-    #     self.profile.print_stats()
+    def on_stop(self):
+        self.profile.disable()
+        self.profile.dump_stats('pihome.profile')
+        self.profile.print_stats()
 
 # Start PiHome
-PiHome().run()
+app = PiHome()
+app.run()
+# PiHome().run()
 
