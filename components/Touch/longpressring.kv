@@ -1,0 +1,13 @@
+#:kivy 2.0.0
+<LongPressRing>:
+    size_hint: None, None
+    size: self.size
+    pos: self.pos
+    opacity: root.opacity
+    canvas:
+        Color:
+            rgba: self.color
+        Line:
+            width: dp(1.8)
+            circle:
+                self.center_x, self.center_y, min(self.width, self.height) / 2, 0, root.radius

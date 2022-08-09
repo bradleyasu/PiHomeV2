@@ -1,5 +1,6 @@
 from threading import Thread
 from kivy.config import Config
+from components.Touch.longpressring import LongPressRing
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 
 from services.weather.weather import Weather
@@ -117,6 +118,7 @@ class PiHome(App):
         }
 
         self.appmenu = AppMenu(self.screens)
+        self.appmenu_ring = LongPressRing()
 
         self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
@@ -144,6 +146,8 @@ class PiHome(App):
         self.manager = screenManager
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
+
+        self.layout.add_widget(self.appmenu_ring)
         return self.layout
 
     def reload_configuration(self):
@@ -204,10 +208,12 @@ class PiHome(App):
 
     def on_touch_down(self, touch):
         self._td_down = True
+        self.appmenu_ring.set_visible(True, (touch.x - self.appmenu_ring.width/2, touch.y - self.appmenu_ring.height/2))
 
     def on_touch_up(self, touch):
         self._td_down = False
         self._td_ticks = 0
+        self.appmenu_ring.set_visible(False)
 
     """
     Quit PiHome and clean up resources
