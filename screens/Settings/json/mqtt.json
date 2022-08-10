@@ -1,0 +1,41 @@
+[
+    {
+        "type": "title",
+        "title": "MQTT"
+    },
+    {
+        "type": "string",
+        "title": "Host",
+        "desc": "MQTT Service Host",
+        "section": "mqtt",
+        "key": "host"
+    },
+    {
+        "type": "numeric",
+        "title": "Port Number",
+        "desc": "MQTT service port number.  Typically 1883 or 8883",
+        "section": "mqtt",
+        "key": "port"
+    },
+    {
+        "type": "string",
+        "title": "User ID/Username",
+        "desc": "MQTT Service user id",
+        "section": "mqtt",
+        "key": "user_id"
+    },
+    {
+        "type": "string",
+        "title": "User Password/Key",
+        "desc": "MQTT Service user password/key",
+        "section": "mqtt",
+        "key": "password"
+    },
+    {
+        "type": "string",
+        "title": "Feed",
+        "desc": "MQTT Service where PiHome payloads can be subscribed and published",
+        "section": "mqtt",
+        "key": "feed"
+    }
+]

@@ -1,12 +1,13 @@
-from threading import Thread
 from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+Config.set('graphics', 'verify_gl_main_thread', '0')
+from threading import Thread
 from components.Touch.longpressring import LongPressRing
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
+from networking.mqtt import MQTT
 
 from services.weather.weather import Weather
 from services.wallpaper.wallpaper import Wallpaper 
-Config.set('kivy', 'keyboard_mode', 'systemandmulti')
-Config.set('graphics', 'verify_gl_main_thread', '0')
 
 import cProfile
 import sys
@@ -266,9 +267,16 @@ class PiHome(App):
     def _reload_background(self):
         self.background.reload()
 
-    # def on_start(self):
-    #     self.profile = cProfile.Profile()
-    #     self.profile.enable()
+    def on_start(self):
+        h = self.base_config.get('mqtt', 'host', "")
+        u = self.base_config.get('mqtt', 'user_id', "")
+        p = self.base_config.get('mqtt', 'password', "")
+        f = self.base_config.get('mqtt', 'feed', "pihome")
+        port = self.base_config.get_int('mqtt', 'port', 8883)
+        if u != "" and h != "" and p != "":
+            self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
+        # self.profile = cProfile.Profile()
+        # self.profile.enable()
 
     # def on_stop(self):
     #     self.profile.disable()

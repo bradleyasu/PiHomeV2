@@ -91,6 +91,9 @@ sudo apt-get -y install libmtdev1 >> $LOG
 # Image manipulation
 sudo apt-get install libopenjp2-7 >> $LOG
 
+# MQTT Services
+python3 -m pip install paho-mqtt
+
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
