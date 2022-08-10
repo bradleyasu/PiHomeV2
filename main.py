@@ -128,7 +128,7 @@ class PiHome(App):
         Clock.schedule_interval(lambda _: self._run(), 1)
 
         # auto update every 3 hours
-        Clock.schedule_once(lambda _: self._update(), 60 * 60 * 3) 
+        Clock.schedule_once(lambda _: self._update(), 60 * 60 * 24 * 2) 
 
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
