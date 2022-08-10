@@ -1,0 +1,72 @@
+#:kivy 2.0.0
+<DisplayEvent>:
+    canvas.before:
+        Color:
+            rgba: root.background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
+    FloatLayout:
+
+        size: root.size
+        pos: root.pos
+
+        # canvas.before:
+        #     Color:
+        #         rgba: (0,1,0,0.3)
+        #     Rectangle:
+        #         pos: self.pos
+        #         size: self.size
+
+
+        Label:
+            # canvas.before:
+            #     Color:
+            #         rgba: (1,0,0,0.3)
+            #     Rectangle:
+            #         pos: self.pos
+            #         size: self.size
+            pos: dp(20), root.height - self.height - dp(20)
+            color: (1,1,1,1)
+            font_size: "20sp" 
+            font_name: 'Nunito'
+            size_hint_y: None
+            text_size: self.width, None
+            height: self.texture_size[1]
+            text: root.title
+
+        NetworkImage:
+            url: root.image
+            size: dp(256), dp(256)
+            pos: dp(20), root.height / 2 - self.width /2
+        
+        ScrollView:
+            # canvas.before:
+            #     Color:
+            #         rgba: (1,0,1,0.3)
+            #     Rectangle:
+            #         pos: self.pos
+            #         size: self.size
+            
+            pos: dp(20 + 256 + 20), dp(0)
+            size_hint: None, None
+            size: root.width - dp(296), root.height - dp(60)
+
+            GridLayout:
+                cols: 1
+                size_hint_y: None
+                Label:
+                    color: (1,1,1,1)
+                    font_size: "14sp" 
+                    font_name: 'Nunito'
+                    size_hint_y: None
+                    text_size: self.width, None
+                    height: self.texture_size[1]
+                    text: root.message
+
+
+
+    
+
+    

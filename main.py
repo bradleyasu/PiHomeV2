@@ -1,4 +1,6 @@
 from kivy.config import Config
+
+from screens.DisplayEvent.displayevent import DisplayEvent
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from threading import Thread
@@ -116,6 +118,7 @@ class PiHome(App):
             'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             'bus': BusScreen(name = 'bus', label="Bus ETA"),
             'devtools': DevTools(name = 'devtools', label="Dev Tools"),
+            '_display': DisplayEvent(name = '_display', label="Display Event", is_hidden = True),
         }
 
         self.appmenu = AppMenu(self.screens)
@@ -276,8 +279,17 @@ class PiHome(App):
         if u != "" and h != "" and p != "":
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
             self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
+            self.mqtt.add_listener(type = "display", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_event(payload), 0))
         # self.profile = cProfile.Profile()
         # self.profile.enable()
+
+    def _handle_display_event(self, payload):
+        if "title" in payload and "message" in payload and "image" in payload:
+            self.screens["_display"].title = payload["title"]
+            self.screens["_display"].message = payload["message"]
+            self.screens["_display"].image = payload["image"]
+            goto_screen("_display")
+
 
     # def on_stop(self):
     #     self.profile.disable()

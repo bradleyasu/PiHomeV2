@@ -53,7 +53,8 @@ class AppMenu(Widget):
     def show_apps(self):
         count = 0
         for i in self.screens:
-            icon = self.screens[i].icon
-            label = self.screens[i].label
-            self.grid.add_widget(AppIcon(delay=count*0.100, icon=icon, label = label, app_key = i, on_select=(lambda key: self.open_app(key))))
-            count += 1
+            if not self.screens[i].is_hidden:
+                icon = self.screens[i].icon
+                label = self.screens[i].label
+                self.grid.add_widget(AppIcon(delay=count*0.100, icon=icon, label = label, app_key = i, on_select=(lambda key: self.open_app(key))))
+                count += 1
