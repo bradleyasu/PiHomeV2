@@ -39,7 +39,7 @@ from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SwapTransition, FallOutTransition, SwapTransition, WipeTransition, RiseInTransition
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
-from util.helpers import get_app 
+from util.helpers import get_app, goto_screen 
 from util.tools import hex
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
@@ -275,6 +275,7 @@ class PiHome(App):
         port = self.base_config.get_int('mqtt', 'port', 8883)
         if u != "" and h != "" and p != "":
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
+            self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
         # self.profile = cProfile.Profile()
         # self.profile.enable()
 

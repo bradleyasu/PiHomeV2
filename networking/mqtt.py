@@ -1,3 +1,4 @@
+import json
 from time import time
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
@@ -7,6 +8,9 @@ import paho.mqtt.client as mqtt_client
 class MQTT:
     
     client = None
+    app_listeners = []
+    display_listeners = []
+    notification_listeners = []
     def __init__(self, host, port = 1883, keep_alive = 60, feed = "pihome", user = "", password = "", **kwargs):
         super(MQTT, self).__init__(**kwargs)
         self.host = host
@@ -35,7 +39,35 @@ class MQTT:
         self.client.loop_start()
 
     def on_message(self, client, userdata, msg):
-        print(str(msg.payload))
+        payload = json.loads(msg.payload)
+        self.notify(payload["type"], payload)
 
     def on_connect(self, client, userdata, msg, rc):
         self.client.subscribe(self.feed)
+
+    
+    def add_listener(self, type, callback):
+        """
+        type: The type of event to listen for.  `app`, `display`, `notification`
+        callback: The function to execute with the payload as the single parameter
+        """
+        if type == "app":
+            self.app_listeners.append(callback)
+        if type == "display":
+            self.display_listeners.append(callback)
+        if type == "notification":
+            self.display_listeners.append(callback)
+
+    def notify(self, type, payload):
+        if type == "app":
+            for callback in self.app_listeners:
+                callback(payload)
+
+        if type == "display":
+            for callback in self.display_listeners:
+                callback(payload)
+
+        if type == "notification":
+            for callback in self.notification_listeners:
+                callback(payload)
+
