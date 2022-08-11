@@ -267,6 +267,9 @@ class PiHome(App):
 
     
     def _reload_background(self):
+        """
+        Updates the background image, clearing the cache
+        """
         self.background.reload()
 
     def on_start(self):
