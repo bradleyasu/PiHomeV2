@@ -247,6 +247,7 @@ class PiHome(App):
 
     def update_conf(self, json):
         # TODO validate json
+        # important
         self.web_conf = json
 
     def _run(self):
