@@ -9,6 +9,7 @@ from threading import Thread
 from kivy.clock import Clock
 from PIL import Image as PILImage, ImageOps
 from kivy.network.urlrequest import UrlRequest
+from util.const import TEMP_DIR
 from util.helpers import get_app, get_config, get_poller, toast
 from kivy.uix.image import Image, CoreImage
 
@@ -85,5 +86,5 @@ class Wallpaper:
         pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
         # pilImage = pilImage.resize((width, height), PILImage.ANTIALIAS)
         pilImage = ImageOps.contain(pilImage, (width, height))
-        pilImage.save(fp="_rsz_.png", format="png")
-        return "./_rsz_.png"
+        pilImage.save(fp="{}/_rsz_.png".format(TEMP_DIR), format="png")
+        return "{}/_rsz_.png".format(TEMP_DIR)
