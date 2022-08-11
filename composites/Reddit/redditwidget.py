@@ -1,4 +1,5 @@
 from kivy.lang import Builder
+from services.qr.qr import QR
 from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, BooleanProperty
 from kivy.animation import Animation
@@ -23,13 +24,13 @@ class RedditWidget(Widget):
     qr = StringProperty("./assets/images/blank.png")
     title = StringProperty("")
     guilded = BooleanProperty(False)
+    clicked = BooleanProperty(False)
     text = StringProperty("")
     source = StringProperty("")
 
     background_image = StringProperty("")
 
-    qr_api = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data="
-    qr_enabled = False
+    qr_enabled = True
     item = 0
     item_max = 10
     data = None
@@ -66,6 +67,7 @@ class RedditWidget(Widget):
         animation.start(self)
 
     def next(self):
+        self.clicked = False
         self.fade_out(self._next)
 
     def _next(self):
@@ -78,7 +80,7 @@ class RedditWidget(Widget):
         thumbnail = post["thumbnail"]
         url = post["url"]
         if self.qr_enabled:
-            self.qr = self.qr_api + url
+            self.qr = QR().from_url(url)
         if thumbnail.endswith(".jpg") or thumbnail.endswith(".png"):
             self.thumbnail = thumbnail
         else:
@@ -98,5 +100,6 @@ class RedditWidget(Widget):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            self.next()
+            # self.next()
+            self.clicked = not self.clicked
             return False

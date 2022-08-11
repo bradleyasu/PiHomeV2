@@ -1,7 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
-from util.const import _DISPLAY_SCREEN, MQTT_COMMANDS
+from util.const import _DISPLAY_SCREEN, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from components.Touch.longpressring import LongPressRing
@@ -15,6 +15,7 @@ import cProfile
 import sys
 import kivy
 import platform
+import os
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from components.Image.networkimage import NetworkImage
@@ -263,6 +264,10 @@ class PiHome(App):
          - If in debug mode, setup Profiler
         """
         self._init_mqtt()
+
+        # Make temporary dir 
+        if not os.path.exists(TEMP_DIR):
+            os.makedirs(TEMP_DIR)
         # self.profile = cProfile.Profile()
         # self.profile.enable()
 

@@ -13,15 +13,10 @@
             size: self.size
     
     NetworkImage:
-        url: root.background_image
+        url: root.background_image if root.clicked == False else root.qr
         size: root.size
         pos: root.pos
         opacity: root.background_image_opacity
-    NetworkImage:
-        url: root.qr
-        size: self.size
-        pos: root.pos
-        opacity: 1
 
     GridLayout:
         rows: 1
@@ -31,7 +26,7 @@
         pos: root.pos
         opacity: root.content_opacity if root.background_image_opacity == 0 else 0
         NetworkImage:
-            url: root.thumbnail
+            url: root.thumbnail if root.clicked == False else root.qr
             size: dp(140), dp(140)
             enable_stretch: True
         

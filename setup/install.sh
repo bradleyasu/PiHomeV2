@@ -94,6 +94,8 @@ sudo apt-get install libopenjp2-7 >> $LOG
 # MQTT Services
 python3 -m pip install paho-mqtt
 
+# QR Code Services
+python3 -m pip install qrcode[pil]
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG

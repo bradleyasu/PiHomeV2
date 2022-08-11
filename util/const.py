@@ -5,3 +5,5 @@ MQTT_COMMANDS = {
 }
 
 _DISPLAY_SCREEN = "_display"
+
+TEMP_DIR = "./.temp"
