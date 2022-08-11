@@ -40,8 +40,11 @@ class MQTT:
         self.client.loop_start()
 
     def on_message(self, client, userdata, msg):
-        payload = json.loads(msg.payload)
-        self.notify(payload["type"], payload)
+        try: 
+            payload = json.loads(msg.payload)
+            self.notify(payload["type"], payload)
+        except:
+            pass
 
     def on_connect(self, client, userdata, msg, rc):
         self.client.subscribe(self.feed)
