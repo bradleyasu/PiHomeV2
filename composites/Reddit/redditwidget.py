@@ -1,19 +1,9 @@
-from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.behaviors import ButtonBehavior 
-from kivy.uix.image import Image  
-from kivy.uix.label import Label
-from components.Button.circlebutton import CircleButton
-from theme.color import Color
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.gridlayout import GridLayout
 from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, BooleanProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
-from kivy.metrics import dp
-from util.helpers import get_app, get_config, get_poller
-from util.tools import hex
+from util.helpers import get_config, get_poller
 from kivy.uix.widget import Widget
 
 Builder.load_file("./composites/Reddit/redditwidget.kv")
