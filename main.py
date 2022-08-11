@@ -289,6 +289,8 @@ class PiHome(App):
             self.screens[_DISPLAY_SCREEN].title = payload["title"]
             self.screens[_DISPLAY_SCREEN].message = payload["message"]
             self.screens[_DISPLAY_SCREEN].image = payload["image"]
+            if "background" in payload:
+                self.screens[_DISPLAY_SCREEN].set_background(payload["background"])
             goto_screen(_DISPLAY_SCREEN)
 
 
