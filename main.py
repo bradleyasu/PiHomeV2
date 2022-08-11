@@ -1,7 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
-from util.const import MQTT_COMMANDS
+from util.const import _DISPLAY_SCREEN, MQTT_COMMANDS
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from threading import Thread
@@ -40,10 +40,8 @@ from screens.Settings.settings import SettingsScreen
 from screens.Bus.bus import BusScreen 
 from util.configuration import Configuration
 from kivy.core.window import Window
-from kivy.uix.screenmanager import ScreenManager, SwapTransition, FallOutTransition, SwapTransition, WipeTransition, RiseInTransition
-from kivy.properties import ColorProperty, NumericProperty, StringProperty
-from util.helpers import get_app, goto_screen, update_pihome 
-from util.tools import hex
+from kivy.uix.screenmanager import ScreenManager, SlideTransition
+from util.helpers import get_app, goto_screen
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock
@@ -55,8 +53,6 @@ kivy.require('2.0.0')
 Window.show_cursor = platform.system() == 'Darwin'
 Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = 'below_target'
-
-_DISPLAY_EVENT = "_display"
 
 class PiHome(App):
 
@@ -121,7 +117,7 @@ class PiHome(App):
             'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             'bus': BusScreen(name = 'bus', label="Bus ETA"),
             'devtools': DevTools(name = 'devtools', label="Dev Tools"),
-            '_display': DisplayEvent(name = _DISPLAY_EVENT, label="Display Event", is_hidden = True),
+            _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
         }
 
         self.appmenu = AppMenu(self.screens)
@@ -129,9 +125,6 @@ class PiHome(App):
 
         self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
-
-        # auto update every 3 hours
-        Clock.schedule_once(lambda _: update_pihome(), 60 * 60 * 24 * 2) 
 
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
@@ -142,7 +135,7 @@ class PiHome(App):
 
         self.layout.add_widget(self.background)
 
-        screenManager = ScreenManager(transition=WipeTransition())
+        screenManager = ScreenManager(transition=SlideTransition(direction="down"))
 
         # Add Registered Screens to screenmanager 
         for screen in self.screens.values():
@@ -303,10 +296,10 @@ class PiHome(App):
 
     def _handle_display_event(self, payload):
         if "title" in payload and "message" in payload and "image" in payload:
-            self.screens[_DISPLAY_EVENT].title = payload["title"]
-            self.screens[_DISPLAY_EVENT].message = payload["message"]
-            self.screens[_DISPLAY_EVENT].image = payload["image"]
-            goto_screen(_DISPLAY_EVENT)
+            self.screens[_DISPLAY_SCREEN].title = payload["title"]
+            self.screens[_DISPLAY_SCREEN].message = payload["message"]
+            self.screens[_DISPLAY_SCREEN].image = payload["image"]
+            goto_screen(_DISPLAY_SCREEN)
 
 
     # def on_stop(self):
