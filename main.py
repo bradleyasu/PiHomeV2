@@ -1,6 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
+from util.const import MQTT_COMMANDS
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from threading import Thread
@@ -41,7 +42,7 @@ from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SwapTransition, FallOutTransition, SwapTransition, WipeTransition, RiseInTransition
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
-from util.helpers import get_app, goto_screen 
+from util.helpers import get_app, goto_screen, update_pihome 
 from util.tools import hex
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
@@ -54,6 +55,8 @@ kivy.require('2.0.0')
 Window.show_cursor = platform.system() == 'Darwin'
 Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = 'below_target'
+
+_DISPLAY_EVENT = "_display"
 
 class PiHome(App):
 
@@ -118,7 +121,7 @@ class PiHome(App):
             'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             'bus': BusScreen(name = 'bus', label="Bus ETA"),
             'devtools': DevTools(name = 'devtools', label="Dev Tools"),
-            '_display': DisplayEvent(name = '_display', label="Display Event", is_hidden = True),
+            '_display': DisplayEvent(name = _DISPLAY_EVENT, label="Display Event", is_hidden = True),
         }
 
         self.appmenu = AppMenu(self.screens)
@@ -128,7 +131,7 @@ class PiHome(App):
         Clock.schedule_interval(lambda _: self._run(), 1)
 
         # auto update every 3 hours
-        Clock.schedule_once(lambda _: self._update(), 60 * 60 * 24 * 2) 
+        Clock.schedule_once(lambda _: update_pihome(), 60 * 60 * 24 * 2) 
 
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
@@ -262,15 +265,22 @@ class PiHome(App):
             self._td_down = False 
             self._td_ticks = 0
 
-    def _update(self):
-        self.show_toast("PiHole will update in less than 10 seconds", level = "warn", timeout = 10)
-        Clock.schedule_once(lambda : subprocess.call(['sh', './update_and_restart.sh']), 12)
-
     
     def _reload_background(self):
         self.background.reload()
 
     def on_start(self):
+        """
+        When application has started, do the following:
+         - Setup MQTT Services
+         - If in debug mode, setup Profiler
+        """
+        self._init_mqtt()
+        # self.profile = cProfile.Profile()
+        # self.profile.enable()
+
+
+    def _init_mqtt(self):
         h = self.base_config.get('mqtt', 'host', "")
         u = self.base_config.get('mqtt', 'user_id', "")
         p = self.base_config.get('mqtt', 'password', "")
@@ -280,15 +290,19 @@ class PiHome(App):
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
             self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
             self.mqtt.add_listener(type = "display", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_event(payload), 0))
-        # self.profile = cProfile.Profile()
-        # self.profile.enable()
+            self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
+ 
+    def _handle_command_event(self, payload):
+        cmd = payload["execute"]
+        if cmd in MQTT_COMMANDS:
+            MQTT_COMMANDS[cmd]()
 
     def _handle_display_event(self, payload):
         if "title" in payload and "message" in payload and "image" in payload:
-            self.screens["_display"].title = payload["title"]
-            self.screens["_display"].message = payload["message"]
-            self.screens["_display"].image = payload["image"]
-            goto_screen("_display")
+            self.screens[_DISPLAY_EVENT].title = payload["title"]
+            self.screens[_DISPLAY_EVENT].message = payload["message"]
+            self.screens[_DISPLAY_EVENT].image = payload["image"]
+            goto_screen(_DISPLAY_EVENT)
 
 
     # def on_stop(self):

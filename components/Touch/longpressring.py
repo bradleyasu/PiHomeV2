@@ -4,6 +4,7 @@ from kivy.uix.button import Button
 from kivy.uix.behaviors import ButtonBehavior 
 from kivy.uix.image import Image  
 from kivy.uix.label import Label
+from theme.color import Color
 from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
@@ -16,8 +17,9 @@ Builder.load_file("./components/Touch/longpressring.kv")
 class LongPressRing(Widget):
     theme = Theme()
     color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
-    radius = NumericProperty(0)
+    radius = NumericProperty(-45)
     opacity = NumericProperty(0)
+    visible = False
     def __init__(self, pos=(dp(30), dp(30)), **kwargs):
         super(LongPressRing, self).__init__(**kwargs)
         self.size = (dp(100), dp(100))
@@ -26,12 +28,13 @@ class LongPressRing(Widget):
         
     def set_visible(self, visible, pos = (dp(10), dp(10))):
         self.pos = pos
-        if visible:
-            self.opacity = 1
-        else:
+        self.visible = visible
+        if not visible:
             self.opacity = 0
-            self.radius = 0
+            self.radius = -45
 
     def update(self):
-        if self.opacity == 1 and self.radius < 360:
-            self.radius = self.radius + 6
+        if self.radius >= 0:
+            self.opacity = 1
+        if self.visible and self.radius < 360:
+            self.radius = self.radius + 8

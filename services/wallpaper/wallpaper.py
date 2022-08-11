@@ -17,7 +17,7 @@ class Wallpaper:
     Service that will continuously ping external services for fresh wallpaper depending
     on user configuations.  The 'current' property will have the currently selected
     wallpaper which can be set from the following services:
-        1: PiHole CDN
+        1: PiHome CDN
         2: Reddit/Subreddit configurations
         3: Custom URL
         4: {Add additional services}

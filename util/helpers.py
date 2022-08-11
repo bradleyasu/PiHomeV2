@@ -1,4 +1,6 @@
+import subprocess
 from kivy.app import App
+from kivy.clock import Clock
 
 def get_app():
     return App.get_running_app()
@@ -21,3 +23,11 @@ def toast(label, level = "info", timeout = 5):
 
 def weather():
     return get_app().weather
+
+
+def update_pihome():
+    """
+    Notify user of update, pull latest, and restart
+    """
+    toast("PiHome updates are available. PiHome will restart in less than 10 seconds", level = "warn", timeout = 10)
+    Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 12)

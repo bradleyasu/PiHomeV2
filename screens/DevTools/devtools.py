@@ -1,13 +1,6 @@
 import socket
-import os
-import subprocess
-import requests
-import time
-from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.screenmanager import Screen
-from kivy.uix.label import Label
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty
 
@@ -18,7 +11,7 @@ from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, get_app, goto_screen
+from util.helpers import appmenu_open, get_app, goto_screen, update_pihome
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -46,7 +39,7 @@ class DevTools(PiHomeScreen):
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
-        button.bind(on_release=lambda _: self.trigger_update())
+        button.bind(on_release=lambda _: update_pihome())
         layout.add_widget(button)
 
 
@@ -64,9 +57,6 @@ class DevTools(PiHomeScreen):
         self.add_widget(layout)
 
     
-    def trigger_update(self):
-        subprocess.call(['sh', './update_and_restart.sh'])
-
     def set_brightness(self, level):
         # echo 32 > /sys/class/backlight/rpi_backlight/brightness
         # subprocess.call(['sh', './set_brightness.sh', level])
