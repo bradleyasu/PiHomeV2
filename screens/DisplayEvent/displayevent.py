@@ -1,12 +1,7 @@
-import socket
-import os
-import subprocess
-import requests
-import time
 from kivy.lang import Builder
 from interface.pihomescreen import PiHomeScreen
 from util.tools import hex
-from kivy.properties import ColorProperty, NumericProperty, StringProperty
+from kivy.properties import ColorProperty, StringProperty
 
 Builder.load_file("./screens/DisplayEvent/displayevent.kv")
 
