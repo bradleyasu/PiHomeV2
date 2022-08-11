@@ -4,7 +4,6 @@ from screens.DisplayEvent.displayevent import DisplayEvent
 from util.const import _DISPLAY_SCREEN, MQTT_COMMANDS
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
-from threading import Thread
 from components.Touch.longpressring import LongPressRing
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
@@ -14,21 +13,12 @@ from services.wallpaper.wallpaper import Wallpaper
 
 import cProfile
 import sys
-import subprocess
-import time
 import kivy
 import platform
 from kivy.app import App
-from kivy.uix.button import Button
-
-from kivy.uix.label import Label
-from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.gridlayout import GridLayout
-from components.Button.circlebutton import CircleButton
 from components.Image.networkimage import NetworkImage
 
-from components.Reveal.reveal import Reveal
 from components.Toast.toast import Toast
 from composites.AppMenu.appmenu import AppMenu
 
