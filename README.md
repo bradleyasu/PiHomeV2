@@ -34,7 +34,7 @@ By default, PiHome will display wallpapers from the PiHome CDN (https://pihome.i
 MQTT services are also available.  You can connect your PiHome to an MQTT services of your choice (I use Adafruit.io) and send custom information from external services such as IFTTT, your own scripts, etc. (See MQTT section below for payload information).
 
 
-Please feel free to open issues or pull requests. 
+> This is a hobby project that I hope may be useful to others.  Although currently not very exciting, https://pihome.io is the official site for the project.  Python is not my day to day language, I'm sure some of the syntax and coding styles are not up to standard.  This is also a learning project for myself.  Please feel free to open issues or pull requests. 
 
 
 ---
@@ -89,7 +89,7 @@ Display
     "background": "<(r,g,b,a)>",
     "title": "<title>",
     "message": "<message>",
-    "image": "<image_url>
+    "image": "<image_url>"
 }
 ```
 
@@ -97,6 +97,6 @@ App Trigger
 ```json
 {
     "type": "app",
-    "key": "<app key>" // Not app name!
+    "key": "<app key>" // Not app name!  The key should match the key from the screens array in main.py:setup()
 }
 ```
