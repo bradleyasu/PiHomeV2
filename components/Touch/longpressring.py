@@ -1,13 +1,6 @@
-from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.button import Button
-from kivy.uix.behaviors import ButtonBehavior 
-from kivy.uix.image import Image  
-from kivy.uix.label import Label
-from theme.color import Color
 from theme.theme import Theme
-from kivy.properties import ColorProperty, NumericProperty, StringProperty
-from kivy.animation import Animation
+from kivy.properties import ColorProperty, NumericProperty
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
