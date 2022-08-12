@@ -174,6 +174,10 @@ class PiHome(App):
         Navigate to a specific screen.  If the PIN is required to access the
         screen, the pin pad will be displayed prompting the user to enter PIN
         """
+        if self.manager.transition.direction == "down":
+            self.manager.transition.direction = "up"
+        else:
+            self.manager.transition.direction = "down"
         pin_required = pin_required and self.screens[screen].requires_pin
         if pin_required:
             self.show_pinpad()
