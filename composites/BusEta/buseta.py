@@ -23,6 +23,7 @@ class BusEta(Widget):
     theme = Theme()
     route = StringProperty()
     dest = StringProperty()
+    dest_loc = StringProperty()
     eta = StringProperty()
     stop = StringProperty()
     route_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
@@ -31,12 +32,13 @@ class BusEta(Widget):
     danger_color = ColorProperty(theme.get_color(theme.ALERT_DANGER))
     blinkOpacity = NumericProperty(1)
     
-    def __init__(self, stop = "--", route = "--", dest = "BOUND", eta = "Unknown", **kwargs):
+    def __init__(self, stop = "--", route = "--", dest = "BOUND", dest_loc = "", eta = "Unknown", **kwargs):
         super(BusEta, self).__init__(**kwargs)
         self.size = (dp(get_app().width - 100), dp(200))
         self.route = route
         self.stop = stop
         self.dest = dest
+        self.dest_loc = dest_loc
         self.eta = eta
         if int(eta.split(" ")[0]) < 10:
             self.time_color = self.danger_color

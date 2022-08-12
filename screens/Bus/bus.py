@@ -82,12 +82,13 @@ class BusScreen(PiHomeScreen):
                     r = i["rt"]
                     s = i["stpnm"]
                     d = i['rtdir']
+                    dloc = i['des']
                     e = i['prdtm']
                     dts = dt.now()
                     dte = dt.strptime(e, '%Y%m%d %H:%M')
                     est = math.floor((dte - dts).total_seconds() / 60.0)
                    
-                    b = BusEta(route=r, stop=s, dest=d, eta=str(est)+" min")
+                    b = BusEta(route=r, stop=s, dest=d, dest_loc=dloc, eta=str(est)+" min")
                     self.grid.add_widget(b)
 
         if no_data == True:
