@@ -86,10 +86,11 @@ Display
 ```json
 {
     "type": "display",
-    "background": "<(r,g,b,a)>",
+    "background": "<(r,g,b,a)>", // Optional
     "title": "<title>",
     "message": "<message>",
-    "image": "<image_url>"
+    "image": "<image_url>",
+    "timeout": "<seconds>" // Optional
 }
 ```
 

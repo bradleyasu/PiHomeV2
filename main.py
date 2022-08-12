@@ -296,6 +296,8 @@ class PiHome(App):
             self.screens[_DISPLAY_SCREEN].image = payload["image"]
             if "background" in payload:
                 self.screens[_DISPLAY_SCREEN].set_background(payload["background"])
+            if "timeout" in payload:
+                self.screens[_DISPLAY_SCREEN].set_timeout(payload["timeout"], self.manager.current_screen.name)
             goto_screen(_DISPLAY_SCREEN)
 
 
