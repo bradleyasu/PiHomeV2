@@ -7,6 +7,7 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty, Numeri
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
+from components.Switch.switch import PiHomeSwitch
 from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
@@ -16,6 +17,7 @@ from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.slider import Slider
+from kivy.uix.label import Label
 
 Builder.load_file("./screens/DevTools/devtools.kv")
 
@@ -33,9 +35,9 @@ class DevTools(PiHomeScreen):
 
     
     def build(self):
-        layout = FloatLayout(size=(dp(480), dp(600)), size_hint=(None, None))
+        layout = FloatLayout(size=(dp(800), dp(600)))
 
-        button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 70)))
+        button = CircleButton(text='X', size=(dp(50), dp(50)), pos=(dp(self.width - 70), dp(self.height - 200)))
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
@@ -43,13 +45,15 @@ class DevTools(PiHomeScreen):
         layout.add_widget(button)
 
 
-        stopbutton = CircleButton(text='!', size=(dp(50), dp(50)), pos=(dp(100), dp(self.height - 70)))
+        stopbutton = CircleButton(text='!', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 200)))
         stopbutton.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
         stopbutton.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
         stopbutton.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
         stopbutton.bind(on_release=lambda _: get_app().stop())
         layout.add_widget(stopbutton)
 
+        switch = PiHomeSwitch(pos=(dp(20), dp(20)))
+        layout.add_widget(switch)
 
         # self.slider = Slider(on_touch_move=lambda x,y: self.set_brightness(self.slider.value), orientation='horizontal', min=20, max = 255, pos=(dp(self.width - 10), dp(self.height - 100)), size=(dp(40), dp(200)), step=1)
         # layout.add_widget(self.slider)

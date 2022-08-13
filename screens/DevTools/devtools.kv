@@ -1,8 +1,10 @@
 #:kivy 2.0.0
 <DevTools>:
+    size_hint: 1, 1
+    size: dp(800), dp(600)
     canvas.before:
         Color:
-            rgba: (0, 0, 0, 1)
+            rgba: (0, 0, 0, 0.4)
         Rectangle:
             pos: self.pos
             size: self.size
@@ -18,7 +20,5 @@
             color: (1, 1, 1, 1)
             size_hint: None, None
             pos: root.width / 2 - self.width / 2, 10
-
-    
 
     

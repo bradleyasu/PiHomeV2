@@ -21,7 +21,10 @@ class Theme():
     BUTTON_PRIMARY            = ['primary', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
     BUTTON_SECONDARY          = ['secondary', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
     BUTTON_DANGER             = ['danger', '', '', 'buttons']
-    BUTTON_SUCCESS            = ['success', '', '', 'buttons']
+    BUTTON_SUCCESS            = ['success', Color.CELERY_400, Color.DARK_CELERY_400, 'buttons']
+
+    SWITCH_ACTIVE             = ['active', Color.CELERY_400, Color.DARK_CELERY_400, 'switch']
+    SWITCH_INACTIVE             = ['inactive', Color.GRAY_400, Color.DARK_GRAY_400, 'switch']
     
     BUTTON_PRIMARY_ACCENT     = ['primary_accent', Color.BLUE_700, Color.DARK_BLUE_700, 'buttons']
     BUTTON_SECONDARY_ACCENT   = ['secondary_accent', Color.GRAY_200, Color.DARK_GRAY_200, 'buttons']
