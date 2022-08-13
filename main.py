@@ -1,7 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
-from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _SETTINGS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
@@ -101,8 +101,8 @@ class PiHome(App):
         """
         Window.size = (self.width, self.height)
         self.screens = {
-            'home': HomeScreen(name = 'home', label = "Home"),
-            'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
+            _HOME_SCREEN: HomeScreen(name = _HOME_SCREEN, label = "Home"),
+            _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             'bus': BusScreen(name = 'bus', label="Bus ETA"),
             _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
@@ -194,6 +194,8 @@ class PiHome(App):
         return self.poller;
 
     def set_app_menu_open(self, open):
+        if self.pinpad.opacity == 1:
+            return
         self.app_menu_open = open
         if open == True:
             self.layout.add_widget(self.appmenu)

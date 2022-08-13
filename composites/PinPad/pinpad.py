@@ -104,10 +104,10 @@ class PinPad(Widget):
 
 
     def animate(self):
-        animation = Animation(background_color=(0,0,0,0.6), t='out_quad', d=.2)
+        animation = Animation(background_color=(0,0,0,0.6), t='linear', d=.2)
         animation &= Animation(y_position=(self.height /2 - dp(40)), t='out_elastic', d=1)
-        animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='out_quad', d=.2)
-        animation &= Animation(pinpad_opacity=1, t='out_quad', d=.2)
+        animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='linear', d=.2)
+        animation &= Animation(pinpad_opacity=1, t='linear', d=.2)
         animation.start(self)
 
     def touch_check(self, widget, touch):

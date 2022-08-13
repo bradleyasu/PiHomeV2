@@ -9,6 +9,8 @@ MQTT_COMMANDS = {
 
 _DISPLAY_SCREEN = "_display"
 _DEVTOOLS_SCREEN = "_devtools"
+_HOME_SCREEN = "_home"
+_SETTINGS_SCREEN = "_settings"
 
 TEMP_DIR = "./.temp"
 

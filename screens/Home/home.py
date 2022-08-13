@@ -23,6 +23,7 @@ from util.helpers import appmenu_open, get_app, goto_screen, weather
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
+from util.const import _SETTINGS_SCREEN
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -52,7 +53,7 @@ class HomeScreen(PiHomeScreen):
 
     def open_settings(self):
         # self.manager.current = 'settings'
-        goto_screen('settings')
+        goto_screen(_SETTINGS_SCREEN)
     
     def open_pin(self):
         self.manager.current = 'pin'
