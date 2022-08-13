@@ -1,15 +1,16 @@
 from kivy.lang import Builder
+from interface.gesturewidget import GestureWidget
 from services.qr.qr import QR
 from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, BooleanProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
+from util.const import GESTURE_SWIPE_DOWN
 from util.helpers import get_config, get_poller
-from kivy.uix.widget import Widget
 
 Builder.load_file("./composites/Reddit/redditwidget.kv")
 
-class RedditWidget(Widget):
+class RedditWidget(GestureWidget):
 
     theme = Theme()
     background_color = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.5))
@@ -47,6 +48,9 @@ class RedditWidget(Widget):
         get_poller().register_api(reddit_url, 60 * 10, lambda json: self.parse_reddit(json));
         Clock.schedule_interval(lambda _: self.next(), 120)
         Clock.schedule_once(lambda _: self.start(), 20)
+
+        self.on_gesture = self.handle_gesture
+        self.on_click = self.handle_click
 
     def start(self):
         animation = Animation(opacity=1, t='linear', d=1)
@@ -98,8 +102,9 @@ class RedditWidget(Widget):
             self.item = 0
         self.fade_in()
 
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            # self.next()
-            self.clicked = not self.clicked
-            return False
+    def handle_gesture(self, gesture):
+        if gesture == GESTURE_SWIPE_DOWN:
+            self.next()
+    
+    def handle_click(self):
+        self.clicked = not self.clicked
