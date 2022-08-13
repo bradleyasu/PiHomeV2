@@ -47,6 +47,7 @@ class SettingsScreen(PiHomeScreen):
         self.add_widget(s)
     
     def updated(self, section, key, value):
+        print("{}, {}, {}".format(section, key, value))
         toast(label="PiHome needs to be restarted for new settings to take effect")
         if self.callback is not None:
             self.callback()

@@ -28,25 +28,26 @@ class PiHomeSwitch(Widget):
     background_color = ColorProperty(theme.get_color(theme.SWITCH_INACTIVE))
     button_color = ColorProperty(theme.get_color(theme.BUTTON_PRIMARY))
 
-    def __init__(self, size = (dp(100), dp(40)), **kwargs):
+    def __init__(self, size = (dp(100), dp(40)), on_change = lambda _: (), **kwargs):
         super(PiHomeSwitch, self).__init__(**kwargs)
         self.size = size
+        self.on_change = on_change
 
     def animate_on(self):
         animation = Animation(offset = (self.width - dp(4) - (self.width / 2)), t='out_bounce', d=0.2)
-        animation &= Animation(background_color = self.background_active_color, t='linear', d=0.2)
+        animation += Animation(background_color = self.background_active_color, t='linear', d=0.2)
         animation.start(self)
 
     def animate_off(self):
         animation = Animation(offset = (0), t='out_bounce', d=0.2)
-        animation &= Animation(background_color = self.background_inactive_color, t='linear', d=0.2)
+        animation += Animation(background_color = self.background_inactive_color, t='linear', d=0.2)
         animation.start(self)
 
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            # self.next()
             self.enabled = not self.enabled
+            self.on_change(self.enabled)
             if self.enabled:
                 self.animate_on()
             else:

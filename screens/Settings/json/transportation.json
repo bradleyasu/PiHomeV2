@@ -1,48 +1,34 @@
 [
     {
         "type": "title",
-        "title": "Bus"
+        "title": "Pittsburgh Regional Transit"
     },
     {
         "type": "string",
-        "title": "Bus ETA API URL",
-        "desc": "URL to retrieve the next bus ETA",
-        "section": "bus",
-        "key": "bus_eta_url"
-    },
-    {
-        "type": "string",
-        "title": "ETA Key",
-        "desc": "The API URL should return a JSON object.  Specify the response JSON key for the ETA value",
-        "section": "bus",
-        "key": "bus_eta_key"
+        "title": "PRT API Key",
+        "desc": "API Key",
+        "section": "prt",
+        "key": "api_key"
     },
     {
         "type": "string",
         "title": "Route",
-        "desc": "Bus number or route.  Surround with {} if a key exists in the object that provides this information",
-        "section": "bus",
-        "key": "route"
+        "desc": "Comma delimited bus numbers to monitor",
+        "section": "prt",
+        "key": "routes"
     },
     {
         "type": "string",
-        "title": "Stop",
-        "desc": "Bus stop name.  Surround with {} if a key exists in the object that provides this information",
-        "section": "bus",
-        "key": "stop"
-    },
-    {
-        "type": "string",
-        "title": "Direction Bound",
-        "desc": "Bus direction.  Surround with {} if a key exists in the object that provides this information",
-        "section": "bus",
-        "key": "direction"
+        "title": "Stops",
+        "desc": "Comma delimited bus stop numbers",
+        "section": "prt",
+        "key": "stops"
     },
     {
         "type": "string",
         "title": "Service Logo",
         "desc": "URL to Bus/Transportation services logo",
-        "section": "bus",
+        "section": "prt",
         "key": "logo"
     }
 ]

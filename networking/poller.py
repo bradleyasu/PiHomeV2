@@ -17,4 +17,4 @@ class Poller:
 
     def api_call(self, url, on_resp):
         url = url.replace(" ", "%20")
-        req = UrlRequest(url=url, on_success = lambda request, result: on_resp(result), on_error=lambda r, d: toast(d["message"], "error", 10), on_failure=lambda r, d: toast(d["message"], "error", 10))
+        req = UrlRequest(url=url, on_success = lambda request, result: on_resp(result), on_error=lambda r, d: print("An Error Occurred while polling api"), on_failure=lambda r, d: print("A failure occurred while polling api"))
