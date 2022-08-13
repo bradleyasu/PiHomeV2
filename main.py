@@ -1,7 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
-from util.const import _DISPLAY_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
@@ -104,7 +104,7 @@ class PiHome(App):
             'home': HomeScreen(name = 'home', label = "Home"),
             'settings': SettingsScreen(name = 'settings', requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             'bus': BusScreen(name = 'bus', label="Bus ETA"),
-            'devtools': DevTools(name = 'devtools', label="Dev Tools"),
+            _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
         }
 
@@ -119,6 +119,7 @@ class PiHome(App):
         # Init gesture database
         self.gdb = GESTURE_DATABASE
         self.gdb.add_gesture(GESTURE_CHECK)
+        self.gdb.add_gesture(GESTURE_TRIANGLE)
 
     # the root widget
     def build(self):
@@ -212,15 +213,19 @@ class PiHome(App):
         g = simplegesture('', list(zip(touch.ud['line'].points[::2], touch.ud['line'].points[1::2])))
 
         # User Input Gesture
-        # print("gesture representation:", self.gdb.gesture_to_str(g))
+        # print(self.gdb.gesture_to_str(g))
+        
         # print match scores between all known gestures
         # print("check:", g.get_score(GESTURE_CHECK))
 
         # use database to find the more alike gesture, if any
         g2 = self.gdb.find(g, minscore=0.70)
+        # print(g2)
         if g2:
             if g2[1] == GESTURE_CHECK:
                 self.set_app_menu_open(not self.app_menu_open)
+            if g2[1] == GESTURE_TRIANGLE:
+                goto_screen(_DEVTOOLS_SCREEN)
 
     def on_touch_move(self, touch):
         # store points of the touch movement
