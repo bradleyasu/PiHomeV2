@@ -28,10 +28,14 @@ class Wallpaper:
     default = "https://cdn.pihome.io/assets/background.jpg"
     allow_stretch = 1 
 
+    cache = None
+    source = "CDN"
+
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
         source = get_config().get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = get_config().get_int("wallpaper", "allow_stretch", 1)
+        self.source =source
         if source == "Reddit":
             subs = get_config().get("wallpaper", "subreddits", "wallpaper")
             if subs == "":
@@ -52,6 +56,7 @@ class Wallpaper:
             get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
     def parse_reddit(self, json):
+        self.cache = json
         skip_count = random.randint(0, 9)
         for value in json["data"]["children"]:
             if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
@@ -63,6 +68,7 @@ class Wallpaper:
                 skip_count = skip_count - 1
 
     def parse_wallhaven(self, json): 
+        self.cache = json
         skip_count = random.randint(0, 9)
         for value in json["data"]:
             if skip_count <= 0 and "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
@@ -74,6 +80,7 @@ class Wallpaper:
                 skip_count = skip_count - 1
 
     def parse_cdn(self, json):
+        self.cache = json
         host = json["host"]
         background = json["background"]
         self.current = "{}{}".format(host, background)
@@ -88,3 +95,11 @@ class Wallpaper:
         pilImage = ImageOps.contain(pilImage, (width, height))
         pilImage.save(fp="{}/_rsz_.png".format(TEMP_DIR), format="png")
         return "{}/_rsz_.png".format(TEMP_DIR)
+
+    def shuffle(self):
+        if self.source == "Reddit":
+            self.parse_reddit(self.cache)
+        elif self.source == "Wallhaven":
+            self.parse_wallhaven(self.cache)
+        else:
+            toast("Cannot shuffle wallpaper from configured source", "warn")

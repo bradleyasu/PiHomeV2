@@ -1,7 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
-from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _SETTINGS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _SETTINGS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
@@ -212,6 +212,7 @@ class PiHome(App):
 
         # User Input Gesture
         # print(self.gdb.gesture_to_str(g))
+        # print(GESTURE_DATABASE.gesture_to_str(g))
         
         # print match scores between all known gestures
         # print("check:", g.get_score(GESTURE_CHECK))
@@ -222,8 +223,11 @@ class PiHome(App):
         if g2:
             if g2[1] == GESTURE_CHECK:
                 self.set_app_menu_open(not self.app_menu_open)
-            if g2[1] == GESTURE_TRIANGLE:
+            elif g2[1] == GESTURE_TRIANGLE:
                 goto_screen(_DEVTOOLS_SCREEN)
+            elif g2[1] == GESTURE_W:
+                self.wallpaper_service.shuffle()
+            
 
     def on_touch_move(self, touch):
         # store points of the touch movement
