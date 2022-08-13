@@ -116,11 +116,7 @@ class PiHome(App):
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
 
-        # Init gesture database
-        self.gdb = GESTURE_DATABASE
-        self.gdb.add_gesture(GESTURE_CHECK)
-        self.gdb.add_gesture(GESTURE_TRIANGLE)
-
+    
     # the root widget
     def build(self):
         self.setup()
@@ -221,7 +217,7 @@ class PiHome(App):
         # print("check:", g.get_score(GESTURE_CHECK))
 
         # use database to find the more alike gesture, if any
-        g2 = self.gdb.find(g, minscore=0.70)
+        g2 = GESTURE_DATABASE.find(g, minscore=0.70)
         # print(g2)
         if g2:
             if g2[1] == GESTURE_CHECK:

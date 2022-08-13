@@ -23,7 +23,7 @@ from util.helpers import appmenu_open, get_app, goto_screen, weather
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
-from util.const import _SETTINGS_SCREEN
+from util.const import _SETTINGS_SCREEN, GESTURE_SWIPE_DOWN
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -50,6 +50,8 @@ class HomeScreen(PiHomeScreen):
         Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
+        self.on_gesture = self.handle_gesture
+
 
     def open_settings(self):
         # self.manager.current = 'settings'
@@ -72,3 +74,7 @@ class HomeScreen(PiHomeScreen):
         self.date = time.strftime("%A %B %d, %Y")
 
         self.weather_code = str(weather().weather_code)
+
+    def handle_gesture(self, gesture): 
+        if gesture == GESTURE_SWIPE_DOWN:
+            pass
