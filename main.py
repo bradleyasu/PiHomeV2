@@ -1,10 +1,9 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
-from util.const import _DISPLAY_SCREEN, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
-from components.Touch.longpressring import LongPressRing
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
@@ -19,6 +18,7 @@ import os
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from components.Image.networkimage import NetworkImage
+from kivy.graphics import Color, Ellipse, Line
 
 from components.Toast.toast import Toast
 from composites.AppMenu.appmenu import AppMenu
@@ -32,10 +32,12 @@ from screens.Bus.bus import BusScreen
 from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SlideTransition
-from util.helpers import get_app, goto_screen
+from util.helpers import get_app, goto_screen, simplegesture
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock
+from kivy.gesture import Gesture 
+
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -52,11 +54,6 @@ class PiHome(App):
     toast_open = False
     web_conf = None
     wallpaper_service = None
-
-
-    # App menu trigger events
-    _td_ticks = 0
-    _td_down = False
 
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
@@ -112,13 +109,16 @@ class PiHome(App):
         }
 
         self.appmenu = AppMenu(self.screens)
-        self.appmenu_ring = LongPressRing()
 
         self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
 
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
+
+        # Init gesture database
+        self.gdb = GESTURE_DATABASE
+        self.gdb.add_gesture(GESTURE_CHECK)
 
     # the root widget
     def build(self):
@@ -137,8 +137,8 @@ class PiHome(App):
         self.manager = screenManager
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
+        self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
 
-        self.layout.add_widget(self.appmenu_ring)
         return self.layout
 
     def reload_configuration(self):
@@ -202,13 +202,34 @@ class PiHome(App):
             self.layout.remove_widget(self.appmenu)
 
     def on_touch_down(self, touch):
-        self._td_down = True
-        self.appmenu_ring.set_visible(True, (touch.x - self.appmenu_ring.width/2, touch.y - self.appmenu_ring.height/2))
+        # start collecting points in touch.ud
+        # create a line to display the points
+        userdata = touch.ud
+        userdata['line'] = Line(points=(touch.x, touch.y))
+        return False 
 
     def on_touch_up(self, touch):
-        self._td_down = False
-        self._td_ticks = 0
-        self.appmenu_ring.set_visible(False)
+        g = simplegesture('', list(zip(touch.ud['line'].points[::2], touch.ud['line'].points[1::2])))
+
+        # User Input Gesture
+        # print("gesture representation:", self.gdb.gesture_to_str(g))
+        # print match scores between all known gestures
+        # print("check:", g.get_score(GESTURE_CHECK))
+
+        # use database to find the more alike gesture, if any
+        g2 = self.gdb.find(g, minscore=0.70)
+        if g2:
+            if g2[1] == GESTURE_CHECK:
+                self.set_app_menu_open(not self.app_menu_open)
+
+    def on_touch_move(self, touch):
+        # store points of the touch movement
+        try:
+            touch.ud['line'].points += [touch.x, touch.y]
+            return False 
+        except (KeyError) as e:
+            pass
+
 
     """
     Quit PiHome and clean up resources
@@ -244,16 +265,6 @@ class PiHome(App):
         self.background.url = self.wallpaper_service.current
         self.background.set_stretch(self.wallpaper_service.allow_stretch)
 
-        # Start counter if holding down
-        if self._td_down == True:
-            self._td_ticks = self._td_ticks + 1
-
-        # If holding down for period, open menu
-        if self._td_ticks > 1:
-            self.set_app_menu_open(not self.app_menu_open)
-            self._td_down = False 
-            self._td_ticks = 0
-
     
     def _reload_background(self):
         """
@@ -274,7 +285,6 @@ class PiHome(App):
             os.makedirs(TEMP_DIR)
         # self.profile = cProfile.Profile()
         # self.profile.enable()
-
 
     def _init_mqtt(self):
         h = self.base_config.get('mqtt', 'host', "")

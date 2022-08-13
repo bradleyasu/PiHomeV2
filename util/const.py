@@ -1,4 +1,7 @@
 from util.helpers import update_pihome
+from kivy.gesture import GestureDatabase
+
+GESTURE_DATABASE = GestureDatabase()
 
 MQTT_COMMANDS = {
     'update': update_pihome
@@ -7,3 +10,6 @@ MQTT_COMMANDS = {
 _DISPLAY_SCREEN = "_display"
 
 TEMP_DIR = "./.temp"
+
+
+GESTURE_CHECK = GESTURE_DATABASE.str_to_gesture(b'eNq9lVtIU2EcwI/gFRRdXigf7FCG1oMJpmWCO4RxhB4SFBJEdz3ubM5t7aJ5SZeKD3ECwaOUoY1AGggq5KUMm5mXqQWjLCw0zbxUUEmRhFi27+x8+zzoyyA6Lxu/3////S87O8fq3xIZjHEXE1qiLqtIUlEms8VIsUwQyX9rZo9fY6+yiUxAuVppplmSUNk8GYE0pVbRZjeRSz0knE+XGIx6pUUBVGyPaNOZmcsEmcxGfQllYgtZGmPC+NNzOYhqBBr0ap0ZBCW6o0L5qBwAUZDfFZZ0uOwdFzvSMhm/CpYU39sOiTtb0WSR0yJPDB1FOp5/LZhoSMuho0lxQ4yojkokhH5mLSOrOtrl9o6u6nrHx8e40E+9ix01/cwGfjC9IXNs84HQT77aIkpmncA/6T/aWTm/IvQTVemfHjlw4McP+tekREYI/ZjpkOp+hw346fqAuR/qMaF3aDYMrZ1W4GeSi/0vmG8Kff+3btFEGNf/JH4My0hhhb47d26k69wI8E+HsxLqfiuFvnXIHhiVgAE/vHN+I1URLPDitmDlie5VAvhe0+iNvOv5Qt+zNfDi111uvtvL2FD4tFXonV9EG5dO02D/A7NBWe2f8f/rXQuVovXleOBHT47nOmRa3/zr7Cqt/cws8NM5ZMHih2rf/NsebaOyFuxP7DqVZ9g+UuObX4wptOHjvcDPZrVYQhV1vvnl0cH2763c/f8mf20I75v4t37ljjU6vi8O+IUD5faGjSLf/Cr4+0xNA78UnpfqbGoW+vXj9sHueXD/it9HKsue2V5a5BQTalIYKUqHnhMkUTzCPX1IguK++DWyu5kNsaW9TIVDJt4BF8ekPFN6EjhmhUyKmA0yHDFYVyHxnkdjkGHeOC+Toxo07EVuRYyAjEAM9idb8s5Bw/5kqD8a9ifblQv7k44gBvciRblq2J8U99ZADEPsMDfm/kxSCz7/cAzOIUF7Vkv4uCLHPgztQA1n28U02N7zNPvMUcKl+Ll3gHav3Wd/pbCGAv2WOimfq0SzGeD+itH+LjfxjEY1jJB5mudyTbCuxuaNMyfzTIvqWmCcDp1XFsEzPZqtDNYwEN4a5XAvBlSjHNYwuHhGWeQyJsSs11JGmU5Bud+gD2+Bq43x18lK3W9/zP0uSfoLWtXZrg==')

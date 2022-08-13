@@ -1,6 +1,7 @@
 import subprocess
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.gesture import Gesture
 
 def get_app():
     return App.get_running_app()
@@ -31,3 +32,12 @@ def update_pihome():
     """
     toast("PiHome updates are available. PiHome will restart in less than 10 seconds", level = "warn", timeout = 10)
     Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 12)
+
+
+
+def simplegesture(name, point_list):
+    g = Gesture()
+    g.add_stroke(point_list)
+    g.normalize()
+    g.name = name
+    return g
