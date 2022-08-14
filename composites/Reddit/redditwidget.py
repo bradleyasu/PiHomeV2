@@ -1,4 +1,5 @@
 from kivy.lang import Builder
+from components.Image.networkimage import BLANK_IMAGE
 from interface.gesturewidget import GestureWidget
 from services.qr.qr import QR
 from theme.theme import Theme
@@ -21,8 +22,8 @@ class RedditWidget(GestureWidget):
     opacity = NumericProperty(0)
     background_image_opacity = NumericProperty(0)
 
-    thumbnail = StringProperty("./assets/images/blank.png")
-    qr = StringProperty("./assets/images/blank.png")
+    thumbnail = StringProperty(BLANK_IMAGE)
+    qr = StringProperty(BLANK_IMAGE)
     title = StringProperty("")
     guilded = BooleanProperty(False)
     clicked = BooleanProperty(False)
@@ -88,7 +89,7 @@ class RedditWidget(GestureWidget):
         if thumbnail.endswith(".jpg") or thumbnail.endswith(".png"):
             self.thumbnail = thumbnail
         else:
-            self.thumbnail = "./assets/images/blank.png"
+            self.thumbnail = BLANK_IMAGE
 
         if url.endswith(".jpg") or url.endswith(".png"):
             self.background_image = url

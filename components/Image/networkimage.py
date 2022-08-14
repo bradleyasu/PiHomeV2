@@ -14,11 +14,14 @@ from kivy.metrics import dp
 
 Builder.load_file("./components/Image/networkimage.kv")
 
+BLANK_IMAGE = "./assets/images/blank.png"
+
 class NetworkImage(Widget):
     theme = Theme()
 
     color = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
     url = StringProperty()
+    prev_image = ""
     stretch = BooleanProperty(False)
     k_ratio = BooleanProperty(True)
     loader = None
@@ -26,7 +29,7 @@ class NetworkImage(Widget):
 
     def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), enable_stretch = False, loader = None, error = None, **kwargs):
         super(NetworkImage, self).__init__(**kwargs)
-        Loader.loading_image = "./assets/images/blank.png"
+        Loader.loading_image = BLANK_IMAGE
         self.url = url
         self.size = size
         self.pos = pos
@@ -45,11 +48,13 @@ class NetworkImage(Widget):
         self.ids["network_image_async_source"].reload()
 
     def on_error(self, a = None, b = None):
-        if self.error is not None:
-            self.url = self.error
+        pass
+        # if self.error is not None:
+            # self.url = self.error
     
     def on_load(self):
-        if self.loader is not None:
-            self.url = self.loader
+        pass
+        # if self.loader is not None:
+            # self.url = self.loader
 
 
