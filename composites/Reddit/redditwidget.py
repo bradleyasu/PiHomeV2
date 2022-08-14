@@ -14,7 +14,7 @@ Builder.load_file("./composites/Reddit/redditwidget.kv")
 class RedditWidget(GestureWidget):
 
     theme = Theme()
-    background_color = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.5))
+    background_color = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.0))
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     text_color_secondary = ColorProperty(theme.get_color(theme.TEXT_SECONDARY))
 
@@ -64,11 +64,13 @@ class RedditWidget(GestureWidget):
 
     def fade_out(self, callback):
         animation = Animation(content_opacity=0, t='linear', d=1)
+        animation &= Animation(opacity=0, t='linear', d=1)
         animation.on_complete = lambda _: callback()
         animation.start(self)
 
     def fade_in(self):
         animation = Animation(content_opacity=1, t='linear', d=1)
+        animation &= Animation(opacity=1, t='linear', d=1)
         animation.start(self)
 
     def next(self):
