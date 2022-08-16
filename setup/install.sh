@@ -89,13 +89,16 @@ sudo apt-get -y install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-tt
 sudo apt-get -y install libmtdev1 >> $LOG
 
 # Image manipulation
-sudo apt-get install libopenjp2-7 >> $LOG
+sudo apt-get -y install libopenjp2-7 >> $LOG
+
+# FFMPEG 
+sudo apt-get -y install ffmpeg >> $LOG
 
 # MQTT Services
-python3 -m pip install paho-mqtt
+python3 -m pip install paho-mqtt >> $LOG
 
 # QR Code Services
-python3 -m pip install qrcode[pil]
+python3 -m pip install qrcode[pil] >> $LOG
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
