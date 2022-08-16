@@ -47,6 +47,7 @@ Window.show_cursor = platform.system() == 'Darwin'
 Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = 'below_target'
 os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
+os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 class PiHome(App):
 

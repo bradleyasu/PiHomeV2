@@ -94,6 +94,9 @@ sudo apt-get -y install libopenjp2-7 >> $LOG
 # FFMPEG 
 sudo apt-get -y install ffmpeg >> $LOG
 
+# MPG123 to play audio effects
+sudo apt-get -y install mpg123 >> $LOG
+
 # VLC
 # sudo apt-get -y install vlc >> $LOG
 
@@ -105,6 +108,11 @@ python3 -m pip install qrcode[pil] >> $LOG
 
 # VLC 
 # python3 -m pip install python-vlc >> $LOG
+
+# Playsound
+# python3 -m pip install playsound >> $LOG
+
+python3 -m pip install mpyg321 >> $LOG
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG

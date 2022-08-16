@@ -21,6 +21,7 @@ from kivy.uix.label import Label
 from kivy.uix.videoplayer import VideoPlayer
 from kivy.core.audio import SoundLoader
 
+from mpyg321.MPyg123Player import MPyg123Player 
 
 Builder.load_file("./screens/DevTools/devtools.kv")
 
@@ -58,12 +59,13 @@ class DevTools(PiHomeScreen):
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         layout.add_widget(switch)
 
+        url = './assets/audio/notify/001.wav'
 
-        self.sound =  SoundLoader.load('./assets/audio/notify/001.wav')
+        self.player = MPyg123Player()
         # url = ""
         # player = VideoPlayer(source=url, state='play', options={'allow_stretch': True})
-
         # layout.add_widget(player)
+
         # self.slider = Slider(on_touch_move=lambda x,y: self.set_brightness(self.slider.value), orientation='horizontal', min=20, max = 255, pos=(dp(self.width - 10), dp(self.height - 100)), size=(dp(40), dp(200)), step=1)
         # layout.add_widget(self.slider)
         
@@ -76,6 +78,7 @@ class DevTools(PiHomeScreen):
         print(level)
 
     def play_sound(self):
-        if self.sound:
-            self.sound.play()
-  
+        url = './assets/audio/notify/001.mp3'
+        # playsound.playsound(url, True)
+        if self.player:
+            self.player.play_song(url)
