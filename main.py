@@ -46,6 +46,7 @@ kivy.require('2.0.0')
 Window.show_cursor = platform.system() == 'Darwin'
 Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = 'below_target'
+os.environ["KIVY_AUDIO"] = "ffpyplayer"
 
 class PiHome(App):
 
