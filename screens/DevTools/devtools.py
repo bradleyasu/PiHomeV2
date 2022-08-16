@@ -20,7 +20,7 @@ from kivy.uix.slider import Slider
 from kivy.uix.label import Label
 from kivy.uix.videoplayer import VideoPlayer
 
-from kivy.core.audio import SoundLoader
+import vlc
 
 Builder.load_file("./screens/DevTools/devtools.kv")
 
@@ -58,7 +58,7 @@ class DevTools(PiHomeScreen):
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         layout.add_widget(switch)
 
-        self.sound = SoundLoader.load('./assets/audio/notify/001.wav')
+        self.player = vlc.MediaPlayer("./assets/audio/notify/001.mp3")
 
 
         # url = ""
@@ -77,7 +77,7 @@ class DevTools(PiHomeScreen):
         print(level)
 
     def play_sound(self):
-        if self.sound:
-            self.sound.play()
-
+        if self.player:
+            self.player.set_position(0)
+            self.player.play()
   

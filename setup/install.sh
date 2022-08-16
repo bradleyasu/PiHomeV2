@@ -100,6 +100,9 @@ python3 -m pip install paho-mqtt >> $LOG
 # QR Code Services
 python3 -m pip install qrcode[pil] >> $LOG
 
+# VLC 
+python3 -m pip install python-vlc >> $LOG
+
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
 
