@@ -19,7 +19,7 @@ from kivy.animation import Animation
 from kivy.uix.slider import Slider
 from kivy.uix.label import Label
 
-from mpyg321.MPyg123Player import MPyg123Player 
+from mplayer import Player
 
 Builder.load_file("./screens/DevTools/devtools.kv")
 
@@ -58,7 +58,7 @@ class DevTools(PiHomeScreen):
         layout.add_widget(switch)
 
 
-        self.player = MPyg123Player()
+        self.player = Player()
         # url = ""
         # player = VideoPlayer(source=url, state='play', options={'allow_stretch': True})
         # layout.add_widget(player)
@@ -78,4 +78,6 @@ class DevTools(PiHomeScreen):
         url = './assets/audio/notify/001.mp3'
         # playsound.playsound(url, True)
         if self.player:
-            self.player.play_song(url)
+            self.player.loadfile(url)
+        else:
+            print("faild to create player")
