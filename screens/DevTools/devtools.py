@@ -58,7 +58,7 @@ class DevTools(PiHomeScreen):
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         layout.add_widget(switch)
 
-        self.sound = SoundLoader.load('./assets/audio/notify/001.mp3')
+        self.sound = SoundLoader.load('./assets/audio/notify/001.wav')
 
 
         # url = ""
