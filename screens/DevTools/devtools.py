@@ -19,8 +19,8 @@ from kivy.animation import Animation
 from kivy.uix.slider import Slider
 from kivy.uix.label import Label
 from kivy.uix.videoplayer import VideoPlayer
+from kivy.core.audio import SoundLoader
 
-import vlc
 
 Builder.load_file("./screens/DevTools/devtools.kv")
 
@@ -58,9 +58,8 @@ class DevTools(PiHomeScreen):
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         layout.add_widget(switch)
 
-        self.player = vlc.MediaPlayer("./assets/audio/notify/001.mp3")
 
-
+        self.sound =  SoundLoader.load('./assets/audio/notify/001.wav')
         # url = ""
         # player = VideoPlayer(source=url, state='play', options={'allow_stretch': True})
 
@@ -77,7 +76,6 @@ class DevTools(PiHomeScreen):
         print(level)
 
     def play_sound(self):
-        if self.player:
-            self.player.set_position(0)
-            self.player.play()
+        if self.sound:
+            self.sound.play()
   

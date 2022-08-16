@@ -94,6 +94,9 @@ sudo apt-get -y install libopenjp2-7 >> $LOG
 # FFMPEG 
 sudo apt-get -y install ffmpeg >> $LOG
 
+# VLC
+# sudo apt-get -y install vlc >> $LOG
+
 # MQTT Services
 python3 -m pip install paho-mqtt >> $LOG
 
@@ -101,7 +104,7 @@ python3 -m pip install paho-mqtt >> $LOG
 python3 -m pip install qrcode[pil] >> $LOG
 
 # VLC 
-python3 -m pip install python-vlc >> $LOG
+# python3 -m pip install python-vlc >> $LOG
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
