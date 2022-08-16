@@ -18,8 +18,6 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.slider import Slider
 from kivy.uix.label import Label
-from kivy.uix.videoplayer import VideoPlayer
-from kivy.core.audio import SoundLoader
 
 from mpyg321.MPyg123Player import MPyg123Player 
 
@@ -59,7 +57,6 @@ class DevTools(PiHomeScreen):
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         layout.add_widget(switch)
 
-        url = './assets/audio/notify/001.wav'
 
         self.player = MPyg123Player()
         # url = ""
