@@ -2,6 +2,7 @@ from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
 from server.server import PiHomeServer
+from services.audio.audioplayer import AudioPlayer
 from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _SETTINGS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
@@ -98,6 +99,9 @@ class PiHome(App):
 
         # Init Server
         self.server = PiHomeServer()
+
+        # Init Audio Player
+        self.audio_player = AudioPlayer()
 
     def setup(self):
         """
