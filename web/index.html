@@ -1,3 +1,5 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script>
   const HOST = "http://"+window.location.host;
   function play(audio) {
@@ -10,8 +12,15 @@
   function uplay(){
     const input = document.getElementById("uinput").value;
     play(input)
+    document.getElementById("uinput").value = "";
   }
 
+  function stop() {
+    const body = {
+      "stop": "audio"
+    }
+    postData(HOST, body).then(() => console.log("DONE"));
+  }
 
   async function postData(url = '', data = {}) {
     // Default options are marked with *
@@ -32,5 +41,73 @@
     }
 </script>
 
-<input id="uinput"/>
-<button onclick="javascript:uplay()">Play</button>
+<style>
+  html,body{
+    margin: 0px
+    padding:0px
+  }
+  body {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
+    align-items: center;
+    background: black;
+    color: white;
+    font-family: "Helvetica";
+  }
+
+  .uin {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #A020F0;
+  }
+
+  .uin > input {
+    font-size: 20px;
+    line-height: 30px;
+    border: none;
+    outline: none;
+    outline-width: none;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .controls {
+    margin-top: 10px;
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+
+  button {
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #424242;
+    background: #121212;
+    color: white;
+    border-radius:10px;
+  }
+
+</style>
+<body>
+  <div class="player">
+    <h4>
+      Paste URL and click play:
+    </h4>
+    <div class="uin">
+      <input id="uinput"/>
+    </div>
+    <div class="controls">
+      <button onclick="javascript:uplay()">Play</button>
+      <button onclick="javascript:stop()">Stop</button>
+    </div>
+  </div>
+</body>
