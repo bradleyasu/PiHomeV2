@@ -7,7 +7,7 @@ class AudioPlayer:
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
         # self.player = Player()
-        self.player = MPV(ytdl=True)
+        self.player = MPV(ytdl=True, vid=False)
 
     def play(self, url):
         if self.player:
