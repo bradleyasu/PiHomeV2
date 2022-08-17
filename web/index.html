@@ -22,6 +22,13 @@
     postData(HOST, body).then(() => console.log("DONE"));
   }
 
+  function setVolume(value) {
+    const body = {
+      "volume": value
+    }
+    postData(HOST, body).then(() => console.log("DONE"));
+  }
+
   async function postData(url = '', data = {}) {
     // Default options are marked with *
     const response = await fetch(url, {
@@ -96,6 +103,15 @@
     border-radius:10px;
   }
 
+  .volume_control {
+    margin-top: 100px;
+    text-align: center;
+    background: #121212;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+
 </style>
 <body>
   <div class="player">
@@ -108,6 +124,14 @@
     <div class="controls">
       <button onclick="javascript:uplay()">Play</button>
       <button onclick="javascript:stop()">Stop</button>
+    </div>
+    <div class="volume_control">
+      <div>
+        Volume: 
+      </div>
+      <div>
+        <input type="range" min="0" max="100" value="100" oninput="javascript:setVolume(this.value)">
+      </div>
     </div>
   </div>
 </body>

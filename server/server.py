@@ -22,6 +22,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 audio_player().play(url)
             if "stop" in payload:
                 audio_player().stop()
+            if "volume" in payload: 
+                v = int(payload["volume"])
+                audio_player().set_volume(v)
         except:
             pass
         self._set_response()
