@@ -1,11 +1,11 @@
-
 <script>
+  const HOST = "http://"+window.loction.host;
   function play(audio) {
     const body = {
         "play": audio
     }
     console.log(body);
-    postData("http://localhost:8989", body).then(() => console.log("DONE"));
+    postData(HOST, body).then(() => console.log("DONE"));
   }
 
   function uplay(){
