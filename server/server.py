@@ -9,7 +9,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
  
  
 class PiHomeServer():
-    PORT = 8282
+    PORT = 80
     SERVER_THREAD = None
     def __init__(self, **kwargs):
         super(PiHomeServer, self).__init__(**kwargs)
