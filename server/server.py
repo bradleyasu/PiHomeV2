@@ -2,6 +2,8 @@ import http.server
 import socketserver
 from threading import Thread
 
+from util.const import SERVER_PORT
+
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         self.path = './web/index.html'
@@ -9,7 +11,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
  
  
 class PiHomeServer():
-    PORT = 80
+    PORT = SERVER_PORT
     SERVER_THREAD = None
     def __init__(self, **kwargs):
         super(PiHomeServer, self).__init__(**kwargs)
@@ -25,5 +27,4 @@ class PiHomeServer():
     def _run(self):
         Handler = MyHttpRequestHandler
         with socketserver.TCPServer(("", self.PORT), Handler) as httpd:
-            print("Http Server Serving at port", self.PORT)
             httpd.serve_forever()

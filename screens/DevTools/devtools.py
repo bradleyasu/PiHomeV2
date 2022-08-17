@@ -14,6 +14,7 @@ from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
+from util.const import SERVER_PORT
 from util.helpers import appmenu_open, get_app, goto_screen, update_pihome
 from util.tools import hex
 from kivy.clock import Clock
@@ -62,7 +63,7 @@ class DevTools(PiHomeScreen):
 
         self.player = Player()
 
-        qr = QR().from_url("http://{}".format(self.local_ip))
+        qr = QR().from_url("http://{}:{}".format(self.local_ip, SERVER_PORT))
         qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(100), dp(100)))
         layout.add_widget(qr_img)
         # url = ""

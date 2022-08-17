@@ -1,6 +1,7 @@
 from util.helpers import update_pihome
 from kivy.gesture import GestureDatabase
 
+SERVER_PORT = 8989
 GESTURE_DATABASE = GestureDatabase()
 
 MQTT_COMMANDS = {
