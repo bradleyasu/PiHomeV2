@@ -97,7 +97,7 @@ sudo apt-get -y install ffmpeg >> $LOG
 # MPG123 to play audio effects
 # sudo apt-get -y install mpg123 >> $LOG
 sudo apt-get -y install mplayer >> $LOG
-sudo apt-get -y install mpv >> $LOG
+sudo apt-get -y install mpv libmpv1 >> $LOG
 
 # VLC
 # sudo apt-get -y install vlc >> $LOG

@@ -538,7 +538,7 @@ def _mpv_client_api_version():
     return ver>>16, ver&0xFFFF
 
 MPV_VERSION = _mpv_client_api_version()
-if MPV_VERSION < (1, 108):
+if MPV_VERSION < (1, 107):
     ver = '.'.join(str(num) for num in MPV_VERSION)
     raise RuntimeError(f"python-mpv requires libmpv with an API version of 1.108 or higher (libmpv >= 0.33), but you have an older version ({ver}).")
 
