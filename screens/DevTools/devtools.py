@@ -6,9 +6,11 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty, Numeri
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
+from components.Image.networkimage import NetworkImage
 from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
 from interface.pihomescreen import PiHomeScreen
+from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
@@ -59,6 +61,10 @@ class DevTools(PiHomeScreen):
 
 
         self.player = Player()
+
+        qr = QR().from_url("http://{}:8282".format(self.local_ip))
+        qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(50), dp(50)))
+        layout.add_widget(qr_img)
         # url = ""
         # player = VideoPlayer(source=url, state='play', options={'allow_stretch': True})
         # layout.add_widget(player)

@@ -1,6 +1,7 @@
 from kivy.config import Config
 
 from screens.DisplayEvent.displayevent import DisplayEvent
+from server.server import PiHomeServer
 from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _SETTINGS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
@@ -37,7 +38,6 @@ from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock
 from kivy.gesture import Gesture 
-
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -95,6 +95,9 @@ class PiHome(App):
 
         #Init Weather Services
         self.wallpaper_service = Wallpaper()
+
+        # Init Server
+        self.server = PiHomeServer()
 
     def setup(self):
         """
@@ -294,6 +297,7 @@ class PiHome(App):
             os.makedirs(TEMP_DIR)
         # self.profile = cProfile.Profile()
         # self.profile.enable()
+        self.server.start_server()
 
     def _init_mqtt(self):
         h = self.base_config.get('mqtt', 'host', "")
@@ -324,7 +328,8 @@ class PiHome(App):
             goto_screen(_DISPLAY_SCREEN)
 
 
-    # def on_stop(self):
+    def on_stop(self):
+        self.server.stop_server()
     #     self.profile.disable()
     #     self.profile.dump_stats('pihome.profile')
     #     self.profile.print_stats()
