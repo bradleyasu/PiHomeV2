@@ -97,6 +97,7 @@ sudo apt-get -y install ffmpeg >> $LOG
 # MPG123 to play audio effects
 # sudo apt-get -y install mpg123 >> $LOG
 sudo apt-get -y install mplayer >> $LOG
+sudo apt-get -y install mpv >> $LOG
 
 # VLC
 # sudo apt-get -y install vlc >> $LOG
@@ -115,6 +116,7 @@ python3 -m pip install qrcode[pil] >> $LOG
 
 # python3 -m pip install mpyg321 >> $LOG
 python3 -m pip install mplayer.py >> $LOG
+python3 -m pip install python-mpv >> $LOG
 
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
