@@ -1,0 +1,87 @@
+#:kivy 2.0.0
+<MusicPlayer>:
+    size: self.size
+    pos: self.pos
+    size_hint: 1, 1
+    canvas.before:
+        Color:
+            rgba:  (0,0,0,0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        
+    FloatLayout:
+        size: self.size
+        pos: self.pos
+        size_hint: 1, 1
+        canvas.before:
+            Color:
+                rgba: root.background_color_prime
+            Rectangle:
+                pos: root.pos
+                size: root.size   
+
+        ScrollView:
+            canvas.before:
+                Color:
+                    rgba: root.background_color_secondary
+                Rectangle:
+                    pos: root.pos
+                    size: root.size
+
+            pos: 0, 0
+            size_hint: None, None
+            size: dp(300), root.height
+
+            GridLayout:
+                cols: 1
+                size_hint_y: None
+        
+        FloatLayout:
+            size: dp(root.width) - dp(300), dp(root.height)
+            pos: dp(300), 0
+            size_hint: None, None
+
+            canvas:
+                Color:
+                    rgba: (0, 1, 0, 0.0)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+
+            NetworkImage:
+                url: root.album_art
+                size: dp(128), dp(128)
+                pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2)), (root.height / 2 - self.height / 2 + dp(100)) 
+
+            Label:
+                id: "media_playing_title"
+                text: root.media_name
+                color: root.text_color
+                font_size: '20sp'
+                font_name: 'Nunito'
+                pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2)), root.height / 2 - self.height / 2
+
+            Widget:
+                size_hint: None, None
+                size: dp(300), dp(2)
+                pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2)), (root.height / 2 - self.height / 2 - dp(60)) 
+                canvas.before:
+                    Color:
+                        rgba: root.track_color
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size  
+                    Color:
+                        rgba: root.track_prog_color
+                    Rectangle:
+                        pos: self.pos
+                        size: dp(root.percent * 300 /100), dp(2) 
+
+
+            NetworkImage:
+                url: root.play_control_btn
+                size: dp(64), dp(64)
+                pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2)), (root.height / 2 - self.height / 2 - dp(140)) 
+                on_touch_down: root.toggle_play

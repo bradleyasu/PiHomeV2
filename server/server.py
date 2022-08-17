@@ -39,6 +39,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
 class PiHomeServer():
     PORT = SERVER_PORT
     SERVER_THREAD = None
+    httpd = None
     def __init__(self, **kwargs):
         super(PiHomeServer, self).__init__(**kwargs)
 
@@ -47,10 +48,11 @@ class PiHomeServer():
         self.SERVER_THREAD.start()
 
     def stop_server(self):
-        self.SERVER_THREAD.join()
+        self.httpd.shutdown()
         
 
     def _run(self):
         Handler = MyHttpRequestHandler
-        with socketserver.TCPServer(("", self.PORT), Handler) as httpd:
-            httpd.serve_forever()
+        with socketserver.TCPServer(("", self.PORT), Handler) as h:
+            self.httpd = h
+            h.serve_forever()

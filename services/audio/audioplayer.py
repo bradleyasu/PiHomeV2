@@ -5,17 +5,18 @@ from .mpv import MPV
 from util.const import TEMP_DIR
 
 class AudioPlayer:
-    percent = ""
-    title = ""
+    percent = 0
+    title = "No Media"
     is_playing = False
     volume = 100.0
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
         # self.player = Player()
         self.player = MPV(ytdl=True, vid=False)
-        self._observe('media-title', lambda value: self._set_percent(value))
-        self._observe('percent-pos', lambda value: self._set_title(value))
+        self._observe('media-title', lambda value: self._set_title(value))
+        self._observe('percent-pos', lambda value: self._set_percent(value))
         self._observe('volume', lambda value: self._set_volume(value))
+        self._observe('core-idle', lambda value: self._set_is_playing(value))
 
     def play(self, url):
         if self.player:
@@ -23,6 +24,10 @@ class AudioPlayer:
             self.player.play(url)
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
+
+    def toggle_play(self):
+        if self.player:
+            self.player.command("p")
 
     def stop(self):
         # Terminate the current player
@@ -37,13 +42,26 @@ class AudioPlayer:
             action(value)
 
     def _set_percent(self, value):
-        self.percent = value
+        if value:
+            self.percent = value
+        else:
+            self.percent = 0
 
     def _set_title(self, title):
-        self.title = title
+        if title:
+            self.title = title
+        else:
+            self.title = "No Media"
 
     def _set_volume(self, volume):
-        self.volume = volume
+        if volume:
+            self.volume = volume
+
+    def _set_is_playing(self, is_playing):
+        if is_playing:
+            self.is_playing = False
+        else:
+            self.is_playing = True
     
     def set_volume(self, volume):
         self.player._set_property("volume", volume)
