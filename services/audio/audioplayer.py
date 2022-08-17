@@ -9,9 +9,10 @@ class AudioPlayer:
         self.player = Player()
 
     def play(self, url):
-        print("HERE")
         if self.player:
-            print("playing {}".format(url))
             self.player.loadfile(url)
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
+
+    def stop(self):
+        self.player.quit()

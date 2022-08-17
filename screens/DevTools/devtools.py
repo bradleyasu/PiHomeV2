@@ -54,7 +54,7 @@ class DevTools(PiHomeScreen):
         stopbutton.stroke_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
         stopbutton.text_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
         stopbutton.down_color = self.theme.get_color(self.theme.ALERT_SUCCESS, 0.2)
-        stopbutton.bind(on_release=lambda _: self.play_sound())
+        stopbutton.bind(on_release=lambda _: self.stop_sound())
         layout.add_widget(stopbutton)
 
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
@@ -81,3 +81,6 @@ class DevTools(PiHomeScreen):
 
     def play_sound(self):
         audio_player().play("./assets/audio/notify/001.mp3")
+
+    def stop_sound(self):
+        audio_player().stop()

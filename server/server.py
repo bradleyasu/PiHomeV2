@@ -17,8 +17,11 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         # print("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
         try:
             payload = json.loads(post_data.decode('utf-8'))
-            url = payload["play"]
-            audio_player().play(url)
+            if "play" in payload:
+                url = payload["play"]
+                audio_player().play(url)
+            if "stop" in payload:
+                audio_player().stop()
         except:
             pass
         self._set_response()
