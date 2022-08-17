@@ -62,8 +62,8 @@ class DevTools(PiHomeScreen):
 
         self.player = Player()
 
-        qr = QR().from_url("http://{}:8282".format(self.local_ip))
-        qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(50), dp(50)))
+        qr = QR().from_url("http://{}".format(self.local_ip))
+        qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(100), dp(100)))
         layout.add_widget(qr_img)
         # url = ""
         # player = VideoPlayer(source=url, state='play', options={'allow_stretch': True})
