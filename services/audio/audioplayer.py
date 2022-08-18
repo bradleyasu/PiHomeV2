@@ -95,7 +95,7 @@ class AudioPlayer:
         except:
             pass
         self.queue = data
-        # print(self.queue)
+        print(self.queue)
     
     def set_volume(self, volume):
         self.player._set_property("volume", volume)
