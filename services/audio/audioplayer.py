@@ -22,7 +22,7 @@ class AudioPlayer:
         self._observe('volume', lambda value: self._set_volume(value))
         self._observe('core-idle', lambda value: self._set_is_playing(value))
         self._observe('playlist', lambda value: self._set_playlist(value))
-        self._observe('playlist-playing-pos', lambda value: self._set_playlist_pos(value))
+        self._observe('playlist-pos', lambda value: self._set_playlist_pos(value))
 
     def play(self, url):
         if self.player:
@@ -102,5 +102,5 @@ class AudioPlayer:
 
     def _set_playlist_pos(self, pos):
         if pos:
-            print("POS: "+pos)
+            print("POS: "+str(pos))
             self.playlist_pos = pos + self.playlist_start
