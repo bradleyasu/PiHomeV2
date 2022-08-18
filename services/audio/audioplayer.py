@@ -30,7 +30,7 @@ class AudioPlayer:
             self.player.playlist_append(url)
             if not self.is_playing:
                 self.player.playlist_play_index(0)
-                self.player.play()
+                # self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
 
