@@ -54,7 +54,8 @@ class AudioPlayer:
         try:
             print(index - self.playlist_start)
             if self.player:
-                self.player.playlist_play_index(index - self.playlist_start)
+                # self.player.playlist_play_index(index - self.playlist_start)
+                self.player.command("playlist-play-index", index - self.playlist_start)
         except Exception as e:
             print("Could not play song selected: ")
             print(e)
