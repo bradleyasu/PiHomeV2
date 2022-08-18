@@ -35,8 +35,8 @@ class AudioPlayer:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
 
     def queue(self, url):
-        print("QUEUE: ", url)
         if self.player:
+            print("QUEUE: ", url)
             self.player.playlist_append(url)
 
     def toggle_play(self):
@@ -101,6 +101,6 @@ class AudioPlayer:
         self.player._set_property("volume", volume)
 
     def _set_playlist_pos(self, pos):
-        print("Pos: ", pos)
         if pos:
+            print("POS: "+pos)
             self.playlist_pos = pos + self.playlist_start
