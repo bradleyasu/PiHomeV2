@@ -1034,20 +1034,40 @@ class MPV(object):
         """
         _mpv_request_log_messages(self._event_handle, level.encode('utf-8'))
 
-    def command(self, name, *args):
-        """Execute a raw command."""
-        args = [name.encode('utf-8')] + [ (arg if type(arg) is bytes else str(arg).encode('utf-8'))
-                for arg in args if arg is not None ] + [None]
-        _mpv_command(self.handle, (c_char_p*len(args))(*args))
+    # def command(self, name, *args):
+    #     """Execute a raw command."""
+    #     args = [name.encode('utf-8')] + [ (arg if type(arg) is bytes else str(arg).encode('utf-8'))
+    #             for arg in args if arg is not None ] + [None]
+    #     _mpv_command(self.handle, (c_char_p*len(args))(*args))
+
+    # def node_command(self, name, *args, decoder=strict_decoder):
+    #     _1, _2, _3, pointer = _make_node_str_list([name, *args])
+    #     out = cast(create_string_buffer(sizeof(MpvNode)), POINTER(MpvNode))
+    #     ppointer = cast(pointer, POINTER(MpvNode))
+    #     _mpv_command_node(self.handle, ppointer, out)
+    #     rv = out.contents.node_value(decoder=decoder)
+    #     _mpv_free_node_contents(out)
+    #     return rv
 
     def node_command(self, name, *args, decoder=strict_decoder):
-        _1, _2, _3, pointer = _make_node_str_list([name, *args])
+        self.command(name, *args, decoder=decoder)
+
+    def command(self, name, *args, decoder=strict_decoder, **kwargs):
+        if kwargs:
+            if args:
+                raise ValueError('Can only call mpv commands either using positional or using named arguments, not a mix of both.')
+            kwargs['name'] = name
+            _1, _2, _3, pointer = _make_node_str_map(kwargs)
+        else:
+            _1, _2, _3, pointer = _make_node_str_list([name, *args])
+
         out = cast(create_string_buffer(sizeof(MpvNode)), POINTER(MpvNode))
         ppointer = cast(pointer, POINTER(MpvNode))
         _mpv_command_node(self.handle, ppointer, out)
         rv = out.contents.node_value(decoder=decoder)
         _mpv_free_node_contents(out)
         return rv
+
 
     def seek(self, amount, reference="relative", precision="default-precise"):
         """Mapped mpv seek command, see man mpv(1)."""
