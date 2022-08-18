@@ -1,0 +1,34 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<Song>:
+    size_hint: None, None
+    size: dp(300), dp(100)
+    
+    FloatLayout:
+        size_hint: None, None
+        size: dp(300), dp(100)
+        spacing: dp(1)
+        canvas:
+            Color:
+                rgba: root.active_color if root.active == True else root.background_color
+            Rectangle:
+                pos: root.pos
+                size: root.size
+
+        Label:
+            text: root.title[0:50]
+            color: root.text_color
+            font_size: '14sp'
+            font_name: 'Nunito'
+            size_hint: None, None
+            size: dp(300), dp(40)
+            pos: root.x, root.y + dp(40)
+
+        Label:
+            text: root.url[0:120]
+            color: root.text_color
+            font_size: '10sp'
+            font_name: 'Nunito'
+            size_hint: None, None
+            size: dp(300), dp(20)
+            pos: root.x, root.y + dp(10)

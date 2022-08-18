@@ -1,5 +1,6 @@
+import json
 import subprocess
-
+from composites.Music.song import Song
 from composites.Reddit.redditwidget import RedditWidget
 import requests
 import time
@@ -9,7 +10,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty
+from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty, ListProperty
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
@@ -54,13 +55,30 @@ class MusicPlayer(PiHomeScreen):
     percent = NumericProperty(0)
     media_name = StringProperty("No Media")
     volume_level = NumericProperty(100)
+    queue = ListProperty([])
 
     def __init__(self, **kwargs):
         super(MusicPlayer, self).__init__(**kwargs)
 
         self.qr = QR().from_url("http://{}:{}".format(local_ip(), SERVER_PORT))
         Clock.schedule_interval(lambda _: self._run(), 0.1)
+        self.grid = self.ids["audio_playlist"]
+        self.grid.bind(minimum_height=self.grid.setter('height'))
 
+    def on_queue(self, instance, value):
+        self.grid.clear_widgets()
+        for i in value:
+            index = 0
+            title = "Unknown"
+            url = "--"
+            if "title" in i:
+                title = i["title"]
+            if "id" in i:
+                index = int(i["id"])
+            if "filename" in i:
+                url = i["filename"]
+            song = Song(index, title, url)
+            self.grid.add_widget(song)
 
     def toggle_play(self, widget, touch):
         if widget.collide_point(*touch.pos):
@@ -81,9 +99,11 @@ class MusicPlayer(PiHomeScreen):
         self.media_name = audio_player().title
         self.percent = audio_player().percent
         self.volume_level = audio_player().volume
+        self.queue = audio_player().queue
         if audio_player().is_playing:
             self.play_control_btn = ICO_PAUSE
             self.album_art = ART
         else:
             self.play_control_btn = ICO_PLAY
             self.album_art = self.qr
+        

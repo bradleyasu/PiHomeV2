@@ -10,6 +10,9 @@ class AudioPlayer:
     is_playing = False
     volume = 100.0
     is_paused = False
+    playlist_pos = 0
+    playlist_start = 0
+    queue = []
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
         # self.player = Player()
@@ -18,11 +21,16 @@ class AudioPlayer:
         self._observe('percent-pos', lambda value: self._set_percent(value))
         self._observe('volume', lambda value: self._set_volume(value))
         self._observe('core-idle', lambda value: self._set_is_playing(value))
+        self._observe('playlist', lambda value: self._set_playlist(value))
+        self._observe('playlist-playing-pos', lambda value: self._set_playlist_pos(value))
 
     def play(self, url):
         if self.player:
             # self.player.loadfile(url)
-            self.player.play(url)
+            self.player.playlist_append(url)
+            if not self.is_playing:
+                self.player.playlist_play_index(0)
+                self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
 
@@ -37,6 +45,10 @@ class AudioPlayer:
     def prev(self):
         if self.player:
             self.player.command("playlist-prev")
+
+    def playlist_play_index(self, index):
+        if self.player:
+            self.player.playlist_play_index(index - self.playlist_start)
 
     def stop(self):
         # Terminate the current player
@@ -71,6 +83,17 @@ class AudioPlayer:
             self.is_playing = False
         else:
             self.is_playing = True
+
+    def _set_playlist(self, data):
+        try:
+            self.playlist_start = int(data[0]["id"])
+        except:
+            pass
+        self.queue = data
+        # print(self.queue)
     
     def set_volume(self, volume):
         self.player._set_property("volume", volume)
+
+    def _set_playlist_pos(self, pos):
+        self.playlist_pos = pos + self.playlist_start
