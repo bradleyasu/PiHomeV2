@@ -100,10 +100,10 @@ class Weather:
         Compare current time with sunrise/sunset times to determine
         if it is currently daylight outside
         """
-        current_time = datetime.now()
+        # current_time = datetime.now()
         # Time format = 2022-08-01T10:23:00Z
-        start_time = datetime.strptime(self.sunrise_time, "%Y-%m-%dT%H:%M:%SZ")
-        end_time = datetime.strptime(self.sunset_time, "%Y-%m-%dT%H:%M:%SZ")
+        # start_time = datetime.strptime(self.sunrise_time, "%Y-%m-%dT%H:%M:%SZ")
+        # end_time = datetime.strptime(self.sunset_time, "%Y-%m-%dT%H:%M:%SZ")
 
-        return start_time < current_time < end_time
-        # return True
+        # return start_time < current_time < end_time
+        return True
