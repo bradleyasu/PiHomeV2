@@ -32,8 +32,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 audio_player().set_volume(v)
             self._set_response()
             self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
-        except:
-            pass
+        except Exception as e:
+            print("An Error Occurred: "+e)
 
     def _set_response(self):
         self.send_response(200)
