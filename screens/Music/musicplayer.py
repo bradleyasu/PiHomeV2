@@ -59,18 +59,30 @@ class MusicPlayer(PiHomeScreen):
         super(MusicPlayer, self).__init__(**kwargs)
 
         self.qr = QR().from_url("http://{}:{}".format(local_ip(), SERVER_PORT))
-        Clock.schedule_interval(lambda _: self._run(), 1)
+        Clock.schedule_interval(lambda _: self._run(), 0.1)
 
 
-    def toggle_play(self):
-        audio_player().toggle_play()
+    def toggle_play(self, widget, touch):
+        if widget.collide_point(*touch.pos):
+            audio_player().toggle_play()
+            return False
 
+    def next(self, widget, touch):
+        if widget.collide_point(*touch.pos):
+            audio_player().next()
+            return False
+
+    def prev(self, widget, touch):
+        if widget.collide_point(*touch.pos):
+            audio_player().prev()
+            return False
+        
     def _run(self):
         self.media_name = audio_player().title
         self.percent = audio_player().percent
         self.volume_level = audio_player().volume
         if audio_player().is_playing:
-            self.play_control_btn = ICO_STOP
+            self.play_control_btn = ICO_PAUSE
             self.album_art = ART
         else:
             self.play_control_btn = ICO_PLAY

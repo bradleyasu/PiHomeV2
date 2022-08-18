@@ -9,6 +9,7 @@ class AudioPlayer:
     title = "No Media"
     is_playing = False
     volume = 100.0
+    is_paused = False
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
         # self.player = Player()
@@ -27,7 +28,15 @@ class AudioPlayer:
 
     def toggle_play(self):
         if self.player:
-            self.player.command("p")
+            self.player.command("cycle", "pause")
+
+    def next(self):
+        if self.player:
+            self.player.command("playlist-next")
+
+    def prev(self):
+        if self.player:
+            self.player.command("playlist-prev")
 
     def stop(self):
         # Terminate the current player

@@ -57,7 +57,7 @@
 
             Label:
                 id: "media_playing_title"
-                text: root.media_name
+                text: root.media_name[0:50]
                 color: root.text_color
                 font_size: '20sp'
                 font_name: 'Nunito'
@@ -84,4 +84,16 @@
                 url: root.play_control_btn
                 size: dp(64), dp(64)
                 pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2)), (root.height / 2 - self.height / 2 - dp(140)) 
-                on_touch_down: root.toggle_play
+                on_touch_down: root.toggle_play(*args)
+
+            NetworkImage:
+                url: root.last_btn
+                size: dp(32), dp(32)
+                pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2 - dp(84))), (root.height / 2 - self.height / 2 - dp(140)) 
+                on_touch_down: root.prev(*args)
+
+            NetworkImage:
+                url: root.next_btn
+                size: dp(32), dp(32)
+                pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2 + (dp(84)))), (root.height / 2 - self.height / 2 - dp(140)) 
+                on_touch_down: root.next(*args)

@@ -3,8 +3,8 @@ import json
 import socketserver
 from threading import Thread
 
-from util.const import SERVER_PORT
-from util.helpers import audio_player
+from util.const import SERVER_PORT, _MUSIC_SCREEN
+from util.helpers import audio_player, goto_screen
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -20,6 +20,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "play" in payload:
                 url = payload["play"]
                 audio_player().play(url)
+                goto_screen(_MUSIC_SCREEN)
             if "stop" in payload:
                 audio_player().stop()
             if "volume" in payload: 
