@@ -27,19 +27,15 @@ class AudioPlayer:
     def play(self, url):
         if self.player:
             if self.is_playing:
-                print("queue route")
                 self.queue(url)
             else:
-                print("play route")
                 self.player.loadfile(url)
                 # self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
 
     def queue(self, url):
-        print("In queue")
         if self.player:
-            print("QUEUE: ", url)
             self.player.playlist_append(url)
 
     def toggle_play(self):
@@ -55,8 +51,12 @@ class AudioPlayer:
             self.player.command("playlist-prev")
 
     def playlist_play_index(self, index):
-        if self.player:
-            self.player.playlist_play_index(index - self.playlist_start)
+        try:
+            print(index - self.playlist_start)
+            if self.player:
+                self.player.playlist_play_index(index - self.playlist_start)
+        except:
+            pass
 
     def stop(self):
         # Terminate the current player
@@ -98,12 +98,10 @@ class AudioPlayer:
         except:
             pass
         self.queue = data
-        print(self.queue)
     
     def set_volume(self, volume):
         self.player._set_property("volume", volume)
 
     def _set_playlist_pos(self, pos):
         if pos:
-            print("POS: "+str(pos))
             self.playlist_pos = pos + self.playlist_start
