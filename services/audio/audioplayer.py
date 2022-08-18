@@ -27,14 +27,14 @@ class AudioPlayer:
     def play(self, url):
         if self.player:
             if self.is_playing:
-                self.queue(url)
+                self.queue_next(url)
             else:
                 self.player.loadfile(url)
                 # self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
 
-    def queue(self, url):
+    def queue_next(self, url):
         if self.player:
             print("Queuing: " + url)
             self.player.playlist_append(url)
