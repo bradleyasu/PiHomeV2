@@ -56,7 +56,8 @@ class AudioPlayer:
             if self.player:
                 self.player.playlist_play_index(index - self.playlist_start)
         except Exception as e:
-            print("Could not play song selected: " + e)
+            print("Could not play song selected: ")
+            print(e)
 
     def stop(self):
         # Terminate the current player
