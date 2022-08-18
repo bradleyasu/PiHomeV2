@@ -49,8 +49,14 @@ class PiHomeServer():
         self.SERVER_THREAD.start()
 
     def stop_server(self):
-        self.httpd.shutdown()
-        
+        if self.is_online():
+            self.httpd.shutdown()
+            self.httpd = None
+
+    def is_online(self):
+        if self.httpd == None:
+            return False
+        return True
 
     def _run(self):
         Handler = MyHttpRequestHandler

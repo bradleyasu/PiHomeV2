@@ -60,6 +60,13 @@ class DevTools(PiHomeScreen):
         switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         layout.add_widget(switch)
 
+        self.serverButton = CircleButton(text='S', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
+        self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
+        self.serverButton.bind(on_release=lambda _: self.toggle_server())
+        layout.add_widget(self.serverButton)
+
 
         qr = QR().from_url("http://{}:{}".format(self.local_ip, SERVER_PORT))
         qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(100), dp(100)))
@@ -84,3 +91,9 @@ class DevTools(PiHomeScreen):
 
     def stop_sound(self):
         audio_player().stop()
+
+    def toggle_server(self):
+        if get_app().server.is_online():
+            get_app().server.stop_server()
+        else:
+            get_app().server.start_server()
