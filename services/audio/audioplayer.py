@@ -26,13 +26,17 @@ class AudioPlayer:
 
     def play(self, url):
         if self.player:
-            # self.player.loadfile(url)
-            self.player.playlist_append(url)
-            if not self.is_playing:
-                self.player.playlist_play_index(0)
+            if self.is_playing:
+                self.queue(url)
+            else:
+                self.player.loadfile(url)
                 # self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
+
+    def queue(self, url):
+        if self.player:
+            self.player.playlist_append(url)
 
     def toggle_play(self):
         if self.player:
