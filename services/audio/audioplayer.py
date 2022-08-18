@@ -36,6 +36,7 @@ class AudioPlayer:
 
     def queue(self, url):
         if self.player:
+            print("Queuing: " + url)
             self.player.playlist_append(url)
 
     def toggle_play(self):

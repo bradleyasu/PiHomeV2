@@ -8,14 +8,18 @@ from util.helpers import audio_player, goto_screen
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        self.path = './web/index.html'
-        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+        try:
+            self.path = './web/index.html'
+            resp = http.server.SimpleHTTPRequestHandler.do_GET(self)
+            return resp
+        except:
+            pass
     
     def do_POST(self):
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
         # print("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
         try:
+            content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
+            post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
             if "play" in payload:
                 url = payload["play"]
@@ -26,10 +30,10 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "volume" in payload: 
                 v = int(payload["volume"])
                 audio_player().set_volume(v)
+            self._set_response()
+            self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except:
             pass
-        self._set_response()
-        self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
     def _set_response(self):
         self.send_response(200)
@@ -41,6 +45,7 @@ class PiHomeServer():
     PORT = SERVER_PORT
     SERVER_THREAD = None
     httpd = None
+    shutting_down = False
     def __init__(self, **kwargs):
         super(PiHomeServer, self).__init__(**kwargs)
 
@@ -50,6 +55,7 @@ class PiHomeServer():
 
     def stop_server(self):
         if self.is_online():
+            self.shutting_down = True
             self.httpd.shutdown()
             self.httpd = None
 
@@ -62,4 +68,5 @@ class PiHomeServer():
         Handler = MyHttpRequestHandler
         with socketserver.TCPServer(("", self.PORT), Handler) as h:
             self.httpd = h
-            h.serve_forever()
+            while not self.shutting_down:
+                h.serve_forever()
