@@ -36,7 +36,6 @@ class AudioPlayer:
 
     def queue_next(self, url):
         if self.player:
-            print("Queuing: " + url)
             self.player.playlist_append(url)
 
     def toggle_play(self):
@@ -56,8 +55,8 @@ class AudioPlayer:
             print(index - self.playlist_start)
             if self.player:
                 self.player.playlist_play_index(index - self.playlist_start)
-        except:
-            pass
+        except Exception as e:
+            print("Could not play song selected: " + e)
 
     def stop(self):
         # Terminate the current player
