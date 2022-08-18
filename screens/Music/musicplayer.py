@@ -67,8 +67,8 @@ class MusicPlayer(PiHomeScreen):
 
     def on_queue(self, instance, value):
         self.grid.clear_widgets()
+        index = 0
         for i in value:
-            index = 0
             title = "Unknown"
             url = "--"
             if "title" in i:
@@ -79,6 +79,7 @@ class MusicPlayer(PiHomeScreen):
                 url = i["filename"]
             song = Song(index, title, url)
             self.grid.add_widget(song)
+            index = index + 1
 
     def toggle_play(self, widget, touch):
         if widget.collide_point(*touch.pos):
