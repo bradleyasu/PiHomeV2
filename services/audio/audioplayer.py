@@ -67,6 +67,10 @@ class AudioPlayer:
         # Create a new one
         # self.player.spawn()
 
+    def clear_playlist(self):
+        if self.player:
+            self.player.playlist_clear()
+
     def _observe(self, observer_key, action):
         @self.player.property_observer(observer_key)
         def obac(key, value):

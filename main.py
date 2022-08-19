@@ -104,6 +104,7 @@ class PiHome(App):
         # Init Audio Player
         self.audio_player = AudioPlayer()
 
+
     def setup(self):
         """
         Setup default windowing positions and initialize 

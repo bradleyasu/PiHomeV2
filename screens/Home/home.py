@@ -1,3 +1,4 @@
+from email.mime import audio
 import subprocess
 
 from composites.Reddit.redditwidget import RedditWidget
@@ -19,7 +20,7 @@ from interface.pihomescreen import PiHomeScreen
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, get_app, goto_screen, weather
+from util.helpers import appmenu_open, audio_player, get_app, goto_screen, weather
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -50,6 +51,8 @@ class HomeScreen(PiHomeScreen):
         Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
+        # audio_player().play("./assets/audio/intro/001.mp3")
+
         self.on_gesture = self.handle_gesture
 
 
@@ -66,6 +69,8 @@ class HomeScreen(PiHomeScreen):
         animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
         animation.start(self)
+        # audio_player().stop()
+        # audio_player().clear_playlist()
 
 
     def run(self):
