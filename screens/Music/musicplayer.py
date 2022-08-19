@@ -1,6 +1,7 @@
 import json
 import subprocess
 from composites.Music.song import Song
+from composites.Music.volume import Volume
 from composites.Reddit.redditwidget import RedditWidget
 import requests
 import time

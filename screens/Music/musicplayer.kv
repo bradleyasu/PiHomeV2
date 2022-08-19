@@ -58,7 +58,7 @@
 
             Label:
                 id: "media_playing_title"
-                text: root.media_name[0:50]
+                text: root.media_name[0:30]
                 color: root.text_color
                 font_size: '20sp'
                 font_name: 'Nunito'
@@ -98,3 +98,6 @@
                 size: dp(32), dp(32)
                 pos: (dp(300) + ((root.width - dp(300)) / 2 - self.width / 2 + (dp(84)))), (root.height / 2 - self.height / 2 - dp(140)) 
                 on_touch_down: root.next(*args)
+
+            Volume:
+                pos: (root.width - dp(50)), (root.height/2 - self.height/2)

@@ -1,0 +1,24 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<Volume>:
+    size_hint: None, None
+    size: dp(20), dp(400)
+    
+    FloatLayout:
+        size_hint: None, None
+        size: dp(20), dp(400)
+        spacing: dp(1)
+        canvas:
+            Color:
+                rgba: root.background_color
+            RoundedRectangle:
+                pos: root.pos
+                size: root.size
+            Color:
+                rgba: root.active_color
+            RoundedRectangle:
+                pos: root.pos
+                size: root.width, (root.level * root.height / 100.0)
+        
+
+        
