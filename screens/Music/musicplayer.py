@@ -42,8 +42,8 @@ ART = "./assets/images/audio_vinyl.png"
 class MusicPlayer(PiHomeScreen):
     theme = Theme()
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
-    background_color_prime = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.9))
-    background_color_secondary = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.7))
+    background_color_prime = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.4))
+    background_color_secondary = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.4))
 
     track_color = ColorProperty(Color.DARK_GRAY_700)
     track_prog_color = ColorProperty(Color.CELERY_700)

@@ -38,6 +38,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
             toast("An error occurred processing the server request", "warn", 10)
+            print("Server Post Error: ")
+            print(e)
 
     def _set_response(self):
         self.send_response(200)
