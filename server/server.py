@@ -4,7 +4,7 @@ import socketserver
 from threading import Thread
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
-from util.helpers import audio_player, goto_screen
+from util.helpers import audio_player, goto_screen, toast
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -21,19 +21,23 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
+            if "stop" in payload:
+                audio_player().stop()
+            if "clear_queue" in payload:
+                audio_player().clear_playlist()
+            if "volume" in payload: 
+                v = int(payload["volume"])
+                audio_player().set_volume(v)
             if "play" in payload:
                 url = payload["play"]
                 audio_player().play(url)
                 goto_screen(_MUSIC_SCREEN)
-            if "stop" in payload:
-                audio_player().stop()
-            if "volume" in payload: 
-                v = int(payload["volume"])
-                audio_player().set_volume(v)
+            if "app" in payload:
+                goto_screen(payload["app"])
             self._set_response()
             self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
-            print("An Error Occurred: "+e)
+            toast("An error occurred processing the server request", "warn", 10)
 
     def _set_response(self):
         self.send_response(200)

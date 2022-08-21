@@ -62,14 +62,14 @@ class BusScreen(PiHomeScreen):
 
     def build(self):
         layout = FloatLayout()
-        self.grid = GridLayout(cols=1, spacing=50, size_hint_y=None)
+        self.grid = GridLayout(cols=1, spacing=dp(50), size_hint_y=None)
         self.grid.bind(minimum_height=self.grid.setter('height'))
 
         self.empty_state = Empty(message = "There are no busses coming anytime soon", size=(dp(get_app().width), dp(get_app().height)))
         self.empty_state.opacity = 0
         self.add_widget(self.empty_state)
 
-        view = ScrollView(size_hint=(1, None), size=(get_app().width, get_app().height - (dp(80))))
+        view = ScrollView(size_hint=(1, None), size=(get_app().width, dp(get_app().height) - (dp(80))))
         view.add_widget(self.grid);
         layout.add_widget(view)
         
@@ -78,7 +78,7 @@ class BusScreen(PiHomeScreen):
 
 
         ## Control Bar
-        self.control_bar = GridLayout(rows=1, padding=(10,10,10,10), spacing=20, size_hint_y=None, size=(dp(get_app().width), dp(80)), pos=(0, get_app().height - (dp(80))))
+        self.control_bar = GridLayout(rows=1, padding=(10,10,10,10), spacing=20, size_hint_y=None, size=(dp(get_app().width), dp(80)), pos=(0, dp(get_app().height) - (dp(80))))
         s = PiHomeSwitch(on_change=(self.set_outbound))
         self.control_bar.add_widget(s)
         self.bound_label = Label(text="INBOUND", font_size="22sp", size=(dp(200), dp(20)), color=(self.text_color))

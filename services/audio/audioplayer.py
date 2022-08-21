@@ -1,5 +1,7 @@
 from mplayer import Player
 
+from util.helpers import toast
+
 from .mpv import MPV
 
 from util.const import TEMP_DIR
@@ -51,13 +53,13 @@ class AudioPlayer:
             self.player.command("playlist-prev")
 
     def playlist_play_index(self, index):
+        qIdx = (index - self.playlist_start)
         try:
-            print(index - self.playlist_start)
             if self.player:
                 # self.player.playlist_play_index(index - self.playlist_start)
                 self.player.command("playlist-play-index", str(index - self.playlist_start))
         except Exception as e:
-            print("Could not play song selected: ")
+            toast("Could not play selected queue index: {}".format(qIdx), "error")
             print(e)
 
     def stop(self):
