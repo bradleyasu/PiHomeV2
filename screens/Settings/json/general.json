@@ -107,5 +107,16 @@
         "desc": "Use + to combine multiple subreddits",
         "section": "news",
         "key": "subreddits"
+    },
+    {
+        "type": "title",
+        "title": "Music"
+    },
+    {
+        "type": "string",
+        "title": "Album Art Source",
+        "desc": "Set your Discogs API Token",
+        "section": "music",
+        "key": "album_art_source"
     }
 ]

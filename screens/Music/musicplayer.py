@@ -18,6 +18,7 @@ from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
+from services.albumart.albumart import AlbumArtFactory
 from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
@@ -64,6 +65,7 @@ class MusicPlayer(PiHomeScreen):
         self.qr = QR().from_url("http://{}:{}".format(local_ip(), SERVER_PORT))
         Clock.schedule_interval(lambda _: self._run(), 0.1)
         self.grid = self.ids["audio_playlist"]
+        self.aa_factory = AlbumArtFactory()
         self.grid.bind(minimum_height=self.grid.setter('height'))
 
     def on_queue(self, instance, value):
@@ -98,14 +100,22 @@ class MusicPlayer(PiHomeScreen):
             return False
         
     def _run(self):
+        name_change = not (self.media_name == audio_player().title)
         self.media_name = audio_player().title
         self.percent = audio_player().percent
         self.volume_level = audio_player().volume
         self.queue = audio_player().queue
         if audio_player().is_playing:
             self.play_control_btn = ICO_PAUSE
-            self.album_art = ART
         else:
             self.play_control_btn = ICO_PLAY
-            self.album_art = self.qr
+            # self.album_art = self.qr
         
+        if name_change and self.media_name != "No Media":
+            self.aa_factory.find(self.media_name, self.parse_album_art)
+        
+    def parse_album_art(self, json):
+        if "results" in json and len(json["results"]) > 0:
+            self.album_art = json["results"][0]["cover_image"]
+        else:
+            self.album_art = ART
