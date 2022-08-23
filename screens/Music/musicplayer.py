@@ -27,7 +27,7 @@ from util.helpers import appmenu_open, audio_player, get_app, goto_screen, local
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
-from util.const import _SETTINGS_SCREEN, GESTURE_SWIPE_DOWN, SERVER_PORT
+from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN, SERVER_PORT
 
 Builder.load_file("./screens/Music/musicplayer.kv")
 
@@ -61,12 +61,16 @@ class MusicPlayer(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(MusicPlayer, self).__init__(**kwargs)
+        self.icon = CDN_ASSET.format("music_icon.png")
 
         self.qr = QR().from_url("http://{}:{}".format(local_ip(), SERVER_PORT))
         Clock.schedule_interval(lambda _: self._run(), 0.1)
         self.grid = self.ids["audio_playlist"]
         self.aa_factory = AlbumArtFactory()
         self.grid.bind(minimum_height=self.grid.setter('height'))
+
+    # def on_album_art(self, instance, value):
+        # self.icon = value
 
     def on_queue(self, instance, value):
         self.grid.clear_widgets()

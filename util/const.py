@@ -4,6 +4,8 @@ from kivy.gesture import GestureDatabase
 SERVER_PORT = 8989
 GESTURE_DATABASE = GestureDatabase()
 
+CDN_ASSET = "https://cdn.pihome.io/assets/{}"
+
 MQTT_COMMANDS = {
     'update': update_pihome
 }
