@@ -59,6 +59,10 @@ class MusicPlayer(PiHomeScreen):
     volume_level = NumericProperty(100)
     queue = ListProperty([])
 
+    expand_offset = NumericProperty(0)
+
+    queue_open = False
+
     def __init__(self, **kwargs):
         super(MusicPlayer, self).__init__(**kwargs)
         self.icon = CDN_ASSET.format("music_icon.png")
@@ -102,6 +106,16 @@ class MusicPlayer(PiHomeScreen):
         if widget.collide_point(*touch.pos):
             audio_player().prev()
             return False
+
+    def toggle_queue(self, widget, touch):
+        if widget.collide_point(*touch.pos):
+            offset = 300
+            if self.queue_open:
+                offset = 0
+            animation = Animation(expand_offset=offset, t='out_bounce', d=0.250)
+            animation.start(self)
+            self.queue_open = not self.queue_open
+        return False
         
     def _run(self):
         name_change = not (self.media_name == audio_player().title)

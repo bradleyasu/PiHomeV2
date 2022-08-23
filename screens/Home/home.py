@@ -24,7 +24,7 @@ from util.helpers import appmenu_open, audio_player, get_app, goto_screen, weath
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
-from util.const import _SETTINGS_SCREEN, GESTURE_SWIPE_DOWN
+from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -47,7 +47,7 @@ class HomeScreen(PiHomeScreen):
         super(HomeScreen, self).__init__(**kwargs)
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
-        self.icon = "https://cdn.pihome.io/assets/default_home_icon.png"
+        self.icon = CDN_ASSET.format("default_home_icon.png")
         Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
