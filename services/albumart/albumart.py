@@ -3,6 +3,7 @@ from components.Image.networkimage import NetworkImage
 from kivy.network.urlrequest import UrlRequest
 from util.const import TEMP_DIR
 from util.helpers import get_config
+import re
 
 class AlbumArtFactory:
     api = "https://api.discogs.com/database/search?q={}&token={}"
@@ -13,6 +14,7 @@ class AlbumArtFactory:
 
     
     def find(self, query, on_resp):
+        query = re.sub("[\(\[].*?[\)\]]", "", query)
         if self.token == "":
             return
         url = self.api.format(query, self.token)
