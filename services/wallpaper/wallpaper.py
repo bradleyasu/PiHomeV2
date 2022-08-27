@@ -10,7 +10,7 @@ from kivy.clock import Clock
 from PIL import Image as PILImage, ImageOps
 from kivy.network.urlrequest import UrlRequest
 from util.const import TEMP_DIR
-from util.helpers import get_app, get_config, get_poller, toast
+from util.helpers import get_app, get_config, get_poller, info, toast
 from kivy.uix.image import Image, CoreImage
 
 class Wallpaper:
@@ -88,12 +88,13 @@ class Wallpaper:
 
 
     def resize_image(self, url, width, height):
+        info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
         r = requests.get(url)
-
         pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
         # pilImage = pilImage.resize((width, height), PILImage.ANTIALIAS)
         pilImage = ImageOps.contain(pilImage, (width, height))
         pilImage.save(fp="{}/_rsz_.png".format(TEMP_DIR), format="png")
+        info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/_rsz_.png".format(TEMP_DIR)
 
     def shuffle(self):

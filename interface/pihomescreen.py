@@ -1,7 +1,7 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
 from util.const import GESTURE_DATABASE
-from util.helpers import goto_screen, simplegesture
+from util.helpers import goto_screen, info, simplegesture
 
 class PiHomeScreen(Screen):
 
@@ -15,6 +15,7 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
         self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
+        info("PiHomeScreen Initialized: {} and hidden state set to {}".format(self.label, self.is_hidden))
 
 
     def touch_down(self, touch):

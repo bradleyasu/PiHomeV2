@@ -2,7 +2,7 @@
 from components.Image.networkimage import NetworkImage
 from kivy.network.urlrequest import UrlRequest
 from util.const import TEMP_DIR
-from util.helpers import get_config
+from util.helpers import error, get_config, info
 import re
 
 class AlbumArtFactory:
@@ -28,15 +28,16 @@ class AlbumArtFactory:
                 return
             url = self.api.format(query, self.token)
             url = url.replace(" ", "%20")
+            info("Searching for album art: {} ({})".format(query, url))
             UrlRequest(
                 url=url, 
                 on_success = lambda request, result: on_resp(result),
-                on_error=lambda r, d: print(r, d),
-                on_failure=lambda r, d: print(r, d),
+                on_error=lambda r, d: error("Album Art API Query error {}".format(d)),
+                on_failure=lambda r, d: error("Album Art API Query failed {}".format(d)),
                 user_agent="PiHome"
             )
         except Exception as e:
-            print("Critical error collecting album art {}".format(e))
+            error("Critical error collecting album art {}".format(e))
 
     def _refine_query(self, query):
         query = re.sub("[\(\[].*?[\)\]]", "", query)

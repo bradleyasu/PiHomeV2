@@ -1,4 +1,6 @@
 from kivy.config import Config
+
+from util.phlog import phlog
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 
@@ -103,6 +105,9 @@ class PiHome(App):
 
         # Init Audio Player
         self.audio_player = AudioPlayer()
+
+        # Setup application logger
+        self.phlogger = phlog()
 
 
     def setup(self):
@@ -337,6 +342,7 @@ class PiHome(App):
 
     def on_stop(self):
         self.server.stop_server()
+        self.phlogger.info("=================================== PIHOME SHUTDOWN ===================================")
     #     self.profile.disable()
     #     self.profile.dump_stats('pihome.profile')
     #     self.profile.print_stats()
