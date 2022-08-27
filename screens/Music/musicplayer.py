@@ -133,7 +133,10 @@ class MusicPlayer(PiHomeScreen):
             self.aa_factory.find(self.media_name, self.parse_album_art)
         
     def parse_album_art(self, json):
-        if "results" in json and len(json["results"]) > 0:
-            self.album_art = json["results"][0]["cover_image"]
-        else:
-            self.album_art = ART
+        try:
+            if "results" in json and len(json["results"]) > 0:
+                self.album_art = json["results"][0]["cover_image"]
+            else:
+                self.album_art = ART
+        except Exception as e:
+            print(e)
