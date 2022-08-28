@@ -41,7 +41,7 @@ class MQTT:
 
     def on_message(self, client, userdata, msg):
         try: 
-            info("[ MQTT ] Message Recieved: {} | {} | {}".format(str(client), str(userdata), str(msg)))
+            info("[ MQTT ] Message Recieved: {} | {} | {}".format(str(client), str(userdata), str(msg.payload)))
             payload = json.loads(msg.payload)
             self.notify(payload["type"], payload)
         except Exception as e:
