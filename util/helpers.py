@@ -1,5 +1,6 @@
 import subprocess
 import socket
+import uuid
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.gesture import Gesture
@@ -72,3 +73,7 @@ def warn(message):
     
 def error(message):
     get_app().phlogger.error(message)
+
+
+def random_hash():
+    return uuid.uuid4().hex

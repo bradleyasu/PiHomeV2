@@ -91,6 +91,9 @@ class PiHome(App):
 
 
     def init_services(self):
+        # Setup application logger
+        self.phlogger = phlog()
+        
         # Init Poller Service
         self.poller = Poller()
 
@@ -105,9 +108,6 @@ class PiHome(App):
 
         # Init Audio Player
         self.audio_player = AudioPlayer()
-
-        # Setup application logger
-        self.phlogger = phlog()
 
 
     def setup(self):
