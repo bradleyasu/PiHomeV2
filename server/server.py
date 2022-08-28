@@ -18,8 +18,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             error("Failed to process GET request")
     
     def do_POST(self):
-        # print("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
-        info("Server: POST Request Initiated")
+        info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
         try:
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself

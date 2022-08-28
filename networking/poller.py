@@ -4,7 +4,7 @@ import requests
 from threading import Thread
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from util.helpers import get_app, toast
+from util.helpers import error, get_app, info, toast
 
 class Poller:
 
@@ -17,4 +17,11 @@ class Poller:
 
     def api_call(self, url, on_resp):
         url = url.replace(" ", "%20")
-        req = UrlRequest(url=url, on_success = lambda request, result: on_resp(result), on_error=lambda r, d: print("An Error Occurred while polling api"), on_failure=lambda r, d: print("A failure occurred while polling api"))
+        info("[ POLL ] Initializing API Call: {}".format(url))
+        req = UrlRequest(
+            url=url, 
+            on_success = lambda request, 
+            result: on_resp(result),
+            on_error=lambda r, d: error("An Error Occurred while polling api. {}".format(d)),
+            on_failure=lambda r, d: error("A failure occurred while polling api. {}".format(d))
+        )

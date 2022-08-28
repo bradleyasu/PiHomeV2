@@ -2,7 +2,7 @@ import json
 from time import time
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from util.helpers import get_app, toast
+from util.helpers import error, get_app, info, toast
 import paho.mqtt.client as mqtt_client
 
 class MQTT:
@@ -41,13 +41,15 @@ class MQTT:
 
     def on_message(self, client, userdata, msg):
         try: 
+            info("[ MQTT ] Message Recieved: {} | {} | {}".format(str(client), str(userdata), str(msg)))
             payload = json.loads(msg.payload)
             self.notify(payload["type"], payload)
-        except:
-            pass
+        except Exception as e:
+            error("[ MQTT ] Failed to process and notify listeners. {}".format(str(e)))
 
     def on_connect(self, client, userdata, msg, rc):
         self.client.subscribe(self.feed)
+        info("[ MQTT ] Client active and actively listening for messages!")
 
     
     def add_listener(self, type, callback):
