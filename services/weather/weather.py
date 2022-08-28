@@ -6,7 +6,7 @@ import requests
 from threading import Thread
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from util.helpers import get_app, get_config, get_poller, toast
+from util.helpers import get_app, get_config, get_poller, info, toast, warn
 
 class Weather:
     """
@@ -58,7 +58,10 @@ class Weather:
             if self.api_key != "":
                 self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)
             else:
+                warn("[ WEATHER ] Weather is enabled but no API key is set.  Weather features are disabled.")
                 Clock.schedule_once(lambda _: toast("Weather API key is not set, please configure in settings", "warn", 10), 15)
+        else: 
+            info("[ WEATHER ] Weather is disabled.")
                 
     def register_weather_api_call(self, url, interval, on_resp):
         get_poller().register_api(url, interval, on_resp);

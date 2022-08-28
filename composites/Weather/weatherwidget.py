@@ -7,7 +7,7 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from theme.theme import Theme
 
-from util.helpers import get_app, weather
+from util.helpers import get_app, warn, weather
 
 Builder.load_file("./composites/Weather/weatherwidget.kv")
 
@@ -49,6 +49,8 @@ class WeatherWidget(Widget):
 
         if(weather().enabled):
             Clock.schedule_interval(lambda _: self.update(), 10)
+        else: 
+            warn("Weather is not enabled.  Weather update thread will not be running.")
 
    
     def on_touch_down(self, touch):
