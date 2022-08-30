@@ -30,30 +30,43 @@ class Wallpaper:
 
     cache = None
     source = "CDN"
+    poller_key = None
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
+        self._start()
+    
+    def restart(self):
+        if self.poller_key != None:
+            info("Wallpaper Service is restarting.  {} will be replaced with new thread".format(self.poller_key))
+            get_poller().unregister_api(self.poller_key)
+            self._start();
+
+    def _start(self):
         source = get_config().get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = get_config().get_int("wallpaper", "allow_stretch", 1)
-        self.source =source
+        self.source = source
+        info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(source, self.allow_stretch))
         if source == "Reddit":
             subs = get_config().get("wallpaper", "subreddits", "wallpaper")
             if subs == "":
                 subs = "wallpaper"
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
-            get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
+            self.poller_key = get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif source == "Wallhaven":
             search = get_config().get("wallpaper", "whsearch", "landscape")
             if search == "":
                 search = "landscape"
             wh_url = "https://wallhaven.cc/api/v1/search?q={}".format(search)
-            get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
+            self.poller_key = get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif source == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)
             if self.current == "":
                 self.current = self.default
         else:
-            get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
+            self.poller_key = get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
+
+
 
     def parse_reddit(self, json):
         self.cache = json

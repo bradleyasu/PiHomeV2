@@ -9,6 +9,7 @@ from kivy.uix.settings import SettingsWithSidebar
 from composites.PinPad.pinpad import PinPad
 
 from interface.pihomescreen import PiHomeScreen
+from util.const import _HOME_SCREEN
 from util.helpers import get_app, toast
 Builder.load_file("./screens/Settings/settings.kv")
 
@@ -18,6 +19,7 @@ class SettingsScreen(PiHomeScreen):
         config = ConfigParser()
         config.read('base.ini')
         config.add_callback(self.updated)
+        self.config = config
         s = SettingsWithSidebar()
         self.callback = callback
         # s.register_type("pin", PinPad)
@@ -41,13 +43,15 @@ class SettingsScreen(PiHomeScreen):
         
         # Override on_close event to return to the previous screen
         def on_close():
-            get_app().manager.current = get_app().manager.previous()
-            toast(label="PiHome needs to be restarted for new settings to take effect")
+            # get_app().manager.current = get_app().manager.previous()
+            get_app().manager.current = _HOME_SCREEN
+            # toast(label="PiHome needs to be restarted for new settings to take effect")
 
         s.on_close = on_close
         self.add_widget(s)
     
     def updated(self, section, key, value):
         # toast(label="PiHome needs to be restarted for new settings to take effect")
+        self.config.write()
         if self.callback is not None:
             self.callback()

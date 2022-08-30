@@ -1,11 +1,6 @@
-from operator import mod
-import os
-import time
-import requests
-from threading import Thread
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from util.helpers import error, get_app, info, random_hash, toast
+from util.helpers import error, info, random_hash, warn
 
 class Poller:
 
@@ -34,9 +29,12 @@ class Poller:
         return phash
 
 
-    # def register_api(self, url, interval, on_resp):
-        # Clock.schedule_once(lambda _: self.api_call(url, on_resp), 2)
-        # Clock.schedule_interval(lambda _: self.api_call(url, on_resp), interval)
+    def unregister_api(self, key):
+        if key in self.registered_calls:
+            self.registered_calls.pop(key)
+            info("{} has be removed from the poller.  Associated API will no longer be polled".format(key))
+        else:
+            warn("{} does not exist in the poller.  No changes were made".format(key))
 
     def api_call(self, url, on_resp):
         url = url.replace(" ", "%20")

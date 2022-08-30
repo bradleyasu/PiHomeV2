@@ -156,7 +156,10 @@ class PiHome(App):
         return self.layout
 
     def reload_configuration(self):
-        pass
+        self.phlogger.info("Confgiruation changes have been made.  Resetting services....")
+        self.base_config = Configuration('base.ini')
+        self.wallpaper_service.restart()
+        self.phlogger.info("Confgiuration changes have been applied!")
 
     def restart(self):
         """
