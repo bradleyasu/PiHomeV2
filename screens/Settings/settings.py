@@ -9,7 +9,7 @@ from kivy.uix.settings import SettingsWithSidebar
 from composites.PinPad.pinpad import PinPad
 
 from interface.pihomescreen import PiHomeScreen
-from util.const import _HOME_SCREEN
+from util.const import _HOME_SCREEN, CONF_FILE
 from util.helpers import get_app, toast
 Builder.load_file("./screens/Settings/settings.kv")
 
@@ -17,7 +17,7 @@ class SettingsScreen(PiHomeScreen):
     def __init__(self, callback = None, **kwargs):
         super(SettingsScreen, self).__init__(**kwargs)
         config = ConfigParser()
-        config.read('base.ini')
+        config.read(CONF_FILE)
         config.add_callback(self.updated)
         self.config = config
         s = SettingsWithSidebar()

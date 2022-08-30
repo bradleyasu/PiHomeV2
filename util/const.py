@@ -1,6 +1,8 @@
 from util.helpers import update_pihome
 from kivy.gesture import GestureDatabase
 
+CONF_FILE = "base.ini"
+THEME_FILE = "theme.ini"
 SERVER_PORT = 8989
 GESTURE_DATABASE = GestureDatabase()
 

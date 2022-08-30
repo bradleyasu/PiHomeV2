@@ -8,7 +8,7 @@ from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
 from server.server import PiHomeServer
 from services.audio.audioplayer import AudioPlayer
-from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
@@ -157,7 +157,7 @@ class PiHome(App):
 
     def reload_configuration(self):
         self.phlogger.info("Confgiruation changes have been made.  Resetting services....")
-        self.base_config = Configuration('base.ini')
+        self.base_config = Configuration(CONF_FILE)
         self.wallpaper_service.restart()
         self.phlogger.info("Confgiuration changes have been applied!")
 
