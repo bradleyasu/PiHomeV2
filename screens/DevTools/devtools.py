@@ -7,10 +7,12 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty, Numeri
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage
+from components.Slider.slidecontrol import SlideControl
 from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
 from interface.pihomescreen import PiHomeScreen
 from services.qr.qr import QR
+from system.brightness import set_brightness
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
@@ -19,7 +21,6 @@ from util.helpers import appmenu_open, audio_player, get_app, goto_screen, updat
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
-from kivy.uix.slider import Slider
 from kivy.uix.label import Label
 
 from mplayer import Player
@@ -66,6 +67,10 @@ class DevTools(PiHomeScreen):
         self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
         self.serverButton.bind(on_release=lambda _: self.toggle_server())
         layout.add_widget(self.serverButton)
+
+        slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
+        slider.add_listener(lambda value: set_brightness(value))
+        layout.add_widget(slider)
 
 
         qr = QR().from_url("http://{}:{}".format(self.local_ip, SERVER_PORT))
