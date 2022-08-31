@@ -52,9 +52,10 @@
 
 
             NetworkImage:
-                url: root.album_art
+                url: root.album_art if root.qr_active == False else root.qr
                 size: dp(128), dp(128)
                 pos: (dp(root.expand_offset) + ((root.width - dp(root.expand_offset)) / 2 - self.width / 2)), (root.height / 2 - self.height / 2 + dp(100)) 
+                on_touch_down: root.toggle_qr(*args)
 
             Label:
                 id: "media_playing_title"

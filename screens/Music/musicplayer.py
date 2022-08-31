@@ -11,7 +11,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty, ListProperty
+from kivy.properties import ColorProperty, StringProperty,BooleanProperty, NumericProperty, ListProperty
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
@@ -50,6 +50,7 @@ class MusicPlayer(PiHomeScreen):
     track_prog_color = ColorProperty(Color.CELERY_700)
 
     album_art = StringProperty(ART)
+    qr = StringProperty("")
     next_btn = StringProperty(ICO_NEXT)
     last_btn = StringProperty(ICO_LAST)
     play_control_btn = StringProperty(ICO_PLAY)
@@ -62,6 +63,7 @@ class MusicPlayer(PiHomeScreen):
     expand_offset = NumericProperty(0)
 
     queue_open = False
+    qr_active = BooleanProperty(False)
 
     def __init__(self, **kwargs):
         super(MusicPlayer, self).__init__(**kwargs)
@@ -95,6 +97,11 @@ class MusicPlayer(PiHomeScreen):
     def toggle_play(self, widget, touch):
         if widget.collide_point(*touch.pos):
             audio_player().toggle_play()
+            return False
+
+    def toggle_qr(self, widget, touch):
+        if widget.collide_point(*touch.pos):
+            self.qr_active = not self.qr_active
             return False
 
     def next(self, widget, touch):
