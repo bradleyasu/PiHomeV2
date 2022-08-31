@@ -26,6 +26,7 @@ class Wallpaper:
 
     current = "https://cdn.pihome.io/assets/background.jpg"
     default = "https://cdn.pihome.io/assets/background.jpg"
+    source = ""
     allow_stretch = 1 
 
     cache = None
@@ -61,6 +62,7 @@ class Wallpaper:
             self.poller_key = get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif source == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)
+            self.source = get_config().get("wallpaper", "custom_url", self.default)
             if self.current == "":
                 self.current = self.default
         else:
@@ -74,8 +76,8 @@ class Wallpaper:
         for value in json["data"]["children"]:
             if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 self.current = self.resize_image(value["data"]["url"], 1024, 1024)
+                self.source = value["data"]["url"]
                 get_app()._reload_background()
-                # self.current = value["data"]["url"]
                 break
             if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 skip_count = skip_count - 1
@@ -85,9 +87,9 @@ class Wallpaper:
         skip_count = random.randint(0, 9)
         for value in json["data"]:
             if skip_count <= 0 and "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
+                self.source = value["path"]
                 self.current = self.resize_image(value["path"], 1024, 1024)
                 get_app()._reload_background()
-                # self.current = value["data"]["url"]
                 break
             if "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
                 skip_count = skip_count - 1
@@ -97,6 +99,7 @@ class Wallpaper:
         host = json["host"]
         background = json["background"]
         self.current = "{}{}".format(host, background)
+        self.source = self.current
         get_app()._reload_background()
 
 

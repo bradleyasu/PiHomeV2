@@ -3,19 +3,38 @@ import http.server
 import json
 import socketserver
 from threading import Thread
+from services.wallpaper.wallpaper import Wallpaper
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
-from util.helpers import audio_player, error, goto_screen, info, toast, warn
+from util.helpers import audio_player, error, get_app, goto_screen, info, toast, warn
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         info("Server: GET Request Initiated")
+        if self.path == "/status":
+            self._get_status()
+        else:
+            self._get_index()
+    
+    def _get_status(self):
+        info("Server: Getting current status from multiple services")
+        try:
+            wallpaper = get_app().wallpaper_service.source
+            self._set_response()
+            self.wfile.write(json.dumps({
+                'wallpaper': wallpaper
+            }).encode("utf-8"))
+        except Exception as e:
+            error("Failed to get status of services: {}".format(e))
+
+    def _get_index(self):
         try:
             self.path = './web/index.html'
             resp = http.server.SimpleHTTPRequestHandler.do_GET(self)
             return resp
         except Exception as e:
-            error("Failed to process GET request")
+            error("Failed to process GET request.  Fetching index page")
+
     
     def do_POST(self):
         try:
