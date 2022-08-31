@@ -70,6 +70,8 @@ class DevTools(PiHomeScreen):
 
         slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
         slider.add_listener(lambda value: set_brightness(value))
+        slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
+        slider.active_color = hex(Color.DARK_CHARTREUSE_700)
         layout.add_widget(slider)
 
 

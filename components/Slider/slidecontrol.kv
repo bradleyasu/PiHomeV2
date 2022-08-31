@@ -20,4 +20,9 @@
             RoundedRectangle:
                 pos: root.pos
                 size: root.width, (root.level * root.height / 100.0)
+        Label:
+            pos: root.x - dp(self.width) - dp(10), (root.level * root.height / 100.0) - self.texture_size[1] / 2
+            color: root.text_color
+            text: "{}%".format(round(root.level))
+            opacity: root.label_opacity
         

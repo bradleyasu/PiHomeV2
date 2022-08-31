@@ -20,6 +20,7 @@ class SlideControl(GestureWidget):
     active_color = ColorProperty(Color.DARK_SEAFOAM_700)
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     text_color_secondary = ColorProperty(theme.get_color(theme.TEXT_SECONDARY))
+    label_opacity = NumericProperty(0)
 
 
     level = NumericProperty(100)
@@ -44,8 +45,10 @@ class SlideControl(GestureWidget):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.touching = True
+            self.label_opacity = 1
 
     def on_touch_up(self, touch):
+        self.label_opacity = 0
         if self.collide_point(*touch.pos):
             self.touching = False
 
