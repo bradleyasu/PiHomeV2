@@ -11,11 +11,33 @@
     postData(HOST, body).then(() => console.log("DONE"));
   }
 
+  function play(audio) {
+    const body = {
+        "play": audio
+    }
+    postData(HOST, body).then(() => console.log("DONE"));
+  }
+
   function uplay(){
     const input = document.getElementById("uinput").value;
     play(input)
     document.getElementById("uinput").value = "";
+    document.getElementById("overlay").style.display = "inherit";
+    setTimeout(function() {
+      document.getElementById("overlay").style.display = "none";
+    }, 2000)
   }
+
+  function uqueue(){
+    const input = document.getElementById("uinput").value;
+    queue(input)
+    document.getElementById("uinput").value = "";
+    document.getElementById("overlay").style.display = "inherit";
+    setTimeout(function() {
+      document.getElementById("overlay").style.display = "none";
+    }, 2000)
+  }
+
 
   function stop() {
     const body = {
@@ -155,10 +177,33 @@
     border-radius: 10px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
   }
+  #overlay {
+    position: absolute;
+    width: 250px;
+    height: 200px;
+    z-index: 2;
+    background: black;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 5px;
+    background-color: #424242;
+    font-size: 12px;
+    line-height: 20px;
+    padding: 20px;
+    display: none;
+  }
 </style>
 </head>
 <body>
   <div class="player">
+    <div id="overlay">
+      Your URL has was received by PiHome and will be added to the Queue
+      or start playing in a moment after it is fetched and ads are removed.
+    </div>
     <h4>
       Paste URL and click play:
     </h4>
@@ -166,7 +211,7 @@
       <input id="uinput"/>
     </div>
     <div class="controls">
-      <button onclick="javascript:uplay()">Play</button>
+      <button onclick="javascript:uplay()">Queue</button>
       <button onclick="javascript:stop()">Stop</button>
     </div>
     <div class="volume_control">
