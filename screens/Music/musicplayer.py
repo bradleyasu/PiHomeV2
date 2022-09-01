@@ -1,6 +1,7 @@
 import json
 import subprocess
 from composites.Music.song import Song
+from components.Hamburger.hamburger import Hamburger
 from composites.Music.volume import Volume
 from composites.Reddit.redditwidget import RedditWidget
 import requests
@@ -114,6 +115,15 @@ class MusicPlayer(PiHomeScreen):
             audio_player().prev()
             return False
 
+
+    # def toggle_queue(self, is_open):
+    #     offset = 300
+    #     if self.queue_open:
+    #         offset = 0
+    #     animation = Animation(expand_offset=offset, t='out_bounce', d=0.250)
+    #     animation.start(self)
+    #     self.queue_open = is_open
+ 
     def toggle_queue(self, widget, touch):
         if widget.collide_point(*touch.pos):
             offset = 300

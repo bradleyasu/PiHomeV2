@@ -1,0 +1,19 @@
+#:kivy 2.0.0
+<Hamburger>:
+    size_hint: None, None
+    size: dp(30), dp(80)
+    canvas:
+        Color:
+            rgba: (1,1,1,1)
+        RoundedRectangle:
+            pos: self.x, self.y + dp(60) + root.top_offset
+            size: self.width, dp(5)
+            radius: [2,]
+        RoundedRectangle:
+            pos: self.x, self.y + dp(50)
+            size: self.width, dp(5)
+            radius: [2,]
+        RoundedRectangle:
+            pos: self.x, self.y + dp(40) + root.bottom_offset
+            size: self.width, dp(5)
+            radius: [2,]
