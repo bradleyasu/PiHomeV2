@@ -1,4 +1,5 @@
 from kivy.config import Config
+from screens.WhiteBoard.whiteboard import WhiteBoard
 
 from util.phlog import phlog
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
@@ -120,9 +121,10 @@ class PiHome(App):
             _HOME_SCREEN: HomeScreen(name = _HOME_SCREEN, label = "Home"),
             _MUSIC_SCREEN: MusicPlayer(name = _MUSIC_SCREEN, label = "Music"),
             _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
-            'bus': BusScreen(name = 'bus', label="Bus ETA"),
             _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
+            'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
+            'white_board': WhiteBoard(name = 'white_board', label="White Board")
         }
 
         self.appmenu = AppMenu(self.screens)
