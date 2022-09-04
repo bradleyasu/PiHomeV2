@@ -58,7 +58,7 @@ class Wallpaper:
             search = get_config().get("wallpaper", "whsearch", "landscape")
             if search == "":
                 search = "landscape"
-            wh_url = "https://wallhaven.cc/api/v1/search?q={}".format(search)
+            wh_url = "https://wallhaven.cc/api/v1/search?q={}&sorting=random".format(search)
             self.poller_key = get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif source == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)
