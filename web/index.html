@@ -19,7 +19,10 @@
   }
 
   function uplay(){
-    const input = document.getElementById("uinput").value;
+    let input = document.getElementById("uinput").value;
+    if (input.indexOf("http") === -1) {
+      input = "ytdl://ytsearch20:"+input;
+    };
     play(input)
     document.getElementById("uinput").value = "";
     document.getElementById("overlay").style.display = "inherit";
@@ -205,7 +208,7 @@
       or start playing in a moment after it is fetched and ads are removed.
     </div>
     <h4>
-      Paste URL and click play:
+      Enter text or paste a URL:
     </h4>
     <div class="uin">
       <input id="uinput"/>

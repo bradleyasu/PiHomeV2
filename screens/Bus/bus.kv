@@ -1,6 +1,7 @@
 #:kivy 2.0.0
 <BusScreen>:
-    size: 800, 480
+    # size: 800, 480
+    size: root.size
     canvas.before:
         Color:
             rgba: self.color if self.image is not None else (0,0,0,0)

@@ -69,8 +69,9 @@ class RedditWidget(GestureWidget):
         animation.start(self)
 
     def fade_in(self):
-        animation = Animation(content_opacity=1, t='linear', d=1)
-        animation &= Animation(opacity=1, t='linear', d=1)
+        op = 1
+        animation = Animation(content_opacity=op, t='linear', d=1)
+        animation &= Animation(opacity=op, t='linear', d=1)
         animation.start(self)
 
     def next(self):
