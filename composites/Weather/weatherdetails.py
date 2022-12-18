@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from kivy.lang import Builder
 from kivy.properties import ColorProperty, StringProperty, DictProperty
 from kivy.metrics import dp
@@ -52,8 +52,8 @@ class WeatherDetails(Widget):
         details = self.details
         if len(details) == 0:
             return
-        time = datetime.strptime(details["startTime"], "%Y-%m-%dT%H:%M:%SZ")
-        self.day = datetime.strftime(time, "%b %d")
+        time = datetime.strptime(details["startTime"], "%Y-%m-%dT%H:%M:%SZ") + timedelta(hours=-5)
+        self.day = datetime.strftime(time, "%I:%M %p")
         self.temp = "{}\u00B0F".format(round(details["values"]["temperature"]))
         self.precip = "{}%".format(round(details["values"]["precipitationProbability"]))
 
@@ -61,5 +61,5 @@ class WeatherDetails(Widget):
         if conf != None:
             host = conf["host"]
             path = conf["weather_icons"]
-            self.icon = "{}{}{}.png".format(host, path, str(details["values"]["weatherCodeDay"]))
+            self.icon = "{}{}{}0.png".format(host, path, str(details["values"]["weatherCode"]))
         

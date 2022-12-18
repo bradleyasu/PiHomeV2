@@ -13,7 +13,7 @@ class Weather:
     Weather interface with tomorrow.io api to fetch current weather information
     based on latitude and longitude location 
     """
-    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,temperatureApparent,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection,sunriseTime,sunsetTime&timesteps=current,1d&units=imperial&apikey={}"
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,temperatureApparent,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
     latitude = 0
     longitude = 0 
     api_key = ""
@@ -71,13 +71,15 @@ class Weather:
         for value in data:
             if value["timestep"] == '1d':
                 self.proc_forcast(value)
+            if value["timestep"] == '1h':
+                self.future = value["intervals"]
             if value["timestep"] == 'current':
                 self.proc_current(value)
 
 
 
     def proc_forcast(self, data):
-        self.future = data["intervals"]
+        #self.future = data["intervals"]
         data = data["intervals"][0]["values"]
         self.weather_code_day = data["weatherCodeDay"]
         self.weather_code_night = data["weatherCodeNight"]
