@@ -1,0 +1,101 @@
+#:kivy 2.0.0
+<SnowCast>:
+    size: root.size
+    pos: root.pos
+    size_hint: 1, 1
+    canvas.before:
+        Color:
+            rgba:  (0,0,0,0.8)
+        Rectangle:
+            pos: root.pos
+            size: root.size
+    FloatLayout:
+        pos_hint: None, None
+        canvas:
+            Color: 
+                rgba: (0,0,1, 0.0)
+            Rectangle:
+                pos: self.pos
+                size: self.size 
+
+                canvas:
+            Color:
+                rgba: root.text_color
+            Line:
+                width: 4.
+                circle: (self.center_x, self.center_y, min(self.width, self.height) / 4, -90, 90)
+            Color:
+                rgba: 0,0,1,1
+            Line:
+                width: 4.
+                circle: (self.center_x, self.center_y, min(self.width, self.height) / 4, -90, (root.lifts_open * 180 / root.lifts_total - 90))
+
+        Label:
+            id: snowcast_weather
+            color: root.text_color
+            text: f"Current Weather: {root.weather}"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.x + dp(self.width) + dp(50), root.y + dp(20)
+            font_size: '32sp'
+            font_name: 'Nunito'
+
+        Label:
+            id: snowcast_lift_label 
+            color: root.text_color
+            text: f"Number of Lifts Open"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.width /2 - self.width /2, root.height/2  - self.height/2 - dp(50)
+            font_size: '12sp'
+            font_name: 'Nunito'
+
+        Label:
+            id: snowcast_lift_open
+            color: root.text_color
+            text: f"{root.lifts_open}"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.width /2 - self.width /2, root.height/2  - self.height/2 + dp(20)
+            font_size: '72sp'
+            font_name: 'Nunito'
+
+        Label:
+            id: snowcast_lift_total
+            color: root.text_color
+            text: f"of {root.lifts_total}"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.width /2 - self.width /2 +dp(50), root.height/2  - self.height/2 + dp(40)
+            font_size: '12sp'
+            font_name: 'Nunito'
+
+        Label:
+            id: snowcast_temp
+            color: root.text_color
+            text: f"{root.current_temp}\u00B0F"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.width - dp(self.width) - dp(20), root.y + dp(20)
+            font_size: '32sp'
+            font_name: 'Nunito'
+
+        Label:
+            id: snowcast_temp_range
+            color: root.text_color
+            text: f"Lo: {root.low_temp}\u00B0F | Hi: {root.high_temp}\u00B0F"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.width - dp(self.width) - dp(20), root.y - dp(5)
+            font_size: '12sp'
+            font_name: 'Nunito'
+
+        Label:
+            id: snowcast_in_snow
+            color: root.text_color
+            text: f"Depth: {root.in_snow} inches"
+            pos_hint: None, None
+            size_hint: None, None
+            pos: root.x + dp(self.width) + dp(50), root.y - dp(5)
+            font_size: '12sp'
+            font_name: 'Nunito'

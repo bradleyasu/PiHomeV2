@@ -35,6 +35,7 @@ from screens.DevTools.devtools import DevTools
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
 from screens.Bus.bus import BusScreen 
+from screens.SnowCast.snowcast import SnowCast
 from util.configuration import Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, SlideTransition
@@ -124,6 +125,7 @@ class PiHome(App):
             _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
             'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
+            'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
             'white_board': WhiteBoard(name = 'white_board', label="White Board")
         }
 
