@@ -43,6 +43,8 @@ class Poller:
             url=url, 
             on_success = lambda request, 
             result: on_resp(result),
+            # set the user agent to firefox to avoid 403 errors
+            req_headers={'User-Agent': 'Mozilla/5.0'},
             on_error=lambda r, d: error("An Error Occurred while polling api. {}".format(d)),
             on_failure=lambda r, d: error("A failure occurred while polling api. {}".format(d))
         )
