@@ -94,6 +94,16 @@ Display
 }
 ```
 
+Display Image
+```json
+{
+    "type": "image", 
+    "image_url": "<image_src_url>", 
+    "timeout": "seconds", // Optional 
+    "reload_interval": "<seconds" // Optional
+}
+```
+
 App Trigger
 ```json
 {
