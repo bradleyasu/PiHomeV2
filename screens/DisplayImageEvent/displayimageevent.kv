@@ -1,0 +1,20 @@
+#:kivy 2.0.0
+<DisplayImageEvent>:
+    canvas.before:
+        Color:
+            rgba: root.background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
+    FloatLayout:
+        size: root.size
+        pos: root.pos
+
+        NetworkImage:
+            url: root.image
+            size_hint: 1,1
+            size: root.size
+            pos: root.pos
+            keep_ratio: True
+            auto_refresh_interval: root.reload_interval

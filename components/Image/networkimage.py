@@ -27,6 +27,8 @@ class NetworkImage(Widget):
     loader = None
     error = None
 
+    auto_refresh_interval = NumericProperty(0)
+
     def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), enable_stretch = False, loader = None, error = None, **kwargs):
         super(NetworkImage, self).__init__(**kwargs)
         Loader.loading_image = BLANK_IMAGE
@@ -37,6 +39,9 @@ class NetworkImage(Widget):
         self.k_ratio = not enable_stretch
         self.loader = loader
         self.error = error
+        
+        if self.auto_refresh_interval > 0:
+            Clock.schedule_interval(lambda _: self.reload(), self.auto_refresh_interval)
         
 
     def set_stretch(self, enable_stretch):

@@ -1,4 +1,5 @@
 from kivy.config import Config
+from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
 from screens.WhiteBoard.whiteboard import WhiteBoard
 
 from util.phlog import phlog
@@ -9,7 +10,7 @@ from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
 from server.server import PiHomeServer
 from services.audio.audioplayer import AudioPlayer
-from util.const import _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
@@ -124,6 +125,7 @@ class PiHome(App):
             _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
             _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
+            _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
             'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
             'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
             'white_board': WhiteBoard(name = 'white_board', label="White Board")
@@ -328,7 +330,9 @@ class PiHome(App):
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
             self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
             self.mqtt.add_listener(type = "display", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_event(payload), 0))
+            self.mqtt.add_listener(type = "image", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_image_event(payload), 0))
             self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
+            self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
  
     def _handle_command_event(self, payload):
         cmd = payload["execute"]
@@ -345,6 +349,18 @@ class PiHome(App):
             if "timeout" in payload:
                 self.screens[_DISPLAY_SCREEN].set_timeout(payload["timeout"], self.manager.current_screen.name)
             goto_screen(_DISPLAY_SCREEN)
+
+
+    def _handle_display_image_event(self, payload):
+        if "image_url" in payload:
+            self.screens[_DISPLAY_IMAGE_SCREEN].image = payload["image_url"]
+            if "timeout" in payload:
+                self.screens[_DISPLAY_IMAGE_SCREEN].set_timeout(payload["timeout"], self.manager.current_screen.name)
+
+            if "reload_interval" in payload:
+                self.screens[_DISPLAY_IMAGE_SCREEN].reload_interval = int(payload["reload_interval"])
+
+            goto_screen(_DISPLAY_IMAGE_SCREEN)
 
 
     def on_stop(self):

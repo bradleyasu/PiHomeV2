@@ -61,8 +61,10 @@ class MQTT:
             self.app_listeners.append(callback)
         if type == "display":
             self.display_listeners.append(callback)
-        if type == "notification":
+        if type == "image":
             self.display_listeners.append(callback)
+        if type == "notification":
+            self.notification_listeners.append(callback)
         if type == "command":
             self.command_listeners.append(callback)
 
@@ -71,7 +73,7 @@ class MQTT:
             for callback in self.app_listeners:
                 callback(payload)
 
-        if type == "display":
+        if type == "display" or type == "image":
             for callback in self.display_listeners:
                 callback(payload)
 
