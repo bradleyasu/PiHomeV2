@@ -21,17 +21,17 @@ class LofiScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(LofiScreen, self).__init__(**kwargs)
-        self.audio_source = get_config().get('lofi', 'audio', 'ytsearch: lofi girl')
         self.icon = CDN_ASSET.format("lofi_app_icon.png")
 
     def reset(self):
         audio_player().clear_playlist()
-        audio_player().stop()
 
     def on_enter(self, *args):
         self.reset()
-        audio_player().play(self.audio_source)
+        self.audio_source = get_config().get('lofi', 'audio', 'ytsearch5:lofi girl')
         self.image = get_config().get('lofi', 'image', CDN_ASSET.format("lofi.jpg"))
+
+        audio_player().play(self.audio_source)
         return super().on_enter(*args)
 
     def on_leave(self, *args):
