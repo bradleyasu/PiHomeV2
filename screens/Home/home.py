@@ -51,7 +51,7 @@ class HomeScreen(PiHomeScreen):
         Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
-        # audio_player().play("./assets/audio/intro/001.mp3")
+        audio_player().play("./assets/audio/intro/002.mp3")
 
         self.on_gesture = self.handle_gesture
 
