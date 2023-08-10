@@ -74,6 +74,10 @@ class WeatherWidget(Widget):
         animation.start(self)
 
     def update(self):
+        if self.is_loaded == False:
+            self.animate_in()
+            self.is_loaded = True
+
         self.temp = str(round(weather().temperature))
         self.uvIndex = str(weather().uv_index)
         self.windSpeed = "{} MPH".format(weather().wind_speed)
@@ -98,7 +102,3 @@ class WeatherWidget(Widget):
             self.icon = "{}{}{}{}.png".format(host, path, str(weather().weather_code), str(day_code))
             self.dayIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_day))
             self.nightIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_night))
-        
-        if self.is_loaded == False:
-            self.animate_in()
-            self.is_loaded = True

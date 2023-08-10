@@ -57,9 +57,9 @@ class HomeScreen(PiHomeScreen):
         self.on_gesture = self.handle_gesture
 
     def on_enter(self, *args):
-        if self.is_first_run:
-            self.startup_animation()
+        if self.is_first_run is True:
             audio_player().play("./assets/audio/intro/002.mp3")
+            Clock.schedule_once(lambda _: self.startup_animation(), 10)
             Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
             self.is_first_run = False
         return super().on_enter(*args)
