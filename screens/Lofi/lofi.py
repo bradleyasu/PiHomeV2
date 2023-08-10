@@ -2,6 +2,7 @@
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 from interface.pihomescreen import PiHomeScreen
+from util.const import CDN_ASSET
 from util.helpers import get_config, audio_player
 
 from kivy.config import Config
@@ -20,7 +21,8 @@ class LofiScreen(PiHomeScreen):
 
     def __init(self, **kwargs):
         super(LofiScreen, self).__init__(**kwargs)
-        self.audio_source = get_config().get('lofi', 'audio_source', 'https://www.youtube.com/watch?v=jfKfPfyJRdk')
+        self.audio_source = get_config().get('lofi', 'audio', 'ytsearch: lofi girl')
+        self.icon = CDN_ASSET.format("lofi_app_icon.png")
         self.build()
 
     def reset(self):
@@ -30,7 +32,7 @@ class LofiScreen(PiHomeScreen):
     def on_enter(self, *args):
         self.reset()
         audio_player().play(self.audio_source)
-        self.image = get_config().get('lofi', 'image', 'https://cdn.pihome.io/assets/lofi.jpg')
+        self.image = get_config().get('lofi', 'image', CDN_ASSET.format("lofi.jpg"))
         return super().on_enter(*args)
 
     def on_leave(self, *args):

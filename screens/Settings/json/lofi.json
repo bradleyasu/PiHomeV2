@@ -8,7 +8,7 @@
         "title": "Source Audio",
         "desc": "The source audio file to play in lofi mode",
         "section": "lofi",
-        "key": "audio_source"
+        "key": "audio"
     },
     {
         "type": "string",
