@@ -29,9 +29,12 @@ class LofiScreen(PiHomeScreen):
     def on_enter(self, *args):
         self.reset()
         self.audio_source = get_config().get('lofi', 'audio', 'lofi girl')
-        self.image = get_config().get('lofi', 'image', CDN_ASSET.format("lofi.jpg"))
+        self.image = get_config().get('lofi', 'image', "")
         if not self.audio_source.startswith("http"):
             self.audio_source = "ytdl://ytsearch5:" + self.audio_source
+
+        if self.image == "":
+            self.image = "./screens/Lofi/lofi.gif"
 
         audio_player().play(self.audio_source)
         return super().on_enter(*args)
