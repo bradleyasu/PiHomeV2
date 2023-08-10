@@ -43,18 +43,26 @@ class HomeScreen(PiHomeScreen):
 
     weather_code = StringProperty("--")
 
+    is_first_run = True
+
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
         self.icon = CDN_ASSET.format("default_home_icon.png")
-        Clock.schedule_once(lambda _: self.startup_animation(), 10)
+        # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
 
-        audio_player().play("./assets/audio/intro/002.mp3")
-        Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
 
         self.on_gesture = self.handle_gesture
+
+    def on_enter(self, *args):
+        if self.is_first_run:
+            self.startup_animation()
+            audio_player().play("./assets/audio/intro/002.mp3")
+            Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
+            self.is_first_run = False
+        return super().on_enter(*args)
 
 
     def open_settings(self):
