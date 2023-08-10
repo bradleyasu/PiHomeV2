@@ -1,5 +1,6 @@
 from kivy.config import Config
 from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
+from screens.Lofi.lofi import LofiScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
 
 from util.phlog import phlog
@@ -128,7 +129,8 @@ class PiHome(App):
             _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
             'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
             'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
-            'white_board': WhiteBoard(name = 'white_board', label="White Board")
+            'white_board': WhiteBoard(name = 'white_board', label="White Board"),
+            "lofi": LofiScreen(name = "lofi", label="Lofi Radio")
         }
 
         self.appmenu = AppMenu(self.screens)

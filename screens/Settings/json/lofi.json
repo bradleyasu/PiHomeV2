@@ -1,0 +1,20 @@
+[
+    {
+        "type": "title",
+        "title": "Lofi Configurations"
+    },
+    {
+        "type": "string",
+        "title": "Source Audio",
+        "desc": "The source audio file to play in lofi mode",
+        "section": "lofi",
+        "key": "audio_source"
+    },
+    {
+        "type": "string",
+        "title": "Lofi Background Image",
+        "desc": "The background image to use in lofi mode",
+        "section": "lofi",
+        "key": "image"
+    }
+]

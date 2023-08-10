@@ -1,0 +1,39 @@
+
+from kivy.lang import Builder
+from kivy.properties import StringProperty
+from interface.pihomescreen import PiHomeScreen
+from util.helpers import get_config, audio_player
+
+from kivy.config import Config
+
+
+Builder.load_file("./screens/Lofi/lofi.kv")
+
+class LofiScreen(PiHomeScreen):
+    """
+        Lofi Screen Plays Lofi Music
+    """
+
+    audio_source = StringProperty()
+
+    image = StringProperty("")
+
+    def __init(self, **kwargs):
+        super(LofiScreen, self).__init__(**kwargs)
+        self.audio_source = get_config().get('lofi', 'audio_source', 'https://www.youtube.com/watch?v=jfKfPfyJRdk')
+        self.build()
+
+    def reset(self):
+        audio_player().clear_playlist()
+        audio_player().stop()
+
+    def on_enter(self, *args):
+        self.reset()
+        audio_player().play(self.audio_source)
+        self.image = get_config().get('lofi', 'image', 'https://cdn.pihome.io/assets/lofi.jpg')
+        return super().on_enter(*args)
+
+    def on_leave(self, *args):
+        self.reset()
+        self.image = ""
+        return super().on_leave(*args)
