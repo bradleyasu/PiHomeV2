@@ -12,7 +12,7 @@ Builder.load_file("./screens/Lofi/lofi.kv")
 
 class LofiScreen(PiHomeScreen):
     """
-        Lofi Screen Plays Lofi Music
+        Lofi Screen Plays Lofi Music.  Animated background coming soon.
     """
 
     audio_source = StringProperty()
