@@ -12,13 +12,22 @@
         pos: root.pos
         size_hint: 1,1
 
-        NetworkImage:
-            url: root.image
+        # NetworkImage:
+        #     url: root.image
+        #     size: root.size
+        #     pos: root.pos
+        #     size_hint: 1,1
+        #     stretch: True
+        #     k_ratio: False
+
+        Image:
+            source: root.image
             size: root.size
-            pos: root.pos
             size_hint: 1,1
-            stretch: True
-            k_ratio: False
+            pos: root.pos
+            anim_delay: 0.1
+            allow_stretch: True
+            keep_ratio: False
 
 
         Volume:
