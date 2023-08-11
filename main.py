@@ -222,6 +222,11 @@ class PiHome(App):
         else:
             self.remove_pinpad()
             self.manager.current = screen
+        
+        if (self.screens[screen].is_hidden or screen == _SETTINGS_SCREEN):
+            self.menu_button.opacity = 0
+        else:
+            self.menu_button.opacity = 1
 
     def get_config(self):
         return self.base_config;

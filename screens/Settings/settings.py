@@ -10,7 +10,7 @@ from composites.PinPad.pinpad import PinPad
 
 from interface.pihomescreen import PiHomeScreen
 from util.const import _HOME_SCREEN, CONF_FILE
-from util.helpers import get_app, toast
+from util.helpers import get_app, goto_screen, toast
 Builder.load_file("./screens/Settings/settings.kv")
 
 class SettingsScreen(PiHomeScreen):
@@ -44,7 +44,8 @@ class SettingsScreen(PiHomeScreen):
         # Override on_close event to return to the previous screen
         def on_close():
             # get_app().manager.current = get_app().manager.previous()
-            get_app().manager.current = _HOME_SCREEN
+            # get_app().manager.current = _HOME_SCREEN
+            goto_screen(_HOME_SCREEN)
             # toast(label="PiHome needs to be restarted for new settings to take effect")
 
         s.on_close = on_close

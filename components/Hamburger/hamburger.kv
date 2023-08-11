@@ -3,12 +3,31 @@
     size_hint: None, None
     size: dp(30), dp(80)
     canvas:
+
+        #Bar borders
+        Color:
+            rgba: (0,0,0,0.1)
+        RoundedRectangle:
+            pos: self.x - dp(1), self.y + dp(60) + root.top_offset - dp(1)
+            size: self.width + dp(2), dp(5) + dp(2)
+            radius: [2,]
+        RoundedRectangle:
+            pos: self.x - dp(1), self.y + dp(50) - dp(1)
+            size: self.width + dp(2), dp(5) + dp(2)
+            radius: [2,]
+        RoundedRectangle:
+            pos: self.x - dp(1), self.y + dp(40) + root.bottom_offset - dp(1)
+            size: self.width + dp(2), dp(5) + dp(2)
+            radius: [2,]
+
+        # Actual Bars
         Color:
             rgba: (1,1,1,1)
         RoundedRectangle:
             pos: self.x, self.y + dp(60) + root.top_offset
             size: self.width, dp(5)
             radius: [2,]
+
         RoundedRectangle:
             pos: self.x, self.y + dp(50)
             size: self.width, dp(5)
@@ -17,3 +36,4 @@
             pos: self.x, self.y + dp(40) + root.bottom_offset
             size: self.width, dp(5)
             radius: [2,]
+
