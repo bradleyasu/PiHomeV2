@@ -48,11 +48,11 @@ class WeatherWidget(Widget):
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
 
         if(weather().enabled):
-            Clock.schedule_interval(lambda _: self.update(), 10)
+            Clock.schedule_interval(lambda _: self.update(), 60)
         else: 
             warn("Weather is not enabled.  Weather update thread will not be running.")
 
-   
+
     def on_touch_down(self, touch):
         if self.is_loaded == False:
             return False
@@ -74,16 +74,13 @@ class WeatherWidget(Widget):
         animation.start(self)
 
     def update(self):
-        if self.is_loaded == False:
-            self.animate_in()
-            self.is_loaded = True
-
         self.temp = str(round(weather().temperature))
         self.uvIndex = str(weather().uv_index)
         self.windSpeed = "{} MPH".format(weather().wind_speed)
         self.precipPercent = "{}%".format(weather().precip_propability)
         self.humidity = "{}%".format(weather().humidity)
-        self.airQuality = weather().epa_air_lookup[weather().epa_air_quality]
+        #self.airQuality = weather().epa_air_lookup[weather().epa_air_quality]
+        self.airQuality = "NA"
         self.sunrise = "{}".format(weather().sunrise_time)
         self.sunset = "{}".format(weather().sunset_time)
         self.feelsLike = "{}".format(weather().feels_like)
@@ -102,3 +99,7 @@ class WeatherWidget(Widget):
             self.icon = "{}{}{}{}.png".format(host, path, str(weather().weather_code), str(day_code))
             self.dayIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_day))
             self.nightIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_night))
+
+        if self.is_loaded == False:
+            self.animate_in()
+            self.is_loaded = True
