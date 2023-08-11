@@ -20,6 +20,7 @@ class Hamburger(Widget):
     top_offset = NumericProperty(0)
     bottom_offset = NumericProperty(0)
     is_open = BooleanProperty(False)
+    event_hanlder = None
     def __init__(self, **kwargs):
         super(Hamburger, self).__init__(**kwargs)
 
@@ -30,6 +31,8 @@ class Hamburger(Widget):
         animation = Animation(top_offset=dp(offset * -1), t='linear', d=0.25)
         animation &= Animation(bottom_offset=dp(offset), t='linear', d=0.25)
         animation.start(self)
+        if (self.event_handler):
+            self.event_handler(value)
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):

@@ -1,4 +1,5 @@
 from kivy.config import Config
+from components.Hamburger.hamburger import Hamburger
 from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
 from screens.Lofi.lofi import LofiScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
@@ -77,6 +78,8 @@ class PiHome(App):
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
         self.toast = Toast(on_reset=self.remove_toast)
 
+        self.menu_button = Hamburger()
+
         self.background = NetworkImage(
             "", 
             size=(dp(self.width), dp(self.height)), 
@@ -145,6 +148,9 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
+        self.layout.size = (self.width, self.height)
+        self.layout.size_hint = (1,1)
+        self.layout.pos = (0,0)
 
         self.layout.add_widget(self.background)
 
@@ -160,6 +166,12 @@ class PiHome(App):
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
         self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
+
+
+        self.menu_button.pos = (dp(10), dp(400))
+        self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
+        self.menu_button.size_hint = (None, None)
+        self.layout.add_widget(self.menu_button, index=0)
 
         return self.layout
 
@@ -222,7 +234,7 @@ class PiHome(App):
             return
         self.app_menu_open = open
         if open == True:
-            self.layout.add_widget(self.appmenu)
+            self.layout.add_widget(self.appmenu, index=1)
             self.appmenu.show_apps()
         else:
             self.appmenu.reset()
@@ -250,7 +262,8 @@ class PiHome(App):
         # print(g2)
         if g2:
             if g2[1] == GESTURE_CHECK:
-                self.set_app_menu_open(not self.app_menu_open)
+                pass
+                # self.set_app_menu_open(not self.app_menu_open)
             elif g2[1] == GESTURE_TRIANGLE:
                 goto_screen(_DEVTOOLS_SCREEN)
             elif g2[1] == GESTURE_W:
