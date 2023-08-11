@@ -48,3 +48,7 @@ class Poller:
             on_error=lambda r, d: error("An Error Occurred while polling api. {}".format(d)),
             on_failure=lambda r, d: error("A failure occurred while polling api. {}".format(d))
         )
+
+        # Log any errors from the request
+        if req.error:
+            error("An Error Occurred while polling api. {}".format(req.error))
