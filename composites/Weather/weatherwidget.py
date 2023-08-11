@@ -7,7 +7,7 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from theme.theme import Theme
 
-from util.helpers import get_app, warn, weather
+from util.helpers import get_app, warn, weather, error
 
 Builder.load_file("./composites/Weather/weatherwidget.kv")
 
@@ -48,7 +48,8 @@ class WeatherWidget(Widget):
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
 
         if(weather().enabled):
-            Clock.schedule_interval(lambda _: self.update(), 60)
+            print("scheduled")
+            Clock.schedule_interval(lambda _: self.update(), 1)
         else: 
             warn("Weather is not enabled.  Weather update thread will not be running.")
 
@@ -74,32 +75,36 @@ class WeatherWidget(Widget):
         animation.start(self)
 
     def update(self):
-        self.temp = str(round(weather().temperature))
-        self.uvIndex = str(weather().uv_index)
-        self.windSpeed = "{} MPH".format(weather().wind_speed)
-        self.precipPercent = "{}%".format(weather().precip_propability)
-        self.humidity = "{}%".format(weather().humidity)
-        #self.airQuality = weather().epa_air_lookup[weather().epa_air_quality]
-        self.airQuality = "NA"
-        self.sunrise = "{}".format(weather().sunrise_time)
-        self.sunset = "{}".format(weather().sunset_time)
-        self.feelsLike = "{}".format(weather().feels_like)
-        self.cloudCover = "{}%".format(weather().cloud_cover)
-        self.future = weather().future
-        self.day = weather().future[1]
+        try:
+            self.temp = str(round(weather().temperature))
+            self.uvIndex = str(weather().uv_index)
+            self.windSpeed = "{} MPH".format(weather().wind_speed)
+            self.precipPercent = "{}%".format(weather().precip_propability)
+            self.humidity = "{}%".format(weather().humidity)
+            #self.airQuality = weather().epa_air_lookup[weather().epa_air_quality]
+            self.airQuality = "NA"
+            self.sunrise = "{}".format(weather().sunrise_time)
+            self.sunset = "{}".format(weather().sunset_time)
+            self.feelsLike = "{}".format(weather().feels_like)
+            self.cloudCover = "{}%".format(weather().cloud_cover)
+            self.future = weather().future
+            self.day = weather().future[1]
 
 
-        conf = get_app().web_conf
-        if conf != None:
-            host = conf["host"]
-            path = conf["weather_icons"]
-            day_code = 0
-            if weather().is_currently_day() == False:
-                day_code = 1
-            self.icon = "{}{}{}{}.png".format(host, path, str(weather().weather_code), str(day_code))
-            self.dayIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_day))
-            self.nightIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_night))
+            conf = get_app().web_conf
+            if conf != None:
+                host = conf["host"]
+                path = conf["weather_icons"]
+                day_code = 0
+                if weather().is_currently_day() == False:
+                    day_code = 1
+                self.icon = "{}{}{}{}.png".format(host, path, str(weather().weather_code), str(day_code))
+                self.dayIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_day))
+                self.nightIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_night))
 
-        if self.is_loaded == False:
-            self.animate_in()
-            self.is_loaded = True
+            if self.is_loaded is False:
+                self.animate_in()
+                self.is_loaded = True
+
+        except Exception as e:
+            error(e)
