@@ -3,24 +3,27 @@
     size_hint: None, None
     size: dp(root.max_radius * 2), dp(root.max_radius * 2)
     canvas:
-
-        # Circle Outline
-        Color:
-            rgba: 1,1,1,0.7
-        Line:
-            ellipse:root.center_x - dp(root.radius), root.center_y - dp(root.radius), dp(root.radius * 2), dp(root.radius *2), root.arc_pos, root.arc_pos + root.arc_offset
-            width: 2  # Set the outline width
-
         # Circle background
         Color:
-            rgba: 1,1,1,0.1
+            rgba: 1,1,1,0.6
         Ellipse:
             size: dp(root.radius * 2), dp(root.radius * 2)
             pos: root.center_x - dp(root.radius), root.center_y - dp(root.radius)
 
+        # Circle Outline
+        Color:
+            # Pretty blue
+            rgba: 0.2, 0.6, 0.8, 0.8
+        Line:
+            ellipse:root.center_x - dp(root.radius), root.center_y - dp(root.radius), dp(root.radius * 2), dp(root.radius *2), root.arc_pos, root.arc_pos + root.arc_offset
+            width: 2  # Set the outline width
+
+
         # Circle drag line
         Color:
-            rgba: 1,1,1, root.drag_opacity
+            # rgba: 1,1,1, root.drag_opacity
+            # Pretty blue
+            rgba: 0.2, 0.6, 0.8, root.drag_opacity
         Line:
             points: [root.center_x, root.center_y, root.drag_x, root.drag_y]
             width: 2  # Set the line width 
@@ -39,4 +42,4 @@
         size_hint: None, None
         size: self.texture_size
         pos: root.center_x - self.width / 2, root.center_y + root.height /2
-        font_size: 72
+        font_size: dp(42)

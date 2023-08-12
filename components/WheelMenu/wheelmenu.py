@@ -85,7 +85,7 @@ class WheelMenu(Widget):
 
 
     def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos) and self.is_open:
+        if self.is_open:
             self.drag_x, self.drag_y = touch.pos
             angle = calculate_angle(self.center_x, self.center_y, touch.pos[0], touch.pos[1])
             item = select_item_by_degree(self.options, angle)
@@ -94,7 +94,7 @@ class WheelMenu(Widget):
         return False
 
     def on_touch_up(self, touch):
-        if self.collide_point(*touch.pos):
+        if self.is_open:
             self.is_open = False
             self.drag_x = self.center_x
             self.drag_y = self.center_y
@@ -122,7 +122,7 @@ class WheelMenu(Widget):
 
 
             with self.canvas.after:
-                Color(1, 1, 1, 1)  # Set color to red
+                Color(1, 1, 1, 0)  # Set color to red
                 Line(circle=(self.center_x, self.center_y, dp(self.max_radius), start_angle, end_angle), width=2)
                 # Add lines to separate the pie slices
                 Color(1, 1, 1, 1)  # Set color to black
