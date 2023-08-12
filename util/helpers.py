@@ -1,6 +1,7 @@
 import subprocess
 import socket
 import uuid
+import math
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.gesture import Gesture
@@ -77,3 +78,27 @@ def error(message):
 
 def random_hash():
     return uuid.uuid4().hex
+
+
+
+'''
+    math helpers
+'''
+
+def calculate_angle(x1, y1, x2, y2):
+    dx = x2 - x1
+    dy = y2 - y1
+    angle_radians = math.atan2(dy, dx)
+    angle_degrees = math.degrees(angle_radians)
+    angle_degrees = (angle_degrees - 90 + 360) % 360
+    return 360 - angle_degrees
+
+def select_item_by_degree(arr, degree):
+    if not 0 <= degree <= 360:
+        raise ValueError("Degree value must be between 0 and 360 (inclusive)")
+
+    section_size = 360 / len(arr)
+    section_index = int(degree // section_size)
+
+    selected_item = arr[section_index]
+    return selected_item

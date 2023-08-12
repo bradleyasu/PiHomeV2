@@ -1,8 +1,9 @@
 
 import os
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ListProperty
 from interface.pihomescreen import PiHomeScreen
+from components.WheelMenu.wheelmenu import WheelMenu
 from util.const import CDN_ASSET
 from util.helpers import get_config, audio_player, toast
 
@@ -21,6 +22,13 @@ class LofiScreen(PiHomeScreen):
     audio_source = StringProperty()
 
     image = StringProperty("")
+
+    wheel_options = ListProperty([
+            {'text': 'Chill', 'callback': lambda: print("home")}, 
+            {'text': 'Hype', 'callback': lambda: print("lights")}, 
+            {'text': 'Party', 'callback': lambda: print("settings")},
+        ])
+
 
     def __init__(self, **kwargs):
         super(LofiScreen, self).__init__(**kwargs)

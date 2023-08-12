@@ -10,7 +10,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty
+from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty,ListProperty
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
@@ -44,6 +44,7 @@ class HomeScreen(PiHomeScreen):
     weather_code = StringProperty("--")
 
     is_first_run = True
+
 
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)

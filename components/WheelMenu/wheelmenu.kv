@@ -1,0 +1,42 @@
+#:kivy 2.0.0
+<WheelMenu>:
+    size_hint: None, None
+    size: dp(root.max_radius * 2), dp(root.max_radius * 2)
+    canvas:
+
+        # Circle Outline
+        Color:
+            rgba: 1,1,1,0.7
+        Line:
+            ellipse:root.center_x - dp(root.radius), root.center_y - dp(root.radius), dp(root.radius * 2), dp(root.radius *2), root.arc_pos, root.arc_pos + root.arc_offset
+            width: 2  # Set the outline width
+
+        # Circle background
+        Color:
+            rgba: 1,1,1,0.1
+        Ellipse:
+            size: dp(root.radius * 2), dp(root.radius * 2)
+            pos: root.center_x - dp(root.radius), root.center_y - dp(root.radius)
+
+        # Circle drag line
+        Color:
+            rgba: 1,1,1, root.drag_opacity
+        Line:
+            points: [root.center_x, root.center_y, root.drag_x, root.drag_y]
+            width: 2  # Set the line width 
+
+    Image:
+        source: root.icon
+        size_hint: None, None
+        size: dp(root.radius * 2), dp(root.radius * 2)
+        allow_stretch: True
+        keep_ratio: True
+        pos: root.center_x - dp(root.radius), root.center_y - dp(root.radius)
+        opacity: root.icon_opacity
+
+    Label:
+        text: root.display_text
+        size_hint: None, None
+        size: self.texture_size
+        pos: root.center_x - self.width / 2, root.center_y + root.height /2
+        font_size: 72
