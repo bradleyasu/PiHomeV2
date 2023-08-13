@@ -12,12 +12,17 @@
 
         # Circle Outline
         Color:
+            # Pretty Pink
+            rgba: 0.8, 0.2, 0.8, 0.4
+        Line:
+            ellipse:root.center_x - dp(root.radius), root.center_y - dp(root.radius), dp(root.radius * 2), dp(root.radius *2), root.arc_pos, root.arc_pos + root.arc_offset
+            width: 3  # Set the outline width
+        Color:
             # Pretty blue
-            rgba: 0.2, 0.6, 0.8, 0.8
+            rgba: 0.2, 0.6, 0.8, 1 
         Line:
             ellipse:root.center_x - dp(root.radius), root.center_y - dp(root.radius), dp(root.radius * 2), dp(root.radius *2), root.arc_pos, root.arc_pos + root.arc_offset
             width: 2  # Set the outline width
-
 
         # Circle drag line
         Color:
@@ -27,6 +32,15 @@
         Line:
             points: [root.center_x, root.center_y, root.drag_x, root.drag_y]
             width: 2  # Set the line width 
+
+        Color:
+            #pretty red
+            rgba: 0.8, 0.2, 0.2, root.drag_opacity * 0.1
+        Ellipse:
+            angle_start: (360 / len(root.options) * root.selected_index) if root.options else 0
+            angle_end: ((360 / len(root.options)) + (360 / len(root.options) * root.selected_index)) if root.options else 0
+            size: dp(root.radius * 2), dp(root.radius * 2)
+            pos: root.center_x - dp(root.radius), root.center_y - dp(root.radius)
 
     Image:
         source: root.icon

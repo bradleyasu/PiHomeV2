@@ -101,4 +101,4 @@ def select_item_by_degree(arr, degree):
     section_index = int(degree // section_size)
 
     selected_item = arr[section_index]
-    return selected_item
+    return selected_item, section_index

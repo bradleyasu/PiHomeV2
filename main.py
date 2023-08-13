@@ -127,7 +127,7 @@ class PiHome(App):
             _HOME_SCREEN: HomeScreen(name = _HOME_SCREEN, label = "Home"),
             _MUSIC_SCREEN: MusicPlayer(name = _MUSIC_SCREEN, label = "Music"),
             _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
-            _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = True),
+            _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = False, requires_pin = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
             _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
             'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
@@ -271,9 +271,11 @@ class PiHome(App):
                 pass
                 # self.set_app_menu_open(not self.app_menu_open)
             elif g2[1] == GESTURE_TRIANGLE:
-                goto_screen(_DEVTOOLS_SCREEN)
+                # goto_screen(_DEVTOOLS_SCREEN)
+                pass
             elif g2[1] == GESTURE_W:
-                self.wallpaper_service.shuffle()
+                # self.wallpaper_service.shuffle()
+                pass
             
 
     def on_touch_move(self, touch):

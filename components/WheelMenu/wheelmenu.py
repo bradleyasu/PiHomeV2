@@ -6,12 +6,13 @@ from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
 from interface.gesturewidget import GestureWidget
 from theme.theme import Theme
-from kivy.properties import BooleanProperty, ColorProperty, NumericProperty, StringProperty, ListProperty
+from kivy.properties import BooleanProperty, ColorProperty, NumericProperty, StringProperty, ListProperty, ObjectProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
-from kivy.graphics import Color, Line
+from kivy.graphics import Color, Line, Ellipse
+from kivy.uix.image import Image
 
 from util.helpers import calculate_angle, get_app, select_item_by_degree
 
@@ -38,6 +39,7 @@ class WheelMenu(Widget):
     display_text = StringProperty("")
 
     options = ListProperty([])
+    selected_index = NumericProperty(0)
 
     def __init__(self, **kwargs):
         super(WheelMenu, self).__init__(**kwargs)
@@ -55,8 +57,9 @@ class WheelMenu(Widget):
             # self.radius = self.min_radius
             self.close_animation()
 
-    def set_selected(self, item):
+    def set_selected(self, item, index):
         self.display_text = item['text']
+        self.selected_index = index
 
     def activate_selected(self, item):
         self.display_text = ""
@@ -88,8 +91,8 @@ class WheelMenu(Widget):
         if self.is_open:
             self.drag_x, self.drag_y = touch.pos
             angle = calculate_angle(self.center_x, self.center_y, touch.pos[0], touch.pos[1])
-            item = select_item_by_degree(self.options, angle)
-            self.set_selected(item)
+            item, index = select_item_by_degree(self.options, angle)
+            self.set_selected(item, index)
         # return super().on_touch_move(touch)
         return False
 
@@ -120,10 +123,16 @@ class WheelMenu(Widget):
             end_x = self.center_x+ dp(self.max_radius) * cos(radians(end_angle))
             end_y = self.center_y + dp(self.max_radius) * sin(radians(end_angle))
 
+            item['start_x'] = start_x
+            item['start_y'] = start_y
+            item['end_x'] = end_x
+            item['end_y'] = end_y
 
             with self.canvas.after:
-                Color(1, 1, 1, 0)  # Set color to red
-                Line(circle=(self.center_x, self.center_y, dp(self.max_radius), start_angle, end_angle), width=2)
+                Color(0, 1, 0, 1)  # Set color to red
+
+                # Outline border
+                # Line(circle=(self.center_x, self.center_y, dp(self.max_radius), start_angle, end_angle), width=2)
                 # Add lines to separate the pie slices
                 Color(1, 1, 1, 1)  # Set color to black
                 Line(points=[
@@ -134,6 +143,20 @@ class WheelMenu(Widget):
                     end_x, end_y,
                     self.center_x, self.center_y,
                 ])
+
+                mid_x = (start_x + end_x) / 2
+                mid_y = (start_y + end_y) / 2
+
+                # this is dumb, get the next item in the list and if the next item exceeds the index, loop to the start of the array
+                next_item = items[(i) % len(items)]
+
+                Image(
+                    source=next_item['icon'], 
+                    pos=(mid_x - dp(self.max_radius) / (2 * len(self.options)), mid_y - dp(self.max_radius) / (2 * len(self.options))), 
+                    size=(dp(self.max_radius) / len(self.options), dp(self.max_radius) / len(self.options)), 
+                    opacity=self.icon_opacity,
+                    allow_stretch=True
+                )
 
     def hide_pies(self):
         self.canvas.after.clear()  # Clear previous canvas instructions
