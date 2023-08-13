@@ -63,7 +63,8 @@ class WheelMenu(Widget):
 
     def activate_selected(self, item):
         self.display_text = ""
-        item['callback']()
+        # call the callback function in item
+        item[0]['callback']()
 
     def open_animation(self):
         animation = Animation(arc_offset=370, t='out_elastic', d=0.25)
