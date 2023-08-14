@@ -1,3 +1,4 @@
+import asyncio
 import os
 from mplayer import Player
 
@@ -29,7 +30,8 @@ class AudioPlayer:
 
     def play(self, url):
         if url.startswith("folder://"):
-            self.parseFolder(url)
+            # self.parseFolder(url)
+            asyncio.run(self.parseFolder(url))
         elif self.player:
             if self.is_playing:
                 self.queue_next(url)
@@ -44,7 +46,7 @@ class AudioPlayer:
     '''
     Iterate over each file in the folder and call play on each file
     '''
-    def parseFolder(self, url):
+    async def parseFolder(self, url):
         folder = url.replace("folder://", "")
         count = 0
         self.player.playlist_clear()
