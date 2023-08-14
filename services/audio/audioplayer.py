@@ -48,10 +48,11 @@ class AudioPlayer:
         folder = url.replace("folder://", "")
         count = 0
         for file in os.listdir(folder):
-            self.player.playlist_append(os.path.join(folder, file))
+            if count == 0:
+                self.player.loadfile(os.path.join(folder, file))
+            else:
+                self.player.playlist_append(os.path.join(folder, file))
             count += 1
-        self.player.playlist_play_index(0)
-        self.player.play()
 
     def queue_next(self, url):
         if self.player:
