@@ -56,7 +56,9 @@ class LofiScreen(PiHomeScreen):
     def play_lofi(self, url):
         self.reset()
         self.audio_source = url
-        if not self.audio_source.startswith("http"):
+        if self.audio_source.startswith("folder://"):
+            self.audio_source = self.audio_source 
+        elif not self.audio_source.startswith("http"):
             self.audio_source = "ytdl://ytsearch5:" + self.audio_source
         audio_player().play(self.audio_source)
 

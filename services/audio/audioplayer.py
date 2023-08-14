@@ -1,3 +1,4 @@
+import os
 from mplayer import Player
 
 from util.helpers import toast
@@ -27,7 +28,9 @@ class AudioPlayer:
         self._observe('playlist-pos', lambda value: self._set_playlist_pos(value))
 
     def play(self, url):
-        if self.player:
+        if url.startswith("folder://"):
+            self.parseFolder(url)
+        elif self.player:
             if self.is_playing:
                 self.queue_next(url)
             else:
@@ -35,6 +38,14 @@ class AudioPlayer:
                 # self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
+
+    '''
+    Iterate over each file in the folder and call play on each file
+    '''
+    def parseFolder(self, url):
+        folder = url.replace("folder://", "")
+        for file in os.listdir(folder):
+            self.play(folder + "/" + file)
 
     def queue_next(self, url):
         if self.player:
