@@ -31,8 +31,8 @@ class LofiScreen(PiHomeScreen):
         self.icon = CDN_ASSET.format("lofi_app_icon.png")
 
         self.wheel_options = [
-            {'text': 'Chill', 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl')), 'icon': './screens/Lofi/tape_b_1.png'}, 
-            {'text': 'Hype', 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_2', 'hotchip radio')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(get_config().get('lofi', 'audio_label', 'Option 1')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl')), 'icon': './screens/Lofi/tape_b_1.png'}, 
+            {'text': str(get_config().get('lofi', 'audio_2_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_2', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
             {'text': 'Cancel', 'callback': lambda: print("cancel wheel_menu"), 'icon': './screens/Lofi/tape_b_1.png'},
         ]
 

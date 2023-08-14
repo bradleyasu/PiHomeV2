@@ -1,14 +1,44 @@
 [
     {
         "type": "title",
-        "title": "Lofi Configurations"
+        "title": "Lofi Option One"
+    },
+    {
+        "type": "string",
+        "title": "Source Audio 2 Label",
+        "desc": "Label for second audio source",
+        "section": "lofi",
+        "key": "audio_label"
     },
     {
         "type": "string",
         "title": "Source Audio",
-        "desc": "The source audio file to play in lofi mode",
+        "desc": "Audio source for first option",
         "section": "lofi",
         "key": "audio"
+    },
+    {
+        "type": "title",
+        "title": "Lofi Option Two"
+    },
+    {
+        "type": "string",
+        "title": "Source Audio 2 Label",
+        "desc": "Label for second audio source",
+        "section": "lofi",
+        "key": "audio_2_label"
+    },
+    {
+        "type": "string",
+        "title": "Source Audio 2",
+        "desc": "Audio source for second option",
+        "section": "lofi",
+        "key": "audio_2"
+    },
+
+    {
+        "type": "title",
+        "title": "Background Image"
     },
     {
         "type": "string",
