@@ -33,8 +33,10 @@ class AudioPlayer:
         elif self.player:
             if self.is_playing:
                 self.queue_next(url)
+                print("queueing", url)
             else:
                 self.player.loadfile(url)
+                print("playing", url)
                 # self.player.play()
         else:
             raise FileNotFoundError("{} could not be played.  The player is not initialized.")
@@ -44,8 +46,11 @@ class AudioPlayer:
     '''
     def parseFolder(self, url):
         folder = url.replace("folder://", "")
+        count = 0
         for file in os.listdir(folder):
-            self.play(folder + "/" + file)
+            self.player.playlist_append(os.path.join(folder, file))
+            count += 1
+        self.player.playlist_play_index(0)
 
     def queue_next(self, url):
         if self.player:

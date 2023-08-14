@@ -75,7 +75,6 @@
         "section": "lofi",
         "key": "audio_4"
     },
-
     {
         "type": "title",
         "title": "Lofi Option Five"
@@ -94,8 +93,6 @@
         "section": "lofi",
         "key": "audio_5"
     },
-
-
     {
         "type": "title",
         "title": "Background Image"
