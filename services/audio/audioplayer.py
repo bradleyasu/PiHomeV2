@@ -51,6 +51,7 @@ class AudioPlayer:
             self.player.playlist_append(os.path.join(folder, file))
             count += 1
         self.player.playlist_play_index(0)
+        self.player.play()
 
     def queue_next(self, url):
         if self.player:

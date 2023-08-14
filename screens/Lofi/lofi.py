@@ -66,6 +66,6 @@ class LofiScreen(PiHomeScreen):
         audio_player().play(self.audio_source)
 
     def on_leave(self, *args):
-        self.reset()
+        # self.reset()
         self.image = ""
         return super().on_leave(*args)
