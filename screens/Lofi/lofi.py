@@ -33,6 +33,9 @@ class LofiScreen(PiHomeScreen):
         self.wheel_options = [
             {'text': str(get_config().get('lofi', 'audio_label', 'Option 1')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl')), 'icon': './screens/Lofi/tape_b_1.png'}, 
             {'text': str(get_config().get('lofi', 'audio_2_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_2', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(get_config().get('lofi', 'audio_3_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_3', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(get_config().get('lofi', 'audio_4_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_4', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(get_config().get('lofi', 'audio_5_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_5', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
             {'text': 'Cancel', 'callback': lambda: print("cancel wheel_menu"), 'icon': './screens/Lofi/tape_b_1.png'},
         ]
 
@@ -50,7 +53,7 @@ class LofiScreen(PiHomeScreen):
             self.image = download_image_to_temp(config_image).name
 
         self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl'))
-        toast("Searching for streams, this may take up to 20 seconds...", timeout=10);
+        # toast("Searching for streams, this may take up to 20 seconds...", timeout=10);
         return super().on_enter(*args)
 
     def play_lofi(self, url):
