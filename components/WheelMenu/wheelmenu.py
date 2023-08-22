@@ -106,7 +106,6 @@ class WheelMenu(Widget):
             self.activate_selected(select_item_by_degree(self.options, calculate_angle(self.center_x, self.center_y, touch.pos[0], touch.pos[1])))
             return False
 
-
     def display_pies(self):
         items = self.options
         num_items = len(items)
@@ -154,7 +153,7 @@ class WheelMenu(Widget):
                 Image(
                     source=next_item['icon'], 
                     pos=(mid_x - dp(self.max_radius) / (2 * len(self.options)), mid_y - dp(self.max_radius) / (2 * len(self.options))), 
-                    size=(dp(self.max_radius) / len(self.options), dp(self.max_radius) / len(self.options)), 
+                    size=(dp(self.max_radius * 2) / len(self.options), dp(self.max_radius * 2) / len(self.options)), 
                     opacity=self.icon_opacity,
                     allow_stretch=True
                 )

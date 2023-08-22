@@ -1,4 +1,4 @@
-
+import subprocess
 
 '''
 Convert a Hex color, #00FF00, into an RGBA floating point
@@ -30,3 +30,25 @@ def download_image_to_temp(url):
     temp_file.write(urllib.request.urlopen(url, context=ctx).read())
     temp_file.close()
     return temp_file
+
+
+'''
+Execute a bash command and return the results as a dictionary.  The dictionary
+will contain the following keys:
+    return_code: The return code of the command
+    stdout: The standard output of the command
+    stderr: The standard error of the command
+'''
+def execute_command(command):
+    try:
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        return {
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr
+        }
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
+
