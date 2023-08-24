@@ -19,12 +19,13 @@ Builder.load_file("./screens/CommandCenter/commandcenter.kv")
 
 class CommandCenterScreen(PiHomeScreen):
     """
-        Lofi Screen Plays Lofi Music.  Animated background coming soon.
+        Screen to provide buttons to run shell commands.  Up to 8 commands can 
+        be configured in the settings screen.
     """
 
     theme = Theme()
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
-    background_color_prime = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.4))
+    background_color_prime = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.8))
     background_color_secondary = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.4))
 
 
@@ -47,6 +48,10 @@ class CommandCenterScreen(PiHomeScreen):
         self.grid.clear_widgets()
         self.show_commands()
         return super().on_enter(*args)
+
+    def on_exit(self, *args):
+        self.grid.clear_widgets()
+        return super().on_exit(*args)
 
 
     def run_command(self, button, command):

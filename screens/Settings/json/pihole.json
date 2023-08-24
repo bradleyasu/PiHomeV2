@@ -1,0 +1,27 @@
+[
+    {
+        "type": "title",
+        "title": "Pi-Hole Remote Admin"
+    },
+    {
+        "type": "string",
+        "title": "API Key",
+        "desc": "API Key from pi-hole admin settings panel",
+        "section": "pihole",
+        "key": "api_key"
+    },
+    {
+        "type": "bool",
+        "title": "Enabl Remote Admin",
+        "desc": "Enable Pi-Hole Remote Admin. API KEY REQUIRED",
+        "section": "pihole",
+        "key": "enabled"
+    },
+    {
+        "type": "string",
+        "title": "Pi-Hole IP",
+        "desc": "IP of Pi-Hole",
+        "section": "pihole",
+        "key": "host"
+    }
+]

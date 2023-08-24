@@ -8,6 +8,7 @@ and will be returned as passed.  Opacity should be a value between 0 and 1
 import ssl
 import tempfile
 import urllib
+from util.helpers import info
 
 def hex(hex_string, opacity = 1.0):
     hex_string = hex_string.replace('#', '')
@@ -40,6 +41,7 @@ will contain the following keys:
     stderr: The standard error of the command
 '''
 def execute_command(command):
+    info("Executing Command: " + command)
     try:
         result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         return {

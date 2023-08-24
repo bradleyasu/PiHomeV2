@@ -3,6 +3,7 @@ from components.Hamburger.hamburger import Hamburger
 from screens.CommandCenter.commandcenter import CommandCenterScreen
 from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
 from screens.Lofi.lofi import LofiScreen
+from screens.PiHole.pihole import PiHoleScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
 
 from util.phlog import phlog
@@ -135,6 +136,7 @@ class PiHome(App):
             'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
             'command_center': CommandCenterScreen(name = 'command_center', label="Command Center"),
             "lofi": LofiScreen(name = "lofi", label="Lofi Radio"),
+            "pihole": PiHoleScreen(name = "pihole", label="PiHole"),
             'white_board': WhiteBoard(name = 'white_board', label="White Board"),
         }
 

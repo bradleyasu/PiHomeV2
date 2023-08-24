@@ -42,14 +42,19 @@ class PiHomeSwitch(Widget):
         animation = Animation(offset = (0), t='out_bounce', d=0.2)
         animation += Animation(background_color = self.background_inactive_color, t='linear', d=0.2)
         animation.start(self)
-
+    
+    def on_enabled(self, instance, value):
+        if value:
+            self.animate_on()
+        else:
+            self.animate_off() 
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.enabled = not self.enabled
-            self.on_change(self.enabled)
-            if self.enabled:
-                self.animate_on()
-            else:
-                self.animate_off()
-            return False
+            # self.on_change(self.enabled)
+            # if self.enabled:
+            #     self.animate_on()
+            # else:
+            #     self.animate_off()
+            # return False
