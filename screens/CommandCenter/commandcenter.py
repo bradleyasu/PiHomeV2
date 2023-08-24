@@ -1,9 +1,9 @@
 import os
 from kivy.lang import Builder
-from kivy.properties import StringProperty, ListProperty
-from composites.AppMenu.appicon import AppIcon
+from kivy.properties import StringProperty, ListProperty, ColorProperty
 from interface.pihomescreen import PiHomeScreen
-from components.WheelMenu.wheelmenu import WheelMenu
+from screens.CommandCenter.commandbutton import CommandButton
+from theme.theme import Theme
 from util.const import CDN_ASSET
 
 from kivy.uix.scrollview import ScrollView
@@ -22,11 +22,10 @@ class CommandCenterScreen(PiHomeScreen):
         Lofi Screen Plays Lofi Music.  Animated background coming soon.
     """
 
-    audio_source = StringProperty()
-
-    image = StringProperty("")
-
-    wheel_options = ListProperty([])
+    theme = Theme()
+    text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
+    background_color_prime = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.4))
+    background_color_secondary = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.4))
 
 
     def __init__(self, **kwargs):
@@ -48,16 +47,22 @@ class CommandCenterScreen(PiHomeScreen):
         self.grid.clear_widgets()
         self.show_commands()
         return super().on_enter(*args)
-    
 
+
+    def run_command(self, button, command):
+        response = execute_command(command)
+        if response['return_code'] == 0:
+            button.show_success()
+        else:
+            button.show_error()
+    
     def create_button(self, index):
         icon = get_config().get("controlcenter", "cc_button_"+index+"_icon", None)
         label = get_config().get("controlcenter", "cc_button_"+index+"_label", None)
         command = get_config().get("controlcenter", "cc_button_"+index+"_command", None)
         i = label + "_ccb"
         if icon is not None and label is not None and command is not None and icon != "" and label != "" and command != "":
-            self.grid.add_widget(AppIcon(delay=0.1, icon=icon, label = label, app_key = i, on_select=(lambda key: execute_command(command))))
-            print("Added button: " + label + " with command: " + command)
+            self.grid.add_widget(CommandButton(delay=0.1, icon=icon, label = label, app_key = i, on_select=(lambda key: self.run_command(key, command))))
 
     def show_commands(self):
         for i in range(1, 8):

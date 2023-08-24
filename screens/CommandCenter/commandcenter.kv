@@ -1,2 +1,8 @@
 #:kivy 2.0.0
 <CommandCenterScreen>:
+    canvas.before:
+        Color:
+            rgba:  root.background_color_prime
+        Rectangle:
+            pos: self.pos
+            size: self.size

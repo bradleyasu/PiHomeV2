@@ -1,0 +1,28 @@
+#:kivy 2.0.0
+#: import ew kivy.uix.effectwidget
+<CommandButton>:
+    size_hint: None, None
+    size: self.size
+    opacity: self.opacity
+    canvas:
+        Scale:
+            origin: self.center
+            xyz: [1, self.zoom, 1]
+        Color:
+            rgba: self.background_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+
+    GridLayout:
+        cols: 1
+        spacing: dp(10)
+        pos: root.x, dp(root.y + root.y_pos_offset)
+        NetworkImage:
+            url: root.icon
+            size: root.size
+        Label:
+            text: root.label
+            color: (1,1,1,1)
+            font_size: '12sp'
+            font_name: 'Nunito'
