@@ -47,7 +47,7 @@ class PiHoleScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(PiHoleScreen, self).__init__(**kwargs)
-        # self.icon = CDN_ASSET.format("lofi_app_icon.png")
+        self.icon = CDN_ASSET.format("pihole.png")
         if get_config().get('pihole', 'enabled', False):
             # Reconfigure based on settings
             self.HOST = get_config().get('pihole', 'host', "http://pi.hole")
