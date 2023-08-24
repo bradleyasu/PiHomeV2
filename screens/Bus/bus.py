@@ -80,12 +80,11 @@ class BusScreen(PiHomeScreen):
         ## Control Bar
         self.control_bar = GridLayout(rows=1, padding=(10,10,10,10), spacing=20, size_hint_y=None, size=(dp(get_app().width), dp(80)), pos=(0, dp(get_app().height) - (dp(80))))
         # s = PiHomeSwitch(on_change=(self.set_outbound))
-        s = PiHomeSwitch()
+        s = PiHomeSwitch(pos=(dp(get_app().width - 200), dp(100)))
         s.bind(enabled=lambda x, y:  self.set_outbound(y))
-        s.pos = (dp(get_app().width - 200), dp(10))
-        self.control_bar.add_widget(s)
         self.bound_label = Label(text="INBOUND", font_size="22sp", size=(dp(200), dp(20)), color=(self.text_color))
         self.control_bar.add_widget(self.bound_label)
+        self.control_bar.add_widget(s)
 
         layout.add_widget(self.control_bar)
         self.add_widget(layout)
