@@ -74,9 +74,18 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type", "Accept")
+        self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_response(200)
         self.end_headers()
+
+        response_data = {
+            "status": "success"
+        }
+
+        response_json = json.dumps(response_data)
+        self.wfile.write(response_json.encode('utf-8'))
+
  
  
 class PiHomeServer():
