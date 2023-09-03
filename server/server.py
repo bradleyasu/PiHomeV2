@@ -75,7 +75,6 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
-        self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_response(200)
         self.end_headers()
 
