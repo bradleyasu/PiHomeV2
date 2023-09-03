@@ -13,8 +13,19 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         info("Server: GET Request Initiated")
         if self.path == "/status":
             self._get_status()
-        else:
+        elif self.path == "/" or self.path == "" or self.path == "/index.html":
             self._get_index()
+        else:
+            self.path = "./web" + self.path
+            super().do_GET()
+
+    # def guess_type(self, path):
+    #     # Override the default MIME type guessing to handle CSS files.
+    #     if path.endswith(".css"):
+    #         return "text/css"
+    #     if path.endswith(".js"):
+    #         return "application/javascript"
+    #     return super().guess_type(path)
     
     def _get_status(self):
         info("Server: Getting current status from multiple services")
@@ -30,10 +41,13 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def _get_index(self):
         try:
             self.path = './web/index.html'
-            resp = http.server.SimpleHTTPRequestHandler.do_GET(self)
-            return resp
+            # resp = http.server.SimpleHTTPRequestHandler.do_GET(self)
+            # return resp
+            super().do_GET()
+
         except Exception as e:
             error("Failed to process GET request.  Fetching index page")
+            error(e)
 
     def do_OPTIONS(self):
         self.send_response(200)
