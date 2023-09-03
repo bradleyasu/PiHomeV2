@@ -38,7 +38,7 @@ class Poller:
 
     def api_call(self, url, on_resp):
         url = url.replace(" ", "%20")
-        info("[ POLL ] Initializing API Call: {}".format(url))
+        # info("[ POLL ] Initializing API Call: {}".format(url))
         req = UrlRequest(
             url=url, 
             on_success = lambda request, 
