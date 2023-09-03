@@ -35,9 +35,18 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             error("Failed to process GET request.  Fetching index page")
 
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type")
+        self.end_headers()
+
     
     def do_POST(self):
         try:
+            self.end_headers()
+
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
@@ -62,8 +71,11 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             error("Server: POST Request Failed: {}".format(e))
 
     def _set_response(self):
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type", "Accept")
         self.send_response(200)
-        self.send_header('Content-type', 'text/javascript')
         self.end_headers()
  
  

@@ -18,7 +18,7 @@ class Poller:
             self.tick = 0
         for k,v in self.registered_calls.items():
             if self.tick % int(v["interval"]) == 0:
-                info("[ {} ] Poller triggering {}".format(k, v["url"]))
+                # info("[ {} ] Poller triggering {}".format(k, v["url"]))
                 self.api_call(v["url"], v["on_resp"])
 
     def register_api(self, url, interval, on_resp):
