@@ -45,8 +45,6 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     def do_POST(self):
         try:
-            self.end_headers()
-
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
@@ -65,16 +63,15 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "app" in payload:
                 goto_screen(payload["app"])
             self._set_response()
-            self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
+            # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
             toast("An error occurred processing the server request", "warn", 10)
             error("Server: POST Request Failed: {}".format(e))
 
     def _set_response(self):
         self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", "*")  
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
         self.send_response(200)
         self.end_headers()
 
