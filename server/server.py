@@ -32,9 +32,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             wallpaper = get_app().wallpaper_service.source
             self._set_response()
-            self.wfile.write(json.dumps({
-                'wallpaper': wallpaper
-            }).encode("utf-8"))
+            # self.wfile.write(json.dumps({
+            #     'wallpaper': wallpaper
+            # }).encode("utf-8"))
         except Exception as e:
             error("Failed to get status of services: {}".format(e))
 
