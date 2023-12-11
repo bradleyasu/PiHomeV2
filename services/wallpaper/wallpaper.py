@@ -72,15 +72,25 @@ class Wallpaper:
 
     def parse_reddit(self, json):
         self.cache = json
-        skip_count = random.randint(0, 40)
-        for value in json["data"]["children"]:
-            if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
-                self.current = self.resize_image(value["data"]["url"], 1024, 1024)
-                self.source = value["data"]["url"]
-                get_app()._reload_background()
-                break
-            if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
-                skip_count = skip_count - 1
+        random_child = None
+        while random_child == None or random_child["data"]["url"].endswith(".gif"):
+            # select random child from json
+            rand_idx = random.randint(0, len(json["data"]["children"])) - 1
+            random_child = json["data"]["children"][rand_idx]
+
+        self.current = self.resize_image(random_child["data"]["url"], 1024, 1024)
+        self.source = random_child["data"]["url"]
+        get_app()._reload_background()
+        
+
+        # for value in json["data"]["children"]:
+        #     if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
+        #         self.current = self.resize_image(value["data"]["url"], 1024, 1024)
+        #         self.source = value["data"]["url"]
+        #         get_app()._reload_background()
+        #         break
+        #     if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
+        #         skip_count = skip_count - 1
 
     def parse_wallhaven(self, json): 
         self.cache = json
