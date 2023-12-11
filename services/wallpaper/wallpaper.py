@@ -72,7 +72,7 @@ class Wallpaper:
 
     def parse_reddit(self, json):
         self.cache = json
-        skip_count = random.randint(0, 9)
+        skip_count = random.randint(0, 40)
         for value in json["data"]["children"]:
             if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
                 self.current = self.resize_image(value["data"]["url"], 1024, 1024)
