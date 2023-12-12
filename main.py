@@ -82,6 +82,16 @@ class PiHome(App):
 
         self.menu_button = Hamburger()
 
+
+        self.background_color = NetworkImage(
+            "", 
+            size=(dp(self.width), dp(self.height)), 
+            pos=(0,0), 
+            enable_stretch=True, 
+            loader="./assets/images/default_background.jpg",  
+            error="./assets/images/default_background.jpg"
+        )
+
         self.background = NetworkImage(
             "", 
             size=(dp(self.width), dp(self.height)), 
@@ -156,6 +166,7 @@ class PiHome(App):
         self.layout.size_hint = (1,1)
         self.layout.pos = (0,0)
 
+        self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
 
         screenManager = ScreenManager(transition=SlideTransition(direction="down"))
@@ -323,6 +334,7 @@ class PiHome(App):
         # Update background url from wallpaper service
         # Other regular updates
         self.background.url = self.wallpaper_service.current
+        self.background_color.url = self.wallpaper_service.current_color
         self.background.set_stretch(self.wallpaper_service.allow_stretch)
 
     
@@ -331,6 +343,7 @@ class PiHome(App):
         Updates the background image, clearing the cache
         """
         self.background.reload()
+        self.background_color.reload()
 
     def on_start(self):
         """

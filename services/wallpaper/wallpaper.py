@@ -8,6 +8,7 @@ import requests
 from threading import Thread
 from kivy.clock import Clock
 from PIL import Image as PILImage, ImageOps
+from PIL import ImageFilter as PILImageFilter
 from kivy.network.urlrequest import UrlRequest
 from util.const import TEMP_DIR
 from util.helpers import get_app, get_config, get_poller, info, toast
@@ -25,6 +26,7 @@ class Wallpaper:
     """
 
     current = "https://cdn.pihome.io/assets/background.jpg"
+    current_color = "https://cdn.pihome.io/assets/background.jpg"
     default = "https://cdn.pihome.io/assets/background.jpg"
     source = ""
     allow_stretch = 1 
@@ -69,7 +71,6 @@ class Wallpaper:
             self.poller_key = get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
 
-
     def parse_reddit(self, json):
         self.cache = json
         random_child = None
@@ -81,7 +82,7 @@ class Wallpaper:
         self.current = self.resize_image(random_child["data"]["url"], 1024, 1024)
         self.source = random_child["data"]["url"]
         get_app()._reload_background()
-        
+
 
         # for value in json["data"]["children"]:
         #     if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
@@ -117,11 +118,37 @@ class Wallpaper:
         info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
         r = requests.get(url)
         pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
+
+        # replace background with average color
+        average_color = self.find_average_color(url)
+
+        # resize image to fit screen and set background color to average color
+
         # pilImage = pilImage.resize((width, height), PILImage.ANTIALIAS)
         pilImage = ImageOps.contain(pilImage, (width, height))
         pilImage.save(fp="{}/_rsz_.png".format(TEMP_DIR), format="png")
+
+        # create a new image with the average color as the background color and the pilImage centered in the foreground
+        new_image = PILImage.new("RGB", (get_app().width, get_app().height), average_color)
+        # stretch pilImage to fit screen and add to new image
+        new_image.paste(pilImage, (0, 0))
+
+        # blur image 
+        new_image = new_image.filter(PILImageFilter.GaussianBlur(radius=5))
+        new_image.save(fp="{}/_color_.png".format(TEMP_DIR), format="png")
+        self.current_color = "{}/_color_.png".format(TEMP_DIR)
+
         info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/_rsz_.png".format(TEMP_DIR)
+
+    def find_average_color(self, url):
+        info("Wallpaper Service: finding average color for {}".format(url))
+        r = requests.get(url)
+        pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
+        pilImage = pilImage.resize((1, 1), PILImage.ANTIALIAS)
+        info("Wallpaper Service: finding average color for {} complete".format(url))
+        info("Wallpaper Service: average color is {}".format(pilImage.getpixel((0, 0))))
+        return pilImage.getpixel((0, 0))
 
     def shuffle(self):
         if self.source == "Reddit":
