@@ -1,4 +1,19 @@
 from kivy.config import Config
+
+Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+Config.set('kivy', 'exit_on_escape', '0')
+Config.set('graphics', 'window_state', 'maximized')
+Config.set('graphics', 'borderless', '1')
+Config.set('graphics', 'fullscreen', 'auto')
+Config.set('graphics', 'multisamples', '0')
+Config.set('graphics', 'maxfps', '60')
+Config.set('graphics', 'resizable', '0')
+Config.set('graphics', 'position', 'custom')
+Config.set('graphics', 'left', '0')
+Config.set('graphics', 'top', '0')
+
+Config.set('graphics', 'verify_gl_main_thread', '0')
+
 from components.Hamburger.hamburger import Hamburger
 from screens.CommandCenter.commandcenter import CommandCenterScreen
 from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
@@ -7,8 +22,7 @@ from screens.PiHole.pihole import PiHoleScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
 
 from util.phlog import phlog
-Config.set('kivy', 'keyboard_mode', 'systemandmulti')
-Config.set('graphics', 'verify_gl_main_thread', '0')
+
 
 from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
