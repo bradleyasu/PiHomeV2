@@ -52,9 +52,12 @@ class Wallpaper:
         info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(source, self.allow_stretch))
         if source == "Reddit":
             subs = get_config().get("wallpaper", "subreddits", "wallpaper")
+            is_top = get_config().get_int("wallpaper", "top_of_all_time", 0)
             if subs == "":
                 subs = "wallpaper"
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
+            if is_top == 1:
+                reddit_url = "https://www.reddit.com/r/{}/top/.json?limit=100&t=all".format(subs)
             self.poller_key = get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif source == "Wallhaven":
             search = get_config().get("wallpaper", "whsearch", "landscape")

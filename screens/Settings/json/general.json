@@ -62,6 +62,13 @@
         "options": ["PiHome CDN", "Reddit", "Wallhaven", "Custom"]
     },
     {
+        "type": "bool",
+        "title": "Use Top of All Time?",
+        "desc": "For reddit wallpaper only, if enabled a random wallpaper will be selected from the top of all time.  Disabled will be a random wallpaper from the hot section",
+        "section": "wallpaper",
+        "key": "top_of_all_time"
+    },
+    {
         "type": "string",
         "title": "Subreddits",
         "desc": "Use + to combine multiple subreddits",
