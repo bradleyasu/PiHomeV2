@@ -86,27 +86,18 @@ class Wallpaper:
         self.source = random_child["data"]["url"]
         get_app()._reload_background()
 
-
-        # for value in json["data"]["children"]:
-        #     if skip_count <= 0 and "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
-        #         self.current = self.resize_image(value["data"]["url"], 1024, 1024)
-        #         self.source = value["data"]["url"]
-        #         get_app()._reload_background()
-        #         break
-        #     if "url" in value["data"] and (value["data"]["url"].endswith(".png") or value["data"]["url"].endswith(".jpg")):
-        #         skip_count = skip_count - 1
-
     def parse_wallhaven(self, json): 
         self.cache = json
         skip_count = random.randint(0, 9)
-        for value in json["data"]:
-            if skip_count <= 0 and "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
-                self.source = value["path"]
-                self.current = self.resize_image(value["path"], 1024, 1024)
-                get_app()._reload_background()
-                break
-            if "path" in value and (value["path"].endswith(".png") or value["path"].endswith(".jpg")):
-                skip_count = skip_count - 1
+        random_child = None
+        while random_child == None or random_child["path"].endswith(".gif"):
+            # select random child from json
+            rand_idx = random.randint(0, len(json["data"])) - 1
+            random_child = json["data"][rand_idx]
+        
+        self.current = self.resize_image(random_child["path"], 1024, 1024)
+        self.source = random_child["path"]
+        get_app()._reload_background()
 
     def parse_cdn(self, json):
         self.cache = json
