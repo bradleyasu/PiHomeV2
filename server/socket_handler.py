@@ -20,6 +20,7 @@ class SocketHandler():
         
         if message["type"] == "status":
             status = {
+                "type": "status",
                 "status": "online",
                 "wallpaper": {
                     "current": get_app().wallpaper_service.current,
