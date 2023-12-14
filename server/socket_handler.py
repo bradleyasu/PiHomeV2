@@ -19,6 +19,10 @@ class SocketHandler():
             result = execute_command(command)
             result["type"] = "command"
             await socket.send(json.dumps(result))
+
+        if message["type"] == "wallpaper_shuffle":
+            get_app().wallpaper_service.shuffle()
+
         
         if message["type"] == "audio":
             # check if play_url key exists
