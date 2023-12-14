@@ -118,7 +118,7 @@ python3 -m pip install qrcode[pil] >> $LOG
 python3 -m pip install mplayer.py >> $LOG
 python3 -m pip install python-mpv >> $LOG
 
-python3 -m pip install websockets >> $LOGyy
+python3 -m pip install websockets >> $LOG
 
 # Update MPV
 
