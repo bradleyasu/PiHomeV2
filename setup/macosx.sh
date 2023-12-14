@@ -15,5 +15,7 @@ pip install qrcode[pil] >> $LOG
 
 pip install mplayer.py >> $LOG
 
+pip install websockets >> $LOG
+
 # echo "Installing Kivy..."
 # python3 -m pip install kivy[base] >> $LOG

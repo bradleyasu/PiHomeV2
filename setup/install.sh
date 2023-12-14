@@ -118,6 +118,8 @@ python3 -m pip install qrcode[pil] >> $LOG
 python3 -m pip install mplayer.py >> $LOG
 python3 -m pip install python-mpv >> $LOG
 
+python3 -m pip install websockets >> $LOGyy
+
 # Update MPV
 
 curl https://non-gnu.uvt.nl/debian/uvt_key.gpg --output uvt_key.gpg
