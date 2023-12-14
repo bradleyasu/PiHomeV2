@@ -45,7 +45,8 @@ class SocketHandler():
                 "volume": get_app().audio_player.volume,
                 "playlist_pos": get_app().audio_player.playlist_pos,
                 "playlist_start": get_app().audio_player.playlist_start,
-                "queue": get_app().audio_player.queue
+                "queue": get_app().audio_player.queue,
+                "album_art": get_app().audio_player.album_art
             }))
             
 

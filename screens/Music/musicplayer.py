@@ -153,7 +153,9 @@ class MusicPlayer(PiHomeScreen):
         try:
             if "results" in json and len(json["results"]) > 0:
                 self.album_art = json["results"][0]["cover_image"]
+                audio_player().album_art = self.album_art
             else:
                 self.album_art = ART
+                audio_player().album_art = ART
         except Exception as e:
             print(e)

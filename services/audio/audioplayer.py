@@ -16,6 +16,7 @@ class AudioPlayer:
     is_paused = False
     playlist_pos = 0
     playlist_start = 0
+    album_art = ""
     queue = []
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
