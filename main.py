@@ -313,6 +313,12 @@ class PiHome(App):
         except (KeyError) as e:
             pass
 
+    def get_screen_shot(self):
+        """
+        Get a screenshot of the current screen
+        """
+        Window.screenshot(name=TEMP_DIR + "/screenshot.png")
+
 
     """
     Quit PiHome and clean up resources

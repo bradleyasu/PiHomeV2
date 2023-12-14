@@ -1,7 +1,11 @@
 from cmath import inf
 import http.server
 import json
+import socket
 import socketserver
+from server.socket_handler import SocketHandler
+import websockets
+import asyncio
 from threading import Thread
 from services.wallpaper.wallpaper import Wallpaper
 
@@ -100,15 +104,23 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
  
 class PiHomeServer():
     PORT = SERVER_PORT
+    SOCKET_PORT = 9090
     SERVER_THREAD = None
+    SOCKET_THREAD = None
+    SOCKET_LOOP = None
+    SOCKET_SERVER = None
     httpd = None
     shutting_down = False
+    SOCKET_HANDLER = SocketHandler()
     def __init__(self, **kwargs):
         super(PiHomeServer, self).__init__(**kwargs)
 
     def start_server(self):
         self.SERVER_THREAD = Thread(target=self._run)
         self.SERVER_THREAD.start()
+        self.SOCKET_THREAD = Thread(target=self._run_socket)
+        self.SOCKET_THREAD.start()
+        
         info("Server: PiHome Server has started")
 
     def stop_server(self):
@@ -119,11 +131,34 @@ class PiHomeServer():
             info("Server: PiHome Server has shutdown")
         else:
             warn("Server: Failed to shutdown PiHome server.  It is not running")
+        self._shutdown_socket_loop()
 
     def is_online(self):
         if self.httpd == None:
             return False
         return True
+
+    def _run_socket(self):
+        if self.SOCKET_LOOP != None:
+            return
+        # create event loop
+        self.SOCKET_LOOP = asyncio.new_event_loop()
+        # Start WebSocket server
+        try:
+            self.SOCKET_LOOP.run_until_complete(self.start_socket_server())
+            # self.SOCKET_LOOP.run_forever()
+        except InterruptedError as e:
+            error("Socket Server Error: {}".format(e))
+            self._shutdown_socket_loop()
+
+    def _shutdown_socket_loop(self):
+        if self.SOCKET_SERVER != None:
+            # force socket server to close
+            self.SOCKET_SERVER.close()
+            self.SOCKET_SERVER = None
+        if self.SOCKET_LOOP != None:
+            self.SOCKET_LOOP.stop()
+            self.SOCKET_LOOP = None
 
     def _run(self):
         Handler = MyHttpRequestHandler
@@ -132,3 +167,17 @@ class PiHomeServer():
             info("Server: PiHome Server Listening on port: {}".format(self.PORT))
             while not self.shutting_down:
                 h.serve_forever()
+
+    
+    async def websocket_server(self, websocket, path):
+        toast("Socket Connected", "info", 2)
+        try:
+            async for message in websocket:
+                await self.SOCKET_HANDLER.handle_message(message, websocket)
+        finally:
+            print("WebSocket connection closed")
+
+    async def start_socket_server(self):
+        self.SOCKET_SERVER = await websockets.serve(self.websocket_server, "localhost", 8765)
+        await asyncio.Future()  # Wait indefinitely
+            

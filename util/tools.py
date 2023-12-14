@@ -1,4 +1,10 @@
+import random
 import subprocess
+
+from PIL import Image, ImageDraw, ImageFilter
+from kivy.graphics.texture import Texture
+from kivy.core.image import Image as CoreImage
+from util.const import TEMP_DIR
 
 '''
 Convert a Hex color, #00FF00, into an RGBA floating point
@@ -8,7 +14,7 @@ and will be returned as passed.  Opacity should be a value between 0 and 1
 import ssl
 import tempfile
 import urllib
-from util.helpers import info
+from util.helpers import get_app, info
 
 def hex(hex_string, opacity = 1.0):
     hex_string = hex_string.replace('#', '')
@@ -54,3 +60,47 @@ def execute_command(command):
             "error": str(e)
         }
 
+
+def get_semi_transparent_gaussian_blur_png_from_color(color, as_texture = True, name = "_blur_", width = 100, height = 100):
+    # use PIL to create a get_app().width by get_app().height image
+    # with a semi-transparent gaussian blur
+    noise = generate_noise(width, height)
+    image = Image.new('RGBA', (width, height), (0,0,0, 170))
+    image.paste(noise, (0,0), noise)
+    # generate static/snow effect on image layer
+    image = image.filter(ImageFilter.GaussianBlur(radius=10.0))
+    image.save(fp="{}/{}.png".format(TEMP_DIR, name), format="png")
+    if as_texture == True:
+        return create_texture_from_image_file("{}/{}.png".format(TEMP_DIR, name))
+    return "{}/{}.png".format(TEMP_DIR, name)
+
+
+def create_texture_from_image_file(file):
+    try:
+        image = CoreImage(file, keep_data=True)
+        texture = Texture.create(size=(image.width, image.height), colorfmt='rgba')
+        texture.blit_buffer(image.texture.pixels, colorfmt='rgba', bufferfmt='ubyte')
+        return texture
+    except Exception as e:
+        print(f"Error creating texture: {e}")
+        return None  # Return None in case of an error
+
+def generate_noise(width, height):
+    noise = Image.new('L', (width, height))
+    for y in range(height):
+        for x in range(width):
+            noise.putpixel((x, y), (random.randint(0, 255)))
+    return noise
+
+
+def generate_blob_noise(width, height, num_blobs=50, max_blob_size=100):
+    noise = Image.new('L', (width, height))
+    draw = ImageDraw.Draw(noise)
+    for _ in range(num_blobs):
+        blob_size = random.randint(10, max_blob_size)
+        x = random.randint(0, width - blob_size)
+        y = random.randint(0, height - blob_size)
+        color = random.randint(0, 255)
+        # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), random.randint(50, 150))
+        draw.ellipse([x, y, x + blob_size, y + blob_size], fill=color)
+    return noise

@@ -8,6 +8,7 @@ from kivy.clock import Clock
 from theme.theme import Theme
 
 from util.helpers import get_app, weather
+from util.tools import get_semi_transparent_gaussian_blur_png_from_color
 
 Builder.load_file("./composites/Weather/weatherdetails.kv")
 
@@ -15,6 +16,7 @@ class WeatherDetails(Widget):
     theme = Theme()
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
+    blur = StringProperty(get_semi_transparent_gaussian_blur_png_from_color(theme.get_color(theme.BACKGROUND_PRIMARY), True))
 
     day = StringProperty("--")
     temp = StringProperty("--")

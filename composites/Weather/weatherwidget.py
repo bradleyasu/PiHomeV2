@@ -8,6 +8,7 @@ from kivy.clock import Clock
 from theme.theme import Theme
 
 from util.helpers import get_app, warn, weather, error
+from util.tools import get_semi_transparent_gaussian_blur_png_from_color
 
 Builder.load_file("./composites/Weather/weatherwidget.kv")
 
@@ -15,6 +16,7 @@ class WeatherWidget(Widget):
     theme = Theme()
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     background = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY))
+    blur = StringProperty(get_semi_transparent_gaussian_blur_png_from_color(theme.get_color(theme.BACKGROUND_PRIMARY), True))
 
     background_color = ColorProperty((0,1, 0, 0))
     icon = StringProperty("")
