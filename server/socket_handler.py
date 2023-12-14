@@ -16,8 +16,28 @@ class SocketHandler():
         if message["type"] == "command":
             command = message["command"]
             result = execute_command(command)
+            result["type"] = "command"
             await socket.send(json.dumps(result))
         
+        if message["type"] == "audio":
+            if message["url"] != None:
+                get_app().audio_player.play(message["url"])
+            if message["volume"] != None:
+                get_app().audio_player.set_volume(message["volume"])
+            
+            await socket.send(json.dumps({ 
+                "type": "audio",
+                "is_playing": get_app().audio_player.is_playing,
+                "is_paused": get_app().audio_player.is_paused,
+                "title": get_app().audio_player.title,
+                "percent": get_app().audio_player.percent,
+                "volume": get_app().audio_player.volume,
+                "playlist_pos": get_app().audio_player.playlist_pos,
+                "playlist_start": get_app().audio_player.playlist_start,
+                "queue": get_app().audio_player.queue
+            }))
+            
+
         if message["type"] == "status":
             status = {
                 "type": "status",
