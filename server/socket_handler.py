@@ -1,7 +1,8 @@
 
 
 import json
-from util.helpers import get_app
+from util.const import _MUSIC_SCREEN
+from util.helpers import audio_player, get_app, goto_screen
 from util.tools import execute_command
 
 
@@ -20,10 +21,16 @@ class SocketHandler():
             await socket.send(json.dumps(result))
         
         if message["type"] == "audio":
-            if message["url"] != None:
-                get_app().audio_player.play(message["url"])
-            if message["volume"] != None:
-                get_app().audio_player.set_volume(message["volume"])
+            # check if play_url key exists
+            if "play_url" in message:
+                audio_player().play(message["play_url"])
+                goto_screen(_MUSIC_SCREEN)
+            if "volume" in message:
+                audio_player().set_volume(message["volume"])
+            if "stop" in message:
+                audio_player().stop()
+            if "clear_queue" in message:
+                audio_player().clear_playlist()
             
             await socket.send(json.dumps({ 
                 "type": "audio",
