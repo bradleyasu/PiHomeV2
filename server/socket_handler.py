@@ -23,6 +23,8 @@ class SocketHandler():
         if message["type"] == "wallpaper_shuffle":
             get_app().wallpaper_service.shuffle()
 
+        if message["type"] == "screen":
+            goto_screen(message["screen"])
         
         if message["type"] == "audio":
             # check if play_url key exists
@@ -78,6 +80,17 @@ class SocketHandler():
                     "playlist_start": get_app().audio_player.playlist_start,
                     "queue": get_app().audio_player.queue,
                     "album_art": get_app().audio_player.album_art
+                },
+                "screens": {
+                    "current": get_app().manager.current_screen.name,
+                    "screens": list(map(lambda n: {
+                        n: {
+                            "label": get_app().screens[n].label,
+                            "requires_pin": get_app().screens[n].requires_pin,
+                            "hidden": get_app().screens[n].is_hidden,
+                            "icon": get_app().screens[n].icon
+                        }
+                    }, get_app().screens))
                 }
             }
             await socket.send(json.dumps(status))
