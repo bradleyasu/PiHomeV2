@@ -41,6 +41,7 @@ class RotaryEncoder():
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.is_initialized = True
+            print("Rotary Encoder Initialized")
 
     def on_press(self, channel):
         self.button_pressed = True
