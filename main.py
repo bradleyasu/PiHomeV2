@@ -1,5 +1,7 @@
 from kivy.config import Config
 
+from listeners.PiHomeListener import PiHomeListener
+
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 # Config.set('kivy', 'exit_on_escape', '0')
@@ -61,6 +63,7 @@ from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock
 from kivy.gesture import Gesture 
+from typing import List
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
@@ -79,6 +82,7 @@ class PiHome(App):
     toast_open = False
     web_conf = None
     wallpaper_service = None
+    listeners: List[PiHomeListener]= []
 
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
@@ -206,6 +210,7 @@ class PiHome(App):
         self.phlogger.info("Confgiruation changes have been made.  Resetting services....")
         self.base_config = Configuration(CONF_FILE)
         self.wallpaper_service.restart()
+        self.notify_listeners("configuration_update", self.base_config)
         self.phlogger.info("Confgiuration changes have been applied!")
 
     def restart(self):
@@ -319,6 +324,14 @@ class PiHome(App):
         """
         Window.screenshot(name=TEMP_DIR + "/screenshot.png")
 
+
+    def add_listener(self, listener: PiHomeListener):
+        self.listeners.append(listener)
+
+    def notify_listeners(self, type, payload):
+        for listener in self.listeners:
+            if listener.type == type:
+                listener.callback(payload)
 
     """
     Quit PiHome and clean up resources

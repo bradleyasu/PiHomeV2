@@ -8,6 +8,11 @@ PiHome is an open source ("for fun") project that I've been working on.  PiHome 
 
 In it's current state, PiHome has a Home Screen that displays current time, weather via location information and tomorrow.io API and a settings panel.  Additionally, it has a "custom screen" I've built for public transportation information - upcoming bus departure times.
 
+![3dPrint](.github/images/3d_print.png "3D Print")
+
+Although not required, PiHome is designed to work with a rotary encoder/knob controls.  Each screen is responsible for overriding default behavior for the rotary encoder (currently audio controls), so if you develop your own screens, please consider making use of this.  All default pihome functionality will work without the rotary encoder.  I have 3D printed a custom case for PiHome and the *.3MF can be found in the `./3dprint` directory of this repository.  There is also a README in that directory with more information on setting up the rotary encoder hardware.  The 3D Print/Models are adapted for pihome from the plexamp-pi project by Paul Arden.  Please see the plexamp-pi project on github for more information: https://github.com/ardenpm/plexamp-pi
+
+
 ### Custom Screens
 
 To create a custom screen, create subdirectory within the `screens` directory that is typically named whatever your screen ("PiHome app") is and within your directory, create two files named `<yourapp.py>` and `<yourapp.kv>`.  The `py` file contains business logic for your application while the `kv` file contains UI markdown.  Please refer to the Kivy documentation for more information on this.  Your `py` file should extend the `PiHomeScreen` (refer to other screens in this directory as an example).  `PiHomeScreen` provides a few properties that can be overriden that PiHome will use.  For example, a default name and icon.    You can set these to whatever you like. To add your screen to PiHome, go into the `main.py` and find the `screens` array initialization in the `setup()` funciton.  Simply add your screen to the array.  When you spin up PiHome via `python3 main.py`, long press the display (current geasture may change) to access the App menu.  You should see your new screen ("app") in the menu selection and upon clicking, you will be sent into your screen.    Long press again to get the app menu and return home.  The App Menu is accessible from anywhere.

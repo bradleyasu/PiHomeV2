@@ -55,7 +55,8 @@
 
         RedditWidget:
             size_hint: None, None
-            pos: dp(0), root.height - dp(200)
+            # Center the widget
+            pos_hint: {'center_x': .5, 'center_y': .5}
             
         GridLayout:
             canvas:

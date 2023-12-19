@@ -132,6 +132,14 @@ class AudioPlayer:
     def set_volume(self, volume):
         self.player._set_property("volume", volume)
 
+    def volume_up(self):
+        if self.volume < 100:
+            self.player._set_property("volume", self.volume + 1)
+
+    def volume_down(self):
+        if self.volume > 0:
+            self.player._set_property("volume", self.volume - 1)
+
     def _set_playlist_pos(self, pos):
         if pos:
             self.playlist_pos = pos + self.playlist_start

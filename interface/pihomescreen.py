@@ -1,12 +1,16 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
+from system.rotary import RotaryEncoder
 from util.const import GESTURE_DATABASE
-from util.helpers import goto_screen, info, simplegesture
+from util.helpers import audio_player, get_app, goto_screen, info, simplegesture
 
 class PiHomeScreen(Screen):
 
+    rotary_encoder = None
+
     def __init__(self, icon = "https://cdn.pihome.io/assets/default_app_icon.png", label = "PiHome App", is_hidden = False, requires_pin = False, **kwargs):
         super(PiHomeScreen, self).__init__(**kwargs)
+        self.rotary_encoder = RotaryEncoder()
         self.icon = icon
         self.label = label
         self.is_hidden = is_hidden 
@@ -15,6 +19,10 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
         self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
+
+        if self.rotary_encoder.is_initialized:
+            self.rotary_encoder.button_callback = lambda _: goto_screen("home")
+            self.rotary_encoder.update_callback = lambda direction: self.rotary_handler(direction)
         info("PiHomeScreen Initialized: {} and hidden state set to {}".format(self.label, self.is_hidden))
 
 
@@ -37,3 +45,10 @@ class PiHomeScreen(Screen):
             return False 
         except (KeyError) as e:
             pass
+
+    def rotary_handler(self, direction):
+        if direction == 1:
+            audio_player().volume_up()
+        elif direction == -1:
+            audio_player().volume_down()
+        return False

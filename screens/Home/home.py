@@ -17,6 +17,7 @@ from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
+from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
@@ -54,6 +55,11 @@ class HomeScreen(PiHomeScreen):
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
+        config_listener = ConfigurationUpdateListener(lambda payload: self.reload_all(payload))
+        get_app().add_listener(config_listener)
+
+    def reload_all(self, payload):
+        print("reloading homescreen")
 
     def on_enter(self, *args):
         if self.is_first_run is True:

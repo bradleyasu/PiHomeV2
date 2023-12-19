@@ -1,5 +1,5 @@
 from kivy.lang import Builder
-from components.Image.networkimage import BLANK_IMAGE
+from components.Image.networkimage import BLANK_IMAGE, LOGO_IMAGE
 from interface.gesturewidget import GestureWidget
 from services.qr.qr import QR
 from theme.theme import Theme
@@ -14,7 +14,7 @@ Builder.load_file("./composites/Reddit/redditwidget.kv")
 class RedditWidget(GestureWidget):
 
     theme = Theme()
-    background_color = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.0))
+    background_color = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.4))
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     text_color_secondary = ColorProperty(theme.get_color(theme.TEXT_SECONDARY))
 
@@ -53,6 +53,7 @@ class RedditWidget(GestureWidget):
         self.on_gesture = self.handle_gesture
         self.on_click = self.handle_click
 
+            
     def start(self):
         animation = Animation(opacity=1, t='linear', d=1)
         animation.start(self)
@@ -92,7 +93,7 @@ class RedditWidget(GestureWidget):
         if thumbnail.endswith(".jpg") or thumbnail.endswith(".png"):
             self.thumbnail = thumbnail
         else:
-            self.thumbnail = BLANK_IMAGE
+            self.thumbnail = LOGO_IMAGE
 
         if url.endswith(".jpg") or url.endswith(".png"):
             self.background_image = url

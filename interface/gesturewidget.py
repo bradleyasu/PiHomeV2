@@ -1,3 +1,4 @@
+import sys
 from kivy.graphics import Line
 from util.const import GESTURE_DATABASE
 from kivy.uix.widget import Widget
@@ -9,9 +10,17 @@ class GestureWidget(Widget):
         super(GestureWidget, self).__init__(**kwargs)
         self.on_gesture = lambda _: ()
         self.on_click = lambda _: ()
-        self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
-        self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
-        self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
+        # check if OS has touch screen
+        if self.is_touch_screen():
+            self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
+            self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
+            self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
+
+
+    def is_touch_screen(self):
+        # for now, we'll just return true if the OS is linux
+        is_linux = sys.platform.startswith('linux')
+        return is_linux
 
     def touch_down(self, touch):
         if not self.collide_point(*touch.pos):

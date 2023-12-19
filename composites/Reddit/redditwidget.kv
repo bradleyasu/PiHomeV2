@@ -8,9 +8,11 @@
     canvas.before:
         Color:
             rgba: self.background_color if root.background_image_opacity == 0 else (0,0,0,0)
-        Rectangle:
+        # Create rounded rectangle
+        RoundedRectangle:
             pos: self.pos
             size: self.size
+            radius: [dp(10),]
     
     NetworkImage:
         url: root.background_image if root.clicked == False else root.qr

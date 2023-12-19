@@ -16,6 +16,9 @@ class Poller:
         self.tick = self.tick + 1
         if self.tick >= self.MAX_TICK:
             self.tick = 0
+        # check if registered calls has items()
+        if not self.registered_calls or len(self.registered_calls) == 0:
+            return
         for k,v in self.registered_calls.items():
             if self.tick % int(v["interval"]) == 0:
                 # info("[ {} ] Poller triggering {}".format(k, v["url"]))

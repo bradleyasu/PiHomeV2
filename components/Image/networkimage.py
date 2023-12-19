@@ -16,6 +16,7 @@ from kivy.metrics import dp
 Builder.load_file("./components/Image/networkimage.kv")
 
 BLANK_IMAGE = "./assets/images/blank.png"
+LOGO_IMAGE = "./assets/images/pihome_logo_white.png"
 
 class NetworkImage(Widget):
     theme = Theme()
