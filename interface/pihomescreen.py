@@ -10,7 +10,7 @@ class PiHomeScreen(Screen):
 
     def __init__(self, icon = "https://cdn.pihome.io/assets/default_app_icon.png", label = "PiHome App", is_hidden = False, requires_pin = False, **kwargs):
         super(PiHomeScreen, self).__init__(**kwargs)
-        self.rotary_encoder = RotaryEncoder()
+        self.rotary_encoder = RotaryEncoder().instance
         self.icon = icon
         self.label = label
         self.is_hidden = is_hidden 

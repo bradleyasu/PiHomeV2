@@ -27,10 +27,12 @@ class RotaryEncoder():
     button_callback = lambda _: ()
     update_callback = lambda direction: ()
     is_initialized = False
+    instance = None
 
     def __init__(self, **kwargs):
         super(RotaryEncoder, self).__init__(**kwargs)
-        if can_use_rotary:
+        self.instance = self
+        if can_use_rotary and not self.instance:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
