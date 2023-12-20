@@ -278,6 +278,9 @@ class PiHome(App):
             self.layout.remove_widget(self.appmenu)
             self.menu_button.is_open = False
 
+    def toggle_app_menu(self):
+        self.set_app_menu_open(not self.app_menu_open)
+
     def on_touch_down(self, touch):
         # start collecting points in touch.ud
         # create a line to display the points

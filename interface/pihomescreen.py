@@ -1,8 +1,8 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
 from system.rotary import ROTARY_ENCODER
-from util.const import _HOME_SCREEN, GESTURE_DATABASE
-from util.helpers import audio_player, get_app, goto_screen, info, simplegesture, warn
+from util.const import GESTURE_DATABASE
+from util.helpers import audio_player, get_app, info, simplegesture, warn
 
 class PiHomeScreen(Screen):
 
@@ -21,7 +21,7 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
 
         if self.rotary_encoder.is_initialized:
-            self.rotary_encoder.button_callback = lambda _: goto_screen(_HOME_SCREEN)
+            self.rotary_encoder.button_callback = lambda _: get_app().toggle_app_menu()
             self.rotary_encoder.update_callback = lambda direction: self.rotary_handler(direction)
             info("Rotary Encoder Initialized: {}".format(self.label))
         else: 
