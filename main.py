@@ -172,7 +172,6 @@ class PiHome(App):
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
 
-    
     # the root widget
     def build(self):
         self.setup()

@@ -18,9 +18,10 @@ class SettingsScreen(PiHomeScreen):
         super(SettingsScreen, self).__init__(**kwargs)
         config = ConfigParser()
         config.read(CONF_FILE)
-        config.add_callback(self.updated)
+        # config.add_callback(self.updated)
         self.config = config
         s = SettingsWithSidebar()
+        s.bind(on_close=self.closed)
         self.callback = callback
         # s.register_type("pin", PinPad)
         self.icon = "https://cdn.pihome.io/assets/default_settings_icon.png"
@@ -53,6 +54,11 @@ class SettingsScreen(PiHomeScreen):
     
     def updated(self, section, key, value):
         # toast(label="PiHome needs to be restarted for new settings to take effect")
+        self.config.write()
+        if self.callback is not None:
+            self.callback()
+
+    def closed(self, settings):
         self.config.write()
         if self.callback is not None:
             self.callback()
