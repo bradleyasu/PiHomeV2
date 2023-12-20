@@ -24,3 +24,12 @@ def set_brightness(percent_level):
         ]
         info("Hardware: {} brightness set to {}".format(hardware, level))
         subprocess.call(args)
+
+def get_brightness():
+    if platform.system() == 'Darwin':
+        warn("get brightness is ignored while running on unsupported OS")
+        return 50
+    for hardware in os.listdir('/sys/class/backlight'):
+        with open('/sys/class/backlight/{}/brightness'.format(hardware), 'r') as f:
+            return round((int(f.read()) / 255) * 100)
+    return 100 

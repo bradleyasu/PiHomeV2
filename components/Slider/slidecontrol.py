@@ -25,10 +25,22 @@ class SlideControl(GestureWidget):
 
     level = NumericProperty(100)
     touching = False
+    min = 0
+    max = 100
 
     def __init__(self, min = 0, max = 100, **kwargs):
         super(SlideControl, self).__init__(**kwargs)
         self.listeners = []
+        self.min = min
+        self.max = max
+
+    def set_value(self, value):
+        if value > self.max:
+            value = self.max
+        if value < self.min:
+            value = self.min
+        self.level = value
+        self.on_change(self.level)
 
     def on_change(self, value):
         for listener in self.listeners:

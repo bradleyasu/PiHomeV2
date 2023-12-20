@@ -1,5 +1,6 @@
 from email.mime import audio
 import subprocess
+from components.Slider.slidecontrol import SlideControl
 
 from composites.Reddit.redditwidget import RedditWidget
 import requests
@@ -10,7 +11,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty,ListProperty
+from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty,ListProperty, BooleanProperty
 
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
@@ -18,6 +19,7 @@ from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
+from system.brightness import get_brightness, set_brightness
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
@@ -45,6 +47,7 @@ class HomeScreen(PiHomeScreen):
     weather_code = StringProperty("--")
 
     is_first_run = True
+    brightness_slider = None
 
 
     def __init__(self, **kwargs):
@@ -62,8 +65,11 @@ class HomeScreen(PiHomeScreen):
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
             self.is_first_run = False
+
         return super().on_enter(*args)
 
+    def change_brightness(self, value):
+        set_brightness(value)
 
     def open_settings(self):
         # self.manager.current = 'settings'
@@ -71,7 +77,6 @@ class HomeScreen(PiHomeScreen):
 
     def open_pin(self):
         self.manager.current = 'pin'
-
 
     def startup_animation(self):
         animation = Animation(logo_opacity = 0, t='linear', d=1)
@@ -93,5 +98,28 @@ class HomeScreen(PiHomeScreen):
             pass
 
     def on_rotary_long_pressed(self):
+        # get_app().wallpaper_service.shuffle()
+        self.toggle_controls()
+
+    def on_rotary_pressed(self):
         get_app().wallpaper_service.shuffle()
-        return False
+
+    def on_rotary_turn(self, direction):
+        if not self.brightness_controls_enabled:
+            return super().on_rotary_turn(direction)
+        if direction == 1:
+            self.brightness_slider.set_value(self.brightness_slider.value + 5)
+        elif direction == -1:
+            self.brightness_slider.set_value(self.brightness_slider.value - 5)
+
+    def toggle_controls(self):
+        if self.brightness_slider is None:
+            self.brightness_slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(get_app().width -30), dp(10)))
+            self.brightness_slider.add_listener(lambda value: self.change_brightness(value))
+            self.brightness_slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
+            self.brightness_slider.active_color = hex(Color.DARK_CHARTREUSE_700)
+            self.brightness_slider.value = get_brightness()
+            self.add_widget(self.brightness_slider)
+        else:
+            self.remove_widget(self.brightness_slider)
+            self.brightness_slider = None
