@@ -41,37 +41,40 @@ class RotaryEncoder():
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.on_press_up, bouncetime=300)
-            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update, bouncetime=300)
-            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update, bouncetime=300)
+            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
+            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.is_initialized = True
 
     def on_press_up(self, channel):
         if GPIO.input(channel):
+            if not self.button_pressed:
+                self.press_duration = time.time() - self.press_time
             self.button_pressed = False
-            self.press_duration = time.time() - self.press_time
             if self.press_duration > self.LONG_PRESS_THRESHOLD:
                 self.button_callback(long_press=True)
             else:
                 self.button_callback(long_press=False)
         else:
+            if not self.button_pressed:
+                self.press_time = time.time()
             self.button_pressed = True
-            self.press_time = time.time()
 
     def update(self, data):
         if can_use_rotary:
             sleep(0.02)
-            state = GPIO.input(self.b_pin)
-            if state != self.last_state:
-                if GPIO.input(self.a_pin) != state:
-                    self.rotary_counter -= 1
-                    self.direction = -1
-                else:
+            clkstate = GPIO.input(self.b_pin)
+            dtstate = GPIO.input(self.a_pin)
+            if clkstate != self.last_state:
+                if dtstate != clkstate:
                     self.rotary_counter += 1
                     self.direction = 1
+                else:
+                    self.rotary_counter -= 1
+                    self.direction = -1
             else:
                 self.direction = 0
             self.update_callback(self.direction)
-            self.last_state = state
+            self.last_state = clkstate
 
 
     def reset(self):
