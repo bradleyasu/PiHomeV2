@@ -11,6 +11,7 @@ class PiHomeScreenManager(ScreenManager):
             self.rotary_encoder.button_callback = lambda _: self._rotary_pressed()
             self.rotary_encoder.update_callback = lambda direction: self._rotary_handler(direction)
 
+
     def _rotary_handler(self, direction):
         try:
             self.current_screen.on_rotary_turn(direction)
