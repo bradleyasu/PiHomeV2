@@ -1,4 +1,5 @@
 from kivy.config import Config
+from interface.pihomescreenmanager import PiHomeScreenManager
 
 from listeners.PiHomeListener import PiHomeListener
 
@@ -57,7 +58,7 @@ from screens.Bus.bus import BusScreen
 from screens.SnowCast.snowcast import SnowCast
 from util.configuration import Configuration
 from kivy.core.window import Window
-from kivy.uix.screenmanager import ScreenManager, SlideTransition
+from kivy.uix.screenmanager import SlideTransition
 from util.helpers import get_app, goto_screen, simplegesture
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
@@ -185,7 +186,7 @@ class PiHome(App):
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
 
-        screenManager = ScreenManager(transition=SlideTransition(direction="down"))
+        screenManager = PiHomeScreenManager(transition=SlideTransition(direction="down"))
 
         # Add Registered Screens to screenmanager 
         for screen in self.screens.values():

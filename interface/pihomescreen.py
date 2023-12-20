@@ -1,16 +1,12 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
-from system.rotary import ROTARY_ENCODER
 from util.const import GESTURE_DATABASE
 from util.helpers import audio_player, get_app, info, simplegesture, warn
 
 class PiHomeScreen(Screen):
 
-    rotary_encoder = None
-
     def __init__(self, icon = "https://cdn.pihome.io/assets/default_app_icon.png", label = "PiHome App", is_hidden = False, requires_pin = False, **kwargs):
         super(PiHomeScreen, self).__init__(**kwargs)
-        self.rotary_encoder = ROTARY_ENCODER
         self.icon = icon
         self.label = label
         self.is_hidden = is_hidden 
@@ -19,15 +15,6 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
         self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
-
-        if self.rotary_encoder.is_initialized:
-            self.rotary_encoder.button_callback = lambda _: self._rotary_pressed()
-            self.rotary_encoder.update_callback = lambda direction: self._rotary_handler(direction)
-            info("Rotary Encoder Initialized: {}".format(self.label))
-        else: 
-            info("Rotary Encoder Not Initialized: {}".format(self.label))
-            warn("Rotary Encoder Instance State: ".format(self.rotary_encoder.is_initialized))
-        info("PiHomeScreen Initialized: {} and hidden state set to {}".format(self.label, self.is_hidden))
 
 
     def touch_down(self, touch):
@@ -50,12 +37,6 @@ class PiHomeScreen(Screen):
         except (KeyError) as e:
             pass
 
-    def _rotary_handler(self, direction):
-        self.on_rotary_turn(direction)
-
-    def _rotary_pressed(self):
-        self.on_rotary_pressed()
-    
     def on_rotary_pressed(self):
         audio_player().toggle_play()
         return False
