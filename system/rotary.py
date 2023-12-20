@@ -40,7 +40,7 @@ class RotaryEncoder():
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.on_press, bouncetime=300)
+            GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.on_press, bouncetime=20)
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.is_initialized = True
@@ -65,7 +65,6 @@ class RotaryEncoder():
 
     def update(self, data):
         if can_use_rotary:
-            sleep(0.02)
             clkstate = GPIO.input(self.b_pin)
             dtstate = GPIO.input(self.a_pin)
             if clkstate != self.last_state:
