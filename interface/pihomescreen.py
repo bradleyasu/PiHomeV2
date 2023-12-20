@@ -47,3 +47,7 @@ class PiHomeScreen(Screen):
         elif direction == -1:
             audio_player().volume_down()
         return False
+
+    def on_config_update(self, payload):
+        # default behavior is simply to reload the screen
+        self._trigger_layout()

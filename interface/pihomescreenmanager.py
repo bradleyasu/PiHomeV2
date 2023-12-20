@@ -1,5 +1,6 @@
 from kivy.uix.screenmanager import ScreenManager
 from system.rotary import ROTARY_ENCODER
+from util.helpers import info
 
 class PiHomeScreenManager(ScreenManager):
 
@@ -21,3 +22,8 @@ class PiHomeScreenManager(ScreenManager):
             self.current_screen.on_rotary_pressed()
         except AttributeError:
             pass
+    
+    def reload_all(self, payload):
+        info("Reloading all screens")
+        for screen in self.screens:
+            screen.on_config_update(payload)

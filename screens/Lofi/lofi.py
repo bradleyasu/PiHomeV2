@@ -29,7 +29,6 @@ class LofiScreen(PiHomeScreen):
     def __init__(self, **kwargs):
         super(LofiScreen, self).__init__(**kwargs)
         self.icon = CDN_ASSET.format("lofi_app_icon.png")
-
         self.wheel_options = [
             {'text': str(get_config().get('lofi', 'audio_label', 'Option 1')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl')), 'icon': './screens/Lofi/tape_b_1.png'}, 
             {'text': str(get_config().get('lofi', 'audio_2_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_2', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
@@ -69,3 +68,25 @@ class LofiScreen(PiHomeScreen):
         # self.reset()
         self.image = ""
         return super().on_leave(*args)
+
+    def on_rotary_pressed(self):
+        if self.ids.wheel_menu.is_open:
+            self.ids.wheel_menu.is_open = False
+        else:
+            self.ids.wheel_menu.is_open = True
+            self.ids.wheel_menu.selected_index = 0
+
+    def on_rotary_turn(self, direction):
+        if self.ids.wheel_menu.is_open:
+            if direction == 1:
+                if self.ids.wheel_menu.selected_index == len(self.wheel_options) - 1:
+                    self.ids.wheel_menu.selected_index = 0
+                else:
+                    self.ids.wheel_menu.selected_index += 1 
+            elif direction == -1:
+                if self.ids.wheel_menu.selected_index == 0:
+                    self.ids.wheel_menu.selected_index = len(self.wheel_options) - 1
+                else:
+                    self.ids.wheel_menu.selected_index -= 1
+        else:
+            return super().on_rotary_turn(direction)

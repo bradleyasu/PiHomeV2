@@ -55,11 +55,6 @@ class HomeScreen(PiHomeScreen):
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
-        config_listener = ConfigurationUpdateListener(lambda payload: self.reload_all(payload))
-        get_app().add_listener(config_listener)
-
-    def reload_all(self, payload):
-        print("reloading homescreen")
 
     def on_enter(self, *args):
         if self.is_first_run is True:
@@ -73,7 +68,7 @@ class HomeScreen(PiHomeScreen):
     def open_settings(self):
         # self.manager.current = 'settings'
         goto_screen(_SETTINGS_SCREEN)
-    
+
     def open_pin(self):
         self.manager.current = 'pin'
 

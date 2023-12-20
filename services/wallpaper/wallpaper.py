@@ -150,4 +150,4 @@ class Wallpaper:
         elif self.source == "Wallhaven":
             self.parse_wallhaven(self.cache)
         else:
-            toast("Cannot shuffle wallpaper from configured source", "warn")
+            toast("Cannot shuffle wallpaper from configured source: {}".format(self.source), "warn")
