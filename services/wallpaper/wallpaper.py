@@ -32,7 +32,7 @@ class Wallpaper:
     allow_stretch = 1 
 
     cache = None
-    source = "CDN"
+    repo = "CDN"
     poller_key = None
 
     def __init__(self, **kwargs):
@@ -46,11 +46,11 @@ class Wallpaper:
             self._start();
 
     def _start(self):
-        source = get_config().get("wallpaper", "source", "PiHome CDN")
+        repo = get_config().get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = get_config().get_int("wallpaper", "allow_stretch", 1)
-        self.source = source
-        info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(source, self.allow_stretch))
-        if source == "Reddit":
+        self.repo = repo 
+        info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
+        if repo == "Reddit":
             subs = get_config().get("wallpaper", "subreddits", "wallpaper")
             is_top = get_config().get_int("wallpaper", "top_of_all_time", 0)
             if subs == "":
@@ -59,13 +59,13 @@ class Wallpaper:
             if is_top == 1:
                 reddit_url = "https://www.reddit.com/r/{}/top/.json?limit=100&t=all".format(subs)
             self.poller_key = get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
-        elif source == "Wallhaven":
+        elif repo == "Wallhaven":
             search = get_config().get("wallpaper", "whsearch", "landscape")
             if search == "":
                 search = "landscape"
             wh_url = "https://wallhaven.cc/api/v1/search?q={}&sorting=random".format(search)
             self.poller_key = get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
-        elif source == "Custom":
+        elif repo == "Custom":
             self.current = get_config().get("wallpaper", "custom_url", self.default)
             self.source = get_config().get("wallpaper", "custom_url", self.default)
             if self.current == "":
@@ -145,9 +145,9 @@ class Wallpaper:
         return pilImage.getpixel((0, 0))
 
     def shuffle(self):
-        if self.source == "Reddit":
+        if self.repo == "Reddit":
             self.parse_reddit(self.cache)
-        elif self.source == "Wallhaven":
+        elif self.repo == "Wallhaven":
             self.parse_wallhaven(self.cache)
         else:
-            toast("Cannot shuffle wallpaper from configured source: {}".format(self.source), "warn")
+            toast("Cannot shuffle wallpaper from configured source: {}".format(self.repo), "warn")
