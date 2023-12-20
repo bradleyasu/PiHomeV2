@@ -24,6 +24,7 @@ class RotaryEncoder():
     rotary_counter = 0
     # last state is the last state of the rotary encoder
     last_state = 0
+    last_button_state = 0
     # direction is the direction of the rotary encoder.  1 is clockwise, -1 is counter clockwise, 0 is no movement
     direction = 0
     button_pressed = False
@@ -46,7 +47,10 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press(self, channel):
-        if GPIO.input(channel) == GPIO.HIGH:
+        state = GPIO.input(channel)
+        if state == self.last_button_state:
+            return
+        if state  == GPIO.HIGH:
             if self.button_pressed:
                 self.press_duration = time.time() - self.press_time
             self.button_pressed = False
@@ -58,6 +62,7 @@ class RotaryEncoder():
             if not self.button_pressed:
                 self.press_time = time.time()
             self.button_pressed = True
+        last_button_state = state
 
     def update(self, data):
         if can_use_rotary:
