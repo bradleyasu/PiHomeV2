@@ -40,24 +40,22 @@ class RotaryEncoder():
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.on_press_up, bouncetime=300)
+            GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.on_press_up, bouncetime=100)
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.is_initialized = True
 
     def on_press_up(self, channel):
         if GPIO.input(channel):
-            print("press")
-            self.button_pressed = True
-            self.press_time = time.time()
-        else:
-            print("release")
             self.button_pressed = False
             self.press_duration = time.time() - self.press_time
             if self.press_duration > self.LONG_PRESS_THRESHOLD:
                 self.button_callback(long_press=True)
             else:
                 self.button_callback(long_press=False)
+        else:
+            self.button_pressed = True
+            self.press_time = time.time()
 
     def update(self, data):
         if can_use_rotary:
