@@ -97,3 +97,6 @@ class HomeScreen(PiHomeScreen):
     def handle_gesture(self, gesture): 
         if gesture == GESTURE_SWIPE_DOWN:
             pass
+
+    def rotary_pressed(self):
+        get_app().wallpaper_service.restart()

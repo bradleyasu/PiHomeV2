@@ -21,7 +21,7 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
 
         if self.rotary_encoder.is_initialized:
-            self.rotary_encoder.button_callback = lambda _: get_app().toggle_app_menu()
+            self.rotary_encoder.button_callback = lambda _: self.rotary_pressed()
             self.rotary_encoder.update_callback = lambda direction: self.rotary_handler(direction)
             info("Rotary Encoder Initialized: {}".format(self.label))
         else: 
@@ -55,5 +55,9 @@ class PiHomeScreen(Screen):
             audio_player().volume_up()
         elif direction == -1:
             audio_player().volume_down()
+        return False
+
+    def rotary_pressed(self):
+        audio_player().toggle_play()
         return False
     
