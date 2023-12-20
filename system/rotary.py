@@ -27,13 +27,10 @@ class RotaryEncoder():
     button_callback = lambda _: ()
     update_callback = lambda direction: ()
     is_initialized = False
-    instance = None
 
     def __init__(self, **kwargs):
         super(RotaryEncoder, self).__init__(**kwargs)
-        if can_use_rotary and not self.instance and not self.is_initialized:
-            self.is_initialized = True
-            print("setting up rotary encoder")
+        if can_use_rotary and not self.is_initialized:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -41,7 +38,7 @@ class RotaryEncoder():
             GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_press, bouncetime=300)
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
-            self.instance = self
+            self.is_initialized = True
 
     def on_press(self, channel):
         self.button_pressed = True
@@ -78,3 +75,5 @@ class RotaryEncoder():
     def __str__(self):
         return "Rotary Encoder: {}, {}, {}".format(self.rotary_counter, self.direction, self.button_pressed)
     
+
+ROTARY_ENCODER = RotaryEncoder()

@@ -1,6 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
-from system.rotary import RotaryEncoder
+from system.rotary import ROTARY_ENCODER
 from util.const import GESTURE_DATABASE
 from util.helpers import audio_player, get_app, goto_screen, info, simplegesture, warn
 
@@ -10,7 +10,7 @@ class PiHomeScreen(Screen):
 
     def __init__(self, icon = "https://cdn.pihome.io/assets/default_app_icon.png", label = "PiHome App", is_hidden = False, requires_pin = False, **kwargs):
         super(PiHomeScreen, self).__init__(**kwargs)
-        self.rotary_encoder = RotaryEncoder().instance
+        self.rotary_encoder = ROTARY_ENCODER
         self.icon = icon
         self.label = label
         self.is_hidden = is_hidden 
