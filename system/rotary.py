@@ -46,10 +46,12 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press_up(self, channel):
-        if GPIO.input(channel) == GPIO.HIGH:
+        if GPIO.input(channel):
+            print("press")
             self.button_pressed = True
             self.press_time = time.time()
         else:
+            print("release")
             self.button_pressed = False
             self.press_duration = time.time() - self.press_time
             if self.press_duration > self.LONG_PRESS_THRESHOLD:
