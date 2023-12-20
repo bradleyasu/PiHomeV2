@@ -46,7 +46,7 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press(self, channel):
-        if GPIO.input(channel):
+        if not GPIO.input(channel):
             print("pressing...")
             if self.button_pressed:
                 self.press_duration = time.time() - self.press_time
@@ -78,6 +78,7 @@ class RotaryEncoder():
             else:
                 self.direction = 0
             self.update_callback(self.direction)
+            print("Direction: {}, Counter: {}".format(self.direction, self.rotary_counter))
             self.last_state = clkstate
 
 
