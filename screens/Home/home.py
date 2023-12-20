@@ -81,6 +81,9 @@ class HomeScreen(PiHomeScreen):
         # audio_player().stop()
         # audio_player().clear_playlist()
 
+    def on_config_update(self, payload):
+        # Update widgets
+        pass
 
     def run(self):
         time.ctime()

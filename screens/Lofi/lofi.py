@@ -5,7 +5,7 @@ from kivy.properties import StringProperty, ListProperty
 from interface.pihomescreen import PiHomeScreen
 from components.WheelMenu.wheelmenu import WheelMenu
 from util.const import CDN_ASSET
-from util.helpers import get_config, audio_player, toast
+from util.helpers import get_config, audio_player, info, toast
 
 from kivy.config import Config
 
@@ -70,23 +70,26 @@ class LofiScreen(PiHomeScreen):
         return super().on_leave(*args)
 
     def on_rotary_pressed(self):
-        if self.ids.wheel_menu.is_open:
+        info("Rotary pressed and wheel menu is open: " + str(self.ids.wheel_menu.is_open))
+        if self.ids.wheel_menu.is_open == True:
             self.ids.wheel_menu.is_open = False
+            self.ids.wheel_menu.activate_selected(self.ids.wheel_menu.options[self.ids.wheel_menu.selected_index])
         else:
             self.ids.wheel_menu.is_open = True
-            self.ids.wheel_menu.selected_index = 0
+            self.ids.wheel_menu.set_selected(self.wheel_options[0], 0)
 
     def on_rotary_turn(self, direction):
-        if self.ids.wheel_menu.is_open:
+        info("Rotary turning and wheel menu is open: " + str(self.ids.wheel_menu.is_open))
+        if self.ids.wheel_menu.is_open == True:
             if direction == 1:
                 if self.ids.wheel_menu.selected_index == len(self.wheel_options) - 1:
-                    self.ids.wheel_menu.selected_index = 0
+                    self.ids.wheel_menu.set_selected(self.wheel_options[0], 0)
                 else:
-                    self.ids.wheel_menu.selected_index += 1 
+                    self.ids.wheel_menu.set_selected(self.wheel_options[self.ids.wheel_menu.selected_index + 1], self.ids.wheel_menu.selected_index + 1)
             elif direction == -1:
                 if self.ids.wheel_menu.selected_index == 0:
-                    self.ids.wheel_menu.selected_index = len(self.wheel_options) - 1
+                    self.ids.wheel_menu.set_selected(self.wheel_options[len(self.wheel_options) - 1], len(self.wheel_options) - 1)
                 else:
-                    self.ids.wheel_menu.selected_index -= 1
+                    self.ids.wheel_menu.set_selected(self.wheel_options[self.ids.wheel_menu.selected_index - 1], self.ids.wheel_menu.selected_index - 1)
         else:
             return super().on_rotary_turn(direction)
