@@ -44,7 +44,7 @@ class RotaryEncoder():
         self.button_pressed = True
         self.button_callback(channel)
 
-    def update(self):
+    def update(self, data):
         if can_use_rotary:
             sleep(0.002)
             state = GPIO.input(self.a_pin)
