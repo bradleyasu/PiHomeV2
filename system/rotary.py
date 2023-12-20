@@ -14,9 +14,9 @@ else:
 
 class RotaryEncoder():
 
-    a_pin = 11      # DT
-    b_pin = 12      # CLK
-    button_pin = 13 # SW
+    a_pin = 17      # DT
+    b_pin = 18      # CLK
+    button_pin = 27 # SW
     # rotary counter is the number of clicks
     rotary_counter = 0
     # last state is the last state of the rotary encoder
