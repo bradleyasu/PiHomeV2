@@ -50,11 +50,11 @@ class RotaryEncoder():
             state = GPIO.input(self.a_pin)
             if state != self.last_state:
                 if GPIO.input(self.b_pin) != state:
-                    self.rotary_counter += 1
-                    self.direction = 1
-                else:
                     self.rotary_counter -= 1
                     self.direction = -1
+                else:
+                    self.rotary_counter += 1
+                    self.direction = 1
             else:
                 self.direction = 0
             self.update_callback(self.direction)
