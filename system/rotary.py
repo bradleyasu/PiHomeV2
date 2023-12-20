@@ -32,11 +32,12 @@ class RotaryEncoder():
     def __init__(self, **kwargs):
         super(RotaryEncoder, self).__init__(**kwargs)
         if can_use_rotary and not self.instance:
+            print("setting up rotary encoder")
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            # GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_press, bouncetime=300)
+            GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_press, bouncetime=300)
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.is_initialized = True
