@@ -46,8 +46,8 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press(self, channel):
-        if not GPIO.input(channel):
-            print("pressing...")
+        if GPIO.input(channel):
+            print("releaseing...")
             if self.button_pressed:
                 self.press_duration = time.time() - self.press_time
             self.button_pressed = False
@@ -58,7 +58,7 @@ class RotaryEncoder():
                 self.button_callback(long_press=False)
                 print("short press {}".format(self.press_duration))
         else:
-            print("released")
+            print("pressing...")
             if not self.button_pressed:
                 self.press_time = time.time()
             self.button_pressed = True
