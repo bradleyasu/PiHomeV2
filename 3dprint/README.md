@@ -16,8 +16,8 @@ The PiHome will work without the knob controls, but they are nice to have.  You 
 
 If you do connect a rotary encoder/knob controls Please note that PiHome expects the following pins to be used:
 
-* Pin 11 - Rotary Encoder A
-* Pin 12 - Rotary Encoder B
-* Pin 13 - Rotary Encoder Switch
+* Pin 17 - Rotary Encoder A
+* Pin 18 - Rotary Encoder B
+* Pin 27 - Rotary Encoder Switch
 
 The Power (+) is connected to the 3V3 pin and the Ground (-) is connected a the Ground pin.

@@ -51,8 +51,10 @@ class PiHomeScreen(Screen):
             pass
 
     def rotary_handler(self, direction):
+        print("Rotary Encoder Direction Recieved: {}".format(direction))
         if direction == 1:
             audio_player().volume_up()
         elif direction == -1:
             audio_player().volume_down()
         return False
+    
