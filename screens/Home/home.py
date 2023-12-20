@@ -99,4 +99,5 @@ class HomeScreen(PiHomeScreen):
             pass
 
     def rotary_pressed(self):
-        get_app().wallpaper_service.restart()
+        get_app().wallpaper_service.shuffle()
+        return False
