@@ -98,7 +98,6 @@ class HomeScreen(PiHomeScreen):
             pass
 
     def on_rotary_long_pressed(self):
-        # get_app().wallpaper_service.shuffle()
         self.toggle_controls()
 
     def on_rotary_pressed(self):

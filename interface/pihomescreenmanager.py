@@ -18,9 +18,9 @@ class PiHomeScreenManager(ScreenManager):
         except AttributeError:
             pass
 
-    def _rotary_pressed(self, long_press):
+    def _rotary_pressed(self, long_press = False):
         try:
-            if long_press:
+            if long_press is True:
                 self.current_screen.on_rotary_long_pressed()
             else:
                 self.current_screen.on_rotary_pressed()
