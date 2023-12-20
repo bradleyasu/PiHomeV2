@@ -46,7 +46,7 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press(self, channel):
-        if GPIO.input(channel) == GPIO.LOW:
+        if GPIO.input(channel) == GPIO.HIGH:
             print("releaseing...")
             if self.button_pressed:
                 self.press_duration = time.time() - self.press_time
@@ -70,9 +70,10 @@ class RotaryEncoder():
             dtstate = GPIO.input(self.a_pin)
             if clkstate != self.last_state:
                 if dtstate != clkstate:
-                    self.rotary_counter += 1
-                    self.direction = 1
-                else:
+                    if self.direction >= 0:
+                        self.rotary_counter += 1
+                        self.direction = 1
+                elif self.direction <= 0:
                     self.rotary_counter -= 1
                     self.direction = -1
             else:
