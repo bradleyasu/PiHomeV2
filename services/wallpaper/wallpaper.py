@@ -145,6 +145,7 @@ class Wallpaper:
         return pilImage.getpixel((0, 0))
 
     def shuffle(self):
+        toast("Shuffling wallpaper...", "info")
         if self.repo == "Reddit":
             self.parse_reddit(self.cache)
         elif self.repo == "Wallhaven":
