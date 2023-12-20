@@ -31,7 +31,6 @@ class RotaryEncoder():
 
     def __init__(self, **kwargs):
         super(RotaryEncoder, self).__init__(**kwargs)
-        self.instance = self
         if can_use_rotary and not self.instance:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -41,6 +40,7 @@ class RotaryEncoder():
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.is_initialized = True
+            self.instance = self
 
     def on_press(self, channel):
         self.button_pressed = True
