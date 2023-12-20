@@ -52,6 +52,7 @@ class HomeScreen(PiHomeScreen):
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
         self.icon = CDN_ASSET.format("default_home_icon.png")
+        self.bind(rotary_pressed=lambda _: self.on_rotary_pressed())
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
@@ -98,6 +99,6 @@ class HomeScreen(PiHomeScreen):
         if gesture == GESTURE_SWIPE_DOWN:
             pass
 
-    def rotary_pressed(self):
+    def on_rotary_pressed(self):
         get_app().wallpaper_service.shuffle()
         return False
