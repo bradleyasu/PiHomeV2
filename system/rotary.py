@@ -46,7 +46,7 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press(self, channel):
-        if GPIO.input(channel):
+        if GPIO.input(channel) == GPIO.LOW:
             print("releaseing...")
             if self.button_pressed:
                 self.press_duration = time.time() - self.press_time
