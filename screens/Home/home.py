@@ -105,12 +105,12 @@ class HomeScreen(PiHomeScreen):
         get_app().wallpaper_service.shuffle()
 
     def on_rotary_turn(self, direction):
-        if not self.brightness_controls_enabled:
+        if self.brightness_slider is None:
             return super().on_rotary_turn(direction)
         if direction == 1:
-            self.brightness_slider.set_value(self.brightness_slider.value + 5)
+            self.brightness_slider.set_value(self.brightness_slider.level + 5)
         elif direction == -1:
-            self.brightness_slider.set_value(self.brightness_slider.value - 5)
+            self.brightness_slider.set_value(self.brightness_slider.level - 5)
 
     def toggle_controls(self):
         if self.brightness_slider is None:
@@ -118,7 +118,7 @@ class HomeScreen(PiHomeScreen):
             self.brightness_slider.add_listener(lambda value: self.change_brightness(value))
             self.brightness_slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
             self.brightness_slider.active_color = hex(Color.DARK_CHARTREUSE_700)
-            self.brightness_slider.value = get_brightness()
+            self.brightness_slider.level = get_brightness()
             self.add_widget(self.brightness_slider)
         else:
             self.remove_widget(self.brightness_slider)
