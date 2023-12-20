@@ -62,7 +62,7 @@ class RotaryEncoder():
             if not self.button_pressed:
                 self.press_time = time.time()
             self.button_pressed = True
-        last_button_state = state
+        self.last_button_state = state
 
     def update(self, data):
         if can_use_rotary:
