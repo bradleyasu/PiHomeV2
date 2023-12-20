@@ -35,14 +35,19 @@ class RotaryEncoder():
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.on_press, bouncetime=300)
-            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
-            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
+            GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_press_down, bouncetime=300)
+            GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.on_press_up, bouncetime=300)
+            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update, bouncetime=300)
+            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update, bouncetime=300)
             self.is_initialized = True
 
-    def on_press(self, channel):
+    def on_press_up(self, channel):
+        if (self.button_pressed == True and self.button_callback is not None):
+            self.button_callback(channel)
+        self.button_pressed = False 
+    
+    def on_press_down(self, channel):
         self.button_pressed = True
-        self.button_callback(channel)
 
     def update(self, data):
         if can_use_rotary:
