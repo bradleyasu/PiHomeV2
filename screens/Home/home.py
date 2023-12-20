@@ -92,6 +92,6 @@ class HomeScreen(PiHomeScreen):
         if gesture == GESTURE_SWIPE_DOWN:
             pass
 
-    def on_rotary_pressed(self):
+    def on_rotary_long_pressed(self):
         get_app().wallpaper_service.shuffle()
         return False

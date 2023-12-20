@@ -1,4 +1,5 @@
 import sys
+import time
 
 
 can_use_rotary = False
@@ -14,6 +15,8 @@ else:
 
 class RotaryEncoder():
 
+    # LONG_PRESS_THRESHOLD IS 2 seconds
+    LONG_PRESS_THRESHOLD = 2
     a_pin = 17      # DT
     b_pin = 18      # CLK
     button_pin = 27 # SW
@@ -24,9 +27,11 @@ class RotaryEncoder():
     # direction is the direction of the rotary encoder.  1 is clockwise, -1 is counter clockwise, 0 is no movement
     direction = 0
     button_pressed = False
-    button_callback = lambda _: ()
+    button_callback = lambda long_press: ()
     update_callback = lambda direction: ()
     is_initialized = False
+    press_time = 0
+    press_duration = 0
 
     def __init__(self, **kwargs):
         super(RotaryEncoder, self).__init__(**kwargs)
@@ -41,11 +46,16 @@ class RotaryEncoder():
             self.is_initialized = True
 
     def on_press_up(self, channel):
-        if GPIO.input(channel):
+        if GPIO.input(channel) == GPIO.HIGH:
             self.button_pressed = True
+            self.press_time = time.time()
         else:
             self.button_pressed = False
-            self.button_callback(channel)
+            self.press_duration = time.time() - self.press_time
+            if self.press_duration > self.LONG_PRESS_THRESHOLD:
+                self.button_callback(long_press=True)
+            else:
+                self.button_callback(long_press=False)
 
     def update(self, data):
         if can_use_rotary:

@@ -41,6 +41,11 @@ class PiHomeScreen(Screen):
         audio_player().toggle_play()
         return False
 
+    def on_rotary_long_pressed(self):
+        audio_player().stop()
+        audio_player().clear_playlist()
+        return False
+
     def on_rotary_turn(self, direction):
         if direction == 1:
             audio_player().volume_up()
