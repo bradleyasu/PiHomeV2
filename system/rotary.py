@@ -52,21 +52,20 @@ class RotaryEncoder():
 
         if state == self.last_button_state:
             return
-
-        if state == GPIO.HIGH:
-            if self.button_pressed:
-                self.button_pressed = False
-                press_duration = time.time() - self.press_time
-                if press_duration > self.LONG_PRESS_THRESHOLD:
-                    self.button_callback(long_press=True)
-                else:
-                    self.button_callback(long_press=False)
-        else:
-            if not self.button_pressed:
-                self.button_pressed = True
-                self.press_time = time.time()
-
+            
         self.last_button_state = state
+        
+        if state == GPIO.HIGH:
+            self.button_pressed = False
+            press_duration = time.time() - self.press_time
+            if press_duration > self.LONG_PRESS_THRESHOLD:
+                self.button_callback(long_press=True)
+            else:
+                self.button_callback(long_press=False)
+        else:
+            self.button_pressed = True
+            self.press_time = time.time()
+
 
     def update(self, data):
         if can_use_rotary:
