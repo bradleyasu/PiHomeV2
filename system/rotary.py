@@ -16,7 +16,7 @@ else:
 class RotaryEncoder():
 
     # LONG_PRESS_THRESHOLD IS 1 seconds
-    LONG_PRESS_THRESHOLD = 0.5
+    LONG_PRESS_THRESHOLD = 0.75
     a_pin = 17      # DT
     b_pin = 18      # CLK
     button_pin = 27 # SW
@@ -48,20 +48,23 @@ class RotaryEncoder():
 
     def on_press(self, channel):
         state = GPIO.input(channel)
+
         if state == self.last_button_state:
             return
-        if state  == GPIO.HIGH:
+
+        if state == GPIO.HIGH:
             if self.button_pressed:
-                self.press_duration = time.time() - self.press_time
-            self.button_pressed = False
-            if self.press_duration > self.LONG_PRESS_THRESHOLD:
-                self.button_callback(long_press=True)
-            else:
-                self.button_callback(long_press=False)
+                self.button_pressed = False
+                press_duration = time.time() - self.press_time
+                if press_duration > self.LONG_PRESS_THRESHOLD:
+                    self.button_callback(long_press=True)
+                else:
+                    self.button_callback(long_press=False)
         else:
             if not self.button_pressed:
+                self.button_pressed = True
                 self.press_time = time.time()
-            self.button_pressed = True
+
         self.last_button_state = state
 
     def update(self, data):
