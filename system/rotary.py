@@ -55,7 +55,7 @@ class RotaryEncoder():
 
         self.last_button_state = state
         
-        if state == GPIO.HIGH:
+        if state == GPIO.LOW:
             self.button_pressed = False
             press_duration = time.time() - self.press_time
             if press_duration > self.LONG_PRESS_THRESHOLD:
