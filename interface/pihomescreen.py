@@ -1,5 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
+from system.brightness import get_brightness, set_brightness
 from util.const import GESTURE_DATABASE
 from util.helpers import audio_player, get_app, info, simplegesture, warn
 
@@ -46,7 +47,14 @@ class PiHomeScreen(Screen):
         audio_player().clear_playlist()
         return False
 
-    def on_rotary_turn(self, direction):
+    def on_rotary_turn(self, direction, button_pressed):
+        if button_pressed:
+            current_brightness = get_brightness()
+            if current_brightness is None or current_brightness == 0 or current_brightness == 100:
+                return False
+            set_brightness(current_brightness + direction)
+            return False
+
         if direction == 1:
             audio_player().volume_up()
         elif direction == -1:

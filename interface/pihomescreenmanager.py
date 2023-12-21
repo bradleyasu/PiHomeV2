@@ -9,12 +9,12 @@ class PiHomeScreenManager(ScreenManager):
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
             self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
-            self.rotary_encoder.update_callback = lambda direction: self._rotary_handler(direction)
+            self.rotary_encoder.update_callback = lambda direction, pressed: self._rotary_handler(direction, pressed)
 
 
-    def _rotary_handler(self, direction):
+    def _rotary_handler(self, direction, pressed):
         try:
-            self.current_screen.on_rotary_turn(direction)
+            self.current_screen.on_rotary_turn(direction, pressed)
         except AttributeError:
             pass
 
