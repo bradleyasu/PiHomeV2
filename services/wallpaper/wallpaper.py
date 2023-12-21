@@ -12,7 +12,6 @@ from PIL import ImageFilter as PILImageFilter
 from kivy.network.urlrequest import UrlRequest
 from util.const import TEMP_DIR
 from util.helpers import get_app, get_config, get_poller, info, toast, url_hash
-from kivy.uix.image import Image, CoreImage
 
 class Wallpaper:
     """
@@ -35,7 +34,7 @@ class Wallpaper:
     repo = "CDN"
     poller_key = None
     url_cache = []
-    cache_size = 30
+    cache_size = 100
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
@@ -89,6 +88,11 @@ class Wallpaper:
         self.source = random_child["data"]["url"]
         get_app()._reload_background()
 
+    def create_cache(self, urls):
+        for url in urls:
+            print("Caching {}".format(url))
+            self.resize_image(url, 1024, 1024)
+
     def parse_wallhaven(self, json): 
         self.cache = json
         skip_count = random.randint(0, 9)
@@ -123,8 +127,11 @@ class Wallpaper:
         self.url_cache.append(url)
         while len(self.url_cache) > self.cache_size:
             url = self.url_cache.pop(0)
-            os.remove("{}/_rsz_{}.png".format(TEMP_DIR, url_hash(url)))
-            os.remove("{}/_color_{}.png".format(TEMP_DIR, url_hash(url)))
+            try:
+                os.remove("{}/_rsz_{}.png".format(TEMP_DIR, url_hash(url)))
+                os.remove("{}/_color_{}.png".format(TEMP_DIR, url_hash(url)))
+            except Exception as e:
+                break
 
         info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
         r = requests.get(url)
@@ -152,6 +159,7 @@ class Wallpaper:
         info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
+
     def find_average_color(self, url):
         info("Wallpaper Service: finding average color for {}".format(url))
         r = requests.get(url)
@@ -166,14 +174,18 @@ class Wallpaper:
         for file in os.listdir(TEMP_DIR):
             if file.startswith("_rsz") or file.startswith("_color"):
                 os.remove("{}/{}".format(TEMP_DIR, file))
+        self.url_cache = []
 
     def shuffle(self):
         url = self.get_random_from_cache()
         if url == None:
             toast("No wallpaper found in cache", "error")
             return
-        if url == self.source:
+        if len(self.url_cache) <= 1:
             toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+            return
+        if url == self.source:
+            self.shuffle()
             return
         self.current, self.current_color = self.resize_image(url, 1024, 1024)
         self.source = url
