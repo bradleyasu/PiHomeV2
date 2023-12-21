@@ -16,7 +16,7 @@ else:
 class RotaryEncoder():
 
     # LONG_PRESS_THRESHOLD IS 1 seconds
-    LONG_PRESS_THRESHOLD = 0.75
+    LONG_PRESS_THRESHOLD = 0.5
     a_pin = 17      # DT
     b_pin = 18      # CLK
     button_pin = 27 # SW
