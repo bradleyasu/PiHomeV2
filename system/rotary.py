@@ -41,7 +41,7 @@ class RotaryEncoder():
             GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_falling, bouncetime=1000)
+            GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_falling, bouncetime=2500)
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
             GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.last_button_state = GPIO.input(self.button_pin)
@@ -55,9 +55,10 @@ class RotaryEncoder():
 
         self.button_callback(long_press=(self.duration > self.LONG_PRESS_THRESHOLD))
 
+        GPIO.wait_for_edge(channel, GPIO.RISING)
         # Allow time for relase of button
         while GPIO.input(channel) == GPIO.LOW:
-            sleep(0.1)
+            pass
 
 
     def on_press(self, channel):
