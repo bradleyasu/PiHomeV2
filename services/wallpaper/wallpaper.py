@@ -12,6 +12,7 @@ from PIL import ImageFilter as PILImageFilter
 from kivy.network.urlrequest import UrlRequest
 from util.const import TEMP_DIR
 from util.helpers import get_app, get_config, get_poller, info, toast, url_hash
+import asyncio
 
 class Wallpaper:
     """
@@ -88,10 +89,12 @@ class Wallpaper:
         self.source = random_child["data"]["url"]
         get_app()._reload_background()
 
-    def create_cache(self, urls):
+    async def create_cache(self, urls):
         for url in urls:
-            print("Caching {}".format(url))
-            self.resize_image(url, 1024, 1024)
+            print("creating cache for", url)
+            if url.endswith(".jpg") or url.endswith(".png"):
+                self.resize_image(url, 1024, 1024)
+        await asyncio.sleep(0)
 
     def parse_wallhaven(self, json): 
         self.cache = json
@@ -154,7 +157,7 @@ class Wallpaper:
         # blur image 
         new_image = new_image.filter(PILImageFilter.GaussianBlur(radius=5))
         new_image.save(fp="{}/{}".format(TEMP_DIR, colored), format="png")
-        self.current_color = "{}/{}".format(TEMP_DIR, colored)
+        # self.current_color = "{}/{}".format(TEMP_DIR, colored)
 
         info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
