@@ -168,12 +168,18 @@ class Wallpaper:
                 os.remove("{}/{}".format(TEMP_DIR, file))
 
     def shuffle(self):
-        toast("Shuffling wallpaper...", "info")
         url = self.get_random_from_cache()
+        if url == None:
+            toast("No wallpaper found in cache", "error")
+            return
+        if url == self.current:
+            toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+            return
         self.current, self.current_color = self.resize_image(url, 1024, 1024)
         self.source = url
         get_app()._reload_background()
 
+        toast("Shuffling wallpaper...", "info")
         # if self.repo == "Reddit":
         #     self.parse_reddit(self.cache)
         # elif self.repo == "Wallhaven":
