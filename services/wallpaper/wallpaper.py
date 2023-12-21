@@ -172,14 +172,13 @@ class Wallpaper:
         if url == None:
             toast("No wallpaper found in cache", "error")
             return
-        if url == self.current:
+        if url == self.source:
             toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
             return
         self.current, self.current_color = self.resize_image(url, 1024, 1024)
         self.source = url
         get_app()._reload_background()
 
-        toast("Shuffling wallpaper...", "info")
         # if self.repo == "Reddit":
         #     self.parse_reddit(self.cache)
         # elif self.repo == "Wallhaven":
