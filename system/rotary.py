@@ -50,7 +50,7 @@ class RotaryEncoder():
     
     def on_falling(self, channel):
         self.press_time = time.time()
-        while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < self.LONG_PRESS_THRESHOLD:
+        while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < (self.LONG_PRESS_THRESHOLD+0.1):
             self.duration = time.time() - self.press_time
 
         self.button_callback(long_press=(self.duration > self.LONG_PRESS_THRESHOLD))
