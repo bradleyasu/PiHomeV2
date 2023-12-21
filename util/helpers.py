@@ -102,3 +102,8 @@ def select_item_by_degree(arr, degree):
 
     selected_item = arr[section_index]
     return selected_item, section_index
+
+
+# This function generates a uniq hash for the url provided.  If the same url is entered, the same hash will be output
+def url_hash(url):
+    return uuid.uuid5(uuid.NAMESPACE_URL, url).hex

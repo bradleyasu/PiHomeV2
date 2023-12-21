@@ -1,6 +1,5 @@
 import asyncio
 import os
-from mplayer import Player
 
 from util.helpers import toast
 
@@ -93,6 +92,7 @@ class AudioPlayer:
 
     def clear_playlist(self):
         if self.player:
+            self.queue.clear()
             self.player.playlist_clear()
 
     def _observe(self, observer_key, action):
@@ -127,6 +127,7 @@ class AudioPlayer:
             self.playlist_start = int(data[0]["id"])
         except:
             pass
+        self.queue.clear()
         self.queue = data
     
     def set_volume(self, volume):
