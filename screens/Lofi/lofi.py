@@ -76,7 +76,7 @@ class LofiScreen(PiHomeScreen):
             self.ids.wheel_menu.set_selected(self.wheel_options[0], 0)
         return False
 
-    def on_rotary_turn(self, direction):
+    def on_rotary_turn(self, direction, pressed):
         if self.ids.wheel_menu.is_open == True:
             if direction == 1:
                 if self.ids.wheel_menu.selected_index == len(self.wheel_options) - 1:
@@ -90,4 +90,4 @@ class LofiScreen(PiHomeScreen):
                     self.ids.wheel_menu.set_selected(self.wheel_options[self.ids.wheel_menu.selected_index - 1], self.ids.wheel_menu.selected_index - 1)
             return False
         else:
-            return super().on_rotary_turn(direction)
+            return super().on_rotary_turn(direction, pressed)
