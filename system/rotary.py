@@ -55,8 +55,6 @@ class RotaryEncoder():
 
         self.button_callback(long_press=(self.duration > self.LONG_PRESS_THRESHOLD))
 
-        GPIO.wait_for_edge(channel, GPIO.RISING)
-        # Allow time for relase of button
         while GPIO.input(channel) == GPIO.LOW:
             pass
 
