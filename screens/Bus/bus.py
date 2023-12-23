@@ -40,6 +40,7 @@ class BusScreen(PiHomeScreen):
     
     pending_updates = False
     data = None
+    scroller = None
 
     PRT_API = "https://realtime.portauthority.org/bustime/api/v3/getpredictions?rtpidatafeed=Port Authority Bus&key={}&format=json&rt={}&stpid={}"
 
@@ -72,6 +73,7 @@ class BusScreen(PiHomeScreen):
         view = ScrollView(size_hint=(1, None), size=(get_app().width, dp(get_app().height) - (dp(80))))
         view.add_widget(self.grid);
         layout.add_widget(view)
+        self.scroller = view
         
         self.logo = NetworkImage(url=self.logo, size=(dp(108), dp(56)), pos=(dp(get_app().width - 112), dp(0)))
         layout.add_widget(self.logo)
@@ -88,6 +90,21 @@ class BusScreen(PiHomeScreen):
 
         layout.add_widget(self.control_bar)
         self.add_widget(layout)
+
+
+    def scroll_y(self, amount):
+        if self.scroller.scroll_y + amount < 0:
+            self.scroller.scroll_y = 0
+        elif self.scroller.scroll_y + amount > 1:
+            self.scroller.scroll_y = 1
+        else:
+            self.scroller.scroll_y = self.scroller.scroll_y + amount
+
+    def on_rotary_turn(self, direction, pressed):
+        if direction == 1:
+            self.scroll_y(-0.1)
+        else:
+            self.scroll_y(0.1)
 
     def set_outbound(self, enabled):
         if enabled:
