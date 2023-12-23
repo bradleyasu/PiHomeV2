@@ -1,27 +1,21 @@
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt
 import math
-from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty
 
 from kivy.uix.scrollview import ScrollView
-from kivy.core.window import Window
 
-from components.Button.circlebutton import CircleButton
 from components.Empty.empty import Empty
 from components.Image.networkimage import NetworkImage
 from components.Switch.switch import PiHomeSwitch
 from composites.BusEta.buseta import BusEta
 from interface.pihomescreen import PiHomeScreen
-from theme.color import Color
 from theme.theme import Theme
-from util.helpers import get_app, get_config, get_poller, goto_screen, toast 
-from util.tools import hex
+from util.helpers import get_app, get_config, get_poller
 from kivy.clock import Clock
 
 Builder.load_file("./screens/Bus/bus.kv")
@@ -93,18 +87,24 @@ class BusScreen(PiHomeScreen):
 
 
     def scroll_y(self, amount):
+        # 1 is top and 0 is bottom of scroll view
+        # convert scroll view to a tenth of a percent
+        amount = amount / 10
+
+        if self.scroller.scroll_y + amount > 1:
+            return
         if self.scroller.scroll_y + amount < 0:
-            self.scroller.scroll_y = 0
-        elif self.scroller.scroll_y + amount > 1:
-            self.scroller.scroll_y = 1
-        else:
-            self.scroller.scroll_y = self.scroller.scroll_y + amount
+            return
+        self.scroller.scroll_to(self.scroller, 0, self.scroller.scroll_y + amount, True)
 
     def on_rotary_turn(self, direction, pressed):
         if direction == 1:
             self.scroll_y(-0.1)
         else:
             self.scroll_y(0.1)
+
+    def on_rotary_pressed(self):
+        self.set_outbound(not self.outbound)
 
     def set_outbound(self, enabled):
         if enabled:
