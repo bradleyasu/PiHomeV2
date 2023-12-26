@@ -99,9 +99,9 @@ class BusScreen(PiHomeScreen):
 
     def on_rotary_turn(self, direction, pressed):
         if direction == 1:
-            self.scroll_y(-0.1)
-        else:
             self.scroll_y(0.1)
+        elif direction == -1:
+            self.scroll_y(-0.1)
 
     def on_rotary_pressed(self):
         self.set_outbound(not self.outbound)
