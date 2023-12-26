@@ -89,7 +89,6 @@ class BusScreen(PiHomeScreen):
     def scroll_y(self, amount):
         # 1 is top and 0 is bottom of scroll view
         # convert scroll view to a tenth of a percent
-        amount = amount / 10
 
         if self.scroller.scroll_y + amount > 1:
             return
