@@ -35,6 +35,10 @@ class SocketHandler():
                 audio_player().set_volume(message["volume"])
             if "stop" in message:
                 audio_player().stop()
+            if "next" in message:
+                audio_player().next()
+            if "prev" in message:
+                audio_player().prev()
             if "clear_queue" in message:
                 audio_player().clear_playlist()
             
