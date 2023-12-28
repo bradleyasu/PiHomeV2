@@ -40,7 +40,7 @@ class BusEta(Widget):
         self.dest = dest
         self.dest_loc = dest_loc
         self.eta = eta
-        if int(eta.split(" ")[0]) < 10:
+        if eta == "Now Arriving"  or int(eta.split(" ")[0]) < 10:
             self.time_color = self.danger_color
             # self.blink()
 
