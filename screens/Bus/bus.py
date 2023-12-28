@@ -136,8 +136,13 @@ class BusScreen(PiHomeScreen):
                         dts = dt.now()
                         dte = dt.strptime(e, '%Y%m%d %H:%M')
                         est = math.floor((dte - dts).total_seconds() / 60.0)
+
+                        label="{} min".format(est)
                     
-                        b = BusEta(route=r, stop=s, dest=d, dest_loc=dloc, eta=str(est)+" min")
+                        if est < 1:
+                            label = "Now Arriving"
+
+                        b = BusEta(route=r, stop=s, dest=d, dest_loc=dloc, eta=label)
                         if self.outbound and d == "OUTBOUND":
                             self.grid.add_widget(b)
                         elif not self.outbound and d == "INBOUND":

@@ -1,34 +1,16 @@
-import json
-import subprocess
 from composites.Music.song import Song
-from components.Hamburger.hamburger import Hamburger
-from composites.Music.volume import Volume
-from composites.Reddit.redditwidget import RedditWidget
-import requests
-import time
-from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.screenmanager import Screen
-from kivy.uix.label import Label
-from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,BooleanProperty, NumericProperty, ListProperty
 
-from components.Button.circlebutton import CircleButton
-from components.Button.simplebutton import SimpleButton
-from components.SmartLight.smartlight import SmartLight
-from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from services.albumart.albumart import AlbumArtFactory
 from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
-from kivy.factory import Factory
-from util.helpers import appmenu_open, audio_player, get_app, goto_screen, local_ip, weather
-from util.tools import hex
+from util.helpers import audio_player, local_ip
 from kivy.clock import Clock
 from kivy.animation import Animation
-from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN, SERVER_PORT
+from util.const import CDN_ASSET, SERVER_PORT
 
 Builder.load_file("./screens/Music/musicplayer.kv")
 
