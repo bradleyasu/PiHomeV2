@@ -19,18 +19,15 @@ class Fireworks(Widget):
         rand_blue = randint(0, 100) / 100
         rand_opacity = randint(80, 100) / 100
         color = [rand_red, rand_green, rand_blue, rand_opacity]  # White color with alpha
-        max_size = randint(50, 200)
         with self.canvas:
             Color(*color)
             firework = Firework(pos=(randint(0, self.width - 10), randint(0, self.height - 10)), size=(10, 10))
-            firework.max_fireworks_size = max_size 
         self.fireworks.append(firework)
 
     def update_fireworks(self, dt):
         # Update the size of each firework and remove if too big
         for firework in self.fireworks[:]:
-            firework.size = (firework.size[0] + 2, firework.size[1] + 2)
-            firework.pos = (firework.pos[0] + 0.5, firework.pos[1] + 0.5)
+            firework.step()
             if firework.size[0] > firework.max_fireworks_size:
                 self.canvas.remove(firework)
                 self.fireworks.remove(firework)
