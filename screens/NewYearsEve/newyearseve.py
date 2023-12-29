@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from kivy.lang import Builder
 from kivy.metrics import dp
 
@@ -31,6 +31,11 @@ class NewYearsEveScreen(PiHomeScreen):
         next_year = current_time.year + 1
         new_year = datetime(next_year, 1, 1, 0, 0, 0)  # New Year's Day of the next year
         return new_year
+
+    def get_now_plus_20(self):
+        current_time = datetime.now()
+        now_plus_20 = current_time + timedelta(seconds=20)
+        return now_plus_20
 
     def start(self):
         self.fireworks = Fireworks();

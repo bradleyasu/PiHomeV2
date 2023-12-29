@@ -8,6 +8,7 @@ from screens.NewYearsEve.firework import Firework
 
 class Fireworks(Widget):
     is_big_firework = False
+    counter = 0
     def __init__(self, **kwargs):
         super(Fireworks, self).__init__(**kwargs)
         self.fireworks = []
@@ -20,6 +21,11 @@ class Fireworks(Widget):
         rand_blue = randint(0, 100) / 100
         rand_opacity = randint(80, 100) / 100
         color = [rand_red, rand_green, rand_blue, rand_opacity]  # White color with alpha
+        if self.is_big_firework == True:
+            self.counter += 1
+        if self.counter > 100:
+            self.is_big_firework = False
+            self.counter = 0
         with self.canvas:
             Color(*color)
             firework = Firework(pos=(randint(-200, self.width - 10), randint(-200, self.height - 10)), size=(10, 10))
