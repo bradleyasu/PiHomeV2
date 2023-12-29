@@ -7,6 +7,7 @@ from random import randint
 from screens.NewYearsEve.firework import Firework
 
 class Fireworks(Widget):
+    is_big_firework = False
     def __init__(self, **kwargs):
         super(Fireworks, self).__init__(**kwargs)
         self.fireworks = []
@@ -21,7 +22,10 @@ class Fireworks(Widget):
         color = [rand_red, rand_green, rand_blue, rand_opacity]  # White color with alpha
         with self.canvas:
             Color(*color)
-            firework = Firework(pos=(randint(0, self.width - 10), randint(0, self.height - 10)), size=(10, 10))
+            firework = Firework(pos=(randint(-200, self.width - 10), randint(-200, self.height - 10)), size=(10, 10))
+            if self.is_big_firework == True:
+                firework.max_fireworks_size = randint(500, 1200)
+                firework.pos_step = 0
         self.fireworks.append(firework)
 
     def update_fireworks(self, dt):

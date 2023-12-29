@@ -7,11 +7,12 @@ from kivy.uix.boxlayout import BoxLayout
 
 
 class Countdown(BoxLayout):
-    def __init__(self, countdown_time, message, **kwargs):
+    def __init__(self, countdown_time, message, on_timeout, **kwargs):
         super(Countdown, self).__init__(**kwargs)
         self.orientation = 'vertical'
         self.countdown_time = countdown_time
         self.message = message
+        self.on_timeout = on_timeout
         self.label = Label(text=str(self.countdown_time), font_size='100sp')
         self.add_widget(self.label)
         self.countdown_event = None
@@ -24,6 +25,7 @@ class Countdown(BoxLayout):
         self.label.text = str(self.countdown_time)
         if self.countdown_time == 0:
             self.label.text = self.message
+            self.on_timeout()
             self.stop_countdown()
 
     def stop_countdown(self):

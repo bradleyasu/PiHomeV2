@@ -13,6 +13,7 @@ Builder.load_file("./screens/NewYearsEve/newyearseve.kv")
 class NewYearsEveScreen(PiHomeScreen):
     fireworks = None
     countdown = None
+    is_new_year = False
     def __init__(self, **kwargs):
         super(NewYearsEveScreen, self).__init__(**kwargs)
 
@@ -36,12 +37,16 @@ class NewYearsEveScreen(PiHomeScreen):
 
     def start(self):
         self.fireworks = Fireworks();
-        self.countdown = Countdown(self.calculate_seconds_to_new_year(), "Happy New Year!")
+        self.countdown = Countdown(20, "Happy New Year!", self.set_new_year)
         # center countdown on screen
         self.add_widget(self.fireworks)
         self.add_widget(self.countdown)
         self.fireworks.start_fireworks()
         self.countdown.start_countdown()
+
+    def set_new_year(self):
+        self.is_new_year = True
+        self.fireworks.is_big_firework = True
 
     def stop(self):
         self.fireworks.stop_fireworks()
