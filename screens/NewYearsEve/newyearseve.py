@@ -26,18 +26,15 @@ class NewYearsEveScreen(PiHomeScreen):
         self.stop()
         return super().on_leave(*args)
 
-    def calculate_seconds_to_new_year(self):
+    def get_newyear(self):
         current_time = datetime.now()
         next_year = current_time.year + 1
         new_year = datetime(next_year, 1, 1, 0, 0, 0)  # New Year's Day of the next year
-        time_difference = new_year - current_time
-        seconds = time_difference.total_seconds() 
-        rounded_seconds = round(seconds)
-        return rounded_seconds
+        return new_year
 
     def start(self):
         self.fireworks = Fireworks();
-        self.countdown = Countdown(20, "Happy New Year!", self.set_new_year)
+        self.countdown = Countdown(self.get_newyear(), "Happy New Year!", self.set_new_year)
         # center countdown on screen
         self.add_widget(self.fireworks)
         self.add_widget(self.countdown)
