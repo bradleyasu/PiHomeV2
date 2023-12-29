@@ -37,7 +37,7 @@ class Fireworks(Widget):
 
     def start_fireworks(self):
         # Schedule the continuous creation of fireworks and their updates
-        Clock.schedule_interval(self.explode_firework, 0.1)
+        Clock.schedule_interval(self.explode_firework, 0.2)
         Clock.schedule_interval(self.update_fireworks, 0.03)
 
     def stop_fireworks(self):

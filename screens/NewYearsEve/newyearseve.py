@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from kivy.lang import Builder
 from kivy.metrics import dp
 
@@ -26,10 +26,13 @@ class NewYearsEveScreen(PiHomeScreen):
         return super().on_leave(*args)
 
     def calculate_seconds_to_new_year(self):
-        new_years = datetime.datetime(datetime.datetime.now().year + 1, 1, 1)
-        now = datetime.datetime.now()
-        delta = new_years - now
-        return delta.seconds
+        current_time = datetime.now()
+        next_year = current_time.year + 1
+        new_year = datetime(next_year, 1, 1, 0, 0, 0)  # New Year's Day of the next year
+        time_difference = new_year - current_time
+        seconds = time_difference.total_seconds() 
+        rounded_seconds = round(seconds)
+        return rounded_seconds
 
     def start(self):
         self.fireworks = Fireworks();
