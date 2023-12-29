@@ -1,5 +1,6 @@
 from kivy.config import Config
 from interface.pihomescreenmanager import PiHomeScreenManager
+from screens.NewYearsEve.newyearseve import NewYearsEveScreen
 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
@@ -162,6 +163,7 @@ class PiHome(App):
             "lofi": LofiScreen(name = "lofi", label="Lofi Radio"),
             "pihole": PiHoleScreen(name = "pihole", label="PiHole"),
             'white_board': WhiteBoard(name = 'white_board', label="White Board"),
+            'nye': NewYearsEveScreen(name="nye", label="NYE", is_hidden=False, requires_pin=False)
         }
 
         self.appmenu = AppMenu(self.screens)
