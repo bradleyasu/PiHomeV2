@@ -30,8 +30,8 @@ class Fireworks(Widget):
             Color(*color)
             firework = Firework(pos=(randint(-200, self.width - 10), randint(-200, self.height - 10)), size=(10, 10))
             if self.is_big_firework == True:
-                firework.max_fireworks_size = randint(500, 1200)
                 firework.pos_step = 0
+                firework.max_fireworks_size = randint(500, 1200)
         self.fireworks.append(firework)
 
     def update_fireworks(self, dt):
@@ -46,6 +46,7 @@ class Fireworks(Widget):
         # Schedule the continuous creation of fireworks and their updates
         Clock.schedule_interval(self.explode_firework, 0.2)
         Clock.schedule_interval(self.update_fireworks, 0.03)
+        Clock.schedule_once(self.restart_fireworks, 120)
 
     def stop_fireworks(self):
         # Stop the fireworks
@@ -53,3 +54,9 @@ class Fireworks(Widget):
         Clock.unschedule(self.update_fireworks)
         self.canvas.clear()
         self.fireworks = []
+
+    def restart_fireworks(self, dt):
+        # Restart the fireworks
+        print("Restarting fireworks")
+        self.stop_fireworks()
+        self.start_fireworks()

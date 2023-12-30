@@ -1,9 +1,9 @@
 from datetime import datetime
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
-from kivy.graphics import Color, Rectangle
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
+
 
 
 class Countdown(BoxLayout):
@@ -18,6 +18,9 @@ class Countdown(BoxLayout):
         self.message = message
         self.on_timeout = on_timeout
         self.label = Label(text=str(self.countdown_time), font_size='100sp')
+        self.label.outline_width = 2
+        self.label.outline_color = (0, 0, 0, 0.7)
+        self.label.font_name = 'Nunito'
         self.add_widget(self.label)
         self.countdown_event = None
     

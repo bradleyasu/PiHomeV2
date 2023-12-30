@@ -37,14 +37,19 @@ class NewYearsEveScreen(PiHomeScreen):
         now_plus_20 = current_time + timedelta(seconds=20)
         return now_plus_20
 
-    def start(self):
+    def start(self, debug=False):
         self.fireworks = Fireworks();
-        self.countdown = Countdown(self.get_newyear(), "Happy New Year!", self.set_new_year)
+        countdown_time = self.get_now_plus_20() if debug else self.get_newyear()
+        self.countdown = Countdown(countdown_time, "Happy New Year!", self.set_new_year)
         # center countdown on screen
         self.add_widget(self.fireworks)
         self.add_widget(self.countdown)
         self.fireworks.start_fireworks()
         self.countdown.start_countdown()
+
+    def on_rotary_long_pressed(self):
+        self.stop()
+        self.start(debug=True)
 
     def set_new_year(self):
         self.is_new_year = True
