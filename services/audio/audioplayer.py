@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 
 from util.helpers import toast
 
@@ -18,6 +19,8 @@ class AudioPlayer:
     album_art = ""
     queue = []
     vol_delta = 10
+    last_vol_up_time = 0
+    last_vol_down_time = 0
 
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
@@ -136,12 +139,20 @@ class AudioPlayer:
         self.player._set_property("volume", volume)
 
     def volume_up(self):
+        now = time.time()
+        if now - self.last_vol_down_time < 1:
+            return
+        self.last_vol_up_time = now
         if self.volume < 100 - self.vol_delta:
             self.player._set_property("volume", self.volume + self.vol_delta)
         if self.volume < 100:
             self.player._set_property("volume", self.volume + 1)
 
     def volume_down(self):
+        now = time.time()
+        if now - self.last_vol_up_time < 1:
+            return
+        self.last_vol_down_time = now
         if self.volume > self.vol_delta:
             self.player._set_property("volume", self.volume - self.vol_delta)
         elif self.volume > 0:
