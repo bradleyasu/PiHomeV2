@@ -88,9 +88,9 @@ class RotaryEncoder():
                     if self.direction >= 0:
                         self.rotary_counter += 1
                         self.direction = 1
-                elif self.direction <= 0:
-                    self.rotary_counter -= 1
-                    self.direction = -1
+                    elif self.direction <= 0:
+                        self.rotary_counter -= 1
+                        self.direction = -1
             else:
                 self.direction = 0
             self.update_callback(self.direction, self.button_pressed)
