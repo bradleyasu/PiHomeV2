@@ -104,27 +104,6 @@
                 pos: (root.width - dp(50)), (root.height/2 - self.height/2)
 
 
-            Hamburger:
-                pos: (dp(root.expand_offset + 50)), root.height - dp(80)
+            ArrowButton:
+                pos: (dp(root.expand_offset + 10)), root.height/2 - self.height/2
                 on_touch_down: root.toggle_queue(*args)
-                
-                # Widget:
-                #     size_hint: None, None
-                #     size: dp(30), dp(80)
-                #     pos: (dp(root.expand_offset + 20)), root.height - dp(80)
-                #     on_touch_down: root.toggle_queue(*args)
-                #     canvas.before:
-                #         Color:
-                #             rgba: (1,1,1,1)
-                #         RoundedRectangle:
-                #             pos: self.x, self.y + dp(60)
-                #             size: self.width, dp(5)
-                #             radius: [2,]
-                #         RoundedRectangle:
-                #             pos: self.x, self.y + dp(50)
-                #             size: self.width, dp(5)
-                #             radius: [2,]
-                #         RoundedRectangle:
-                #             pos: self.x, self.y + dp(40)
-                #             size: self.width, dp(5)
-                #             radius: [2,]
