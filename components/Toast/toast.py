@@ -42,17 +42,24 @@ class Toast(Widget):
         if( level == "success" or level == "done"):
             self.background_color = self.success_color
         Clock.schedule_once(lambda _: self.animate(), 1)
-        Clock.schedule_once(lambda _: self.reset(), timeout)
-        Clock.schedule_once(lambda _: self.on_reset(), timeout + 1)
+        if timeout > 0:
+            Clock.schedule_once(lambda _: self.reset(), timeout)
+            Clock.schedule_once(lambda _: self.on_reset(), timeout + 1)
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            self.reset()
+            self.on_reset()
+            return True
 
     def animate(self):
-        animation = Animation(y_pos_offset = 0, t='out_elastic', d=1)
-        animation &= Animation(opacity = 1, t='out_elastic', d=1)
-        animation &= Animation(zoom = 1, t='out_elastic', d=1)
+        animation = Animation(y_pos_offset = 0, t='out_expo', d=0.25)
+        animation &= Animation(opacity = 1, t='linear', d=0.25)
+        animation &= Animation(zoom = 1, t='out_expo', d=0.25)
         animation.start(self)
 
     def reset(self):
-        animation = Animation(y_pos_offset = -20, t='out_elastic', d=1)
-        animation &= Animation(opacity = 0, t='linear', d=1)
-        animation &= Animation(zoom = 0.8, t='out_elastic', d=1)
+        # animation = Animation(y_pos_offset = -20, t='out_elastic', d=1)
+        animation = Animation(opacity = 0, t='linear', d=1)
+        # animation &= Animation(zoom = 0.8, t='out_elastic', d=1)
         animation.start(self)

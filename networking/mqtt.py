@@ -12,6 +12,7 @@ class MQTT:
     display_listeners = []
     notification_listeners = []
     command_listeners = []
+    toast_listeners = []
     def __init__(self, host, port = 1883, keep_alive = 60, feed = "pihome", user = "", password = "", **kwargs):
         super(MQTT, self).__init__(**kwargs)
         self.host = host
@@ -76,6 +77,8 @@ class MQTT:
             self.notification_listeners.append(callback)
         if type == "command":
             self.command_listeners.append(callback)
+        if type == "toast":
+            self.toast_listeners.append(callback)
 
     def notify(self, type, payload):
         if type == "app":
@@ -92,4 +95,8 @@ class MQTT:
 
         if type == "command":
             for callback in self.command_listeners:
+                callback(payload)
+
+        if type == "toast":
+            for callback in self.toast_listeners:
                 callback(payload)

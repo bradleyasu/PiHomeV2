@@ -103,7 +103,6 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(response_json.encode('utf-8'))
 
  
- 
 class PiHomeServer():
     PORT = SERVER_PORT
     SOCKET_PORT = 9090
@@ -175,8 +174,7 @@ class PiHomeServer():
             except Exception as e:
                 attempts += 1
                 error("Server Attempt {}: Failed to start server: {}".format(attempts, e))
-                # sleep for 5 seconds before trying again
-                asyncio.sleep(5)
+                
     
     async def websocket_server(self, websocket, path):
         toast("Socket Connected", "info", 2)
