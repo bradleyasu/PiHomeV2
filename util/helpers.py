@@ -26,6 +26,12 @@ def appmenu_open(open = True):
 def toast(label, level = "info", timeout = 5):
     get_app().show_toast(label = label, level = level, timeout = timeout);
 
+def process_webhook(webhook):
+    if get_app().mqtt is not None:
+        get_app().mqtt.process_webhook(webhook)
+    else:
+        warn("No MQTT service available to process webhook")
+
 def weather():
     return get_app().weather
 

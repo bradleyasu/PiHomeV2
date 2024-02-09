@@ -1,7 +1,6 @@
 from cmath import inf
 import http.server
 import json
-import socket
 import socketserver
 from server.socket_handler import SocketHandler
 import websockets
@@ -10,7 +9,7 @@ from threading import Thread
 from services.wallpaper.wallpaper import Wallpaper
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
-from util.helpers import audio_player, error, get_app, goto_screen, info, toast, warn
+from util.helpers import audio_player, error, get_app, goto_screen, info, process_webhook, toast, warn
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -80,6 +79,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 goto_screen(_MUSIC_SCREEN)
             if "app" in payload:
                 goto_screen(payload["app"])
+            if "webhook" in payload:
+                process_webhook(payload["webhook"])
+
             self._set_response()
             # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
@@ -162,12 +164,19 @@ class PiHomeServer():
 
     def _run(self):
         Handler = MyHttpRequestHandler
-        with socketserver.TCPServer(("", self.PORT), Handler) as h:
-            self.httpd = h
-            info("Server: PiHome Server Listening on port: {}".format(self.PORT))
-            while not self.shutting_down:
-                h.serve_forever()
-
+        attempts = 0
+        while attempts < 5:
+            try:
+                with socketserver.TCPServer(("", self.PORT), Handler) as h:
+                    self.httpd = h
+                    info("Server: PiHome Server Listening on port: {}".format(self.PORT))
+                    while not self.shutting_down:
+                        h.serve_forever()
+            except Exception as e:
+                attempts += 1
+                error("Server Attempt {}: Failed to start server: {}".format(attempts, e))
+                # sleep for 5 seconds before trying again
+                asyncio.sleep(5)
     
     async def websocket_server(self, websocket, path):
         toast("Socket Connected", "info", 2)

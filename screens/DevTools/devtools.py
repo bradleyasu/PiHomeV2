@@ -51,32 +51,36 @@ class DevTools(PiHomeScreen):
         layout.add_widget(button)
 
 
-        stopbutton = CircleButton(text='>', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 200)))
-        stopbutton.stroke_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
-        stopbutton.text_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
-        stopbutton.down_color = self.theme.get_color(self.theme.ALERT_SUCCESS, 0.2)
-        stopbutton.bind(on_release=lambda _: self.stop_sound())
-        layout.add_widget(stopbutton)
+        # stopbutton = CircleButton(text='>', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 200)))
+        # stopbutton.stroke_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
+        # stopbutton.text_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
+        # stopbutton.down_color = self.theme.get_color(self.theme.ALERT_SUCCESS, 0.2)
+        # stopbutton.bind(on_release=lambda _: self.stop_sound())
+        # layout.add_widget(stopbutton)
 
-        switch = PiHomeSwitch(pos=(dp(20), dp(20)))
-        layout.add_widget(switch)
+        # switch = PiHomeSwitch(pos=(dp(20), dp(20)))
+        # layout.add_widget(switch)
 
-        self.serverButton = CircleButton(text='S', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
-        self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
-        self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
-        self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
-        self.serverButton.bind(on_release=lambda _: self.toggle_server())
-        layout.add_widget(self.serverButton)
+        # self.serverButton = CircleButton(text='S', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
+        # self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        # self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        # self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
+        # self.serverButton.bind(on_release=lambda _: self.toggle_server())
+        # layout.add_widget(self.serverButton)
 
-        slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
-        slider.add_listener(lambda value: set_brightness(value))
-        slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
-        slider.active_color = hex(Color.DARK_CHARTREUSE_700)
-        layout.add_widget(slider)
+        # slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
+        # slider.add_listener(lambda value: set_brightness(value))
+        # slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
+        # slider.active_color = hex(Color.DARK_CHARTREUSE_700)
+        # layout.add_widget(slider)
 
 
         qr = QR().from_url("http://{}:{}".format(self.local_ip, SERVER_PORT))
         qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(100), dp(100)))
+        # center the qr code
+        qr_img.pos = (dp((self.width - qr_img.width) / 2), dp((self.height - qr_img.height) / 2))
+        # round the corners
+        qr_img.radius = (dp(20), dp(20), dp(20), dp(20))
         layout.add_widget(qr_img)
         # url = ""
         # player = VideoPlayer(source=url, state='play', options={'allow_stretch': True})

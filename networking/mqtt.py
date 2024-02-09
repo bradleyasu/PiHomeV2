@@ -39,6 +39,15 @@ class MQTT:
         self.client.connect(self.host, self.port, self.keep_alive)
         self.client.loop_start()
 
+    def process_webhook(self, webhook):
+        """
+        Process a webhook from the server
+        """
+        if "type" in webhook:
+            self.notify(webhook["type"], webhook)
+        else:
+            error("Webhook does not contain a type")
+
     def on_message(self, client, userdata, msg):
         try: 
             info("[ MQTT ] Message Recieved: {} | {} | {}".format(str(client), str(userdata), str(msg.payload)))
