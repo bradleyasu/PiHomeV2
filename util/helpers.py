@@ -76,6 +76,7 @@ def info(message):
     get_app().phlogger.info(message)
 
 def warn(message):
+    print(message)
     get_app().phlogger.warn(message)
     
 def error(message):

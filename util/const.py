@@ -1,5 +1,6 @@
 from util.helpers import update_pihome
 from kivy.gesture import GestureDatabase
+from system.brightness import set_brightness
 
 CONF_FILE = "base.ini"
 THEME_FILE = "theme.ini"
@@ -9,7 +10,9 @@ GESTURE_DATABASE = GestureDatabase()
 CDN_ASSET = "https://cdn.pihome.io/assets/{}"
 
 MQTT_COMMANDS = {
-    'update': update_pihome
+    'update': update_pihome,
+    'soften': lambda _: set_brightness(1.0),
+    'brighten': lambda _: set_brightness(1.0)
 }
 
 _DISPLAY_SCREEN = "_display"
