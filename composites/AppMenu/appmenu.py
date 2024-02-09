@@ -26,6 +26,7 @@ Builder.load_file("./composites/AppMenu/appmenu.kv")
 class AppMenu(Widget):
 
     background_color = ColorProperty((0,0,0, 0.8))
+    disabled = False
 
     def __init__(self, screens, **kwargs):
         super(AppMenu, self).__init__(**kwargs)
@@ -40,11 +41,33 @@ class AppMenu(Widget):
 
         view.add_widget(self.grid)
         self.add_widget(view)
+        self.view = view
 
 
     def open_app(self, key):
+        if self.disabled:
+            return
         get_app().set_app_menu_open(False)
         goto_screen(key)
+
+    def hide(self):
+        self.opacity = 0
+        # disable touch events
+        self.disabled = True
+        # even though the menu is hidden, touch events are still being registered
+        # so we need to move the position of everything off screen
+        self.pos = (0, -1000)
+        self.grid.pos = (0, -1000)
+        self.view.pos = (0, -1000)
+
+    def show(self):
+        self.opacity = 1
+        # enable touch events
+        self.disabled = False
+        # move everything back to the original position
+        self.pos = (0, 0)
+        self.grid.pos = (0, 0)
+        self.view.pos = (0, 0)
 
 
     def reset(self):

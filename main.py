@@ -167,6 +167,8 @@ class PiHome(App):
         }
 
         self.appmenu = AppMenu(self.screens)
+        self.appmenu.show_apps()
+        self.appmenu.hide()
 
         self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
@@ -181,6 +183,7 @@ class PiHome(App):
         self.layout.size_hint = (1,1)
         self.layout.pos = (0,0)
 
+        
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
 
@@ -202,6 +205,9 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         self.layout.add_widget(self.menu_button, index=0)
+
+        # Add App Menu
+        self.layout.add_widget(self.appmenu, index=1)
 
         return self.layout
 
@@ -270,11 +276,13 @@ class PiHome(App):
             return
         self.app_menu_open = open
         if open == True:
-            self.layout.add_widget(self.appmenu, index=1)
-            self.appmenu.show_apps()
+            # self.layout.add_widget(self.appmenu, index=1)
+            # self.appmenu.show_apps()
+            self.appmenu.show()
         else:
-            self.appmenu.reset()
-            self.layout.remove_widget(self.appmenu)
+            # self.appmenu.reset()
+            # self.layout.remove_widget(self.appmenu)
+            self.appmenu.hide()
             self.menu_button.is_open = False
 
     def toggle_app_menu(self):
