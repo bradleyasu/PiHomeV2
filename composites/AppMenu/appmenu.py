@@ -56,22 +56,26 @@ class AppMenu(Widget):
         self.disabled = True
         # even though the menu is hidden, touch events are still being registered
         # so we need to move the position of everything off screen
-        self.pos = (0, -1000)
-        self.grid.pos = (0, -1000)
-        self.view.pos = (0, -1000)
+        self.pos = (0, 1000)
+        self.grid.pos = (0, 1000)
+        self.view.pos = (0, 1000)
 
     def show(self):
-        self.opacity = 1
+        # self.opacity = 1
         # enable touch events
         self.disabled = False
         # move everything back to the original position
         self.pos = (0, 0)
         self.view.pos = (0, 0)
-        # self.grid.pos = (0, 0)
+        self.grid.pos = (0, 0)
         #bounce animate the grid back in
-        self.grid.pos = (0, -1000)
-        anim = Animation(pos=(0, 0), t='out_expo', d=1)
-        anim.start(self.grid)
+        anim = Animation(pos=(0, 0), t='in_expo', d=0.5)
+        # anim.start(self)
+        # # anim.start(self.grid)
+        # # # anim.start(self.view)
+        # fade in opacity
+        anim = Animation(opacity=1, t='in_expo', d=0.1)
+        anim.start(self)
 
 
 
