@@ -163,17 +163,11 @@ class PiHomeServer():
 
     def _run(self):
         Handler = MyHttpRequestHandler
-        attempts = 0
-        while attempts < 5:
-            try:
-                with socketserver.TCPServer(("", self.PORT), Handler) as h:
-                    self.httpd = h
-                    info("Server: PiHome Server Listening on port: {}".format(self.PORT))
-                    while not self.shutting_down:
-                        h.serve_forever()
-            except Exception as e:
-                attempts += 1
-                error("Server Attempt {}: Failed to start server: {}".format(attempts, e))
+        with socketserver.TCPServer(("", self.PORT), Handler) as h:
+            self.httpd = h
+            info("Server: PiHome Server Listening on port: {}".format(self.PORT))
+            while not self.shutting_down:
+                h.serve_forever()
                 
     
     async def websocket_server(self, websocket, path):
