@@ -66,8 +66,13 @@ class AppMenu(Widget):
         self.disabled = False
         # move everything back to the original position
         self.pos = (0, 0)
-        self.grid.pos = (0, 0)
         self.view.pos = (0, 0)
+        # self.grid.pos = (0, 0)
+        #bounce animate the grid back in
+        self.grid.pos = (0, -1000)
+        anim = Animation(pos=(0, 0), t='out_expo', d=1)
+        anim.start(self.grid)
+
 
 
     def reset(self):
