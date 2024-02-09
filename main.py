@@ -408,11 +408,17 @@ class PiHome(App):
             self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
  
     def _handle_command_event(self, payload):
+        """
+        Handle a command event from the server
+        """
         cmd = payload["execute"]
         if cmd in MQTT_COMMANDS:
             MQTT_COMMANDS[cmd]()
 
     def _handle_display_event(self, payload):
+        """
+        Handle a display event from the server
+        """
         if "title" in payload and "message" in payload and "image" in payload:
             self.screens[_DISPLAY_SCREEN].title = payload["title"]
             self.screens[_DISPLAY_SCREEN].message = payload["message"]
@@ -425,6 +431,9 @@ class PiHome(App):
 
 
     def _handle_display_image_event(self, payload):
+        """
+        Handle a display image event from the server
+        """
         if "image_url" in payload:
             self.screens[_DISPLAY_IMAGE_SCREEN].image = payload["image_url"]
             if "timeout" in payload:
