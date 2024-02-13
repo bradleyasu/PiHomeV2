@@ -27,7 +27,7 @@ class TimerDrawer(GridLayout):
         self.cols = 1
         self.size_hint = (None, None)
         self.size = (dp(200), dp(50))
-        self.padding = (dp(50), dp(0))
+        self.padding = (dp(50), 0)
         # self.pos_hint = {"top": 1}
         self.pos = (dp(get_app().width /2) - self.width /2, get_app().height - self.height)
         self.add_timer(Timer(30, "Give Bella Meds"))
