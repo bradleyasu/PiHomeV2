@@ -39,6 +39,10 @@ class TimerDrawer(GridLayout):
         timer.add_listener(lambda _: self.remove_widget(timer_widget))
         timer_widget.start()
 
+    def create_timer(self, duration, label):
+        timer = Timer(duration, label)
+        self.add_timer(timer)
+
     def remove_widget(self, widget):
         self.timer_widgets.remove(widget)
         self.alarm.play()
