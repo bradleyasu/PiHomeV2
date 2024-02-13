@@ -1,11 +1,11 @@
 import os
+os.environ['KIVY_AUDIO'] = 'sdl2'
+os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
+os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 from kivy.config import Config
 from composites.TimerDrawer.timerdrawer import TimerDrawer
 from interface.pihomescreenmanager import PiHomeScreenManager
 from screens.NewYearsEve.newyearseve import NewYearsEveScreen
-os.environ['KIVY_AUDIO'] = 'sdl2'
-os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
-os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
