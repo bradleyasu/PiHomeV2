@@ -1,7 +1,11 @@
+import os
 from kivy.config import Config
 from composites.TimerDrawer.timerdrawer import TimerDrawer
 from interface.pihomescreenmanager import PiHomeScreenManager
 from screens.NewYearsEve.newyearseve import NewYearsEveScreen
+os.environ['KIVY_AUDIO'] = 'sdl2'
+os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
+os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
@@ -40,7 +44,6 @@ import cProfile
 import sys
 import kivy
 import platform
-import os
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from components.Image.networkimage import NetworkImage
@@ -73,9 +76,6 @@ kivy.require('2.0.0')
 Window.show_cursor = platform.system() == 'Darwin'
 Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = 'below_target'
-os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
-os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
-os.environ['KIVY_AUDIO'] = 'sdl2'
 
 class PiHome(App):
 
