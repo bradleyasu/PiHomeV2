@@ -1,5 +1,5 @@
 import os
-os.environ['KIVY_AUDIO'] = 'audio_ffpyplayer'
+os.environ['KIVY_AUDIO'] = 'gstreamer'
 # os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 from kivy.config import Config
