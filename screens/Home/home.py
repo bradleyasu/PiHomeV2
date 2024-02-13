@@ -40,7 +40,7 @@ class HomeScreen(PiHomeScreen):
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.3))
 
-    startup_sound = SoundLoader.load("assets/audio/intro/002.mp3")
+    startup_sound = SoundLoader.load("./assets/audio/intro/002.mp3")
     logo_opacity = NumericProperty(1)
 
     date_time_y_offset = NumericProperty(-100)
