@@ -136,6 +136,9 @@ sudo apt install -t "o=UvT" mpv
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
 
+echo "Installing ffpyplayer as audio provider..."
+python3 -m pip install ffpyplayer >> $LOG
+
 echo "Setting up environment..."
 
 echo "" >> $PROFILE
