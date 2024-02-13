@@ -1,4 +1,5 @@
 from kivy.config import Config
+from composites.TimerDrawer.timerdrawer import TimerDrawer
 from interface.pihomescreenmanager import PiHomeScreenManager
 from screens.NewYearsEve.newyearseve import NewYearsEveScreen
 
@@ -96,6 +97,8 @@ class PiHome(App):
         self.toast = Toast(on_reset=self.remove_toast)
 
         self.menu_button = Hamburger()
+
+        self.timer_drawer = TimerDrawer()
 
 
         self.background_color = NetworkImage(
@@ -204,6 +207,8 @@ class PiHome(App):
         self.menu_button.pos = (dp(10), dp(400))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
+
+        self.layout.add_widget(self.timer_drawer, index=0)
         self.layout.add_widget(self.menu_button, index=0)
 
         # Add App Menu

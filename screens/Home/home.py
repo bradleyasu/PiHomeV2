@@ -28,6 +28,7 @@ from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
 from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN
+from kivy.core.audio import SoundLoader
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -39,6 +40,7 @@ class HomeScreen(PiHomeScreen):
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.3))
 
+    startup_sound = SoundLoader.load("assets/audio/intro/002.mp3")
     logo_opacity = NumericProperty(1)
 
     date_time_y_offset = NumericProperty(-100)
@@ -61,7 +63,7 @@ class HomeScreen(PiHomeScreen):
 
     def on_enter(self, *args):
         if self.is_first_run is True:
-            audio_player().play("./assets/audio/intro/002.mp3")
+            self.startup_sound.play()
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
             self.is_first_run = False

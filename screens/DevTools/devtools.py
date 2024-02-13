@@ -22,6 +22,8 @@ from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.label import Label
+from services.timers.timer import Timer
+from components.PihomeTimer.pihometimer import PiHomeTimer
 
 from mplayer import Player
 
@@ -50,12 +52,15 @@ class DevTools(PiHomeScreen):
         button.bind(on_release=lambda _: update_pihome())
         layout.add_widget(button)
 
+        # timer = Timer(10)
+        # timer_widget = PiHomeTimer(timer=timer, display_text="TimerText")
+        # layout.add_widget(timer_widget)
 
-        # stopbutton = CircleButton(text='>', size=(dp(50), dp(50)), pos=(dp(20), dp(self.height - 200)))
+        # stopbutton = CircleButton(text='T', size=(dp(140), dp(50)), pos=(dp(20), dp(self.height - 200)))
         # stopbutton.stroke_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
         # stopbutton.text_color = self.theme.get_color(self.theme.ALERT_SUCCESS)
         # stopbutton.down_color = self.theme.get_color(self.theme.ALERT_SUCCESS, 0.2)
-        # stopbutton.bind(on_release=lambda _: self.stop_sound())
+        # stopbutton.bind(on_release=lambda _: timer_widget.start())
         # layout.add_widget(stopbutton)
 
         # switch = PiHomeSwitch(pos=(dp(20), dp(20)))

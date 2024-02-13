@@ -1,0 +1,19 @@
+#:kivy 2.0.0
+<PiHomeTimer>:
+    Label:
+        id: time_label
+        text: root.time_label
+        size_hint: None, None
+        # We need to make sure that the position of the label is set to the center of the widget
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        pos: root.pos
+        size: self.texture_size
+        font_size: '26sp'
+    
+    Label:
+        id: label
+        text: root.label
+        size: self.texture_size 
+        font_size: '14sp'
+        pos: root.x, root.y + 47
+        align: 'center'
