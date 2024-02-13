@@ -45,7 +45,8 @@ class TimerDrawer(GridLayout):
 
     def remove_widget(self, widget):
         self.timer_widgets.remove(widget)
-        self.alarm.play()
+        if self.alarm is not None:
+            self.alarm.play()
         return super().remove_widget(widget)
 
     def on_timer_widgets(self, instance, value):
