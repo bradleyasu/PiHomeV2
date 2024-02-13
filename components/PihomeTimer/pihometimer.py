@@ -16,8 +16,8 @@ class PiHomeTimer(Widget):
     def __init__(self, timer = None , **kwargs):
         super(PiHomeTimer, self).__init__(**kwargs)
         self.timer = timer
-        self.pos_hint = None, None
-        self.size_hint = None, None
+        # self.pos_hint = None, None
+        # self.size_hint = None, None
         self.label = timer.label
         if not self.timer:
             self.timer = Timer(60)

@@ -2,6 +2,7 @@ from kivy.uix.widget import Widget
 from kivy.metrics import dp
 from kivy.lang import Builder
 from kivy.properties import NumericProperty, ListProperty
+from services.audio.sfx import SFX
 from services.timers.timer import Timer
 from kivy.clock import Clock
 from components.PihomeTimer.pihometimer import PiHomeTimer
@@ -11,7 +12,6 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 
 from kivy.animation import Animation
-from kivy.core.audio import SoundLoader
 import time
 
 Builder.load_file("./composites/TimerDrawer/timerdrawer.kv")
@@ -19,7 +19,6 @@ Builder.load_file("./composites/TimerDrawer/timerdrawer.kv")
 class TimerDrawer(GridLayout):
 
     timer_widgets = ListProperty([])
-    alarm = SoundLoader.load("assets/audio/notify/001.mp3")
 
     def __init__(self, **kwargs):
         super(TimerDrawer, self).__init__(**kwargs)
@@ -42,11 +41,11 @@ class TimerDrawer(GridLayout):
     def create_timer(self, duration, label):
         timer = Timer(duration, label)
         self.add_timer(timer)
+        SFX.play("pop")
 
     def remove_widget(self, widget):
         self.timer_widgets.remove(widget)
-        if self.alarm is not None:
-            self.alarm.play()
+        SFX.play("success")
         return super().remove_widget(widget)
 
     def on_timer_widgets(self, instance, value):

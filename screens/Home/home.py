@@ -19,6 +19,7 @@ from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
+from services.audio.sfx import SFX
 from system.brightness import get_brightness, set_brightness
 from theme.color import Color
 from theme.theme import Theme
@@ -28,7 +29,6 @@ from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
 from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN
-from kivy.core.audio import SoundLoader
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -40,7 +40,6 @@ class HomeScreen(PiHomeScreen):
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.3))
 
-    startup_sound = SoundLoader.load("./assets/audio/intro/002.mp3")
     logo_opacity = NumericProperty(1)
 
     date_time_y_offset = NumericProperty(-100)
@@ -63,8 +62,7 @@ class HomeScreen(PiHomeScreen):
 
     def on_enter(self, *args):
         if self.is_first_run is True:
-            if self.startup_sound is not None:
-                self.startup_sound.play()
+            SFX.play("startup")
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
             self.is_first_run = False

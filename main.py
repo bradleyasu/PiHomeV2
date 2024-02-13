@@ -1,6 +1,8 @@
 import os
+
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
+
 from kivy.config import Config
 from composites.TimerDrawer.timerdrawer import TimerDrawer
 from interface.pihomescreenmanager import PiHomeScreenManager
@@ -411,6 +413,7 @@ class PiHome(App):
             self.mqtt.add_listener(type = "image", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_image_event(payload), 0))
             self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
             self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
+            self.mqtt.add_listener(type = "timer", callback = lambda payload: self.timer_drawer.create_timer(payload["duration"], payload["label"]))
  
     def _handle_command_event(self, payload):
         """

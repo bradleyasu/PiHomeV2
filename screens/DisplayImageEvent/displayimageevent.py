@@ -1,5 +1,6 @@
 from kivy.lang import Builder
 from interface.pihomescreen import PiHomeScreen
+from services.audio.sfx import SFX
 from util.helpers import goto_screen
 from util.tools import hex
 from kivy.clock import Clock
@@ -21,3 +22,7 @@ class DisplayImageEvent(PiHomeScreen):
         self.image = ""
         self.reload_interval = 0
         return super().on_leave(*args)
+
+    def on_enter(self, *args):
+        SFX.play("multi_pop")
+        return super().on_enter(*args)

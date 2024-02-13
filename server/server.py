@@ -89,10 +89,10 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             error("Server: POST Request Failed: {}".format(e))
 
     def _set_response(self):
+        self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")  
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_response(200)
         self.end_headers()
 
         response_data = {
