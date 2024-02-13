@@ -1,6 +1,6 @@
 import os
-os.environ['KIVY_AUDIO'] = 'avplayer'
-os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
+os.environ['KIVY_AUDIO'] = 'sdl2'
+# os.environ["KIVY_AUDIO"] = "audio_ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 from kivy.config import Config
 from composites.TimerDrawer.timerdrawer import TimerDrawer

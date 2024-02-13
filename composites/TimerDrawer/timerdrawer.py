@@ -30,7 +30,7 @@ class TimerDrawer(GridLayout):
         self.padding = (dp(50), dp(0))
         # self.pos_hint = {"top": 1}
         self.pos = (dp(get_app().width /2) - self.width /2, get_app().height - self.height)
-        self.add_timer(Timer(300, "Give Bella Meds"))
+        self.add_timer(Timer(30, "Give Bella Meds"))
 
     def add_timer(self, timer):
         timer_widget = PiHomeTimer(timer=timer)
