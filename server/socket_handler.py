@@ -85,6 +85,14 @@ class SocketHandler():
                     "queue": get_app().audio_player.queue,
                     "album_art": get_app().audio_player.album_art
                 },
+                "timers":
+                    list(map(lambda t: {
+                        "label": t.timer.label,
+                        "end_time": t.timer.end_time,
+                        "duration": t.timer.duration,
+                        "elapsed_time": t.timer.elapsed_time
+                    }, get_app().timer_drawer.timer_widgets))
+                ,
                 "screens": {
                     "current": get_app().manager.current_screen.name,
                     "screens": list(map(lambda n: {
