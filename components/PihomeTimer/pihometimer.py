@@ -5,6 +5,7 @@ from kivy.properties import StringProperty
 from services.timers.timer import Timer
 from kivy.clock import Clock
 import time
+from components.Msgbox.msgbox import MSGBOX_FACTORY
 
 Builder.load_file("./components/PihomeTimer/pihometimer.kv")
 
@@ -26,6 +27,12 @@ class PiHomeTimer(Widget):
         Clock.schedule_interval(self.update, 1/60)
         self.timer.add_listener(self.destroy)
         self.timer.start()
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            MSGBOX_FACTORY.show(self, "Timer", "Would you like to remove {}".format(self.label), 0, 0, 1, self.timer.cancel)
+            return True
+        return super().on_touch_down(touch)
 
     def update(self, dt):
         if not self.timer:

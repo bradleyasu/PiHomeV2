@@ -66,12 +66,12 @@ class DevTools(PiHomeScreen):
         # switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         # layout.add_widget(switch)
 
-        # self.serverButton = CircleButton(text='S', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
-        # self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
-        # self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
-        # self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
-        # self.serverButton.bind(on_release=lambda _: self.toggle_server())
-        # layout.add_widget(self.serverButton)
+        self.serverButton = CircleButton(text='S', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
+        self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
+        self.serverButton.bind(on_release=lambda _: self.toggle_server())
+        layout.add_widget(self.serverButton)
 
         # slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
         # slider.add_listener(lambda value: set_brightness(value))

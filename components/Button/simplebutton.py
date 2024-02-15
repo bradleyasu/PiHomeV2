@@ -47,3 +47,6 @@ class SimpleButton(ButtonBehavior, Widget):
         animation.start(self)
 
 
+    def bind(self, **kwargs):
+        super(SimpleButton, self).bind(**kwargs)
+

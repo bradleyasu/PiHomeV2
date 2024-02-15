@@ -36,6 +36,10 @@ class Timer:
     def notify_listeners(self):
         for listener in self.listeners:
             listener(self.get_elapsed_time())
+
+    def cancel(self):
+        self.stop(notify=True)
+        self.is_running = False
     
     def start(self):
         if self.is_running:

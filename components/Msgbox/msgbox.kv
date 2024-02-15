@@ -1,0 +1,53 @@
+#:kivy 2.0.0
+<Msgbox>:
+    size_hint: None, None
+    size: 400, 200
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 0.8
+        Rectangle:
+            pos: 0, 0
+            # fullscreen backdrop
+            size: dp(1024), dp(1024)
+        Color:
+            rgba: root.background_color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [5, 5, 5, 5]
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.size
+        pos: root.pos   
+        padding: 10
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 0
+            RoundedRectangle:
+                size: self.size
+                pos: self.pos
+                radius: [5, 5, 5, 5]
+
+        Label:
+            text: root.message
+            font_size: '20sp'
+        GridLayout:
+            rows: 1
+            spacing: 10
+            size_hint: 1, 0.3
+            id: button_grid
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 0
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+
+            SimpleButton:
+                text: "Yes"
+                size_hint: 0.5, 1
+                # on_release: root.dismiss()
+            SimpleButton:
+                text: "No"
+                size_hint: 0.5, 1
