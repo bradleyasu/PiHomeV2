@@ -44,7 +44,7 @@ class Msgbox(Widget):
 
     def slide_out(self, on_out = None):
         if on_out is not None:
-            on_out()
+            Clock.schedule_once(lambda _: on_out(), 0.5)
         self.animate_out()
 
     def animate_in(self):
@@ -62,10 +62,10 @@ class Msgbox(Widget):
         grid = self.ids.button_grid
         grid.clear_widgets()
         if self.buttons == MSGBOX_BUTTONS["OK"]:
-            grid.add_widget(SimpleButton(text="OKAY", size_hint=(0.5,1), on_release=lambda _: self.slide_out()))
+            grid.add_widget(SimpleButton(text="OKAY", size_hint=(0.5,1), on_press=lambda _: self.slide_out()))
         elif self.buttons == MSGBOX_BUTTONS["YES_NO"]:
-            grid.add_widget(SimpleButton(text="YES", size_hint=(0.5,1), on_release=lambda _: self.slide_out(on_yes)))
-            grid.add_widget(SimpleButton(text="NO", size_hint=(0.5,1), on_release=lambda _: self.slide_out(on_no)))
+            grid.add_widget(SimpleButton(text="YES", size_hint=(0.5,1), on_press=lambda _: self.slide_out(on_yes)))
+            grid.add_widget(SimpleButton(text="NO", size_hint=(0.5,1), on_press=lambda _: self.slide_out(on_no)))
 
 class MsgboxFactory:
     def __init__(self):

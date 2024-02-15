@@ -30,7 +30,7 @@ class PiHomeTimer(Widget):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            MSGBOX_FACTORY.show(self, "Timer", "Would you like to remove {}".format(self.label), 0, 0, 1, self.timer.cancel)
+            MSGBOX_FACTORY.show(self, "Timer", "Would you like to remove {}?".format(self.label), 0, 0, 1, self.timer.cancel)
             return True
         return super().on_touch_down(touch)
 
