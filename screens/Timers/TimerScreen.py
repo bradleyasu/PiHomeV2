@@ -28,7 +28,7 @@ class TimerScreen(PiHomeScreen):
     
     def on_rotary_turn(self, direction, button_pressed):
         new_seconds = self.seconds
-        new_seconds += direction
+        new_seconds += (direction * 60)
         if new_seconds < 0:
             new_seconds = 0
         self.seconds = new_seconds
