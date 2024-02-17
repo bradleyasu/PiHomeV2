@@ -74,9 +74,14 @@ class DevTools(PiHomeScreen):
         self.serverButton.bind(on_release=lambda _: self.toggle_server())
         layout.add_widget(self.serverButton)
 
-        self.control_panel = SimpleButton(text="Control Panel", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
-        self.control_panel.bind(on_release=lambda _: CONTROL_PANEL.open())
-        layout.add_widget(self.control_panel)
+        # self.control_panel = SimpleButton(text="Control Panel", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
+        # self.control_panel.bind(on_release=lambda _: CONTROL_PANEL.open())
+        # layout.add_widget(self.control_panel)
+        
+        self.goback = SimpleButton(text="GO BACK", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
+        self.goback.bind(on_release=lambda _: self.go_back())
+        layout.add_widget(self.goback)
+
 
         # slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
         # slider.add_listener(lambda value: set_brightness(value))
