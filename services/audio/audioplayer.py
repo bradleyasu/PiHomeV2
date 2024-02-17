@@ -140,8 +140,8 @@ class AudioPlayer:
 
     def volume_up(self):
         now = time.time()
-        # if now - self.last_vol_down_time < 1:
-            # return
+        if now - self.last_vol_down_time < 1:
+            return
         self.last_vol_up_time = now
         if self.volume < 100 - self.vol_delta:
             self.player._set_property("volume", self.volume + self.vol_delta)
@@ -150,8 +150,8 @@ class AudioPlayer:
 
     def volume_down(self):
         now = time.time()
-        # if now - self.last_vol_up_time < 1:
-            # return
+        if now - self.last_vol_up_time < 1:
+            return
         self.last_vol_down_time = now
         if self.volume > self.vol_delta:
             self.player._set_property("volume", self.volume - self.vol_delta)
