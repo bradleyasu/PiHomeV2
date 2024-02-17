@@ -33,23 +33,25 @@ class RotaryEncoder():
     is_initialized = False
     press_time = 0
     press_duration = 0
+    _lock = False
 
     def __init__(self, **kwargs):
         super(RotaryEncoder, self).__init__(**kwargs)
         if can_use_rotary and not self.is_initialized:
             GPIO.setmode(GPIO.BCM)
-            GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.setup(self.a_pin, GPIO.IN)
+            GPIO.setup(self.b_pin, GPIO.IN)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_falling, bouncetime=2500)
-            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update, bouncetime=200)
-            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update, bouncetime=200)
+            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
+            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.last_button_state = GPIO.input(self.button_pin)
             self.is_initialized = True
 
     
     def on_falling(self, channel):
         self.press_time = time.time()
+        self._lock = True
         while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < (self.LONG_PRESS_THRESHOLD+0.1):
             self.duration = time.time() - self.press_time
 
@@ -57,12 +59,14 @@ class RotaryEncoder():
 
         while GPIO.input(channel) == GPIO.LOW:
             pass
+        
+        self._lock = False
 
 
     def on_press(self, channel):
         state = GPIO.input(channel)
 
-        if state == self.last_button_state:
+        if state == self.last_button_state or self._lock:
             return
 
         self.last_button_state = state
@@ -80,7 +84,8 @@ class RotaryEncoder():
 
 
     def update(self, data):
-        if can_use_rotary:
+        if can_use_rotary and not self._lock:
+            self._lock = True
             clkstate = GPIO.input(self.b_pin)
             dtstate = GPIO.input(self.a_pin)
             if clkstate != self.last_state:
@@ -95,6 +100,7 @@ class RotaryEncoder():
                 self.direction = 0
             self.update_callback(self.direction, self.button_pressed)
             self.last_state = clkstate
+            self._lock = False
 
 
     def reset(self):
