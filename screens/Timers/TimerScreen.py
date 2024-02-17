@@ -3,6 +3,8 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty, NumericProperty
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from interface.pihomescreen import PiHomeScreen
+from util.const import _HOME_SCREEN
+from util.helpers import get_app
 
 
 
@@ -25,6 +27,8 @@ class TimerScreen(PiHomeScreen):
     def on_rotary_pressed(self):
         TIMER_DRAWER.create_timer(self.seconds, None)
         self.seconds = 0
+        self.timerLabel = "00:00:00"
+        get_app().goto_screen(_HOME_SCREEN)
     
     def on_rotary_turn(self, direction, button_pressed):
         new_seconds = self.seconds
