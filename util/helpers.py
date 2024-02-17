@@ -6,6 +6,8 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.gesture import Gesture
 
+from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
+
 def get_app():
     return App.get_running_app()
 
@@ -41,7 +43,7 @@ def update_pihome():
     """
     get_app().server.stop_server()
     toast("PiHome updates are available. PiHome will restart in less than 30 seconds", level = "warn", timeout = 30)
-    get_app().timer_drawer.create_timer(30, "Restarting PiHome")
+    TIMER_DRAWER.create_timer(30, "Restarting PiHome")
     Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 32)
 
 

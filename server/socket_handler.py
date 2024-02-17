@@ -1,6 +1,7 @@
 
 
 import json
+from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from util.const import _MUSIC_SCREEN
 from util.helpers import audio_player, get_app, goto_screen
 from util.tools import execute_command
@@ -91,7 +92,7 @@ class SocketHandler():
                         "end_time": t.timer.end_time,
                         "duration": t.timer.duration,
                         "elapsed_time": t.timer.elapsed_time
-                    }, get_app().timer_drawer.timer_widgets))
+                    }, TIMER_DRAWER.timer_widgets))
                 ,
                 "screens": {
                     "current": get_app().manager.current_screen.name,
