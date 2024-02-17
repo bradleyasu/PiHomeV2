@@ -32,10 +32,8 @@ class TimerScreen(PiHomeScreen):
         if new_seconds < 0:
             new_seconds = 0
         self.seconds = new_seconds
+        self.timerLabel = self.human_readable_time(self.seconds)
         return None
-
-    def on_seconds(self, instance, value):
-        self.timerLabel = self.get_readable_time(value)
 
     def human_readable_time(self, seconds):
         return time.strftime("%H:%M:%S", time.gmtime(seconds))
