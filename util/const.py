@@ -21,6 +21,7 @@ _DEVTOOLS_SCREEN = "_devtools"
 _HOME_SCREEN = "_home"
 _SETTINGS_SCREEN = "_settings"
 _MUSIC_SCREEN = "_music"
+_TIMERS_SCREEN = "_timers"
 
 TEMP_DIR = "./.temp"
 

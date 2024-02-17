@@ -1,10 +1,12 @@
 import os
 
+from screens.Timers.TimerScreen import TimerScreen
+
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 from kivy.config import Config
-from composites.TimerDrawer.timerdrawer import TimerDrawer
+from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from interface.pihomescreenmanager import PiHomeScreenManager
 from screens.NewYearsEve.newyearseve import NewYearsEveScreen
 
@@ -34,7 +36,7 @@ from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
 from server.server import PiHomeServer
 from services.audio.audioplayer import AudioPlayer
-from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, _TIMERS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
@@ -100,7 +102,6 @@ class PiHome(App):
 
         self.menu_button = Hamburger()
 
-        self.timer_drawer = TimerDrawer()
 
 
         self.background_color = NetworkImage(
@@ -162,6 +163,7 @@ class PiHome(App):
             _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = False, requires_pin = True),
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
             _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
+            _TIMERS_SCREEN: TimerScreen(name = _TIMERS_SCREEN, label="Timers"),
             'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
             'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
             'command_center': CommandCenterScreen(name = 'command_center', label="Command Center"),
@@ -210,7 +212,7 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
 
-        self.layout.add_widget(self.timer_drawer, index=0)
+        self.layout.add_widget(TIMER_DRAWER, index=0)
         self.layout.add_widget(self.menu_button, index=0)
 
         # Add App Menu
@@ -413,7 +415,7 @@ class PiHome(App):
             self.mqtt.add_listener(type = "image", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_image_event(payload), 0))
             self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
             self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
-            self.mqtt.add_listener(type = "timer", callback = lambda payload: self.timer_drawer.create_timer(payload["duration"], payload["label"]))
+            self.mqtt.add_listener(type = "timer", callback = lambda payload: TIMER_DRAWER.create_timer(payload["duration"], payload["label"]))
  
     def _handle_command_event(self, payload):
         """

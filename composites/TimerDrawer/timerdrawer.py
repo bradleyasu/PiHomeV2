@@ -28,10 +28,15 @@ class TimerDrawer(GridLayout):
         self.size = (dp(200), dp(50))
         self.padding = (dp(50), 0)
         # self.pos_hint = {"top": 1}
-        self.pos = (dp(get_app().width /2) - self.width /2, dp(get_app().height))
+        # self.pos = (dp(get_app().width /2) - self.width /2, dp(get_app().height))
+        self.pos = dp(200), dp(-200)
+        self.in_position = False
         # self.add_timer(Timer(30, "Give Bella Meds"))
 
     def add_timer(self, timer):
+        if self.in_position is False:
+            self.pos = (dp(get_app().width /2) - self.width /2, dp(get_app().height))
+        
         timer_widget = PiHomeTimer(timer=timer)
         self.timer_widgets.append(timer_widget)
         self.add_widget(timer_widget)
@@ -68,5 +73,5 @@ class TimerDrawer(GridLayout):
         animation.start(self)
 
 
-    
+TIMER_DRAWER = TimerDrawer() 
     

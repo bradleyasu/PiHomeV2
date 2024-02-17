@@ -8,6 +8,7 @@ from components.Button.simplebutton import SimpleButton
 import time
 from theme.theme import Theme
 from kivy.clock import Clock
+from kivy.uix.popup import Popup
 
 from util.helpers import get_app
 
@@ -48,11 +49,11 @@ class Msgbox(Widget):
         self.animate_out()
 
     def animate_in(self):
-        animation = Animation(pos=(dp(get_app().width /2) - self.width /2, dp(get_app().height /2) - self.height /2), t='in_out_cubic', d=0.5)
+        animation = Animation(pos=(dp(get_app().width /2) - self.width /2, dp(get_app().height /2) - self.height /2), t='in_back', d=0.5)
         animation.start(self)
 
     def animate_out(self):
-        animation = Animation(pos=(dp(get_app().width /2) - self.width /2, dp(get_app().height)), t='in_out_cubic', d=0.5)
+        animation = Animation(pos=(dp(get_app().width /2) - self.width /2, dp(get_app().height)), t='out_back', d=0.5)
         animation.start(self)
         # remove widget after animation
         animation.bind(on_complete=lambda _,widget: widget.parent.remove_widget(widget))

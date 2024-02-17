@@ -10,6 +10,7 @@ from components.Image.networkimage import NetworkImage
 from components.Slider.slidecontrol import SlideControl
 from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
+from composites.ControlPanel.controlpanel import CONTROL_PANEL
 from interface.pihomescreen import PiHomeScreen
 from services.qr.qr import QR
 from system.brightness import set_brightness
@@ -72,6 +73,10 @@ class DevTools(PiHomeScreen):
         self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
         self.serverButton.bind(on_release=lambda _: self.toggle_server())
         layout.add_widget(self.serverButton)
+
+        self.control_panel = SimpleButton(text="Control Panel", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
+        self.control_panel.bind(on_release=lambda _: CONTROL_PANEL.open())
+        layout.add_widget(self.control_panel)
 
         # slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
         # slider.add_listener(lambda value: set_brightness(value))
