@@ -18,14 +18,14 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
         self.last_screen = None
 
-    def on_pre_enter(self, *args):
-        if self.last_screen is not self.parent.current:
-            self.last_screen = self.parent.current
+    def on_pre_leave(self, *args):
+        if self.last_screen is not self.manager.current:
+            self.last_screen = self.manager.current
         return super().on_pre_enter(*args)
 
     def go_back(self):
         if self.last_screen is not None:
-            self.parent.current = self.last_screen
+            self.manager.current = self.last_screen
 
     def touch_down(self, touch):
         userdata = touch.ud
