@@ -43,8 +43,8 @@ class RotaryEncoder():
             GPIO.setup(self.b_pin, GPIO.IN)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_falling, bouncetime=2500)
-            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
-            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
+            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update, bouncetime=5)
+            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update, bouncetime=5)
             self.last_button_state = GPIO.input(self.button_pin)
             self.is_initialized = True
 
