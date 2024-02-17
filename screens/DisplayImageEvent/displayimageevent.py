@@ -26,3 +26,7 @@ class DisplayImageEvent(PiHomeScreen):
     def on_enter(self, *args):
         SFX.play("multi_pop")
         return super().on_enter(*args)
+    
+    def on_touch_down(self, touch):
+        self.go_back()
+        return super().on_touch_down(touch)

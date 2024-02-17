@@ -34,7 +34,7 @@ class TimerScreen(PiHomeScreen):
 
     def on_rotary_pressed(self):
         TIMER_DRAWER.create_timer(self.seconds, None)
-        get_app().goto_screen(_HOME_SCREEN)
+        self.go_back()
 
     def on_rotary_long_pressed(self):
         self.is_granular = not self.is_granular
