@@ -32,8 +32,6 @@ class PiHomeScreen(Screen):
         return False
 
     def touch_move(self, touch):
-        if not self.is_active:
-            return False
         try:
             touch.ud['line'].points += [touch.x, touch.y]
             return False 
@@ -41,21 +39,15 @@ class PiHomeScreen(Screen):
             pass
 
     def on_rotary_pressed(self):
-        if not self.is_active:
-            return False
         audio_player().toggle_play()
         return False
 
     def on_rotary_long_pressed(self):
-        if not self.is_active:
-            return False
         audio_player().stop()
         audio_player().clear_playlist()
         return False
 
     def on_rotary_turn(self, direction, button_pressed):
-        if not self.is_active:
-            return False
         if direction == 1:
             audio_player().volume_up()
         elif direction == -1:
