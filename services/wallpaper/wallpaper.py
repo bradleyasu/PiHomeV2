@@ -10,9 +10,10 @@ from kivy.clock import Clock
 from PIL import Image as PILImage, ImageOps
 from PIL import ImageFilter as PILImageFilter
 from kivy.network.urlrequest import UrlRequest
+from networking.poller import POLLER
 from util.configuration import CONFIG
 from util.const import TEMP_DIR
-from util.helpers import get_app, get_poller, info, toast, url_hash
+from util.helpers import get_app, info, toast, url_hash
 import asyncio
 
 class Wallpaper:
@@ -45,7 +46,7 @@ class Wallpaper:
     def restart(self):
         if self.poller_key != None:
             info("Wallpaper Service is restarting.  {} will be replaced with new thread".format(self.poller_key))
-            get_poller().unregister_api(self.poller_key)
+            POLLER.unregister_api(self.poller_key)
             self._start();
 
     def _start(self):
@@ -62,20 +63,20 @@ class Wallpaper:
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
             if is_top == 1:
                 reddit_url = "https://www.reddit.com/r/{}/top/.json?limit=100&t=all".format(subs)
-            self.poller_key = get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
+            self.poller_key = POLLER.register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif repo == "Wallhaven":
             search = CONFIG.get("wallpaper", "whsearch", "landscape")
             if search == "":
                 search = "landscape"
             wh_url = "https://wallhaven.cc/api/v1/search?q={}&sorting=random".format(search)
-            self.poller_key = get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
+            self.poller_key = POLLER.register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif repo == "Custom":
             self.current = CONFIG.get("wallpaper", "custom_url", self.default)
             self.source = CONFIG.get("wallpaper", "custom_url", self.default)
             if self.current == "":
                 self.current = self.default
         else:
-            self.poller_key = get_poller().register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
+            self.poller_key = POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
 
     def parse_reddit(self, json):

@@ -14,9 +14,10 @@ from components.Image.networkimage import NetworkImage
 from components.Switch.switch import PiHomeSwitch
 from composites.BusEta.buseta import BusEta
 from interface.pihomescreen import PiHomeScreen
+from networking.poller import POLLER
 from theme.theme import Theme
 from util.configuration import CONFIG
-from util.helpers import get_app, get_poller
+from util.helpers import get_app
 from kivy.clock import Clock
 
 Builder.load_file("./screens/Bus/bus.kv")
@@ -50,7 +51,7 @@ class BusScreen(PiHomeScreen):
         self.api = self.PRT_API.format(self.api_key, self.routes, self.stops)
         
         # Register API to be polled every 200 seconds
-        get_poller().register_api(self.api, 60, lambda json: self.update(json))
+        POLLER.register_api(self.api, 60, lambda json: self.update(json))
         Clock.schedule_interval(self._update, 1)
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.8)

@@ -56,7 +56,7 @@ from components.Toast.toast import Toast
 from composites.AppMenu.appmenu import AppMenu
 
 from composites.PinPad.pinpad import PinPad
-from networking.poller import Poller
+from networking.poller import POLLER, Poller
 from screens.DevTools.devtools import DevTools
 from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
@@ -131,8 +131,6 @@ class PiHome(App):
         # Setup application logger
         self.phlogger = PIHOME_LOGGER
         
-        # Init Poller Service
-        self.poller = Poller()
 
         #Init Weather Services
         self.weather = Weather()
@@ -174,7 +172,7 @@ class PiHome(App):
         self.appmenu.show_apps()
         self.appmenu.hide()
 
-        self.poller.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
+        POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
 
         # Add a custom error handler for pihome
@@ -270,9 +268,6 @@ class PiHome(App):
             self.menu_button.opacity = 0
         else:
             self.menu_button.opacity = 1
-
-    def get_poller(self):
-        return self.poller;
 
     def set_app_menu_open(self, open):
         if self.pinpad.opacity == 1:

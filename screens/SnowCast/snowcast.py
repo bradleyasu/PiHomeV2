@@ -1,6 +1,7 @@
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,BooleanProperty, NumericProperty, ListProperty
+from networking.poller import POLLER
 from theme.theme import Theme
 
 from interface.pihomescreen import PiHomeScreen
@@ -9,7 +10,7 @@ from util.tools import hex
 from kivy.animation import Animation
 from kivy.graphics import Line, Rectangle, Ellipse, Color
 from kivy.clock import Clock
-from util.helpers import get_app, get_poller, goto_screen, toast 
+from util.helpers import get_app, goto_screen, toast 
 
 Builder.load_file("./screens/SnowCast/snowcast.kv")
 
@@ -31,7 +32,7 @@ class SnowCast(PiHomeScreen):
         self.icon = CDN_ASSET.format("snow.png")
 
         # Every 30 minutes
-        get_poller().register_api(self.SEVEN_SPRINGS, 60 * 30, lambda json: self.update(json))
+        POLLER.register_api(self.SEVEN_SPRINGS, 60 * 30, lambda json: self.update(json))
 
     def update(self, payload):
         self.lifts_open = payload["OpenLifts"]

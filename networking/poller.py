@@ -55,3 +55,6 @@ class Poller:
         # Log any errors from the request
         if req.error:
             error("An Error Occurred while polling api. {}".format(req.error))
+
+
+POLLER = Poller()

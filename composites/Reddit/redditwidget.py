@@ -1,6 +1,7 @@
 from kivy.lang import Builder
 from components.Image.networkimage import BLANK_IMAGE, LOGO_IMAGE
 from interface.gesturewidget import GestureWidget
+from networking.poller import POLLER
 from services.qr.qr import QR
 from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, BooleanProperty
@@ -8,7 +9,6 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from util.configuration import CONFIG
 from util.const import GESTURE_SWIPE_DOWN
-from util.helpers import get_poller
 
 Builder.load_file("./composites/Reddit/redditwidget.kv")
 
@@ -47,7 +47,7 @@ class RedditWidget(GestureWidget):
         if subs == "":
             subs = "politics"
         reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
-        get_poller().register_api(reddit_url, 60 * 10, lambda json: self.parse_reddit(json));
+        POLLER.register_api(reddit_url, 60 * 10, lambda json: self.parse_reddit(json));
         Clock.schedule_interval(lambda _: self.next(), 120)
         Clock.schedule_once(lambda _: self.start(), 20)
 

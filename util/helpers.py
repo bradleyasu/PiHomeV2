@@ -11,9 +11,6 @@ from kivy.gesture import Gesture
 def get_app():
     return App.get_running_app()
 
-def get_poller():
-    return get_app().get_poller()
-
 def goto_screen(screen):
     get_app().goto_screen(screen, True)
 

@@ -6,8 +6,9 @@ import requests
 from threading import Thread
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
+from networking.poller import POLLER
 from util.configuration import CONFIG
-from util.helpers import get_app, get_poller, info, toast, warn
+from util.helpers import get_app, info, toast, warn
 
 class Weather:
     """
@@ -65,7 +66,7 @@ class Weather:
             info("[ WEATHER ] Weather is disabled.")
                 
     def register_weather_api_call(self, url, interval, on_resp):
-        get_poller().register_api(url, interval, on_resp);
+        POLLER.register_api(url, interval, on_resp);
 
     def update_weather(self, weather_data):
         data = weather_data["data"]["timelines"]
