@@ -2,6 +2,7 @@
 
 import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
+from services.weather.weather import WEATHER
 from util.const import _MUSIC_SCREEN
 from util.helpers import audio_player, get_app, goto_screen
 from util.tools import execute_command
@@ -67,13 +68,13 @@ class SocketHandler():
                     "allow_stretch": get_app().wallpaper_service.allow_stretch
                 },
                 "weather": {
-                    "weather_code": get_app().weather.weather_code,
-                    "temperature": get_app().weather.temperature,
-                    "humidity": get_app().weather.humidity,
-                    "uv_index": get_app().weather.uv_index,
-                    "wind_speed": get_app().weather.wind_speed,
-                    "precip_propability": get_app().weather.precip_propability,
-                    "future": get_app().weather.future
+                    "weather_code": WEATHER.weather_code,
+                    "temperature": WEATHER.temperature,
+                    "humidity": WEATHER.humidity,
+                    "uv_index": WEATHER.uv_index,
+                    "wind_speed": WEATHER.wind_speed,
+                    "precip_propability": WEATHER.precip_propability,
+                    "future": WEATHER.future
                 }, 
                 "audio": {
                     "is_playing": get_app().audio_player.is_playing,

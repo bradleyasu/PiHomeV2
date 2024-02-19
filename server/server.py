@@ -15,7 +15,7 @@ from util.phlog import PIHOME_LOGGER
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         PIHOME_LOGGER.info("Server: GET Request Initiated")
-        if self.path == "/status":
+        if self.path == "/status" or self.path == "/undefined":
             self._get_status()
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
             self._get_index()
