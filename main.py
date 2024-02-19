@@ -34,7 +34,7 @@ from util.phlog import PIHOME_LOGGER
 
 from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
-from server.server import SERVER
+from server.server import PiHomeServer
 from services.audio.audioplayer import AudioPlayer
 from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, _TIMERS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
@@ -130,6 +130,9 @@ class PiHome(App):
     def init_services(self):
         #Init Weather Services
         self.wallpaper_service = Wallpaper()
+
+        # Init Server
+        self.server = PiHomeServer()
 
         # Init Audio Player
         self.audio_player = AudioPlayer()
@@ -379,7 +382,7 @@ class PiHome(App):
             os.makedirs(TEMP_DIR)
         # self.profile = cProfile.Profile()
         # self.profile.enable()
-        SERVER.start_server()
+        self.server.start_server()
 
     def _init_mqtt(self):
         h = CONFIG.get('mqtt', 'host', "")
@@ -435,7 +438,7 @@ class PiHome(App):
 
 
     def on_stop(self):
-        SERVER.stop_server()
+        self.server.stop_server()
         PIHOME_LOGGER.info("=================================== PIHOME SHUTDOWN ===================================")
     #     self.profile.disable()
     #     self.profile.dump_stats('pihome.profile')

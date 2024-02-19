@@ -7,8 +7,6 @@ from kivy.clock import Clock
 from kivy.gesture import Gesture
 # from server.server import SERVER
 
-from util.phlog import PIHOME_LOGGER
-
 # from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 
 def get_app():
@@ -28,7 +26,7 @@ def process_webhook(webhook):
     if get_app().mqtt is not None:
         get_app().mqtt.process_webhook(webhook)
     else:
-        PIHOME_LOGGER.warn("No MQTT service available to process webhook")
+        warn("No MQTT service available to process webhook")
 
 
 def update_pihome():
