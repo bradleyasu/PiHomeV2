@@ -12,7 +12,6 @@ from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
 from composites.ControlPanel.controlpanel import CONTROL_PANEL
 from interface.pihomescreen import PiHomeScreen
-from server.server import SERVER
 from services.qr.qr import QR
 from system.brightness import set_brightness
 from theme.color import Color
@@ -120,7 +119,7 @@ class DevTools(PiHomeScreen):
         audio_player().stop()
 
     def toggle_server(self):
-        if SERVER.is_online():
-            SERVER.stop_server()
+        if get_app().server.is_online():
+            get_app().server.stop_server()
         else:
-            SERVER.start_server()
+            get_app().server.start_server()
