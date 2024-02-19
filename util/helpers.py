@@ -5,6 +5,7 @@ import math
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.gesture import Gesture
+from server.server import SERVER
 
 from util.phlog import PIHOME_LOGGER
 
@@ -34,7 +35,7 @@ def update_pihome():
     """
     Notify user of update, pull latest, and restart
     """
-    get_app().server.stop_server()
+    SERVER.stop_server()
     toast("PiHome updates are available. PiHome will restart in less than 30 seconds", level = "warn", timeout = 30)
     # TIMER_DRAWER.create_timer(30, "Restarting PiHome")
     Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 32)
