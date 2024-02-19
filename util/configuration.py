@@ -30,3 +30,6 @@ class Configuration:
     def save(self):
         with open(self.name, 'w') as configfile:  # save
             self.c.write(configfile)
+
+
+CONFIG = Configuration("base.ini")

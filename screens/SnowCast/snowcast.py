@@ -9,7 +9,7 @@ from util.tools import hex
 from kivy.animation import Animation
 from kivy.graphics import Line, Rectangle, Ellipse, Color
 from kivy.clock import Clock
-from util.helpers import get_app, get_config, get_poller, goto_screen, toast 
+from util.helpers import get_app, get_poller, goto_screen, toast 
 
 Builder.load_file("./screens/SnowCast/snowcast.kv")
 

@@ -29,7 +29,7 @@ from screens.Lofi.lofi import LofiScreen
 from screens.PiHole.pihole import PiHoleScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
 
-from util.phlog import phlog
+from util.phlog import PIHOME_LOGGER, phlog
 
 
 from screens.DisplayEvent.displayevent import DisplayEvent
@@ -62,7 +62,7 @@ from screens.Home.home import HomeScreen
 from screens.Settings.settings import SettingsScreen
 from screens.Bus.bus import BusScreen 
 from screens.SnowCast.snowcast import SnowCast
-from util.configuration import Configuration
+from util.configuration import CONFIG, Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import SlideTransition
 from util.helpers import get_app, goto_screen, simplegesture
@@ -91,12 +91,9 @@ class PiHome(App):
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
 
-        #Init Base configuration
-        self.base_config = Configuration('base.ini')
-
-        self.height = self.base_config.get_int('window', 'height', 480)
-        self.width = self.base_config.get_int('window', 'width', 800)
-        pin = self.base_config.get('security', 'pin', '')
+        self.height = CONFIG.get_int('window', 'height', 480)
+        self.width = CONFIG.get_int('window', 'width', 800)
+        pin = CONFIG.get('security', 'pin', '')
         self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
         self.toast = Toast(on_reset=self.remove_toast)
 
@@ -132,7 +129,7 @@ class PiHome(App):
 
     def init_services(self):
         # Setup application logger
-        self.phlogger = phlog()
+        self.phlogger = PIHOME_LOGGER
         
         # Init Poller Service
         self.poller = Poller()
@@ -222,9 +219,9 @@ class PiHome(App):
 
     def reload_configuration(self):
         self.phlogger.info("Confgiruation changes have been made.  Resetting services....")
-        self.base_config = Configuration(CONF_FILE)
+        # CONFIG = Configuration(CONF_FILE)
         self.wallpaper_service.restart()
-        self.manager.reload_all(self.base_config)
+        self.manager.reload_all(CONFIG)
         self.phlogger.info("Confgiuration changes have been applied!")
 
     def restart(self):
@@ -273,9 +270,6 @@ class PiHome(App):
             self.menu_button.opacity = 0
         else:
             self.menu_button.opacity = 1
-
-    def get_config(self):
-        return self.base_config;
 
     def get_poller(self):
         return self.poller;
@@ -403,11 +397,11 @@ class PiHome(App):
         self.server.start_server()
 
     def _init_mqtt(self):
-        h = self.base_config.get('mqtt', 'host', "")
-        u = self.base_config.get('mqtt', 'user_id', "")
-        p = self.base_config.get('mqtt', 'password', "")
-        f = self.base_config.get('mqtt', 'feed', "pihome")
-        port = self.base_config.get_int('mqtt', 'port', 8883)
+        h = CONFIG.get('mqtt', 'host', "")
+        u = CONFIG.get('mqtt', 'user_id', "")
+        p = CONFIG.get('mqtt', 'password', "")
+        f = CONFIG.get('mqtt', 'feed', "pihome")
+        port = CONFIG.get_int('mqtt', 'port', 8883)
         if u != "" and h != "" and p != "":
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
             self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))

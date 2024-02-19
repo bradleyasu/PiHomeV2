@@ -6,8 +6,9 @@ from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, BooleanProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
+from util.configuration import CONFIG
 from util.const import GESTURE_SWIPE_DOWN
-from util.helpers import get_config, get_poller
+from util.helpers import get_poller
 
 Builder.load_file("./composites/Reddit/redditwidget.kv")
 
@@ -38,11 +39,11 @@ class RedditWidget(GestureWidget):
     data = None
     def __init__(self, **kwargs):
         super(RedditWidget, self).__init__(**kwargs)
-        source = get_config().get("news", "source", "Disabled News")
+        source = CONFIG.get("news", "source", "Disabled News")
         if source == "Disabled News":
             return
 
-        subs = get_config().get("news", "subreddits", "politics+worldnews")
+        subs = CONFIG.get("news", "subreddits", "politics+worldnews")
         if subs == "":
             subs = "politics"
         reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)

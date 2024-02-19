@@ -15,7 +15,8 @@ from components.Switch.switch import PiHomeSwitch
 from composites.BusEta.buseta import BusEta
 from interface.pihomescreen import PiHomeScreen
 from theme.theme import Theme
-from util.helpers import get_app, get_config, get_poller
+from util.configuration import CONFIG
+from util.helpers import get_app, get_poller
 from kivy.clock import Clock
 
 Builder.load_file("./screens/Bus/bus.kv")
@@ -40,11 +41,11 @@ class BusScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(BusScreen, self).__init__(**kwargs)
-        self.api_key = get_config().get('prt', 'api_key', '')
-        self.routes = get_config().get('prt', 'routes', '')
-        self.stops =  get_config().get('prt', 'stops', '')
-        self.logo= get_config().get('prt', 'logo', '')
-        self.icon = get_config().get('prt', 'logo', '')
+        self.api_key = CONFIG.get('prt', 'api_key', '')
+        self.routes = CONFIG.get('prt', 'routes', '')
+        self.stops =  CONFIG.get('prt', 'stops', '')
+        self.logo= CONFIG.get('prt', 'logo', '')
+        self.icon = CONFIG.get('prt', 'logo', '')
         
         self.api = self.PRT_API.format(self.api_key, self.routes, self.stops)
         

@@ -1,8 +1,9 @@
 
 from components.Image.networkimage import NetworkImage
 from kivy.network.urlrequest import UrlRequest
+from util.configuration import CONFIG
 from util.const import TEMP_DIR
-from util.helpers import error, get_config, info
+from util.helpers import error, info
 import re
 
 class AlbumArtFactory:
@@ -18,7 +19,7 @@ class AlbumArtFactory:
     ]
     def __init__(self, **kwargs):
         super(AlbumArtFactory, self).__init__(**kwargs)
-        self.token = get_config().get("music", "album_art_source", "")
+        self.token = CONFIG.get("music", "album_art_source", "")
 
     
     def find(self, query, on_resp):

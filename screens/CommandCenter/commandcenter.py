@@ -4,12 +4,13 @@ from kivy.properties import StringProperty, ListProperty, ColorProperty
 from interface.pihomescreen import PiHomeScreen
 from screens.CommandCenter.commandbutton import CommandButton
 from theme.theme import Theme
+from util.configuration import CONFIG
 from util.const import CDN_ASSET
 
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.metrics import dp
-from util.helpers import get_app, get_config
+from util.helpers import get_app
 from kivy.config import Config
 
 from util.tools import download_image_to_temp, execute_command
@@ -62,9 +63,9 @@ class CommandCenterScreen(PiHomeScreen):
             button.show_error()
     
     def create_button(self, index):
-        icon = get_config().get("controlcenter", "cc_button_"+index+"_icon", None)
-        label = get_config().get("controlcenter", "cc_button_"+index+"_label", None)
-        command = get_config().get("controlcenter", "cc_button_"+index+"_command", None)
+        icon = CONFIG.get("controlcenter", "cc_button_"+index+"_icon", None)
+        label = CONFIG.get("controlcenter", "cc_button_"+index+"_label", None)
+        command = CONFIG.get("controlcenter", "cc_button_"+index+"_command", None)
         i = label + "_ccb"
         if icon is not None and label is not None and command is not None and icon != "" and label != "" and command != "":
             self.grid.add_widget(CommandButton(delay=0.1, icon=icon, label = label, app_key = i, on_select=(lambda key: self.run_command(key, command))))

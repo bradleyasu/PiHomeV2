@@ -1,6 +1,6 @@
 import logging
+from util.configuration import CONFIG
 
-from util.helpers import get_config
 
 class phlog:
     levels = {
@@ -10,8 +10,8 @@ class phlog:
         'ERROR': logging.ERROR
     }
     def __init__(self):
-        self.level = get_config().get('logging', 'level', 'INFO')
-        self.output = get_config().get('logging', 'out', 'pihome.log')
+        self.level = CONFIG.get('logging', 'level', 'INFO')
+        self.output = CONFIG.get('logging', 'out', 'pihome.log')
         # self.logger = logging.basicConfig(format='%(asctime)s : [ %(levelname)s ] : %(message)s', filename=self.output, level=self.levels[self.level])
         self.logger = logging.getLogger('pihome_default')
         self.logger.setLevel(self.levels[self.level])
@@ -24,12 +24,18 @@ class phlog:
 
     def debug(self, message):
         self.logger.debug(message)
+        print("DEBUG: ", message)
 
     def info(self, message):
         self.logger.info(message)
+        print("INFO: ", message)
 
     def warn(self, message):
         self.logger.warn(message)
+        print("WARN: ", message)
 
     def error(self, message):
         self.logger.error(message)
+        print("ERROR: ", message)
+
+PIHOME_LOGGER = phlog()

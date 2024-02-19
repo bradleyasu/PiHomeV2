@@ -4,14 +4,14 @@ from kivy.properties import StringProperty, ListProperty, ColorProperty
 from interface.pihomescreen import PiHomeScreen
 from screens.CommandCenter.commandbutton import CommandButton
 from theme.theme import Theme
+from util.configuration import CONFIG
 from util.const import CDN_ASSET
 
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.metrics import dp
-from util.helpers import get_app, get_config, get_poller, info, toast
+from util.helpers import get_app, get_poller, info, toast
 from kivy.config import Config
-from util.phlog import phlog
 
 from util.tools import download_image_to_temp, execute_command
 
@@ -48,10 +48,10 @@ class PiHoleScreen(PiHomeScreen):
     def __init__(self, **kwargs):
         super(PiHoleScreen, self).__init__(**kwargs)
         self.icon = CDN_ASSET.format("pihole.png")
-        if get_config().get('pihole', 'enabled', False):
+        if CONFIG.get('pihole', 'enabled', False):
             # Reconfigure based on settings
-            self.HOST = get_config().get('pihole', 'host', "http://pi.hole")
-            self.API_KEY = get_config().get('pihole', 'api_key', "")
+            self.HOST = CONFIG.get('pihole', 'host', "http://pi.hole")
+            self.API_KEY = CONFIG.get('pihole', 'api_key', "")
             get_poller().register_api(self.get_pihole_uri(), self.UPDATE_FREQUENCY, lambda json: self.update(json))
 
             info("Registered PiHole API: {}".format(self.get_pihole_uri()))

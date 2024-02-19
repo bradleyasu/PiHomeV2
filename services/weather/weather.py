@@ -6,7 +6,8 @@ import requests
 from threading import Thread
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from util.helpers import get_app, get_config, get_poller, info, toast, warn
+from util.configuration import CONFIG
+from util.helpers import get_app, get_poller, info, toast, warn
 
 class Weather:
     """
@@ -50,10 +51,10 @@ class Weather:
 
     def __init__(self, **kwargs):
         super(Weather, self).__init__(**kwargs)
-        self.enabled = get_config().get_int("weather", "enabled", 0)
-        self.api_key = get_config().get("weather", "api_key", '')
-        self.latitude = get_config().get("weather", "latitude", '0')
-        self.longitude = get_config().get("weather", "longitude", '0')
+        self.enabled = CONFIG.get_int("weather", "enabled", 0)
+        self.api_key = CONFIG.get("weather", "api_key", '')
+        self.latitude = CONFIG.get("weather", "latitude", '0')
+        self.longitude = CONFIG.get("weather", "longitude", '0')
         if self.enabled == 1:
             if self.api_key != "":
                 self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)

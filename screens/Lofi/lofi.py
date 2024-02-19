@@ -4,8 +4,9 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty, ListProperty
 from interface.pihomescreen import PiHomeScreen
 from components.WheelMenu.wheelmenu import WheelMenu
+from util.configuration import CONFIG
 from util.const import CDN_ASSET
-from util.helpers import get_config, audio_player, info
+from util.helpers import audio_player, info
 
 from util.tools import download_image_to_temp
 
@@ -28,11 +29,11 @@ class LofiScreen(PiHomeScreen):
         super(LofiScreen, self).__init__(**kwargs)
         self.icon = CDN_ASSET.format("lofi_app_icon.png")
         self.wheel_options = [
-            {'text': str(get_config().get('lofi', 'audio_label', 'Option 1')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl')), 'icon': './screens/Lofi/tape_b_1.png'}, 
-            {'text': str(get_config().get('lofi', 'audio_2_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_2', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
-            {'text': str(get_config().get('lofi', 'audio_3_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_3', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
-            {'text': str(get_config().get('lofi', 'audio_4_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_4', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
-            {'text': str(get_config().get('lofi', 'audio_5_label', 'Option 2')), 'callback': lambda: self.play_lofi(get_config().get('lofi', 'audio_5', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(CONFIG.get('lofi', 'audio_label', 'Option 1')), 'callback': lambda: self.play_lofi(CONFIG.get('lofi', 'audio', 'lofi girl')), 'icon': './screens/Lofi/tape_b_1.png'}, 
+            {'text': str(CONFIG.get('lofi', 'audio_2_label', 'Option 2')), 'callback': lambda: self.play_lofi(CONFIG.get('lofi', 'audio_2', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(CONFIG.get('lofi', 'audio_3_label', 'Option 2')), 'callback': lambda: self.play_lofi(CONFIG.get('lofi', 'audio_3', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(CONFIG.get('lofi', 'audio_4_label', 'Option 2')), 'callback': lambda: self.play_lofi(CONFIG.get('lofi', 'audio_4', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
+            {'text': str(CONFIG.get('lofi', 'audio_5_label', 'Option 2')), 'callback': lambda: self.play_lofi(CONFIG.get('lofi', 'audio_5', 'lofi girl')), 'icon': './screens/Lofi/tape_b_2.png'}, 
             {'text': 'Cancel', 'callback': lambda: print("cancel wheel_menu"), 'icon': './screens/Lofi/tape_b_1.png'},
         ]
 
@@ -41,7 +42,7 @@ class LofiScreen(PiHomeScreen):
         audio_player().clear_playlist()
 
     def on_enter(self, *args):
-        config_image = get_config().get('lofi', 'image', "")
+        config_image = CONFIG.get('lofi', 'image', "")
 
 
         if config_image == "":
@@ -49,7 +50,7 @@ class LofiScreen(PiHomeScreen):
         else:
             self.image = download_image_to_temp(config_image).name
 
-        self.play_lofi(get_config().get('lofi', 'audio', 'lofi girl'))
+        self.play_lofi(CONFIG.get('lofi', 'audio', 'lofi girl'))
         # toast("Searching for streams, this may take up to 20 seconds...", timeout=10);
         return super().on_enter(*args)
 

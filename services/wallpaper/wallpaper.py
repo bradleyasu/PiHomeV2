@@ -10,8 +10,9 @@ from kivy.clock import Clock
 from PIL import Image as PILImage, ImageOps
 from PIL import ImageFilter as PILImageFilter
 from kivy.network.urlrequest import UrlRequest
+from util.configuration import CONFIG
 from util.const import TEMP_DIR
-from util.helpers import get_app, get_config, get_poller, info, toast, url_hash
+from util.helpers import get_app, get_poller, info, toast, url_hash
 import asyncio
 
 class Wallpaper:
@@ -49,13 +50,13 @@ class Wallpaper:
 
     def _start(self):
         self._cleanup()
-        repo = get_config().get("wallpaper", "source", "PiHome CDN")
-        self.allow_stretch = get_config().get_int("wallpaper", "allow_stretch", 1)
+        repo = CONFIG.get("wallpaper", "source", "PiHome CDN")
+        self.allow_stretch = CONFIG.get_int("wallpaper", "allow_stretch", 1)
         self.repo = repo 
         info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
         if repo == "Reddit":
-            subs = get_config().get("wallpaper", "subreddits", "wallpaper")
-            is_top = get_config().get_int("wallpaper", "top_of_all_time", 0)
+            subs = CONFIG.get("wallpaper", "subreddits", "wallpaper")
+            is_top = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
             if subs == "":
                 subs = "wallpaper"
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
@@ -63,14 +64,14 @@ class Wallpaper:
                 reddit_url = "https://www.reddit.com/r/{}/top/.json?limit=100&t=all".format(subs)
             self.poller_key = get_poller().register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif repo == "Wallhaven":
-            search = get_config().get("wallpaper", "whsearch", "landscape")
+            search = CONFIG.get("wallpaper", "whsearch", "landscape")
             if search == "":
                 search = "landscape"
             wh_url = "https://wallhaven.cc/api/v1/search?q={}&sorting=random".format(search)
             self.poller_key = get_poller().register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif repo == "Custom":
-            self.current = get_config().get("wallpaper", "custom_url", self.default)
-            self.source = get_config().get("wallpaper", "custom_url", self.default)
+            self.current = CONFIG.get("wallpaper", "custom_url", self.default)
+            self.source = CONFIG.get("wallpaper", "custom_url", self.default)
             if self.current == "":
                 self.current = self.default
         else:
