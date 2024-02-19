@@ -27,9 +27,6 @@ def process_webhook(webhook):
     else:
         warn("No MQTT service available to process webhook")
 
-def weather():
-    return get_app().weather
-
 
 def update_pihome():
     """
@@ -59,24 +56,6 @@ def local_ip():
     LOCAL_IP = s.getsockname()[0]
     s.close()
     return LOCAL_IP
-
-
-
-'''
-    Logging helpers
-'''
-def debug(message):
-    get_app().phlogger.debug(message)
-
-def info(message):
-    get_app().phlogger.info(message)
-
-def warn(message):
-    print(message)
-    get_app().phlogger.warn(message)
-    
-def error(message):
-    get_app().phlogger.error(message)
 
 
 def random_hash():

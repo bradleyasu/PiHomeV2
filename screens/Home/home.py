@@ -20,11 +20,12 @@ from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
 from services.audio.sfx import SFX
+from services.weather.weather import WEATHER
 from system.brightness import get_brightness, set_brightness
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, audio_player, get_app, goto_screen, weather
+from util.helpers import appmenu_open, audio_player, get_app, goto_screen
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -92,7 +93,7 @@ class HomeScreen(PiHomeScreen):
         self.time = time.strftime("%l:%M%p")
         self.date = time.strftime("%A %B %d, %Y")
 
-        self.weather_code = str(weather().weather_code)
+        self.weather_code = str(WEATHER.weather_code)
 
     def handle_gesture(self, gesture): 
         if gesture == GESTURE_SWIPE_DOWN:

@@ -7,7 +7,7 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from theme.theme import Theme
 
-from util.helpers import get_app, weather
+from util.helpers import get_app
 from util.tools import get_semi_transparent_gaussian_blur_png_from_color
 
 Builder.load_file("./composites/Weather/weatherdetails.kv")

@@ -13,8 +13,10 @@ from kivy.network.urlrequest import UrlRequest
 from networking.poller import POLLER
 from util.configuration import CONFIG
 from util.const import TEMP_DIR
-from util.helpers import get_app, info, toast, url_hash
+from util.helpers import get_app, toast, url_hash
 import asyncio
+
+from util.phlog import PIHOME_LOGGER
 
 class Wallpaper:
     """
@@ -45,7 +47,7 @@ class Wallpaper:
     
     def restart(self):
         if self.poller_key != None:
-            info("Wallpaper Service is restarting.  {} will be replaced with new thread".format(self.poller_key))
+            PIHOME_LOGGER.info("Wallpaper Service is restarting.  {} will be replaced with new thread".format(self.poller_key))
             POLLER.unregister_api(self.poller_key)
             self._start();
 
@@ -54,7 +56,7 @@ class Wallpaper:
         repo = CONFIG.get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = CONFIG.get_int("wallpaper", "allow_stretch", 1)
         self.repo = repo 
-        info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
+        PIHOME_LOGGER.info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
         if repo == "Reddit":
             subs = CONFIG.get("wallpaper", "subreddits", "wallpaper")
             is_top = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
@@ -126,7 +128,7 @@ class Wallpaper:
         colored = "_color_{}.png".format(hash)
 
         if os.path.exists("{}/{}".format(TEMP_DIR, resized)) and os.path.exists("{}/{}".format(TEMP_DIR, colored)):
-            info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
+            PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
             return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
         self.url_cache.append(url)
@@ -138,7 +140,7 @@ class Wallpaper:
             except Exception as e:
                 break
 
-        info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
+        PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
         r = requests.get(url)
         pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
 
@@ -161,17 +163,17 @@ class Wallpaper:
         new_image.save(fp="{}/{}".format(TEMP_DIR, colored), format="png")
         # self.current_color = "{}/{}".format(TEMP_DIR, colored)
 
-        info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
+        PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
 
     def find_average_color(self, url):
-        info("Wallpaper Service: finding average color for {}".format(url))
+        PIHOME_LOGGER.info("Wallpaper Service: finding average color for {}".format(url))
         r = requests.get(url)
         pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
         pilImage = pilImage.resize((1, 1), PILImage.ANTIALIAS)
-        info("Wallpaper Service: finding average color for {} complete".format(url))
-        info("Wallpaper Service: average color is {}".format(pilImage.getpixel((0, 0))))
+        PIHOME_LOGGER.info("Wallpaper Service: finding average color for {} complete".format(url))
+        PIHOME_LOGGER.info("Wallpaper Service: average color is {}".format(pilImage.getpixel((0, 0))))
         return pilImage.getpixel((0, 0))
 
     def _cleanup(self):

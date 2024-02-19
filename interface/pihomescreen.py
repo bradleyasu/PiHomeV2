@@ -2,7 +2,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
 from system.brightness import get_brightness, set_brightness
 from util.const import GESTURE_DATABASE
-from util.helpers import audio_player, get_app, info, simplegesture, warn
+from util.helpers import audio_player, get_app, simplegesture
 
 class PiHomeScreen(Screen):
 

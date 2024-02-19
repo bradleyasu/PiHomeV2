@@ -8,7 +8,8 @@ from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
 from networking.poller import POLLER
 from util.configuration import CONFIG
-from util.helpers import get_app, info, toast, warn
+from util.helpers import get_app, toast
+from util.phlog import PIHOME_LOGGER
 
 class Weather:
     """
@@ -60,10 +61,10 @@ class Weather:
             if self.api_key != "":
                 self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)
             else:
-                warn("[ WEATHER ] Weather is enabled but no API key is set.  Weather features are disabled.")
+                PIHOME_LOGGER.warn("[ WEATHER ] Weather is enabled but no API key is set.  Weather features are disabled.")
                 Clock.schedule_once(lambda _: toast("Weather API key is not set, please configure in settings", "warn", 10), 15)
         else: 
-            info("[ WEATHER ] Weather is disabled.")
+            PIHOME_LOGGER.info("[ WEATHER ] Weather is disabled.")
                 
     def register_weather_api_call(self, url, interval, on_resp):
         POLLER.register_api(url, interval, on_resp);
@@ -114,3 +115,6 @@ class Weather:
 
         # return start_time < current_time < end_time
         return True
+
+
+WEATHER = Weather()

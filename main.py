@@ -29,7 +29,7 @@ from screens.Lofi.lofi import LofiScreen
 from screens.PiHole.pihole import PiHoleScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
 
-from util.phlog import PIHOME_LOGGER, phlog
+from util.phlog import PIHOME_LOGGER 
 
 
 from screens.DisplayEvent.displayevent import DisplayEvent
@@ -128,13 +128,6 @@ class PiHome(App):
 
 
     def init_services(self):
-        # Setup application logger
-        self.phlogger = PIHOME_LOGGER
-        
-
-        #Init Weather Services
-        self.weather = Weather()
-
         #Init Weather Services
         self.wallpaper_service = Wallpaper()
 
@@ -216,11 +209,11 @@ class PiHome(App):
         return self.layout
 
     def reload_configuration(self):
-        self.phlogger.info("Confgiruation changes have been made.  Resetting services....")
+        PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
         # CONFIG = Configuration(CONF_FILE)
         self.wallpaper_service.restart()
         self.manager.reload_all(CONFIG)
-        self.phlogger.info("Confgiuration changes have been applied!")
+        PIHOME_LOGGER.info("Confgiuration changes have been applied!")
 
     def restart(self):
         """
@@ -446,7 +439,7 @@ class PiHome(App):
 
     def on_stop(self):
         self.server.stop_server()
-        self.phlogger.info("=================================== PIHOME SHUTDOWN ===================================")
+        PIHOME_LOGGER.info("=================================== PIHOME SHUTDOWN ===================================")
     #     self.profile.disable()
     #     self.profile.dump_stats('pihome.profile')
     #     self.profile.print_stats()

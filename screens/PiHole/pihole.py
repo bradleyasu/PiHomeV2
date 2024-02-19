@@ -11,8 +11,9 @@ from util.const import CDN_ASSET
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.metrics import dp
-from util.helpers import get_app, info, toast
+from util.helpers import toast
 from kivy.config import Config
+from util.phlog import PIHOME_LOGGER
 
 from util.tools import download_image_to_temp, execute_command
 
@@ -55,7 +56,7 @@ class PiHoleScreen(PiHomeScreen):
             self.API_KEY = CONFIG.get('pihole', 'api_key', "")
             POLLER.register_api(self.get_pihole_uri(), self.UPDATE_FREQUENCY, lambda json: self.update(json))
 
-            info("Registered PiHole API: {}".format(self.get_pihole_uri()))
+            PIHOME_LOGGER.info("Registered PiHole API: {}".format(self.get_pihole_uri()))
 
     def get_pihole_uri(self):
         return "{}{}{}&auth={}".format(self.HOST, self.ROUTE, self.PARAMS, self.API_KEY)
@@ -63,7 +64,7 @@ class PiHoleScreen(PiHomeScreen):
 
 
     def toggle_pihole(self, active):
-        info("PiHole toggle: {}".format(active))
+        PIHOME_LOGGER.info("PiHole toggle: {}".format(active))
         self.pending_update = True
         if active:
             self.status = "enabled"

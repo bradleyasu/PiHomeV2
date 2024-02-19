@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFilter
 from kivy.graphics.texture import Texture
 from kivy.core.image import Image as CoreImage
 from util.const import TEMP_DIR
+from util.phlog import PIHOME_LOGGER
 
 '''
 Convert a Hex color, #00FF00, into an RGBA floating point
@@ -14,7 +15,6 @@ and will be returned as passed.  Opacity should be a value between 0 and 1
 import ssl
 import tempfile
 import urllib
-from util.helpers import get_app, info
 
 def hex(hex_string, opacity = 1.0):
     hex_string = hex_string.replace('#', '')
@@ -47,7 +47,7 @@ will contain the following keys:
     stderr: The standard error of the command
 '''
 def execute_command(command):
-    info("Executing Command: " + command)
+    PIHOME_LOGGER.info("Executing Command: " + command)
     try:
         result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         return {

@@ -5,9 +5,11 @@ from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.animation import Animation
 from kivy.clock import Clock
+from services.weather.weather import WEATHER
 from theme.theme import Theme
 
-from util.helpers import get_app, warn, weather, error
+from util.helpers import get_app 
+from util.phlog import PIHOME_LOGGER
 from util.tools import get_semi_transparent_gaussian_blur_png_from_color
 
 Builder.load_file("./composites/Weather/weatherwidget.kv")
@@ -49,11 +51,11 @@ class WeatherWidget(Widget):
         self.pos = pos
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
 
-        if(weather().enabled):
+        if(WEATHER.enabled):
             print("scheduled")
             Clock.schedule_interval(lambda _: self.update(), 1)
         else: 
-            warn("Weather is not enabled.  Weather update thread will not be running.")
+            PIHOME_LOGGER.warn("Weather is not enabled.  Weather update thread will not be running.")
 
 
     def on_touch_down(self, touch):
@@ -78,19 +80,19 @@ class WeatherWidget(Widget):
 
     def update(self):
         try:
-            self.temp = str(round(weather().temperature))
-            self.uvIndex = str(weather().uv_index)
-            self.windSpeed = "{} MPH".format(weather().wind_speed)
-            self.precipPercent = "{}%".format(weather().precip_propability)
-            self.humidity = "{}%".format(weather().humidity)
-            #self.airQuality = weather().epa_air_lookup[weather().epa_air_quality]
+            self.temp = str(round(WEATHER.temperature))
+            self.uvIndex = str(WEATHER.uv_index)
+            self.windSpeed = "{} MPH".format(WEATHER.wind_speed)
+            self.precipPercent = "{}%".format(WEATHER.precip_propability)
+            self.humidity = "{}%".format(WEATHER.humidity)
+            #self.airQuality = WEATHER.epa_air_lookup[WEATHER.epa_air_quality]
             self.airQuality = "NA"
-            self.sunrise = "{}".format(weather().sunrise_time)
-            self.sunset = "{}".format(weather().sunset_time)
-            self.feelsLike = "{}".format(weather().feels_like)
-            self.cloudCover = "{}%".format(weather().cloud_cover)
-            self.future = weather().future
-            self.day = weather().future[1]
+            self.sunrise = "{}".format(WEATHER.sunrise_time)
+            self.sunset = "{}".format(WEATHER.sunset_time)
+            self.feelsLike = "{}".format(WEATHER.feels_like)
+            self.cloudCover = "{}%".format(WEATHER.cloud_cover)
+            self.future = WEATHER.future
+            self.day = WEATHER.future[1]
 
 
             conf = get_app().web_conf
@@ -98,15 +100,15 @@ class WeatherWidget(Widget):
                 host = conf["host"]
                 path = conf["weather_icons"]
                 day_code = 0
-                if weather().is_currently_day() == False:
+                if WEATHER.is_currently_day() == False:
                     day_code = 1
-                self.icon = "{}{}{}{}.png".format(host, path, str(weather().weather_code), str(day_code))
-                self.dayIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_day))
-                self.nightIcon = "{}{}{}.png".format(host, path, str(weather().weather_code_night))
+                self.icon = "{}{}{}{}.png".format(host, path, str(WEATHER.weather_code), str(day_code))
+                self.dayIcon = "{}{}{}.png".format(host, path, str(WEATHER.weather_code_day))
+                self.nightIcon = "{}{}{}.png".format(host, path, str(WEATHER.weather_code_night))
 
             if self.is_loaded is False:
                 self.animate_in()
                 self.is_loaded = True
 
         except Exception as e:
-            error(e)
+            PIHOME_LOGGER.error(e)

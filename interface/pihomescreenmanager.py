@@ -1,6 +1,6 @@
 from kivy.uix.screenmanager import ScreenManager
 from system.rotary import ROTARY_ENCODER
-from util.helpers import info
+from util.phlog import PIHOME_LOGGER
 
 class PiHomeScreenManager(ScreenManager):
 
@@ -28,6 +28,6 @@ class PiHomeScreenManager(ScreenManager):
             pass
     
     def reload_all(self, payload):
-        info("Reloading all screens")
+        PIHOME_LOGGER.info("Reloading all screens")
         for screen in self.screens:
             screen.on_config_update(payload)

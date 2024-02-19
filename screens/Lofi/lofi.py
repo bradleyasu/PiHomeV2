@@ -6,7 +6,7 @@ from interface.pihomescreen import PiHomeScreen
 from components.WheelMenu.wheelmenu import WheelMenu
 from util.configuration import CONFIG
 from util.const import CDN_ASSET
-from util.helpers import audio_player, info
+from util.helpers import audio_player
 
 from util.tools import download_image_to_temp
 

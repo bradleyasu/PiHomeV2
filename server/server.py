@@ -9,11 +9,12 @@ from threading import Thread
 from services.wallpaper.wallpaper import Wallpaper
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
-from util.helpers import audio_player, error, get_app, goto_screen, info, process_webhook, toast, warn
+from util.helpers import audio_player, get_app, goto_screen, process_webhook, toast
+from util.phlog import PIHOME_LOGGER
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        info("Server: GET Request Initiated")
+        PIHOME_LOGGER.info("Server: GET Request Initiated")
         if self.path == "/status":
             self._get_status()
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
@@ -31,7 +32,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     #     return super().guess_type(path)
     
     def _get_status(self):
-        info("Server: Getting current status from multiple services")
+        PIHOME_LOGGER.info("Server: Getting current status from multiple services")
         try:
             wallpaper = get_app().wallpaper_service.source
             self._set_response()
@@ -39,7 +40,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             #     'wallpaper': wallpaper
             # }).encode("utf-8"))
         except Exception as e:
-            error("Failed to get status of services: {}".format(e))
+            PIHOME_LOGGER.error("Failed to get status of services: {}".format(e))
 
     def _get_index(self):
         try:
@@ -49,8 +50,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
         except Exception as e:
-            error("Failed to process GET request.  Fetching index page")
-            error(e)
+            PIHOME_LOGGER.error("Failed to process GET request.  Fetching index page")
+            PIHOME_LOGGER.error(e)
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -65,7 +66,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
-            info("POST request: {} | {}".format(str(self.path), post_data.decode('utf-8')))
+            PIHOME_LOGGER.info("POST request: {} | {}".format(str(self.path), post_data.decode('utf-8')))
             if "stop" in payload:
                 audio_player().stop()
             if "clear_queue" in payload:
@@ -86,7 +87,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
             toast("An error occurred processing the server request", "warn", 10)
-            error("Server: POST Request Failed: {}".format(e))
+            PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(e))
 
     def _set_response(self):
         self.send_response(200)
@@ -122,16 +123,16 @@ class PiHomeServer():
         self.SOCKET_THREAD = Thread(target=self._run_socket)
         self.SOCKET_THREAD.start()
         
-        info("Server: PiHome Server has started")
+        PIHOME_LOGGER.info("Server: PiHome Server has started")
 
     def stop_server(self):
         if self.is_online():
             self.shutting_down = True
             self.httpd.shutdown()
             self.httpd = None
-            info("Server: PiHome Server has shutdown")
+            PIHOME_LOGGER.info("Server: PiHome Server has shutdown")
         else:
-            warn("Server: Failed to shutdown PiHome server.  It is not running")
+            PIHOME_LOGGER.warn("Server: Failed to shutdown PiHome server.  It is not running")
         self._shutdown_socket_loop()
 
     def is_online(self):
@@ -149,7 +150,7 @@ class PiHomeServer():
             self.SOCKET_LOOP.run_until_complete(self.start_socket_server())
             # self.SOCKET_LOOP.run_forever()
         except InterruptedError as e:
-            error("Socket Server Error: {}".format(e))
+            PIHOME_LOGGER.error("Socket Server Error: {}".format(e))
             self._shutdown_socket_loop()
 
     def _shutdown_socket_loop(self):
@@ -165,7 +166,7 @@ class PiHomeServer():
         Handler = MyHttpRequestHandler
         with socketserver.TCPServer(("", self.PORT), Handler) as h:
             self.httpd = h
-            info("Server: PiHome Server Listening on port: {}".format(self.PORT))
+            PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {}".format(self.PORT))
             while not self.shutting_down:
                 h.serve_forever()
                 
