@@ -183,3 +183,5 @@ class PiHomeServer():
         self.SOCKET_SERVER = await websockets.serve(self.websocket_server, "0.0.0.0", 8765)
         await asyncio.Future()  # Wait indefinitely
             
+
+SERVER = PiHomeServer()
