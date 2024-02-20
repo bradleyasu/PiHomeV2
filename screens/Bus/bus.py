@@ -46,7 +46,6 @@ class BusScreen(PiHomeScreen):
         self.routes = CONFIG.get('prt', 'routes', '')
         self.stops =  CONFIG.get('prt', 'stops', '')
         self.logo= CONFIG.get('prt', 'logo', '')
-        self.icon = CONFIG.get('prt', 'logo', '')
         
         self.api = self.PRT_API.format(self.api_key, self.routes, self.stops)
         

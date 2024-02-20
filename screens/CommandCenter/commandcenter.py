@@ -32,7 +32,6 @@ class CommandCenterScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(CommandCenterScreen, self).__init__(**kwargs)
-        self.icon = CDN_ASSET.format("controls.png")
         self.build()
 
 

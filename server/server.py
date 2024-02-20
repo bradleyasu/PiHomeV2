@@ -2,6 +2,7 @@ from cmath import inf
 import http.server
 import json
 import socketserver
+import time
 from server.socket_handler import SocketHandler
 import websockets
 import asyncio
@@ -164,11 +165,17 @@ class PiHomeServer():
 
     def _run(self):
         Handler = MyHttpRequestHandler
-        with socketserver.TCPServer(("", self.PORT), Handler) as h:
-            self.httpd = h
-            PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {}".format(self.PORT))
-            while not self.shutting_down:
-                h.serve_forever()
+        try:
+            with socketserver.TCPServer(("", self.PORT), Handler) as h:
+                self.httpd = h
+                PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {}".format(self.PORT))
+                while not self.shutting_down:
+                    h.serve_forever()
+        except Exception as e:
+            PIHOME_LOGGER.error("Server: PiHome Server failed to start: {}".format(e))
+            # try again after 20 seconds
+            time.sleep(20)
+            self._run()
                 
     
     async def websocket_server(self, websocket, path):
@@ -183,3 +190,5 @@ class PiHomeServer():
         self.SOCKET_SERVER = await websockets.serve(self.websocket_server, "0.0.0.0", 8765)
         await asyncio.Future()  # Wait indefinitely
             
+
+SERVER = PiHomeServer()

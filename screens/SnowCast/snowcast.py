@@ -29,7 +29,6 @@ class SnowCast(PiHomeScreen):
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.3))
     def __init__(self, **kwargs):
         super(SnowCast, self).__init__(**kwargs)
-        self.icon = CDN_ASSET.format("snow.png")
 
         # Every 30 minutes
         POLLER.register_api(self.SEVEN_SPRINGS, 60 * 30, lambda json: self.update(json))

@@ -12,6 +12,7 @@ from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
 from composites.ControlPanel.controlpanel import CONTROL_PANEL
 from interface.pihomescreen import PiHomeScreen
+from server.server import SERVER
 from services.qr.qr import QR
 from system.brightness import set_brightness
 from theme.color import Color
@@ -67,7 +68,7 @@ class DevTools(PiHomeScreen):
         # switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         # layout.add_widget(switch)
 
-        self.serverButton = CircleButton(text='S', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
+        self.serverButton = CircleButton(text='TOGGLE SERVER', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
         self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
         self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
         self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
@@ -119,7 +120,7 @@ class DevTools(PiHomeScreen):
         audio_player().stop()
 
     def toggle_server(self):
-        if get_app().server.is_online():
-            get_app().server.stop_server()
+        if SERVER.is_online():
+            SERVER.stop_server()
         else:
-            get_app().server.start_server()
+            SERVER.start_server()
