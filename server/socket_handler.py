@@ -27,6 +27,9 @@ class SocketHandler():
 
         if message["type"] == "screen":
             goto_screen(message["screen"])
+
+        if message["type"] == "timer":
+            TIMER_DRAWER.create_timer(message["duration"], message["label"])
         
         if message["type"] == "audio":
             # check if play_url key exists
