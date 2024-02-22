@@ -9,7 +9,7 @@ class PihomeEventType():
     DISPLAY = "display"
     ALERT = "alert"
     TASK = "task"
-    ACKTASK = "acktask" # Ack Task event will acknowledge active tasks
+    ACKTASK = "acktask"
 
 
 import json

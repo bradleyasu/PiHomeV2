@@ -1,5 +1,7 @@
 /venv/
 /base.ini
+/task.ini
+/tasks.ini
 /theme.ini
 /.idea/
 *.pyc
