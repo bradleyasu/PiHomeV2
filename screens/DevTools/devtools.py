@@ -86,13 +86,10 @@ class DevTools(PiHomeScreen):
         layout.add_widget(self.goback)
 
 
-        start_time = datetime.now() + timedelta(seconds=30)
-        task = Task("Test Task", "This is a test task", start_time, TaskStatus.PENDING, TaskPriority.LOW, 1)
         
-        self.create_task = SimpleButton(text="Create Task", size=(dp(200), dp(50)), pos=(dp(300), dp(80)))
-        # temp_time is 30 seconds from now
-        self.create_task.bind(on_release=lambda _: TASK_MANAGER.add_task(task))
-        layout.add_widget(self.create_task)
+        self.delete_tasks = SimpleButton(text="Delete All Tasks", size=(dp(200), dp(50)), pos=(dp(300), dp(80)))
+        self.delete_tasks.bind(on_release=lambda _: TASK_MANAGER.delete_task_cache())
+        layout.add_widget(self.delete_tasks)
 
 
         # slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))

@@ -145,6 +145,11 @@ class TaskManager():
                     task.run()
             sleep(1)
 
+    def delete_task_cache(self):
+        if os.path.exists(self.task_store):
+            os.remove(self.task_store)
+            PIHOME_LOGGER.info(f"Deleted task cache: {self.task_store}")
+
 class Task():
     """
     repeat days is a list of days of the week that the task should repeat
