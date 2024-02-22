@@ -28,9 +28,13 @@ class PiHomeScreen(Screen):
         return super().on_enter(*args)
 
     def show(self):
+        if self.manager is None:
+            return
         self.manager.current = self.name
 
     def go_back(self):
+        if self.manager is None:
+            return
         if self.manager.last_screen:
             self.manager.current = self.manager.last_screen
 
