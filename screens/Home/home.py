@@ -63,7 +63,7 @@ class HomeScreen(PiHomeScreen):
 
     def on_enter(self, *args):
         if self.is_first_run is True:
-            SFX.play("startup")
+            SFX.play("startup_2")
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
             self.is_first_run = False

@@ -4,7 +4,7 @@
     size: 400, 200
     canvas:
         Color:
-            rgba: 0, 0, 0, 0.8
+            rgba: root.backdrop_color
         Rectangle:
             pos: 0, 0
             # fullscreen backdrop
@@ -31,6 +31,7 @@
 
         Label:
             text: root.message
+            color: root.text_color
             font_size: '20sp'
         GridLayout:
             rows: 1

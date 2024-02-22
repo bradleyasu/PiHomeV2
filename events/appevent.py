@@ -6,7 +6,7 @@ from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 
 
 class AppEvent(PihomeEvent):
-    def __init__(self, app):
+    def __init__(self, app, **kwargs):
         super().__init__()
         self.type = "app"
         self.app = app

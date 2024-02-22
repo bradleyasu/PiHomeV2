@@ -1,7 +1,8 @@
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
 from kivy.lang import Builder
-from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import StringProperty, NumericProperty, ColorProperty
+from services.audio.sfx import SFX
 from services.timers.timer import Timer
 from kivy.animation import Animation
 from components.Button.simplebutton import SimpleButton
@@ -30,7 +31,9 @@ class Msgbox(Widget):
     title = StringProperty("Title")
     message = StringProperty("Message")
     timeout = NumericProperty(0)
-    background_color = Theme().get_color(Theme().COLOR_SECONDARY)
+    background_color = ColorProperty(Theme().get_color(Theme().COLOR_SECONDARY))
+    backdrop_color = ColorProperty(Theme().get_color(Theme().COLOR_PRIMARY, 0.8))
+    text_color = ColorProperty(Theme().get_color(Theme().TEXT_PRIMARY))
 
     type = NumericProperty(2)
     buttons = NumericProperty(0)
@@ -42,6 +45,13 @@ class Msgbox(Widget):
     def slide_in(self):
         self.pos = (dp(get_app().width /2) - self.width /2, dp(get_app().height))
         self.animate_in()
+        if self.type == MSGBOX_TYPES["ERROR"]:
+            self.backdrop_color = Theme().get_color(Theme().ALERT_DANGER, 0.8)
+            SFX.play("error")
+        elif self.type == MSGBOX_TYPES["WARNING"]:
+            self.backdrop_color = Theme().get_color(Theme().ALERT_WARNING, 0.8)
+        else:
+            self.backdrop_color = Theme().get_color(Theme().COLOR_PRIMARY, 0.8)
 
     def slide_out(self, on_out = None):
         if on_out is not None:
@@ -84,6 +94,7 @@ class MsgboxFactory:
         self.msgbox = Msgbox()
         self.msgbox.title = title
         self.msgbox.message = message
+        self.msgbox.type = type
         self.msgbox.set_buttons(buttons, on_yes, on_no)
         
         # center message box

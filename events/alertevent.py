@@ -7,13 +7,13 @@ from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 
 
 class AlertEvent(PihomeEvent):
-    def __init__(self, title, message, timeout, type = MSGBOX_TYPES["INFO"], buttons = MSGBOX_BUTTONS["OK"], on_yes = None, on_no = None):
+    def __init__(self, title, message, timeout, level = MSGBOX_TYPES["INFO"], buttons = MSGBOX_BUTTONS["OK"], on_yes = None, on_no = None, **kwargs):
         super().__init__()
         self.type = "toast"
         self.timeout = timeout
         self.title = title
         self.message = message
-        self.type = type
+        self.type = level
         self.buttons = buttons
         self.on_yes = on_yes
         self.on_no = on_no

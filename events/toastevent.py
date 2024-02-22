@@ -4,7 +4,7 @@ from events.pihomeevent import PihomeEvent
 
 
 class ToastEvent(PihomeEvent):
-    def __init__(self, label, level = "info", timeout = 5):
+    def __init__(self, label, level = "info", timeout = 5, **kwargs):
         super().__init__()
         self.type = "toast"
         self.label = label

@@ -7,6 +7,7 @@ class PihomeEventType():
     TOAST = "toast"
     TASK = "task"
     DISPLAY = "display"
+    ALERT = "alert"
 
 
 import json
@@ -54,14 +55,16 @@ class PihomeEventFactory():
             elif event_type == PihomeEventType.DISPLAY:
                 from events.displayevent import DisplayEvent
                 return DisplayEvent(**kwargs)
+            elif event_type == PihomeEventType.ALERT:
+                from events.alertevent import AlertEvent
+                return AlertEvent(**kwargs)
             else:
                 from events.alertevent import AlertEvent
-                return AlertEvent("Error", "Failed to process event {}".format(event_type), 20)
+                return AlertEvent("Warning", "Failed to process event {}".format(event_type), 20, 1)
         except Exception as e:
-            PIHOME_LOGGER.error("Error creating event: {}".format(e))
-            print(e)
+            PIHOME_LOGGER.error("Error creating event: {}".format(event_type))
             from events.alertevent import AlertEvent
-            return AlertEvent("Error", "Failed to process event {}".format(event_type), 20)
+            return AlertEvent("Error", "Failed to process event {}".format(event_type), 20, 0)
 
     def create_event_from_dict(event_dict):
         return PihomeEventFactory.create_event(event_dict["type"], **event_dict)

@@ -6,7 +6,7 @@ from util.const import MQTT_COMMANDS
 
 
 class CommandEvent(PihomeEvent):
-    def __init__(self, execute):
+    def __init__(self, execute, **kwargs):
         super().__init__()
         self.type = "command"
         self.command = execute
