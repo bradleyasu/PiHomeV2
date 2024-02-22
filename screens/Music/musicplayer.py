@@ -148,8 +148,8 @@ class MusicPlayer(PiHomeScreen):
             self.play_control_btn = ICO_PLAY
             # self.album_art = self.qr
         
-        # if name_change and self.media_name != "No Media":
-            # self.aa_factory.find(self.media_name, self.parse_album_art)
+        if name_change and self.media_name != "No Media":
+            self.aa_factory.find(self.media_name, self.parse_album_art)
         
     def parse_album_art(self, json):
         try:
