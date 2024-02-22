@@ -9,6 +9,7 @@ class PihomeEventType():
     DISPLAY = "display"
     ALERT = "alert"
     TASK = "task"
+    ACKTASK = "acktask"
 
 
 import json
@@ -48,6 +49,7 @@ class PihomeEventFactory():
         from events.displayevent import DisplayEvent
         from events.alertevent import AlertEvent
         from events.taskevent import TaskEvent
+        from events.acktaskevent import AckTaskEvent
 
         event_objects = {
             PihomeEventType.APP: AppEvent,
@@ -57,7 +59,8 @@ class PihomeEventFactory():
             PihomeEventType.TOAST: ToastEvent,
             PihomeEventType.DISPLAY: DisplayEvent,
             PihomeEventType.ALERT: AlertEvent,
-            PihomeEventType.TASK: TaskEvent
+            PihomeEventType.TASK: TaskEvent,
+            PihomeEventType.ACKTASK: AckTaskEvent
         }
         try:
             event = event_objects[event_type]

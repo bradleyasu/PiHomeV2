@@ -127,6 +127,15 @@ class TaskManager():
         self.task_screen.set_task(task)
         self.task_screen.show()
 
+    def ack_task(self, confirm = True):
+        if self.task_screen is None or not self.task_screen.is_open:
+            return None
+        if confirm:
+            self.task_screen.confirm()
+        else:
+            self.task_screen.cancel()
+        return self.task_screen.task.id
+
     def run_service(self):
         while True:
             self.process_tasks()

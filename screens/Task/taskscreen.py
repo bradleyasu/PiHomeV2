@@ -57,6 +57,10 @@ class TaskScreen(PiHomeScreen):
             PIHOME_LOGGER.error(f"Error generating event from json: {e}")
         return event
 
+    def on_leave(self, *args):
+        if self.sfx is not None:
+            self.sfx.stop()
+        return super().on_leave(*args)
 
     def confirm(self):
         if self.on_confirm is not None:
