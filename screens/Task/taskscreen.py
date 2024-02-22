@@ -19,7 +19,8 @@ class TaskScreen(PiHomeScreen):
     start_time = NumericProperty(0)
     on_confirm = None
     on_cancel = None
-
+    sfx = None
+    
     def __init__(self, **kwargs):
         super(TaskScreen, self).__init__(**kwargs)
 
@@ -32,12 +33,20 @@ class TaskScreen(PiHomeScreen):
             self.background = Theme().get_color(Theme().ALERT_INFO, 0.8)
         elif task.priority == TaskPriority.MEDIUM:
             self.background = Theme().get_color(Theme().ALERT_WARNING, 0.8)
+            self.sfx = SFX.loop("alert")
         else:
             self.background = Theme().get_color(Theme().ALERT_DANGER, 0.8)
+            self.sfx = SFX.loop("alert")
+
         # self.start_time = task.start_time
         self.on_confirm = self.generate_event(task.on_confirm)
         self.on_cancel = self.generate_event(task.on_cancel)
     
+    def on_touch_down(self, touch):
+        if self.sfx is not None:
+            self.sfx.stop()
+        return super().on_touch_down(touch)
+
     def generate_event(self, event_json):
         event = None
         if event_json is None:

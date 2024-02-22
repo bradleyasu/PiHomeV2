@@ -68,8 +68,9 @@ class PihomeEventFactory():
             return event(**kwargs)
         except Exception as e:
             PIHOME_LOGGER.error("Error creating event: {}".format(event_type))
+            PIHOME_LOGGER.error(e)
             from events.alertevent import AlertEvent
-            return AlertEvent("Error", "Failed to process event {}".format(event_type), 20, 0)
+            return AlertEvent("Error", "{}".format(e), 20, 0)
 
     def create_event_from_dict(event_dict):
         return PihomeEventFactory.create_event(event_dict["type"], **event_dict)

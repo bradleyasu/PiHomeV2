@@ -19,9 +19,14 @@ class Timer:
             label = "{} second timer".format(duration)
         self.label = label
         self.duration = duration
-        self.on_complete = self.generate_event(on_complete)
+        self.on_complete = on_complete
         if self.on_complete is not None:
-            self.add_listener(lambda _: self.on_complete.execute())
+            self.add_listener(lambda _: self.process_on_complete())
+        
+    def process_on_complete(self):
+        event = self.generate_event(self.on_complete)
+        if event is not None:
+            event.execute()
     
     def generate_event(self, event_json):
         event = None
