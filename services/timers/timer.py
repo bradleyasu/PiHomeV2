@@ -1,11 +1,15 @@
 import time
 import threading
 
+from events.pihomeevent import PihomeEventFactory
+from util.phlog import PIHOME_LOGGER
+
 """
 Simple Timer class with start, stop, and reset methods.
 """
 class Timer:
-    def __init__(self, duration = 0, label = None):
+    # on_complete should be a PihomeEvent
+    def __init__(self, duration = 0, label = None, on_complete = None):
         self.start_time = 0
         self.end_time = self.start_time + duration
         self.elapsed_time = 0
@@ -15,6 +19,19 @@ class Timer:
             label = "{} second timer".format(duration)
         self.label = label
         self.duration = duration
+        self.on_complete = self.generate_event(on_complete)
+        if self.on_complete is not None:
+            self.add_listener(lambda _: self.on_complete.execute())
+    
+    def generate_event(self, event_json):
+        event = None
+        if event_json is None:
+            return event
+        try:
+            event = PihomeEventFactory.create_event_from_dict(event_json)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error generating event from json: {e}")
+        return event
 
     def update(self):
         while self.is_running:

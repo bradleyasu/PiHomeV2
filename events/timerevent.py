@@ -4,14 +4,15 @@ from events.pihomeevent import PihomeEvent
 
 
 class TimerEvent(PihomeEvent):
-    def __init__(self, label, duration, **kwargs):
+    def __init__(self, label, duration, on_complete = None, **kwargs):
         super().__init__()
         self.type = "timer"
         self.label = label
         self.duration = duration
+        self.on_complete = on_complete
 
     def execute(self):
-        TIMER_DRAWER.create_timer(self.duration, self.label)
+        TIMER_DRAWER.create_timer(self.duration, self.label, self.on_complete)
         return {
             "code": 200,
             "body": {"status": "success", "message": "Timer started"}

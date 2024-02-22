@@ -43,8 +43,8 @@ class TimerDrawer(GridLayout):
         timer.add_listener(lambda _: self.remove_widget(timer_widget))
         timer_widget.start()
 
-    def create_timer(self, duration, label):
-        timer = Timer(duration, label)
+    def create_timer(self, duration, label, on_complete = None):
+        timer = Timer(duration, label, on_complete)
         self.add_timer(timer)
         SFX.play("pop")
 
