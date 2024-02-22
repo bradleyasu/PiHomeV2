@@ -13,6 +13,7 @@ Builder.load_file("./screens/Task/taskscreen.kv")
 
 class TaskScreen(PiHomeScreen):
     background = ColorProperty((0,0,0,0.7))
+    background_image = StringProperty("")
     text_color = Theme().get_color(Theme().TEXT_PRIMARY)
     title = StringProperty("<title>")
     description = StringProperty("<message>")
@@ -37,6 +38,11 @@ class TaskScreen(PiHomeScreen):
         else:
             self.background = Theme().get_color(Theme().ALERT_DANGER, 0.8)
             self.sfx = SFX.loop("alert")
+        
+        if task.background_image is not None:
+            self.background_image = task.background_image
+        else:
+            self.background_image = ""
 
         # self.start_time = task.start_time
         self.on_confirm = self.generate_event(task.on_confirm)

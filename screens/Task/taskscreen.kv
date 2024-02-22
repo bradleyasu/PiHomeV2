@@ -7,6 +7,14 @@
         Rectangle:
             size: self.size
             pos: self.pos
+    NetworkImage:
+        url: root.background_image
+        size_hint: 1,1
+        size: root.size
+        pos: root.pos
+        keep_ratio: True
+        auto_refresh_interval: 0
+        opacity: 0 if root.background_image == '' else 1
     BoxLayout:
         orientation: 'vertical'
         pos_hint: {'center_x': 0.5, 'center_y': 0.5}

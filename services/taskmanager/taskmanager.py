@@ -149,7 +149,7 @@ class Task():
     """
     repeat days is a list of days of the week that the task should repeat
     """
-    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None):
+    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None):
         # set id to random hash
         self.id = hash(name + description + str(datetime.now()))
         self.name = name
@@ -161,6 +161,7 @@ class Task():
         self.task_function = task_function
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
+        self.background_image = background_image
 
     def __str__(self):
         return f"Task: {self.name} - {self.description} - {self.duration} - {self.start_time} - {self.end_time} - {self.status} - {self.priority}"

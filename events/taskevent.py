@@ -5,7 +5,7 @@ from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, T
 
 
 class TaskEvent(PihomeEvent):
-    def __init__(self, name, description, start_time, priority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, **kwargs):
+    def __init__(self, name, description, start_time, priority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, **kwargs):
         super().__init__()
         self.type = "task"
         self.name = name
@@ -18,6 +18,7 @@ class TaskEvent(PihomeEvent):
         self.task_function = task_function
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
+        self.background_image = background_image
 
     def str_to_date(self, date_str):
         if date_str.startswith("delta:"):
@@ -40,7 +41,7 @@ class TaskEvent(PihomeEvent):
                 "code": 400,
                 "body": {"status": "error", "message": "Task is expired"}
             }
-        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.repeat_days, self.task_function, self.on_confirm, self.on_cancel)
+        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.repeat_days, self.task_function, self.on_confirm, self.on_cancel, self.background_image)
         TASK_MANAGER.add_task(task)
         return {
             "code": 200,
