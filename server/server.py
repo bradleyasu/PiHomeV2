@@ -15,6 +15,7 @@ from util.helpers import audio_player, get_app, goto_screen, process_webhook, to
 from util.phlog import PIHOME_LOGGER
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
+    
     def do_GET(self):
         PIHOME_LOGGER.info("Server: GET Request Initiated")
         if self.path == "/status" or self.path == "/undefined":
@@ -68,7 +69,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
-            PIHOME_LOGGER.info("POST request: {} | {}".format(str(self.path), post_data.decode('utf-8')))
+            # PIHOME_LOGGER.info("POST request: {} | {}".format(str(self.path), post_data.decode('utf-8')))
             if "stop" in payload:
                 audio_player().stop()
             if "clear_queue" in payload:
@@ -84,7 +85,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 goto_screen(payload["app"])
             if "webhook" in payload:
                 event = PihomeEventFactory.create_event_from_dict(payload["webhook"])
-                event.execute()
+                response = event.execute()
+                self._set_response(response["code"], response["body"])
+                return
 
             self._set_response()
             # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
@@ -93,16 +96,12 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(e))
             PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(post_data.decode('utf-8')))
 
-    def _set_response(self):
-        self.send_response(200)
+    def _set_response(self, code = 200, response_data = {"status": "success"}):
+        self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")  
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
-
-        response_data = {
-            "status": "success"
-        }
 
         response_json = json.dumps(response_data)
         self.wfile.write(response_json.encode('utf-8'))

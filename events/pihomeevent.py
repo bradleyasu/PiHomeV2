@@ -8,6 +8,7 @@ class PihomeEventType():
     TASK = "task"
     DISPLAY = "display"
     ALERT = "alert"
+    TASK = "task"
 
 
 import json
@@ -21,6 +22,10 @@ class PihomeEvent():
 
     def execute(self):
         print("Event Not Implemented")
+        return {
+            "code": 500,
+            "body": {"status": "error", "message": "Event Not Implemented"}
+        }
 
     def to_json(self):
         return json.dumps({
@@ -32,35 +37,35 @@ class PihomeEvent():
             "webhook": self.to_json() 
         })
 
-
 class PihomeEventFactory():
     @staticmethod
     def create_event(event_type, **kwargs):
+        from events.appevent import AppEvent
+        from events.imageevent import ImageEvent
+        from events.timerevent import TimerEvent
+        from events.commandevent import CommandEvent
+        from events.toastevent import ToastEvent
+        from events.displayevent import DisplayEvent
+        from events.alertevent import AlertEvent
+        from events.taskevent import TaskEvent
+
+        event_objects = {
+            PihomeEventType.APP: AppEvent,
+            PihomeEventType.IMAGE: ImageEvent,
+            PihomeEventType.TIMER: TimerEvent,
+            PihomeEventType.COMMAND: CommandEvent,
+            PihomeEventType.TOAST: ToastEvent,
+            PihomeEventType.DISPLAY: DisplayEvent,
+            PihomeEventType.ALERT: AlertEvent,
+            PihomeEventType.TASK: TaskEvent
+        }
         try:
-            if event_type == PihomeEventType.APP:
-                from events.appevent import AppEvent
-                return AppEvent(**kwargs)
-            elif event_type == PihomeEventType.IMAGE:
-                from events.imageevent import ImageEvent
-                return ImageEvent(**kwargs)
-            elif event_type == PihomeEventType.TIMER:
-                from events.timerevent import TimerEvent
-                return TimerEvent(**kwargs)
-            elif event_type == PihomeEventType.COMMAND:
-                from events.commandevent import CommandEvent
-                return CommandEvent(**kwargs)
-            elif event_type == PihomeEventType.TOAST:
-                from events.toastevent import ToastEvent
-                return ToastEvent(**kwargs)
-            elif event_type == PihomeEventType.DISPLAY:
-                from events.displayevent import DisplayEvent
-                return DisplayEvent(**kwargs)
-            elif event_type == PihomeEventType.ALERT:
-                from events.alertevent import AlertEvent
-                return AlertEvent(**kwargs)
-            else:
-                from events.alertevent import AlertEvent
-                return AlertEvent("Warning", "Failed to process event {}".format(event_type), 20, 1)
+            event = event_objects[event_type]
+            if event is None:
+                PIHOME_LOGGER.error("Event type {} not found".format(event_type))
+                return AlertEvent("Error", "Failed to process event \"{}\"".format(event_type), 20, 1)
+
+            return event(**kwargs)
         except Exception as e:
             PIHOME_LOGGER.error("Error creating event: {}".format(event_type))
             from events.alertevent import AlertEvent

@@ -12,6 +12,10 @@ class TimerEvent(PihomeEvent):
 
     def execute(self):
         TIMER_DRAWER.create_timer(self.duration, self.label)
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": "Timer started"}
+        }
 
 
     def __str__(self) -> str:

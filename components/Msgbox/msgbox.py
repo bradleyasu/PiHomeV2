@@ -2,6 +2,7 @@ from kivy.uix.widget import Widget
 from kivy.metrics import dp
 from kivy.lang import Builder
 from kivy.properties import StringProperty, NumericProperty, ColorProperty
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from services.audio.sfx import SFX
 from services.timers.timer import Timer
 from kivy.animation import Animation
@@ -82,7 +83,7 @@ class MsgboxFactory:
     def __init__(self):
         pass
 
-    def show(self, root, title, message, timeout, 
+    def show(self, title, message, timeout, 
              type = MSGBOX_TYPES["INFO"], 
              buttons = MSGBOX_BUTTONS["OK"],
              on_yes= None,
@@ -100,7 +101,7 @@ class MsgboxFactory:
         # center message box
         self.msgbox.pos = (dp(get_app().width /2) - self.msgbox.width /2, dp(get_app().height /2) - self.msgbox.height /2)
         
-        root.add_widget(self.msgbox, index=0)
+        PIHOME_SCREEN_MANAGER.current_screen.add_widget(self.msgbox, index=0)
         self.msgbox.slide_in()
         if timeout > 0:
             Clock.schedule_once(lambda _: self.msgbox.slide_out(), timeout)

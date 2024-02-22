@@ -69,11 +69,16 @@ class TaskManager():
     def deserialize_tasks(self, file_path):
         with open(file_path, 'rb') as file:
             self.tasks = pickle.load(file)
-    
-    def serialize_tasks_on_exit(self):
+
+    def serialize_pending_tasks(self):
         # remove any tasks that are not pending
         self.tasks = [task for task in self.tasks if task.status == TaskStatus.PENDING]
         self.serialize_tasks(self.task_store)
+    
+    def serialize_tasks_on_exit(self):
+        # remove any tasks that are not pending
+        self.serialize_pending_tasks()
+
 
     def deserialize_tasks_on_start(self):
         # if the file exists, load the tasks
@@ -84,6 +89,7 @@ class TaskManager():
     def add_task(self, task):
         PIHOME_LOGGER.info(f"Adding Task: {task.name}")
         self.tasks.append(task)
+        self.serialize_pending_tasks()
 
     def remove_task(self, task):
         PIHOME_LOGGER.info(f"Removing Task: {task.name}")

@@ -20,8 +20,11 @@ class AlertEvent(PihomeEvent):
 
 
     def execute(self):
-        current_screen = PIHOME_SCREEN_MANAGER.current_screen
-        MSGBOX_FACTORY.show(current_screen, self.title, self.message, self.timeout, self.type, self.buttons, self.on_yes, self.on_no)
+        MSGBOX_FACTORY.show(self.title, self.message, self.timeout, self.type, self.buttons, self.on_yes, self.on_no)
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": "Alert displayed"}
+        }
 
 
     def to_json(self):

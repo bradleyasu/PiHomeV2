@@ -25,6 +25,10 @@ class ImageEvent(PihomeEvent):
         if self.timeout > 0:
             screen.set_timeout(self.timeout, _HOME_SCREEN)
         PIHOME_SCREEN_MANAGER.goto(_DISPLAY_IMAGE_SCREEN)
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": "Image displayed"}
+        }
 
 
     def to_json(self):

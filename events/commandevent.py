@@ -14,6 +14,15 @@ class CommandEvent(PihomeEvent):
     def execute(self):
         if self.command in MQTT_COMMANDS:
             MQTT_COMMANDS[self.command]()
+            return {
+                "code": 200,
+                "body": {"status": "success", "message": "Command executed"}
+            }
+        else:
+            return {
+                "code": 400,
+                "body": {"status": "error", "message": "Command not found"}
+            }
 
 
     def to_json(self):

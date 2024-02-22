@@ -27,6 +27,11 @@ class DisplayEvent(PihomeEvent):
             screen.set_timeout(self.timeout, _DISPLAY_SCREEN)
         PIHOME_SCREEN_MANAGER.goto(_DISPLAY_SCREEN)
 
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": "Display updated"}
+        }
+
 
     def to_json(self):
         return json.dumps({

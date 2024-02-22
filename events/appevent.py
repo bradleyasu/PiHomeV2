@@ -13,6 +13,10 @@ class AppEvent(PihomeEvent):
 
     def execute(self):
         PIHOME_SCREEN_MANAGER.goto(self.app)
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": "App launched"}
+        }
 
     def to_json(self):
         return json.dumps({
