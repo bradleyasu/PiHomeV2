@@ -8,6 +8,7 @@ from kivy.properties import ColorProperty, StringProperty,ObjectProperty, Numeri
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage
+from components.Msgbox.msgbox import MSGBOX_FACTORY
 from components.Slider.slidecontrol import SlideControl
 from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
@@ -70,25 +71,28 @@ class DevTools(PiHomeScreen):
         # switch = PiHomeSwitch(pos=(dp(20), dp(20)))
         # layout.add_widget(switch)
 
-        self.serverButton = CircleButton(text='TOGGLE SERVER', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
-        self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
-        self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
-        self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
-        self.serverButton.bind(on_release=lambda _: self.toggle_server())
-        layout.add_widget(self.serverButton)
+        # self.serverButton = CircleButton(text='TOGGLE SERVER', size=(dp(50), dp(50)), pos=(dp(130), dp(self.height - 200)))
+        # self.serverButton.stroke_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        # self.serverButton.text_color = self.theme.get_color(self.theme.ALERT_WARNING)
+        # self.serverButton.down_color = self.theme.get_color(self.theme.ALERT_WARNING, 0.2)
+        # self.serverButton.bind(on_release=lambda _: self.toggle_server())
+        # layout.add_widget(self.serverButton)
 
         # self.control_panel = SimpleButton(text="Control Panel", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
         # self.control_panel.bind(on_release=lambda _: CONTROL_PANEL.open())
         # layout.add_widget(self.control_panel)
         
-        self.goback = SimpleButton(text="GO BACK", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
-        self.goback.bind(on_release=lambda _: self.go_back())
-        layout.add_widget(self.goback)
+        # self.goback = SimpleButton(text="GO BACK", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
+        # self.goback.bind(on_release=lambda _: self.go_back())
+        # layout.add_widget(self.goback)
 
 
+        def delete_cache(self):
+            TASK_MANAGER.delete_task_cache()
+            MSGBOX_FACTORY.show("Task Cache Deleted", "Task Cache Deleted", 10, 0, 0)
         
-        self.delete_tasks = SimpleButton(text="Delete All Tasks", size=(dp(200), dp(50)), pos=(dp(300), dp(80)))
-        self.delete_tasks.bind(on_release=lambda _: TASK_MANAGER.delete_task_cache())
+        self.delete_tasks = SimpleButton(text="Delete Tasks Cache", size=(dp(200), dp(50)), pos=(dp(300), dp(80)))
+        self.delete_tasks.bind(on_release=delete_cache)
         layout.add_widget(self.delete_tasks)
 
 

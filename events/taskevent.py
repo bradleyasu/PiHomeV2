@@ -45,7 +45,7 @@ class TaskEvent(PihomeEvent):
         TASK_MANAGER.add_task(task)
         return {
             "code": 200,
-            "body": {"status": "success", "message": "Task added"}
+            "body": {"status": "success", "message": "Task added", "task_id": task.id}
         }
 
 
