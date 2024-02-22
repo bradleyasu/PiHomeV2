@@ -35,7 +35,7 @@ class TaskScreen(PiHomeScreen):
             self.sfx = SFX.play("notify")
         elif task.priority == TaskPriority.MEDIUM:
             self.background = Theme().get_color(Theme().ALERT_WARNING, 0.8)
-            # self.sfx = SFX.play("alert")
+            self.sfx = SFX.play("alert")
         else:
             self.background = Theme().get_color(Theme().ALERT_DANGER, 0.8)
             self.sfx = SFX.loop("alert")
