@@ -22,6 +22,7 @@ _HOME_SCREEN = "_home"
 _SETTINGS_SCREEN = "_settings"
 _MUSIC_SCREEN = "_music"
 _TIMERS_SCREEN = "_timers"
+_TASK_SCREEN = "_task"
 
 TEMP_DIR = "./.temp"
 

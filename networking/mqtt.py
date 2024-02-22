@@ -2,6 +2,7 @@ import json
 from time import time
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
+from events.pihomeevent import PihomeEventFactory
 from util.helpers import get_app, toast
 import paho.mqtt.client as mqtt_client
 
@@ -10,12 +11,7 @@ from util.phlog import PIHOME_LOGGER
 class MQTT:
     
     client = None
-    app_listeners = []
-    display_listeners = []
-    notification_listeners = []
-    command_listeners = []
-    toast_listeners = []
-    timer_listeners = []
+
     def __init__(self, host, port = 1883, keep_alive = 60, feed = "pihome", user = "", password = "", **kwargs):
         super(MQTT, self).__init__(**kwargs)
         self.host = host
@@ -55,8 +51,7 @@ class MQTT:
     def on_message(self, client, userdata, msg):
         try: 
             PIHOME_LOGGER.info("[ MQTT ] Message Recieved: {} | {} | {}".format(str(client), str(userdata), str(msg.payload)))
-            payload = json.loads(msg.payload)
-            self.notify(payload["type"], payload)
+            PihomeEventFactory.create_event_from_json(msg.payload).execute()
         except Exception as e:
             PIHOME_LOGGER.error("[ MQTT ] Failed to process and notify listeners. {}".format(str(e)))
 
@@ -64,48 +59,3 @@ class MQTT:
         self.client.subscribe(self.feed)
         PIHOME_LOGGER.info("[ MQTT ] Client active and actively listening for messages!")
 
-    
-    def add_listener(self, type, callback):
-        """
-        type: The type of event to listen for.  `app`, `display`, `notification`
-        callback: The function to execute with the payload as the single parameter
-        """
-        if type == "app":
-            self.app_listeners.append(callback)
-        if type == "display":
-            self.display_listeners.append(callback)
-        if type == "image":
-            self.display_listeners.append(callback)
-        if type == "notification":
-            self.notification_listeners.append(callback)
-        if type == "command":
-            self.command_listeners.append(callback)
-        if type == "toast":
-            self.toast_listeners.append(callback)
-        if type == "timer":
-            self.timer_listeners.append(callback)
-
-    def notify(self, type, payload):
-        if type == "app":
-            for callback in self.app_listeners:
-                callback(payload)
-
-        if type == "display" or type == "image":
-            for callback in self.display_listeners:
-                callback(payload)
-
-        if type == "notification":
-            for callback in self.notification_listeners:
-                callback(payload)
-
-        if type == "command":
-            for callback in self.command_listeners:
-                callback(payload)
-
-        if type == "toast":
-            for callback in self.toast_listeners:
-                callback(payload)
-
-        if type == "timer":
-            for callback in self.timer_listeners:
-                callback(payload)

@@ -21,7 +21,8 @@ class PihomeSfx:
 
     def play(self, key):
         if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
-            self.SOUND_EFFECTS[key].seek(0)
+            self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].play()
+            self.SOUND_EFFECTS[key].seek(0)
 
 SFX = PihomeSfx()

@@ -3,6 +3,7 @@ import http.server
 import json
 import socketserver
 import time
+from events.pihomeevent import PihomeEventFactory
 from server.socket_handler import SocketHandler
 import websockets
 import asyncio
@@ -82,13 +83,15 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "app" in payload:
                 goto_screen(payload["app"])
             if "webhook" in payload:
-                process_webhook(payload["webhook"])
+                event = PihomeEventFactory.create_event_from_dict(payload["webhook"])
+                event.execute()
 
             self._set_response()
             # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
             toast("An error occurred processing the server request", "warn", 10)
             PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(e))
+            PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(post_data.decode('utf-8')))
 
     def _set_response(self):
         self.send_response(200)

@@ -1,0 +1,17 @@
+#:kivy 2.0.0
+<TaskScreen>:
+    name: 'task'
+    canvas.before:
+        Color:
+            rgba: root.background
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    BoxLayout:
+        orientation: 'vertical'
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        Label:
+            text: root.title
+            font_size: '30sp'
+            color: 255, 255, 255, 1
+            pos_hint: {'center_x': 0.5, 'center_y': 0.9}

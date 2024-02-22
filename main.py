@@ -1,13 +1,12 @@
 import os
 
-from screens.Timers.TimerScreen import TimerScreen
-
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 from kivy.config import Config
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
-from interface.pihomescreenmanager import PiHomeScreenManager
+from services.taskmanager.taskmanager import TASK_MANAGER
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER, PiHomeScreenManager
 from screens.NewYearsEve.newyearseve import NewYearsEveScreen
 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
@@ -23,6 +22,8 @@ Config.set('graphics', 'verify_gl_main_thread', '0')
 # Config.set('graphics', 'left', '0')
 # Config.set('graphics', 'top', '0')
 from components.Hamburger.hamburger import Hamburger
+from screens.Task.taskscreen import TaskScreen
+from screens.Timers.TimerScreen import TimerScreen
 from screens.CommandCenter.commandcenter import CommandCenterScreen
 from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
 from screens.Lofi.lofi import LofiScreen
@@ -36,7 +37,7 @@ from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
 from server.server import SERVER, PiHomeServer
 from services.audio.audioplayer import AudioPlayer
-from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, _TIMERS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
+from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, _TASK_SCREEN, _TIMERS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
@@ -135,6 +136,7 @@ class PiHome(App):
         self.audio_player = AudioPlayer()
 
 
+
     def setup(self):
         """
         Setup default windowing positions and initialize 
@@ -149,6 +151,7 @@ class PiHome(App):
             _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
             _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
             _TIMERS_SCREEN: TimerScreen(name = _TIMERS_SCREEN, label="Timers"),
+            _TASK_SCREEN: TaskScreen(name = _TASK_SCREEN, label="Task", is_hidden = True),
             'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
             'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
             'command_center': CommandCenterScreen(name = 'command_center', label="Command Center"),
@@ -157,6 +160,10 @@ class PiHome(App):
             'white_board': WhiteBoard(name = 'white_board', label="White Board"),
             'nye': NewYearsEveScreen(name="nye", label="NYE", is_hidden=False, requires_pin=False)
         }
+
+
+        # Startup TaskManager
+        TASK_MANAGER.start(self.screens[_TASK_SCREEN])
 
         self.appmenu = AppMenu(self.screens)
         self.appmenu.show_apps()
@@ -179,15 +186,15 @@ class PiHome(App):
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
 
-        screenManager = PiHomeScreenManager(transition=SlideTransition(direction="down"))
+        # screenManager = PiHomeScreenManager(transition=SlideTransition(direction="down"))
 
         # Add Registered Screens to screenmanager 
         for screen in self.screens.values():
-            screenManager.add_widget(screen)
+            PIHOME_SCREEN_MANAGER.add_widget(screen)
 
         # Add primary screen manager
-        self.layout.add_widget(screenManager)
-        self.manager = screenManager
+        self.layout.add_widget(PIHOME_SCREEN_MANAGER)
+        self.manager = PIHOME_SCREEN_MANAGER 
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
         self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
@@ -389,49 +396,13 @@ class PiHome(App):
         port = CONFIG.get_int('mqtt', 'port', 8883)
         if u != "" and h != "" and p != "":
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
-            self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
-            self.mqtt.add_listener(type = "display", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_event(payload), 0))
-            self.mqtt.add_listener(type = "image", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_image_event(payload), 0))
-            self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
-            self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
-            self.mqtt.add_listener(type = "timer", callback = lambda payload: TIMER_DRAWER.create_timer(payload["duration"], payload["label"]))
+            # self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
+            # self.mqtt.add_listener(type = "display", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_event(payload), 0))
+            # self.mqtt.add_listener(type = "image", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_image_event(payload), 0))
+            # self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
+            # self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
+            # self.mqtt.add_listener(type = "timer", callback = lambda payload: TIMER_DRAWER.create_timer(payload["duration"], payload["label"]))
  
-    def _handle_command_event(self, payload):
-        """
-        Handle a command event from the server
-        """
-        cmd = payload["execute"]
-        if cmd in MQTT_COMMANDS:
-            MQTT_COMMANDS[cmd]()
-
-    def _handle_display_event(self, payload):
-        """
-        Handle a display event from the server
-        """
-        if "title" in payload and "message" in payload and "image" in payload:
-            self.screens[_DISPLAY_SCREEN].title = payload["title"]
-            self.screens[_DISPLAY_SCREEN].message = payload["message"]
-            self.screens[_DISPLAY_SCREEN].image = payload["image"]
-            if "background" in payload:
-                self.screens[_DISPLAY_SCREEN].set_background(payload["background"])
-            if "timeout" in payload:
-                self.screens[_DISPLAY_SCREEN].set_timeout(payload["timeout"], self.manager.current_screen.name)
-            goto_screen(_DISPLAY_SCREEN)
-
-
-    def _handle_display_image_event(self, payload):
-        """
-        Handle a display image event from the server
-        """
-        if "image_url" in payload:
-            self.screens[_DISPLAY_IMAGE_SCREEN].image = payload["image_url"]
-            if "timeout" in payload:
-                self.screens[_DISPLAY_IMAGE_SCREEN].set_timeout(payload["timeout"], self.manager.current_screen.name)
-
-            if "reload_interval" in payload:
-                self.screens[_DISPLAY_IMAGE_SCREEN].reload_interval = int(payload["reload_interval"])
-
-            goto_screen(_DISPLAY_IMAGE_SCREEN)
 
 
     def on_stop(self):

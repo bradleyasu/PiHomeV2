@@ -16,10 +16,19 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
         self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
+        self.is_open = False
 
     def on_pre_leave(self, *args):
         self.manager.last_screen = self.name
+        self.is_open = False
         return super().on_pre_leave(*args)
+
+    def on_enter(self, *args):
+        self.is_open = True
+        return super().on_enter(*args)
+
+    def show(self):
+        self.manager.current = self.name
 
     def go_back(self):
         if self.manager.last_screen:

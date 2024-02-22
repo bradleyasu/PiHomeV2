@@ -1,4 +1,5 @@
 from kivy.uix.screenmanager import ScreenManager
+from kivy.uix.screenmanager import SlideTransition
 from system.rotary import ROTARY_ENCODER
 from util.phlog import PIHOME_LOGGER
 
@@ -31,3 +32,10 @@ class PiHomeScreenManager(ScreenManager):
         PIHOME_LOGGER.info("Reloading all screens")
         for screen in self.screens:
             screen.on_config_update(payload)
+
+    def goto(self, screen_name):
+        ### TODO Add pin check here - replace goto_screen in main.py
+        self.current = screen_name
+
+        
+PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=SlideTransition(direction="down"))

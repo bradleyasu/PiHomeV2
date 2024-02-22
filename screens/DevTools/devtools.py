@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import socket
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
@@ -14,6 +15,7 @@ from composites.ControlPanel.controlpanel import CONTROL_PANEL
 from interface.pihomescreen import PiHomeScreen
 from server.server import SERVER
 from services.qr.qr import QR
+from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, TaskStatus
 from system.brightness import set_brightness
 from theme.color import Color
 from theme.theme import Theme
@@ -82,6 +84,15 @@ class DevTools(PiHomeScreen):
         self.goback = SimpleButton(text="GO BACK", size=(dp(200), dp(50)), pos=(dp(90), dp(20)))
         self.goback.bind(on_release=lambda _: self.go_back())
         layout.add_widget(self.goback)
+
+
+        start_time = datetime.now() + timedelta(seconds=30)
+        task = Task("Test Task", "This is a test task", start_time, TaskStatus.PENDING, TaskPriority.LOW, 1)
+        
+        self.create_task = SimpleButton(text="Create Task", size=(dp(200), dp(50)), pos=(dp(300), dp(80)))
+        # temp_time is 30 seconds from now
+        self.create_task.bind(on_release=lambda _: TASK_MANAGER.add_task(task))
+        layout.add_widget(self.create_task)
 
 
         # slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(500), dp(100)))
