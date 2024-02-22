@@ -13,5 +13,31 @@
         Label:
             text: root.title
             font_size: '30sp'
-            color: 255, 255, 255, 1
+            font_name: 'Nunito'
+            color: root.text_color
             pos_hint: {'center_x': 0.5, 'center_y': 0.9}
+        Label:
+            text: root.description
+            font_size: '20sp'
+            font_name: 'Nunito'
+            color: root.text_color
+            pos_hint: {'center_x': 0.5, 'center_y': 0.6}
+        GridLayout:
+            cols: 2
+            size_hint: 0.5, 0.5
+            pos_hint: {'center_x': 0.6, 'center_y': 0.1}
+            spacing: dp(140)
+            CircleButton:
+                text: '✓'
+                custom_font: 'ArialUnicode'
+                font_size: '30sp'
+                stroke_width: 1.4
+                stroke_color: (0, 255, 0, 1)
+                down_color: (0, 255, 0, 1)
+            CircleButton:
+                text: "✘"
+                font_size: '30sp'
+                custom_font: 'ArialUnicode'
+                stroke_width: 1.4
+                stroke_color: (255, 0, 0, 1)
+                down_color: (255, 0, 0, 1)

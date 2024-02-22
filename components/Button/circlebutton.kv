@@ -16,7 +16,7 @@
         Color:
             rgba: self.stroke_color
         Line:
-            width: dp(1.)
+            width: dp(self.stroke_width)
             circle:
                 self.center_x, self.center_y, min(self.width, self.height) / 2, 0, 360
     
@@ -24,7 +24,7 @@
         text: root.text
         pos: root.pos
         font_size: root.font_size
-        font_name: 'Nunito'
+        font_name: root.custom_font
         size_hint: None, None
         size: root.size
         color: root.text_color
