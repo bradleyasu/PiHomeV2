@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
-from components.Msgbox.msgbox import MSGBOX_FACTORY
 from events.pihomeevent import PihomeEvent
 from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, TaskStatus
 
@@ -21,6 +20,15 @@ class TaskEvent(PihomeEvent):
         self.on_cancel = on_cancel
 
     def str_to_date(self, date_str):
+        if date_str.startswith("delta:"):
+            # Example input could be "delta:1 days" or "delta:1 hours"
+            delta = date_str.split(":")[1]
+            delta = delta.split(" ")
+            # If delta[1] doesn't end with an s, add it
+            if not delta[1].endswith("s"):
+                delta[1] += "s"
+            return datetime.now() + timedelta(**{delta[1]: int(delta[0])})
+            
         return datetime.strptime(date_str, "%m/%d/%Y %H:%M")
 
     def is_expired(self):
