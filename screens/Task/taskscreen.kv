@@ -34,10 +34,12 @@
                 stroke_width: 1.4
                 stroke_color: (0, 255, 0, 1)
                 down_color: (0, 255, 0, 1)
+                on_press: root.confirm()
             CircleButton:
-                text: "✘"
-                font_size: '30sp'
+                text: "✕"
+                font_size: '32sp'
                 custom_font: 'ArialUnicode'
                 stroke_width: 1.4
                 stroke_color: (255, 0, 0, 1)
                 down_color: (255, 0, 0, 1)
+                on_press: root.cancel()

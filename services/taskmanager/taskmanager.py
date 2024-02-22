@@ -120,6 +120,8 @@ class TaskManager():
                 if task.start_time <= datetime.now():
                     task.status = TaskStatus.PRE_IN_PROGRESS
                     self.load_task_screen(task)
+                    # We want to return so that we don't process any other tasks.  This will allow the task screen to be displayed and remaining tasks will be queued 
+                    return 
     
     def load_task_screen(self, task):
         self.task_screen.set_task(task)
