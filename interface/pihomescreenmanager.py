@@ -102,6 +102,10 @@ class PiHomeScreenManager(ScreenManager):
                         else:
                             index = 9999
 
+                        # ensure the screen is not disabled
+                        if "disabled" in metadata and metadata["disabled"]:
+                            continue
+
                         # dynamically import the class from the module
                         module = __import__("screens.{}".format(screen_module), fromlist=[screen_module])
                         screen = getattr(module, screen_name)(name=screen_id, label=screen_label, is_hidden=screen_hidden, requires_pin=screen_requires_pin)

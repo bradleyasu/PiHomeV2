@@ -2,8 +2,8 @@
     "module": "Timers.TimerScreen",
     "name": "TimerScreen",
     "id": "_timers",
-    "label": "",
+    "label": "New Timer",
     "description": "",
-    "hidden": true,
+    "hidden": false,
     "requires_pin": false
 }

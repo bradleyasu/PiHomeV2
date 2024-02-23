@@ -3,7 +3,8 @@
     "name": "MusicPlayer",
     "id": "_music",
     "label": "Music Player",
-    "description": "",
+    "description": "Music",
     "hidden": false,
-    "requires_pin": false
+    "requires_pin": false,
+    "index": 1
 }
