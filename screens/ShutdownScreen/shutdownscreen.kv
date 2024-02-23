@@ -1,0 +1,24 @@
+#:kivy 2.0.0
+<ShutdownScreen>:
+    canvas.before:
+        Color:
+            rgba: root.background
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: 1, 1
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        Label:
+            text: 'Pihome'
+            color: root.text_color
+            font_size: '72sp'
+            font_name: 'Nunito'
+            size_hint: 1, 0.2
+        Label:
+            text: 'Please wait, pihome is about to shutdown and restart...'
+            font_name: 'Nunito'
+            color: root.text_color
+            font_size: '20sp'
+            size_hint: 1, 0.2

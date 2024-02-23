@@ -1,0 +1,10 @@
+{
+    "index": 3,
+    "module": "ShutdownScreen.shutdownscreen",
+    "name": "ShutdownScreen",
+    "id": "_shutdown",
+    "label": "",
+    "description": "",
+    "hidden": true,
+    "requires_pin": false
+}

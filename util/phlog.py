@@ -52,6 +52,9 @@ class phlog:
         # print warnings in orange color
         print("\033[93mWARN: ", message, "\033[0m")
 
+    def warning(self, message):
+        self.warn(message)
+
     def error(self, message):
         self.logger.error(message)
         if self.is_raspberry_pi():

@@ -14,6 +14,7 @@ from components.SmartLight.smartlight import SmartLight
 from components.Switch.switch import PiHomeSwitch
 from composites.ControlPanel.controlpanel import CONTROL_PANEL
 from interface.pihomescreen import PiHomeScreen
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from server.server import SERVER
 from services.qr.qr import QR
 from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, TaskStatus
@@ -54,7 +55,7 @@ class DevTools(PiHomeScreen):
         button.stroke_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.text_color = self.theme.get_color(self.theme.ALERT_DANGER)
         button.down_color = self.theme.get_color(self.theme.ALERT_DANGER, 0.2)
-        button.bind(on_release=lambda _: update_pihome())
+        button.bind(on_release=lambda _: PIHOME_SCREEN_MANAGER.goto("_shutdown"))
         layout.add_widget(button)
 
         # timer = Timer(10)
