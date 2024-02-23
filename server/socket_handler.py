@@ -100,7 +100,7 @@ class SocketHandler():
                     }, TIMER_DRAWER.timer_widgets))
                 ,
                 "screens": {
-                    "current": get_app().manager.current_screen.name,
+                    "current": PIHOME_SCREEN_MANAGER.current_screen.name,
                     "screens": list(map(lambda n: {
                         n: {
                             "label": get_app().screens[n].label,
