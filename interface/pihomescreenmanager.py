@@ -52,9 +52,15 @@ class PiHomeScreenManager(ScreenManager):
             self.transition.direction = "up"
         
         if self.loaded_screens[screen_name].requires_pin and not pin_verified:
-            pinpad = PinPad(on_enter=lambda: self.goto(screen_name, True))
+            def unlock_screen():
+                self.current_screen.locked = False
+                self.goto(screen_name, True)
+            pinpad = PinPad(on_enter=unlock_screen)
             self.current_screen.add_widget(pinpad)
             pinpad.show()
+
+            # Prevent the screen from changing until pin is verified
+            self.current_screen.locked = True
         else:
             self.current = screen_name
 

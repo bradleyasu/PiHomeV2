@@ -77,8 +77,6 @@ class TaskManager():
         for task in tasks:
             if task.status != TaskStatus.COMPLETED:
                 task.status = TaskStatus.PENDING
-            PIHOME_LOGGER.info("Serialized Task: {}, Cacheable is ".format(task.name, str(task.cacheable)))
-
 
         with open(file_path, 'wb') as file:
             pickle.dump(tasks, file)
