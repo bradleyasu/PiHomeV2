@@ -77,7 +77,7 @@ class TaskManager():
         for task in tasks:
             if task.status != TaskStatus.COMPLETED:
                 task.status = TaskStatus.PENDING
-            PIHOME_LOGGER.info("Serialized Task: {}, Cacheable is ".format(task.name, task.cacheable))
+            PIHOME_LOGGER.info("Serialized Task: {}, Cacheable is ".format(task.name, str(task.cacheable)))
 
 
         with open(file_path, 'wb') as file:
@@ -171,7 +171,7 @@ class Task():
     """
     repeat days is a list of days of the week that the task should repeat
     """
-    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None):
+    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
         # set id to random hash
         self.id = hash(name + description + str(datetime.now()))
         self.name = name
@@ -184,7 +184,7 @@ class Task():
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
         self.background_image = background_image
-        self.cacheable = True
+        self.cacheable = cacheable
 
     def __str__(self):
         return f"Task: {self.name} - {self.description} - {self.duration} - {self.start_time} - {self.end_time} - {self.status} - {self.priority}"

@@ -8,6 +8,7 @@ class TaskEvent(PihomeEvent):
     def __init__(self, name, description, start_time, priority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, **kwargs):
         super().__init__()
         self.type = "task"
+        self.cacheable = True
         self.name = name
         self.description = description
         self.start_time = self.str_to_date(start_time)
@@ -19,7 +20,6 @@ class TaskEvent(PihomeEvent):
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
         self.background_image = background_image
-        self.cacheable = True
 
     def str_to_date(self, date_str):
         if date_str.startswith("delta:"):
@@ -43,8 +43,7 @@ class TaskEvent(PihomeEvent):
                 "code": 400,
                 "body": {"status": "error", "message": "Task is expired"}
             }
-        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.repeat_days, self.task_function, self.on_confirm, self.on_cancel, self.background_image)
-        task.cacheable = self.cacheable
+        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.repeat_days, self.task_function, self.on_confirm, self.on_cancel, self.background_image, self.cacheable)
         TASK_MANAGER.add_task(task)
         return {
             "code": 200,
