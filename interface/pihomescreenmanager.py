@@ -5,10 +5,12 @@ from kivy.uix.screenmanager import SlideTransition
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
 from util.phlog import PIHOME_LOGGER
+from kivy.clock import Clock
 
 class PiHomeScreenManager(ScreenManager):
     screens_loaded = False
     loaded_screens = {}
+    app_menu = None
 
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
@@ -54,6 +56,17 @@ class PiHomeScreenManager(ScreenManager):
         ### TODO Add pin check here - replace goto_screen in main.py
         # self.current = screen_name
 
+    def on_parent(self, base_widget, parent):
+        # Add the app menu to the parent of the screen manager
+        self.load_screens()
+
+        # Create an App Menu for the screens
+        from composites.AppMenu.appmenu import AppMenu
+        self.app_menu = AppMenu(self.loaded_screens)
+        # We have to wait a second before adding the app menu to the parent becuase if we don't
+        # the app menu will be added to the parent before the screen manager is added to the parent
+        Clock.schedule_once(lambda dt: parent.add_widget(self.app_menu, index=1), 1)
+
     def load_screens(self):
         """
         This function will load all screens into the screen manager dynamically.  It does this by searching 
@@ -90,9 +103,11 @@ class PiHomeScreenManager(ScreenManager):
                         screen.app_index = index
                         self.add_widget(screen)
                         self.loaded_screens[screen_id] = screen
-                        PIHOME_LOGGER.info("Loading screen: {}".format(screen_id))
+                        PIHOME_LOGGER.info("[ PihomeScreenManager ] Loaded screen: {}".format(screen_id))
         # sort the screens by their index
         self.loaded_screens = {k: v for k, v in sorted(self.loaded_screens.items(), key=lambda item: item[1].app_index)}
+
+
         # goto the first screen in the loaded screens list
         self.goto(list(self.loaded_screens.keys())[0])
         self.screens_loaded = True

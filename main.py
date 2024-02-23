@@ -54,7 +54,6 @@ from components.Image.networkimage import NetworkImage
 from kivy.graphics import Color, Ellipse, Line
 
 from components.Toast.toast import Toast
-from composites.AppMenu.appmenu import AppMenu
 
 from networking.poller import POLLER, Poller
 from screens.DevTools.devtools import DevTools
@@ -138,15 +137,6 @@ class PiHome(App):
         """
         Window.size = (self.width, self.height)
 
-        PIHOME_SCREEN_MANAGER.load_screens()
-
-        # Startup TaskManager
-        TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
-
-        # self.appmenu = AppMenu(self.screens)
-        self.appmenu = AppMenu(PIHOME_SCREEN_MANAGER.loaded_screens)
-        self.appmenu.show_apps()
-        self.appmenu.hide()
 
         POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
@@ -161,12 +151,9 @@ class PiHome(App):
         self.layout.size_hint = (1,1)
         self.layout.pos = (0,0)
 
-        
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
 
-        # Add primary screen manager
-        self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
         self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
@@ -175,12 +162,13 @@ class PiHome(App):
         self.menu_button.pos = (dp(10), dp(400))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
+        # Add primary screen manager
+        self.layout.add_widget(TIMER_DRAWER)
+        self.layout.add_widget(PIHOME_SCREEN_MANAGER)
+        self.layout.add_widget(self.menu_button)
 
-        self.layout.add_widget(TIMER_DRAWER, index=0)
-        self.layout.add_widget(self.menu_button, index=0)
-
-        # Add App Menu
-        self.layout.add_widget(self.appmenu, index=1)
+        # Startup TaskManager
+        TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
 
         return self.layout
     
@@ -232,11 +220,11 @@ class PiHome(App):
         if open == True:
             # self.layout.add_widget(self.appmenu, index=1)
             # self.appmenu.show_apps()
-            self.appmenu.show()
+            PIHOME_SCREEN_MANAGER.app_menu.show()
         else:
             # self.appmenu.reset()
             # self.layout.remove_widget(self.appmenu)
-            self.appmenu.hide()
+            PIHOME_SCREEN_MANAGER.app_menu.hide()
             self.menu_button.is_open = False
 
     def toggle_app_menu(self):

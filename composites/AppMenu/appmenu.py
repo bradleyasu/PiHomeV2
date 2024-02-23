@@ -33,6 +33,9 @@ class AppMenu(Widget):
         super(AppMenu, self).__init__(**kwargs)
         self.screens = screens
         self.build()
+        self.show_apps()
+        self.hide()
+
 
 
     def build(self):
@@ -63,6 +66,7 @@ class AppMenu(Widget):
         self.view.pos = (0, 1000)
 
     def show(self):
+        
         # self.opacity = 1
         # enable touch events
         self.disabled = False
