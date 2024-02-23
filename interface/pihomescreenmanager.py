@@ -2,6 +2,7 @@ import json
 import os
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
+from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
 from util.phlog import PIHOME_LOGGER
 
@@ -37,9 +38,21 @@ class PiHomeScreenManager(ScreenManager):
         for screen in self.screens:
             screen.on_config_update(payload)
 
-    def goto(self, screen_name):
+    def goto(self, screen_name, pin_verified = False):
+        if self.transition.direction == "up":
+            self.transition.direction = "down"
+        else:
+            self.transition.direction = "up"
+        
+        if self.loaded_screens[screen_name].requires_pin and not pin_verified:
+            pinpad = PinPad(on_enter=lambda: self.goto(screen_name, True))
+            self.current_screen.add_widget(pinpad)
+            pinpad.show()
+        else:
+            self.current = screen_name
+
         ### TODO Add pin check here - replace goto_screen in main.py
-        self.current = screen_name
+        # self.current = screen_name
 
     def load_screens(self):
         """

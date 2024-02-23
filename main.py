@@ -56,7 +56,6 @@ from kivy.graphics import Color, Ellipse, Line
 from components.Toast.toast import Toast
 from composites.AppMenu.appmenu import AppMenu
 
-from composites.PinPad.pinpad import PinPad
 from networking.poller import POLLER, Poller
 from screens.DevTools.devtools import DevTools
 from screens.Home.home import HomeScreen
@@ -94,8 +93,6 @@ class PiHome(App):
 
         self.height = CONFIG.get_int('window', 'height', 480)
         self.width = CONFIG.get_int('window', 'width', 800)
-        pin = CONFIG.get('security', 'pin', '')
-        self.pinpad = PinPad(on_enter=self.remove_pinpad, opacity=0, pin=pin)
         self.toast = Toast(on_reset=self.remove_toast)
 
         self.menu_button = Hamburger()
@@ -231,48 +228,35 @@ class PiHome(App):
         self.stop()
         return PiHome().run()
 
-    def show_pinpad(self):
-        """
-        Show the lock screen/pin pad view
-        """
-        self.layout.add_widget(self.pinpad)
-        self.pinpad.opacity = 1
-        self.pinpad.animate()
-
-    def remove_pinpad(self, *args):
-        self.layout.remove_widget(self.pinpad)
-        self.pinpad.opacity = 0
-        self.pinpad.reset()
-
     def get_size(self):
         return (self.width, self.height)
 
     
-    def goto_screen(self, screen, pin_required = True):
-        """
-        Navigate to a specific screen.  If the PIN is required to access the
-        screen, the pin pad will be displayed prompting the user to enter PIN
-        """
-        if self.manager.transition.direction == "down":
-            self.manager.transition.direction = "up"
-        else:
-            self.manager.transition.direction = "down"
-        pin_required = pin_required and self.screens[screen].requires_pin
-        if pin_required:
-            self.show_pinpad()
-            self.pinpad.on_enter = lambda *args: self.goto_screen(screen, False)
-        else:
-            self.remove_pinpad()
-            self.manager.current = screen
+    # def goto_screen(self, screen, pin_required = True):
+    #     """
+    #     Navigate to a specific screen.  If the PIN is required to access the
+    #     screen, the pin pad will be displayed prompting the user to enter PIN
+    #     """
+    #     if self.manager.transition.direction == "down":
+    #         self.manager.transition.direction = "up"
+    #     else:
+    #         self.manager.transition.direction = "down"
+    #     pin_required = pin_required and self.screens[screen].requires_pin
+    #     if pin_required:
+    #         self.show_pinpad()
+    #         self.pinpad.on_enter = lambda *args: self.goto_screen(screen, False)
+    #     else:
+    #         self.remove_pinpad()
+    #         self.manager.current = screen
         
-        if (screen == _SETTINGS_SCREEN):
-            self.menu_button.opacity = 0
-        else:
-            self.menu_button.opacity = 1
+    #     if (screen == _SETTINGS_SCREEN):
+    #         self.menu_button.opacity = 0
+    #     else:
+    #         self.menu_button.opacity = 1
 
     def set_app_menu_open(self, open):
-        if self.pinpad.opacity == 1:
-            return
+        # if self.pinpad.opacity == 1:
+            # return
         self.app_menu_open = open
         if open == True:
             # self.layout.add_widget(self.appmenu, index=1)

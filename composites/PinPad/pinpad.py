@@ -12,6 +12,7 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
+from util.configuration import CONFIG
 from util.helpers import get_app
 from util.tools import hex
 from kivy.uix.widget import Widget
@@ -19,7 +20,6 @@ from kivy.uix.widget import Widget
 Builder.load_file("./composites/PinPad/pinpad.kv")
 
 class PinPad(Widget):
-
     background_color = ColorProperty((0,0,0,0))
     pinpad_background_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_SECONDARY, 0))
     pinpad_button_color = ColorProperty(hex(Color.INDIGO_600, 1))
@@ -32,10 +32,11 @@ class PinPad(Widget):
     pin_three = NumericProperty(0)
     pin_four  = NumericProperty(0)
 
-    def __init__(self, pin = '', on_enter = lambda _: print('enter'), **kwargs):
+    def __init__(self, on_enter = lambda _: print('enter'), **kwargs):
         super(PinPad, self).__init__(**kwargs)
-        self.pin = pin
+        self.pin = CONFIG.get('security', 'pin', '')
         self.on_enter = on_enter
+        self.opacity = 0
 
         app_size = App.get_running_app().get_size()
         self.ids.pin_pad_float_container.size = app_size
@@ -73,6 +74,7 @@ class PinPad(Widget):
     def verify_pin(self, *args):
         if self.code == self.pin:
             self.on_enter()
+            self.hide()
         else:
             self.code = ""
             self.refresh_pins()
@@ -109,6 +111,16 @@ class PinPad(Widget):
         animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='linear', d=.2)
         animation &= Animation(pinpad_opacity=1, t='linear', d=.2)
         animation.start(self)
+
+    def show(self):
+        self.opacity = 1
+        self.animate()
+
+    def hide(self):
+        self.opacity = 0
+        self.animate()
+        # after .3 seconds, remove the widget
+        Clock.schedule_once(lambda x: self.parent.remove_widget(self), 0.3)
 
     def touch_check(self, widget, touch):
         if self.opacity == 0:

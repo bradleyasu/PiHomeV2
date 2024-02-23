@@ -5,5 +5,5 @@
     "label": "Settings",
     "description": "",
     "hidden": false,
-    "requires_pin": false
+    "requires_pin": true 
 }
