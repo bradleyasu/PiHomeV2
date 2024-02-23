@@ -1,7 +1,6 @@
 
 # PIHOME
 
-
 ![Boot Screen](.github/images/1.png "Boot Screen")
 
 PiHome is an open source ("for fun") project that I've been working on.  PiHome has no microphone, camera, or big tech company backend collecting data.  It's simply a home kiosk/informational and control panel to replace (and potentially do more than) products like the Amazon Echo, Google Home, etc.  
@@ -15,7 +14,28 @@ Although not required, PiHome is designed to work with a rotary encoder/knob con
 
 ### Custom Screens
 
-To create a custom screen, create subdirectory within the `screens` directory that is typically named whatever your screen ("PiHome app") is and within your directory, create two files named `<yourapp.py>` and `<yourapp.kv>`.  The `py` file contains business logic for your application while the `kv` file contains UI markdown.  Please refer to the Kivy documentation for more information on this.  Your `py` file should extend the `PiHomeScreen` (refer to other screens in this directory as an example).  `PiHomeScreen` provides a few properties that can be overriden that PiHome will use.  For example, a default name and icon.    You can set these to whatever you like. To add your screen to PiHome, go into the `main.py` and find the `screens` array initialization in the `setup()` funciton.  Simply add your screen to the array.  When you spin up PiHome via `python3 main.py`, long press the display (current geasture may change) to access the App menu.  You should see your new screen ("app") in the menu selection and upon clicking, you will be sent into your screen.    Long press again to get the app menu and return home.  The App Menu is accessible from anywhere.
+To create a custom screen, create subdirectory within the `screens` directory that is typically named whatever your screen ("PiHome app") is and within your directory, create two files named `<yourapp.py>` and `<yourapp.kv>`.  The `py` file contains business logic for your application while the `kv` file contains UI markdown.  Please refer to the Kivy documentation for more information on this.  Your `py` file should extend the `PiHomeScreen` (refer to other screens in this directory as an example).  `PiHomeScreen` provides a few properties that can be overriden that PiHome will use.  For example, a default name and icon.  PiHome will automatically find and load any screens in the `screens` directory that includes a `manifest.json` file.  The `manifest.json` file should contain metadata about how the screen should be loaded. 
+
+Example `manifest.json`:
+```json
+{
+    "module": "NewYearsEve.newyearseve", // This is the subdirectory and file name of the screen.  The path is /screens/NewYearsEven/newyearseve.py
+    "name": "NewYearsEveScreen",  // The name of the screen. IMPORTANT:  This must match the class name in the py file
+    "id": "nye", // This can be anything you want as long as it is unique among all other screens
+    "label": "New Years!", // This is the label that will appear in the app menu
+    "description": "", // Currently unused
+    "hidden": false, // If this is true, the screen will be loaded into pihome but not accessible.  This is useful if you're creating a custom event that needs to trigger the screen but shouldn't be accessible otherwise
+    "requires_pin": false, // If this is set to true, you'll be prompted to enter your pin.  Your pin is configured in the settings screen
+    "index": 4 // This is the order in which the screen will appear in the app menu.  If it is unset, apps will be rendered in whatever order they were found in the filesystem.  Currently, the only screen that has an index is the home screen and it is set to 0 to ensure it is always the first screen
+}
+```
+
+### Custom Events
+
+To leverage full power of PiHome, you can create custom events that do various things.  PiHome comes with a series of default events that you can refer to.  To create a custom event, add a new event into the `events` directory.  The event should be a python file that extends the `PiHomeEvent` class.  The `PiHomeEvent` class provides a few properties that can be overriden that PiHome will use.  For example, a default name and icon.  PiHome will automatically find and load any events in the `events` directory.   Events are triggered by MQTT messages or webhooks.  The payload of the message should contain a `type` key that matches the type of the event.  The rest of the payload can be whatever you like and will be passed into the constructor of your event.  
+
+The `execute()` function is what should happen when the event gets triggered.  For example, if you have created a custom screen from the previous section that is set to hidden (for example, some sort of notification screen), you can pass the payload properties to that screen and display it through the PIHOME_SCREEN_MANAGER - Which you can access from anywhere. 
+
 
 ![App Screen](.github/images/4.png "App Screen")
 
@@ -62,32 +82,26 @@ MQTT services are also available.  You can connect your PiHome to an MQTT servic
 curl -sSL https://pihome.io/install | bash
 ```
 
+### Timers
 
-### MQTT Payload Definitions
+### The Task Manager and Tasks
 
-If configured, PiHome can subscribe to MQTT feeds and react to events. 
 
-Three types of events can be sent to PiHome
+### PiHome Events
 
-- Notification.  A notification will appear on screen until dismissed
-- Display.  A display will be a full screen UI overlay
-- App Trigger.  This event will trigger an app, if it exists, in PiHome.  For example, if you would like an uber app to be triggered when an event is pushed
-to the MQTT feed
-
-The payloads for these events should respect the following.
-
-Notification
+If configured, PiHome can subscribe to MQTT feeds and react to events.  These payloads can also be posted to pihome via a webhook that looks like
 ```json
 {
-    "type": "notificaiton",
-    "color": "<(r,g,b,a)>",
-    "icon": "<icon_url>",
-    "title": "<title>",
-    "message": "<message>"
+    "webhook": {
+        // Your payload here
+    }
 }
 ```
 
+
+
 Display
+Shows a message on the screen. 
 ```json
 {
     "type": "display",
@@ -100,19 +114,52 @@ Display
 ```
 
 Display Image
+Shows an image on the screen
 ```json
 {
     "type": "image", 
     "image_url": "<image_src_url>", 
     "timeout": "seconds", // Optional 
-    "reload_interval": "<seconds" // Optional
+    "reload_interval": "<seconds>" // Optional
 }
 ```
 
 App Trigger
+Triggers an app.  The app key should match the id as described in the manifest.json file for the screen.
 ```json
 {
     "type": "app",
     "key": "<app key>" // Not app name!  The key should match the key from the screens array in main.py:setup()
+}
+```
+
+Timer
+Creates a timer.  The on_complete is optional and can be set to another PiHomeEvent payload.  See The Timer Section for more inforamtion on how timers work.
+```json
+{
+    "webhook": {
+            "type": "timer",
+            "duration": <TIMER_AMOUNT>, // Number of seconds the timer should run
+            "label": "Feed The Dog!", // Label for the timer
+            "on_complete": {} // Optioanl PiHome Event triggered when the timer is complete
+    }
+}
+```
+
+Task 
+Schedules a new task with the task manager.  See Tasks Section for more information on how Tasks and the TaskManager work.
+```json
+{
+    "webhook": {
+        "type": "task",
+        "name": "Water the plants!", // Name will be displayed in the task screen
+        "description": "Don't forget to water the plants!  They're thirsty too", // Description will be displayed in the task screen
+        "start_time": "02/23/2024 7:00", // When should the task be displayed on the screen?  This an be a date in MM/DD/YYYY HH:MM format or a delta in the format of delta:<hours> hours, delta:<days> days, etc
+        "priority": 1, // What is the priority of the task?  1 is the lowest, 3 is the highest.  Higher priority tasks will play more annoying sounds
+        "repeat_days": 1, // How frequently the task should repeat.  0 for no repeat.  Upon execution, a new task will be created next time the task is due
+        "background_image": <URL>, // Optional image url, leave this out if you don't want an image background
+        "on_confirm": {}, // Optional PiHome Event When the Confirm Button is Pressed
+        "on_cancel": {} // Optional PiHome Event When the Cancel Button is Pressed
+    }
 }
 ```
