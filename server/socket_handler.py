@@ -103,12 +103,12 @@ class SocketHandler():
                     "current": PIHOME_SCREEN_MANAGER.current_screen.name,
                     "screens": list(map(lambda n: {
                         n: {
-                            "label": get_app().screens[n].label,
-                            "requires_pin": get_app().screens[n].requires_pin,
-                            "hidden": get_app().screens[n].is_hidden,
-                            "icon": get_app().screens[n].icon
+                            "label": PIHOME_SCREEN_MANAGER.loaded_screens[n].label,
+                            "requires_pin": PIHOME_SCREEN_MANAGER.loaded_screens[n].requires_pin,
+                            "hidden": PIHOME_SCREEN_MANAGER.loaded_screens[n].is_hidden,
+                            "icon": PIHOME_SCREEN_MANAGER.loaded_screens[n].icon
                         }
-                    }, get_app().screens))
+                    }, PIHOME_SCREEN_MANAGER.loaded_screens))
                 }
             }
             await socket.send(json.dumps(status))
