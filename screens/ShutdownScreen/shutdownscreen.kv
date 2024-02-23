@@ -10,10 +10,17 @@
         orientation: 'vertical'
         size_hint: 1, 1
         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        padding: dp(40)
+        Image:
+            source: 'assets/images/pihome_logo_white.png'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            size_hint: 0.2, 0.2
+            allow_stretch: True
+            keep_ratio: False
         Label:
-            text: 'Pihome'
+            text: 'PiHome'
             color: root.text_color
-            font_size: '72sp'
+            font_size: '60sp'
             font_name: 'Nunito'
             size_hint: 1, 0.2
         Label:
