@@ -5,9 +5,10 @@ from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, T
 
 
 class TaskEvent(PihomeEvent):
+    type = "task"
+    
     def __init__(self, name, description, start_time, priority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, **kwargs):
         super().__init__()
-        self.type = "task"
         self.cacheable = True
         self.name = name
         self.description = description

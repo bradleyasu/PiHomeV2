@@ -4,9 +4,9 @@ from events.pihomeevent import PihomeEvent
 
 
 class TimerEvent(PihomeEvent):
+    type = "timer"
     def __init__(self, label, duration, on_complete = None, **kwargs):
         super().__init__()
-        self.type = "timer"
         self.label = label
         self.duration = duration
         self.on_complete = on_complete

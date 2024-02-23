@@ -8,10 +8,10 @@ class AckTaskEvent(PihomeEvent):
     """
     The AckTask Event will acknowledge any active task/In Progress task in the task manager
     """
+    type = "acktask"
 
     def __init__(self, confirm = True, **kwargs):
         super().__init__()
-        self.type = "acktask"
         self.confirm = confirm
 
     def execute(self):

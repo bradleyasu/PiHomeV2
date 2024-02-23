@@ -7,9 +7,9 @@ from util.const import _DISPLAY_SCREEN
 
 
 class DisplayEvent(PihomeEvent):
+    type = "display"
     def __init__(self, title, message, image, background = None, timeout = None, **kwargs):
         super().__init__()
-        self.type = "display"
         self.title = title
         self.message = message
         self.image = image

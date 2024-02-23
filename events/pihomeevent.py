@@ -1,25 +1,16 @@
 
-class PihomeEventType():
-    COMMAND = "command"
-    TIMER = "timer"
-    APP = "app"
-    IMAGE = "image"
-    TOAST = "toast"
-    TASK = "task"
-    DISPLAY = "display"
-    ALERT = "alert"
-    TASK = "task"
-    ACKTASK = "acktask"
-
-
+import importlib
+import inspect
 import json
+import os
 
 from util.phlog import PIHOME_LOGGER
 
 
 class PihomeEvent():
+    type = "event"
     def __init__(self):
-        self.type = None
+        pass
 
     def execute(self):
         print("Event Not Implemented")
@@ -41,27 +32,8 @@ class PihomeEvent():
 class PihomeEventFactory():
     @staticmethod
     def create_event(event_type, **kwargs):
-        from events.appevent import AppEvent
-        from events.imageevent import ImageEvent
-        from events.timerevent import TimerEvent
-        from events.commandevent import CommandEvent
-        from events.toastevent import ToastEvent
-        from events.displayevent import DisplayEvent
-        from events.alertevent import AlertEvent
-        from events.taskevent import TaskEvent
-        from events.acktaskevent import AckTaskEvent
-
-        event_objects = {
-            PihomeEventType.APP: AppEvent,
-            PihomeEventType.IMAGE: ImageEvent,
-            PihomeEventType.TIMER: TimerEvent,
-            PihomeEventType.COMMAND: CommandEvent,
-            PihomeEventType.TOAST: ToastEvent,
-            PihomeEventType.DISPLAY: DisplayEvent,
-            PihomeEventType.ALERT: AlertEvent,
-            PihomeEventType.TASK: TaskEvent,
-            PihomeEventType.ACKTASK: AckTaskEvent
-        }
+        event_objects = PihomeEventFactory._load_event_objects()
+        
         try:
             event = event_objects[event_type]
             if event is None:
@@ -74,6 +46,30 @@ class PihomeEventFactory():
             PIHOME_LOGGER.error(e)
             from events.alertevent import AlertEvent
             return AlertEvent("Error", "{}".format(e), 20, 0)
+
+    def _load_event_objects():
+        """
+        This function will read all the events in this directory and load them into the event_objects dictionary.
+        """
+        events_dir = "./events/"
+        event_objects = {}
+        for root, dirs, files in os.walk(events_dir):
+            for file in files:
+                if file.endswith(".py") and file != "__init__.py" and file != "pihomeevent.py":
+                    directory = os.path.dirname(os.path.abspath(__file__))
+                    module_name = os.path.splitext(file)[0]
+                    module_path = os.path.join(directory, file)
+
+                    spec = importlib.util.spec_from_file_location(module_name, module_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+
+                    for _, obj in inspect.getmembers(module):
+                        if inspect.isclass(obj):
+                            class_name = getattr(obj, "type", None)
+                            if class_name is not None and class_name != "event" and class_name != "PihomeEvent":
+                                event_objects[class_name] = obj
+        return event_objects
 
     def create_event_from_dict(event_dict):
         return PihomeEventFactory.create_event(event_dict["type"], **event_dict)

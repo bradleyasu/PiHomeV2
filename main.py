@@ -151,8 +151,6 @@ class PiHome(App):
         self.layout.size_hint = (1,1)
         self.layout.pos = (0,0)
 
-        self.layout.add_widget(self.background_color)
-        self.layout.add_widget(self.background)
 
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
@@ -162,6 +160,9 @@ class PiHome(App):
         self.menu_button.pos = (dp(10), dp(400))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
+        # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
+        self.layout.add_widget(self.background_color)
+        self.layout.add_widget(self.background)
         # Add primary screen manager
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
