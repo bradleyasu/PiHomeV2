@@ -41,6 +41,11 @@ class PiHomeScreenManager(ScreenManager):
             screen.on_config_update(payload)
 
     def goto(self, screen_name, pin_verified = False):
+        # make sure screen isn't locked
+        if self.current_screen.locked:
+            PIHOME_LOGGER.info("Screen is locked, cannot change screens.")
+            return
+
         if self.transition.direction == "up":
             self.transition.direction = "down"
         else:

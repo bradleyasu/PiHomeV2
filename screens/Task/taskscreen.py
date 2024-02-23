@@ -26,6 +26,7 @@ class TaskScreen(PiHomeScreen):
         super(TaskScreen, self).__init__(**kwargs)
 
     def set_task(self, task):
+        self.locked = True
         PIHOME_LOGGER.info("Task Screen Set Task To: {} with priority of {}".format(task.name, task.priority))
         self.task = task
         from services.taskmanager.taskmanager import TaskPriority
@@ -72,11 +73,13 @@ class TaskScreen(PiHomeScreen):
 
 
     def confirm(self):
+        self.locked = False
         if self.on_confirm is not None:
             self.on_confirm.execute()
         self.mark_task_as_completed()
 
     def cancel(self):
+        self.locked = False
         if self.on_cancel is not None:
             self.on_cancel.execute()
         # TODO Create new TaskStatus for canceled ? 

@@ -18,6 +18,9 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
         self.is_open = False
 
+        # Locked screens can't be navigated away from.  Logic with in the screen implementation can take advantage of this
+        self.locked = False
+
     def on_pre_leave(self, *args):
         self.manager.last_screen = self.name
         self.is_open = False

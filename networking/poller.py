@@ -20,10 +20,13 @@ class Poller:
         # check if registered calls has items()
         if not self.registered_calls or len(self.registered_calls) == 0:
             return
-        for k,v in self.registered_calls.items():
-            if self.tick % int(v["interval"]) == 0:
-                # info("[ {} ] Poller triggering {}".format(k, v["url"]))
-                self.api_call(v["url"], v["on_resp"])
+        try:
+            for k,v in self.registered_calls.items():
+                if self.tick % int(v["interval"]) == 0:
+                    # info("[ {} ] Poller triggering {}".format(k, v["url"]))
+                    self.api_call(v["url"], v["on_resp"])
+        except Exception as e:
+            PIHOME_LOGGER.error("An error occurred while polling the api. {}".format(e))
 
     def register_api(self, url, interval, on_resp):
         phash = random_hash()
