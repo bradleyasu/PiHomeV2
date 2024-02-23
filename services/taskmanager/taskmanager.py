@@ -66,16 +66,24 @@ class TaskManager():
         if file_path is None:
             file_path = self.task_store
         tasks = self.tasks
+
         # remove any task that isn't pending
         tasks = [task for task in tasks if task.status == TaskStatus.PENDING]
+
+        # remove any task that is not cacheable
+        tasks = [task for task in tasks if task.cacheable == True]
+
         # reset any task that is not completed to pending
         for task in tasks:
             if task.status != TaskStatus.COMPLETED:
                 task.status = TaskStatus.PENDING
-        # remove any task that is not cacheable
-        tasks = [task for task in tasks if task.cacheable]
+            PIHOME_LOGGER.info("Serialized Task: {}, Cacheable is ".format(task.name, task.cacheable))
+
+
         with open(file_path, 'wb') as file:
             pickle.dump(tasks, file)
+        
+        PIHOME_LOGGER.info("Serialized {} tasks".format(len(tasks)))
 
     def deserialize_tasks(self, file_path = None):
         if file_path is None:
@@ -176,6 +184,7 @@ class Task():
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
         self.background_image = background_image
+        self.cacheable = True
 
     def __str__(self):
         return f"Task: {self.name} - {self.description} - {self.duration} - {self.start_time} - {self.end_time} - {self.status} - {self.priority}"
