@@ -5,5 +5,6 @@
     "label": "Lofi",
     "description": "",
     "hidden": false,
+    "disabled": true,
     "requires_pin": false
 }
