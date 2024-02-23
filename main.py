@@ -144,28 +144,32 @@ class PiHome(App):
         """
         Window.size = (self.width, self.height)
         self.screens = {
-            _HOME_SCREEN: HomeScreen(name = _HOME_SCREEN, label = "Home"),
-            _MUSIC_SCREEN: MusicPlayer(name = _MUSIC_SCREEN, label = "Music"),
-            _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
-            _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = False, requires_pin = True),
-            _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
-            _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
-            _TIMERS_SCREEN: TimerScreen(name = _TIMERS_SCREEN, label="Timers"),
-            _TASK_SCREEN: TaskScreen(name = _TASK_SCREEN, label="Task", is_hidden = True),
-            'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
-            'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
-            'command_center': CommandCenterScreen(name = 'command_center', label="Command Center"),
-            "lofi": LofiScreen(name = "lofi", label="Lofi Radio"),
-            "pihole": PiHoleScreen(name = "pihole", label="PiHole"),
-            'white_board': WhiteBoard(name = 'white_board', label="White Board"),
-            'nye': NewYearsEveScreen(name="nye", label="NYE", is_hidden=False, requires_pin=False)
+            # _HOME_SCREEN: HomeScreen(name = _HOME_SCREEN, label = "Home"),
+            # _MUSIC_SCREEN: MusicPlayer(name = _MUSIC_SCREEN, label = "Music"),
+            # _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
+            # _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = False, requires_pin = True),
+            # _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
+            # _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
+            # _TIMERS_SCREEN: TimerScreen(name = _TIMERS_SCREEN, label="Timers"),
+            # _TASK_SCREEN: TaskScreen(name = _TASK_SCREEN, label="Task", is_hidden = True),
+            # 'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
+            # 'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
+            # 'command_center': CommandCenterScreen(name = 'command_center', label="Command Center"),
+            # "lofi": LofiScreen(name = "lofi", label="Lofi Radio"),
+            # "pihole": PiHoleScreen(name = "pihole", label="PiHole"),
+            # 'white_board': WhiteBoard(name = 'white_board', label="White Board"),
+            # 'nye': NewYearsEveScreen(name="nye", label="NYE", is_hidden=False, requires_pin=False)
         }
 
 
-        # Startup TaskManager
-        TASK_MANAGER.start(self.screens[_TASK_SCREEN])
+        PIHOME_SCREEN_MANAGER.load_screens()
 
-        self.appmenu = AppMenu(self.screens)
+        # Startup TaskManager
+        TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
+        # TASK_MANAGER.start(self.screens[_TASK_SCREEN])
+
+        # self.appmenu = AppMenu(self.screens)
+        self.appmenu = AppMenu(PIHOME_SCREEN_MANAGER.loaded_screens)
         self.appmenu.show_apps()
         self.appmenu.hide()
 
@@ -189,8 +193,8 @@ class PiHome(App):
         # screenManager = PiHomeScreenManager(transition=SlideTransition(direction="down"))
 
         # Add Registered Screens to screenmanager 
-        for screen in self.screens.values():
-            PIHOME_SCREEN_MANAGER.add_widget(screen)
+        # for screen in self.screens.values():
+            # PIHOME_SCREEN_MANAGER.add_widget(screen)
 
         # Add primary screen manager
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
@@ -211,7 +215,7 @@ class PiHome(App):
         self.layout.add_widget(self.appmenu, index=1)
 
         return self.layout
-
+    
     def reload_configuration(self):
         PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
         # CONFIG = Configuration(CONF_FILE)

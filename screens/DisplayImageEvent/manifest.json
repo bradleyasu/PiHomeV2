@@ -1,0 +1,9 @@
+{
+    "module": "DisplayImageEvent.displayimageevent",
+    "name": "DisplayImageEvent",
+    "id": "_display_image",
+    "label": "",
+    "description": "",
+    "hidden": true,
+    "requires_pin": false
+}

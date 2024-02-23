@@ -1,0 +1,9 @@
+{
+    "module": "Task.taskscreen",
+    "name": "TaskScreen",
+    "id": "_task",
+    "label": "Tasks",
+    "description": "TaskManager Task Prompt",
+    "hidden": true,
+    "requires_pin": false
+}

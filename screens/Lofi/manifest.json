@@ -1,0 +1,9 @@
+{
+    "module": "Lofi.lofi",
+    "name": "LofiScreen",
+    "id": "lofi",
+    "label": "Lofi",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}

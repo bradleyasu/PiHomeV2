@@ -1,0 +1,9 @@
+{
+    "module": "Settings.settings",
+    "name": "SettingsScreen",
+    "id": "_settings",
+    "label": "Settings",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}

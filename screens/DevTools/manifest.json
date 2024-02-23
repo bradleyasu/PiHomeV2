@@ -1,0 +1,9 @@
+{
+    "module": "DevTools.devtools",
+    "name": "DevTools",
+    "id": "_devtools",
+    "label": "Dev Tools",
+    "description": "Access Dev Tools",
+    "hidden": false,
+    "requires_pin": false
+}

@@ -1,0 +1,9 @@
+{
+    "module": "Timers.TimerScreen",
+    "name": "TimerScreen",
+    "id": "_timers",
+    "label": "",
+    "description": "",
+    "hidden": true,
+    "requires_pin": false
+}

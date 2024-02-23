@@ -1,0 +1,9 @@
+{
+    "module": "DisplayEvent.displayevent",
+    "name": "DisplayEvent",
+    "id": "_display",
+    "label": "",
+    "description": "",
+    "hidden": true,
+    "requires_pin": false
+}

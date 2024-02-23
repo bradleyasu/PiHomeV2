@@ -1,0 +1,9 @@
+{
+    "module": "Bus.bus",
+    "name": "BusScreen",
+    "id": "bus",
+    "label": "Bus Dynamic",
+    "description": "Bus",
+    "hidden": false,
+    "requires_pin": false
+}

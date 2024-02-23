@@ -1,0 +1,10 @@
+{
+    "index": 0,
+    "module": "Home.home",
+    "name": "HomeScreen",
+    "id": "_home",
+    "label": "PiHome",
+    "description": "PiHome Home Screen",
+    "hidden": false,
+    "requires_pin": false
+}

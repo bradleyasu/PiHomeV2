@@ -1,0 +1,9 @@
+{
+    "module": "SnowCast.snowcast",
+    "name": "SnowCast",
+    "id": "snowcast",
+    "label": "Snow Cast",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}

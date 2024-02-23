@@ -46,7 +46,7 @@ class SettingsScreen(PiHomeScreen):
         def on_close():
             # get_app().manager.current = get_app().manager.previous()
             # get_app().manager.current = _HOME_SCREEN
-            goto_screen(_HOME_SCREEN)
+            self.go_back()
             # toast(label="PiHome needs to be restarted for new settings to take effect")
 
         s.on_close = on_close

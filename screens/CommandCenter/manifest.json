@@ -1,0 +1,9 @@
+{
+    "module": "CommandCenter.commandcenter",
+    "name": "CommandCenterScreen",
+    "id": "command_center",
+    "label": "Command Center",
+    "description": "Run Commands",
+    "hidden": false,
+    "requires_pin": false
+}

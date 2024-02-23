@@ -7,6 +7,7 @@ from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage
 from composites.AppMenu.appicon import AppIcon
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from theme.color import Color
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
@@ -48,7 +49,7 @@ class AppMenu(Widget):
         if self.disabled:
             return
         get_app().set_app_menu_open(False)
-        goto_screen(key)
+        PIHOME_SCREEN_MANAGER.goto(key)
 
     def hide(self):
         self.opacity = 0

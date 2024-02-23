@@ -1,0 +1,9 @@
+{
+    "module": "PiHole.pihole",
+    "name": "PiHoleScreen",
+    "id": "pihole",
+    "label": "Pi Hole",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}

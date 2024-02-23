@@ -1,0 +1,9 @@
+{
+    "module": "NewYearsEve.newyearseve",
+    "name": "NewYearsEveScreen",
+    "id": "nye",
+    "label": "New Years!",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}

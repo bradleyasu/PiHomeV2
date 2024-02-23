@@ -1,0 +1,9 @@
+{
+    "module": "Music.musicplayer",
+    "name": "MusicPlayer",
+    "id": "_music",
+    "label": "Music Player",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}
