@@ -18,6 +18,7 @@ from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
 from services.audio.sfx import SFX
 from services.weather.weather import WEATHER
@@ -25,7 +26,7 @@ from system.brightness import get_brightness, set_brightness
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, audio_player, get_app, goto_screen
+from util.helpers import appmenu_open, audio_player, get_app
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -75,7 +76,7 @@ class HomeScreen(PiHomeScreen):
 
     def open_settings(self):
         # self.manager.current = 'settings'
-        goto_screen(_SETTINGS_SCREEN)
+        PIHOME_SCREEN_MANAGER.goto(_SETTINGS_SCREEN)
 
     def open_pin(self):
         self.manager.current = 'pin'

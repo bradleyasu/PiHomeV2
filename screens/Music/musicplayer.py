@@ -25,7 +25,7 @@ from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, audio_player, get_app, goto_screen, local_ip
+from util.helpers import appmenu_open, audio_player, local_ip
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation

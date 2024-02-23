@@ -10,7 +10,6 @@ from composites.PinPad.pinpad import PinPad
 
 from interface.pihomescreen import PiHomeScreen
 from util.const import _HOME_SCREEN, CONF_FILE
-from util.helpers import get_app, goto_screen, toast
 Builder.load_file("./screens/Settings/settings.kv")
 
 class SettingsScreen(PiHomeScreen):

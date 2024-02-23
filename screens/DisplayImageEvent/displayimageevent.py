@@ -1,7 +1,7 @@
 from kivy.lang import Builder
 from interface.pihomescreen import PiHomeScreen
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from services.audio.sfx import SFX
-from util.helpers import goto_screen
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.properties import ColorProperty, StringProperty, NumericProperty
@@ -16,7 +16,7 @@ class DisplayImageEvent(PiHomeScreen):
         super(DisplayImageEvent, self).__init__(**kwargs)
 
     def set_timeout(self, seconds, screen):
-        Clock.schedule_once(lambda _: goto_screen(screen), int(seconds))
+        Clock.schedule_once(lambda _: PIHOME_SCREEN_MANAGER.goto(screen), int(seconds))
     
     def on_leave(self, *args):
         self.image = ""

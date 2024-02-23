@@ -66,7 +66,7 @@ from screens.SnowCast.snowcast import SnowCast
 from util.configuration import CONFIG, Configuration
 from kivy.core.window import Window
 from kivy.uix.screenmanager import SlideTransition
-from util.helpers import get_app, goto_screen, simplegesture
+from util.helpers import get_app, simplegesture
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock

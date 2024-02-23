@@ -4,6 +4,7 @@ import json
 import socketserver
 import time
 from events.pihomeevent import PihomeEventFactory
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from server.socket_handler import SocketHandler
 import websockets
 import asyncio
@@ -11,7 +12,7 @@ from threading import Thread
 from services.wallpaper.wallpaper import Wallpaper
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
-from util.helpers import audio_player, get_app, goto_screen, process_webhook, toast
+from util.helpers import audio_player, get_app, process_webhook, toast
 from util.phlog import PIHOME_LOGGER
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -80,9 +81,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "play" in payload:
                 url = payload["play"]
                 audio_player().play(url)
-                goto_screen(_MUSIC_SCREEN)
+                PIHOME_SCREEN_MANAGER.goto(_MUSIC_SCREEN)
             if "app" in payload:
-                goto_screen(payload["app"])
+                PIHOME_SCREEN_MANAGER.goto(payload["app"])
             if "webhook" in payload:
                 event = PihomeEventFactory.create_event_from_dict(payload["webhook"])
                 response = event.execute()

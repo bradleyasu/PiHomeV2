@@ -22,7 +22,7 @@ from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
 from util.const import SERVER_PORT
-from util.helpers import appmenu_open, audio_player, get_app, goto_screen, update_pihome
+from util.helpers import appmenu_open, audio_player, update_pihome
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation

@@ -17,7 +17,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
-from util.helpers import get_app, goto_screen
+from util.helpers import get_app
 from util.tools import hex
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button

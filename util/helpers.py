@@ -14,9 +14,6 @@ from util.phlog import PIHOME_LOGGER
 def get_app():
     return App.get_running_app()
 
-def goto_screen(screen):
-    get_app().goto_screen(screen, True)
-
 
 def appmenu_open(open = True):
     get_app().set_app_menu_open(open)

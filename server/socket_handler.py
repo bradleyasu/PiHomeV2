@@ -2,9 +2,10 @@
 
 import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from services.weather.weather import WEATHER
 from util.const import _MUSIC_SCREEN
-from util.helpers import audio_player, get_app, goto_screen
+from util.helpers import audio_player, get_app
 from util.tools import execute_command
 
 
@@ -26,7 +27,7 @@ class SocketHandler():
             get_app().wallpaper_service.shuffle()
 
         if message["type"] == "screen":
-            goto_screen(message["screen"])
+            PIHOME_SCREEN_MANAGER.goto(message["screen"])
 
         if message["type"] == "timer":
             TIMER_DRAWER.create_timer(message["duration"], message["label"])
@@ -35,7 +36,7 @@ class SocketHandler():
             # check if play_url key exists
             if "play_url" in message:
                 audio_player().play(message["play_url"])
-                goto_screen(_MUSIC_SCREEN)
+                PIHOME_SCREEN_MANAGER.goto(_MUSIC_SCREEN)
             if "volume" in message:
                 audio_player().set_volume(message["volume"])
             if "stop" in message:
