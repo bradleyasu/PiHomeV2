@@ -3,6 +3,7 @@
 import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+from services.taskmanager.taskmanager import TASK_MANAGER
 from services.weather.weather import WEATHER
 from util.const import _MUSIC_SCREEN
 from util.helpers import audio_player, get_app
@@ -109,6 +110,7 @@ class SocketHandler():
                             "icon": PIHOME_SCREEN_MANAGER.loaded_screens[n].icon
                         }
                     }, PIHOME_SCREEN_MANAGER.loaded_screens))
-                }
+                },
+                "tasks": TASK_MANAGER.tasks_to_json()
             }
             await socket.send(json.dumps(status))

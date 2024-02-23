@@ -1,6 +1,7 @@
 import atexit
 from datetime import datetime, timedelta
 from enum import Enum
+import json
 import os
 import pickle
 from threading import Thread
@@ -164,6 +165,20 @@ class TaskManager():
         if os.path.exists(self.task_store):
             os.remove(self.task_store)
             PIHOME_LOGGER.info(f"Deleted task cache: {self.task_store}")
+
+    def tasks_to_json(self):
+        json_tasks = []
+        for task in self.tasks:
+            start_time_str = task.start_time.strftime("%Y-%m-%d %H:%M:%S")
+            json_tasks.append({
+                "id": task.id,
+                "name": task.name,
+                "description": task.description,
+                "start_time": start_time_str,
+                "status": task.status.name,
+                "priority": task.priority.name
+            })
+        return json_tasks
 
 class Task():
     """
