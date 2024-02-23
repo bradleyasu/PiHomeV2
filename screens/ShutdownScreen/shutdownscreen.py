@@ -19,4 +19,4 @@ class ShutdownScreen(PiHomeScreen):
         # Prevent changing screen
         PIHOME_LOGGER.warning("Shutdown screen entered and locked.  System will restart in 5 seconds.")
         self.locked = True
-        # Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 5)
+        Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 5)
