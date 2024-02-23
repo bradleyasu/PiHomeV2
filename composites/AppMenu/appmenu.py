@@ -51,6 +51,7 @@ class AppMenu(Widget):
         get_app().set_app_menu_open(False)
         PIHOME_SCREEN_MANAGER.goto(key)
 
+
     def hide(self):
         self.opacity = 0
         # disable touch events

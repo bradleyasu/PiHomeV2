@@ -124,7 +124,6 @@ class PiHome(App):
         self.is_running = True
         # Create the Screenmanager
 
-
     def init_services(self):
         #Init Weather Services
         self.wallpaper_service = Wallpaper()
@@ -132,38 +131,17 @@ class PiHome(App):
         # Init Audio Player
         self.audio_player = AudioPlayer()
 
-
-
     def setup(self):
         """
         Setup default windowing positions and initialize 
         application Screens
         """
         Window.size = (self.width, self.height)
-        self.screens = {
-            # _HOME_SCREEN: HomeScreen(name = _HOME_SCREEN, label = "Home"),
-            # _MUSIC_SCREEN: MusicPlayer(name = _MUSIC_SCREEN, label = "Music"),
-            # _SETTINGS_SCREEN: SettingsScreen(name = _SETTINGS_SCREEN, requires_pin = True, label = "Settings", callback=lambda: self.reload_configuration()),
-            # _DEVTOOLS_SCREEN: DevTools(name = _DEVTOOLS_SCREEN, label="Dev Tools", is_hidden = False, requires_pin = True),
-            # _DISPLAY_SCREEN: DisplayEvent(name = _DISPLAY_SCREEN, label="Display Event", is_hidden = True),
-            # _DISPLAY_IMAGE_SCREEN: DisplayImageEvent(name = _DISPLAY_IMAGE_SCREEN, label="Display Image Event", is_hidden = True),
-            # _TIMERS_SCREEN: TimerScreen(name = _TIMERS_SCREEN, label="Timers"),
-            # _TASK_SCREEN: TaskScreen(name = _TASK_SCREEN, label="Task", is_hidden = True),
-            # 'bus': BusScreen(name = 'bus', label="PGH Regional Transit"),
-            # 'snowcast': SnowCast(name = 'snowcast', label="Ski Report"),
-            # 'command_center': CommandCenterScreen(name = 'command_center', label="Command Center"),
-            # "lofi": LofiScreen(name = "lofi", label="Lofi Radio"),
-            # "pihole": PiHoleScreen(name = "pihole", label="PiHole"),
-            # 'white_board': WhiteBoard(name = 'white_board', label="White Board"),
-            # 'nye': NewYearsEveScreen(name="nye", label="NYE", is_hidden=False, requires_pin=False)
-        }
-
 
         PIHOME_SCREEN_MANAGER.load_screens()
 
         # Startup TaskManager
         TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
-        # TASK_MANAGER.start(self.screens[_TASK_SCREEN])
 
         # self.appmenu = AppMenu(self.screens)
         self.appmenu = AppMenu(PIHOME_SCREEN_MANAGER.loaded_screens)
@@ -187,15 +165,8 @@ class PiHome(App):
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
 
-        # screenManager = PiHomeScreenManager(transition=SlideTransition(direction="down"))
-
-        # Add Registered Screens to screenmanager 
-        # for screen in self.screens.values():
-            # PIHOME_SCREEN_MANAGER.add_widget(screen)
-
         # Add primary screen manager
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
-        self.manager = PIHOME_SCREEN_MANAGER 
         self.layout.bind(on_touch_down=lambda _, touch:self.on_touch_down(touch))
         self.layout.bind(on_touch_up=lambda _, touch:self.on_touch_up(touch))
         self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
@@ -217,7 +188,7 @@ class PiHome(App):
         PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
         # CONFIG = Configuration(CONF_FILE)
         self.wallpaper_service.restart()
-        self.manager.reload_all(CONFIG)
+        PIHOME_SCREEN_MANAGER.reload_all(CONFIG)
         PIHOME_LOGGER.info("Confgiuration changes have been applied!")
 
     def restart(self):
@@ -384,14 +355,7 @@ class PiHome(App):
         port = CONFIG.get_int('mqtt', 'port', 8883)
         if u != "" and h != "" and p != "":
             self.mqtt = MQTT(host=h, port=port, feed = f, user=u, password=p)
-            # self.mqtt.add_listener(type = "app", callback = lambda payload: Clock.schedule_once(lambda _: goto_screen(payload["key"]), 0))
-            # self.mqtt.add_listener(type = "display", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_event(payload), 0))
-            # self.mqtt.add_listener(type = "image", callback = lambda payload: Clock.schedule_once(lambda _: self._handle_display_image_event(payload), 0))
-            # self.mqtt.add_listener(type = "command", callback = lambda payload: self._handle_command_event(payload))
-            # self.mqtt.add_listener(type = "toast", callback = lambda payload: Clock.schedule_once(lambda _: self.show_toast(payload["message"], payload["level"], payload["timeout"]), 0))
-            # self.mqtt.add_listener(type = "timer", callback = lambda payload: TIMER_DRAWER.create_timer(payload["duration"], payload["label"]))
  
-
 
     def on_stop(self):
         SERVER.stop_server()
