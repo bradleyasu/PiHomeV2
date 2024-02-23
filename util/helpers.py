@@ -36,9 +36,9 @@ def update_pihome():
     Notify user of update, pull latest, and restart
     """
     # SERVER.stop_server()
-    toast("PiHome updates are available. PiHome will restart in less than 30 seconds", level = "warn", timeout = 30)
+    toast("PiHome updates are available. PiHome will restart in less than 5 seconds", level = "warn", timeout = 5)
     # TIMER_DRAWER.create_timer(30, "Restarting PiHome")
-    Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 32)
+    Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 5)
 
 
 def audio_player():

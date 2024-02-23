@@ -26,13 +26,14 @@ class TaskScreen(PiHomeScreen):
         super(TaskScreen, self).__init__(**kwargs)
 
     def set_task(self, task):
+        PIHOME_LOGGER.info("Task Screen Set Task To: {} with priority of {}".format(task.name, task.priority))
         self.task = task
         from services.taskmanager.taskmanager import TaskPriority
         self.title = task.name
         self.description = task.description
         if task.priority == TaskPriority.LOW:
             self.background = Theme().get_color(Theme().ALERT_INFO, 0.8)
-            self.sfx = SFX.play("notify")
+            # self.sfx = SFX.play("notify")
         elif task.priority == TaskPriority.MEDIUM:
             self.background = Theme().get_color(Theme().ALERT_WARNING, 0.8)
             self.sfx = SFX.play("alert")
@@ -69,20 +70,17 @@ class TaskScreen(PiHomeScreen):
             self.sfx.stop()
         return super().on_leave(*args)
 
+
     def confirm(self):
         if self.on_confirm is not None:
             self.on_confirm.execute()
-        self.go_back()
-        
-        # self.mark_task_as_completed()
+        self.mark_task_as_completed()
 
     def cancel(self):
         if self.on_cancel is not None:
             self.on_cancel.execute()
-        self.go_back()
-
         # TODO Create new TaskStatus for canceled ? 
-        # self.mark_task_as_completed()
+        self.mark_task_as_completed()
 
     def mark_task_as_completed(self):
         from services.taskmanager.taskmanager import TaskStatus

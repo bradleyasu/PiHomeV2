@@ -70,7 +70,14 @@ class TaskManager():
         with open(file_path, 'rb') as file:
             self.tasks = pickle.load(file)
 
+    def reset_non_completed_tasks(self):
+        for task in self.tasks:
+            if task.status != TaskStatus.COMPLETED:
+                task.status = TaskStatus.PENDING
+
     def serialize_pending_tasks(self):
+        # If anything is not completed, reset it to pending status
+        self.reset_non_completed_tasks()
         # remove any tasks that are not pending
         self.tasks = [task for task in self.tasks if task.status == TaskStatus.PENDING]
         self.serialize_tasks(self.task_store)
@@ -176,7 +183,7 @@ class Task():
         self.schedule_next()
         #### TODO SHOULD CUSTOM "EVENT" objects be passed instead of functions? #### 
         # Thread(target=lambda _: self.task_function(self, self.on_confirm, self.on_cancel), daemon=True).start()
-        self.status = TaskStatus.COMPLETED
+        # self.status = TaskStatus.COMPLETED
     
     def schedule_next(self):
         if self.repeat_days > 0:

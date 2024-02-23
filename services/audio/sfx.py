@@ -1,6 +1,8 @@
 import os
 from kivy.core.audio import SoundLoader
 
+from util.phlog import PIHOME_LOGGER
+
 class PihomeSfx:
     path = "assets/audio/sfx/"
     SOURCES = {}
@@ -17,19 +19,24 @@ class PihomeSfx:
             self.SOUND_EFFECTS[key] = SoundLoader.load(value)
 
     def play(self, key):
+        PIHOME_LOGGER.info("Playing sound effect: {}".format(key))
         if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
             self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].loop = False
             self.SOUND_EFFECTS[key].play()
             self.SOUND_EFFECTS[key].seek(0)
+            self.SOUND_EFFECTS[key].bind(on_stop=lambda _: self.SOUND_EFFECTS[key].unload())
             return self.SOUND_EFFECTS[key]
         return None
 
     def loop(self, key):
+        PIHOME_LOGGER.info("Looping sound effect: {}".format(key))
         if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
             self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].loop = True
             self.SOUND_EFFECTS[key].play()
+            self.SOUND_EFFECTS[key].seek(0)
+            self.SOUND_EFFECTS[key].bind(on_stop=lambda _: self.SOUND_EFFECTS[key].unload())
             return self.SOUND_EFFECTS[key]
         return None
 
