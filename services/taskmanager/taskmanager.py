@@ -62,29 +62,31 @@ class TaskManager():
         self.stop()
         self.start()
 
-    def serialize_tasks(self, file_path):
+    def serialize_tasks(self, file_path = None):
+        if file_path is None:
+            file_path = self.task_store
+        tasks = self.tasks
+        # remove any task that isn't pending
+        tasks = [task for task in tasks if task.status == TaskStatus.PENDING]
+        # reset any task that is not completed to pending
+        for task in tasks:
+            if task.status != TaskStatus.COMPLETED:
+                task.status = TaskStatus.PENDING
+        # remove any task that is not cacheable
+        tasks = [task for task in tasks if task.cacheable]
         with open(file_path, 'wb') as file:
-            pickle.dump(self.tasks, file)
+            pickle.dump(tasks, file)
 
-    def deserialize_tasks(self, file_path):
+    def deserialize_tasks(self, file_path = None):
+        if file_path is None:
+            file_path = self.task_store
         with open(file_path, 'rb') as file:
             self.tasks = pickle.load(file)
 
-    def reset_non_completed_tasks(self):
-        for task in self.tasks:
-            if task.status != TaskStatus.COMPLETED:
-                task.status = TaskStatus.PENDING
-
-    def serialize_pending_tasks(self):
-        # If anything is not completed, reset it to pending status
-        self.reset_non_completed_tasks()
-        # remove any tasks that are not pending
-        self.tasks = [task for task in self.tasks if task.status == TaskStatus.PENDING]
-        self.serialize_tasks(self.task_store)
     
     def serialize_tasks_on_exit(self):
         # remove any tasks that are not pending
-        self.serialize_pending_tasks()
+        self.serialize_tasks()
 
 
     def deserialize_tasks_on_start(self):
@@ -96,7 +98,7 @@ class TaskManager():
     def add_task(self, task):
         PIHOME_LOGGER.info(f"Adding Task: {task.name}")
         self.tasks.append(task)
-        self.serialize_pending_tasks()
+        self.serialize_tasks()
 
     def remove_task(self, task):
         PIHOME_LOGGER.info(f"Removing Task: {task.name}")
