@@ -9,10 +9,11 @@ from server.socket_handler import SocketHandler
 import websockets
 import asyncio
 from threading import Thread
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.wallpaper.wallpaper import Wallpaper
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
-from util.helpers import audio_player, get_app, process_webhook, toast
+from util.helpers import get_app, process_webhook, toast
 from util.phlog import PIHOME_LOGGER
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -72,15 +73,15 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             payload = json.loads(post_data.decode('utf-8'))
             # PIHOME_LOGGER.info("POST request: {} | {}".format(str(self.path), post_data.decode('utf-8')))
             if "stop" in payload:
-                audio_player().stop()
+                AUDIO_PLAYER.stop()
             if "clear_queue" in payload:
-                audio_player().clear_playlist()
+                AUDIO_PLAYER.clear_playlist()
             if "volume" in payload: 
                 v = int(payload["volume"])
-                audio_player().set_volume(v)
+                AUDIO_PLAYER.set_volume(v)
             if "play" in payload:
                 url = payload["play"]
-                audio_player().play(url)
+                AUDIO_PLAYER.play(url)
                 PIHOME_SCREEN_MANAGER.goto(_MUSIC_SCREEN)
             if "app" in payload:
                 PIHOME_SCREEN_MANAGER.goto(payload["app"])

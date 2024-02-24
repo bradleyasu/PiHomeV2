@@ -127,9 +127,6 @@ class PiHome(App):
         #Init Weather Services
         self.wallpaper_service = Wallpaper()
 
-        # Init Audio Player
-        self.audio_player = AudioPlayer()
-
     def setup(self):
         """
         Setup default windowing positions and initialize 

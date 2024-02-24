@@ -21,11 +21,12 @@ from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from services.albumart.albumart import AlbumArtFactory
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, audio_player, local_ip
+from util.helpers import appmenu_open, local_ip
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -99,7 +100,7 @@ class MusicPlayer(PiHomeScreen):
 
     def toggle_play(self, widget, touch):
         if widget.collide_point(*touch.pos):
-            audio_player().toggle_play()
+            AUDIO_PLAYER.toggle_play()
             return False
 
     def toggle_qr(self, widget, touch):
@@ -109,12 +110,12 @@ class MusicPlayer(PiHomeScreen):
 
     def next(self, widget, touch):
         if widget.collide_point(*touch.pos):
-            audio_player().next()
+            AUDIO_PLAYER.next()
             return False
 
     def prev(self, widget, touch):
         if widget.collide_point(*touch.pos):
-            audio_player().prev()
+            AUDIO_PLAYER.prev()
             return False
 
 
@@ -137,12 +138,12 @@ class MusicPlayer(PiHomeScreen):
         return False
         
     def _run(self):
-        name_change = not (self.media_name == audio_player().title)
-        self.media_name = audio_player().title
-        self.percent = audio_player().percent
-        self.volume_level = audio_player().volume
-        self.queue = audio_player().queue
-        if audio_player().is_playing:
+        name_change = not (self.media_name == AUDIO_PLAYER.title)
+        self.media_name = AUDIO_PLAYER.title
+        self.percent = AUDIO_PLAYER.percent
+        self.volume_level = AUDIO_PLAYER.volume
+        self.queue = AUDIO_PLAYER.queue
+        if AUDIO_PLAYER.is_playing:
             self.play_control_btn = ICO_PAUSE
         else:
             self.play_control_btn = ICO_PLAY
@@ -155,9 +156,9 @@ class MusicPlayer(PiHomeScreen):
         try:
             if "results" in json and len(json["results"]) > 0:
                 self.album_art = json["results"][0]["cover_image"]
-                audio_player().album_art = self.album_art
+                AUDIO_PLAYER.album_art = self.album_art
             else:
                 self.album_art = ART
-                audio_player().album_art = ART
+                AUDIO_PLAYER.album_art = ART
         except Exception as e:
             print(e)

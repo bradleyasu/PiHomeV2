@@ -4,10 +4,11 @@ import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from events.pihomeevent import PihomeEventFactory
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from services.weather.weather import WEATHER
 from util.const import _MUSIC_SCREEN
-from util.helpers import audio_player, get_app
+from util.helpers import get_app
 from util.tools import execute_command
 
 
@@ -47,30 +48,30 @@ class SocketHandler():
         if message["type"] == "audio":
             # check if play_url key exists
             if "play_url" in message:
-                audio_player().play(message["play_url"])
+                AUDIO_PLAYER.play(message["play_url"])
                 PIHOME_SCREEN_MANAGER.goto(_MUSIC_SCREEN)
             if "volume" in message:
-                audio_player().set_volume(message["volume"])
+                AUDIO_PLAYER.set_volume(message["volume"])
             if "stop" in message:
-                audio_player().stop()
+                AUDIO_PLAYER.stop()
             if "next" in message:
-                audio_player().next()
+                AUDIO_PLAYER.next()
             if "prev" in message:
-                audio_player().prev()
+                AUDIO_PLAYER.prev()
             if "clear_queue" in message:
-                audio_player().clear_playlist()
+                AUDIO_PLAYER.clear_playlist()
             
             await socket.send(json.dumps({ 
                 "type": "audio",
-                "is_playing": get_app().audio_player.is_playing,
-                "is_paused": get_app().audio_player.is_paused,
-                "title": get_app().audio_player.title,
-                "percent": get_app().audio_player.percent,
-                "volume": get_app().audio_player.volume,
-                "playlist_pos": get_app().audio_player.playlist_pos,
-                "playlist_start": get_app().audio_player.playlist_start,
-                "queue": get_app().audio_player.queue,
-                "album_art": get_app().audio_player.album_art
+                "is_playing": AUDIO_PLAYER.is_playing,
+                "is_paused": AUDIO_PLAYER.is_paused,
+                "title": AUDIO_PLAYER.title,
+                "percent": AUDIO_PLAYER.percent,
+                "volume": AUDIO_PLAYER.volume,
+                "playlist_pos": AUDIO_PLAYER.playlist_pos,
+                "playlist_start": AUDIO_PLAYER.playlist_start,
+                "queue": AUDIO_PLAYER.queue,
+                "album_art": AUDIO_PLAYER.album_art
             }))
             
 
@@ -93,15 +94,15 @@ class SocketHandler():
                     "future": WEATHER.future
                 }, 
                 "audio": {
-                    "is_playing": get_app().audio_player.is_playing,
-                    "is_paused": get_app().audio_player.is_paused,
-                    "title": get_app().audio_player.title,
-                    "percent": get_app().audio_player.percent,
-                    "volume": get_app().audio_player.volume,
-                    "playlist_pos": get_app().audio_player.playlist_pos,
-                    "playlist_start": get_app().audio_player.playlist_start,
-                    "queue": get_app().audio_player.queue,
-                    "album_art": get_app().audio_player.album_art
+                    "is_playing": AUDIO_PLAYER.is_playing,
+                    "is_paused": AUDIO_PLAYER.is_paused,
+                    "title": AUDIO_PLAYER.title,
+                    "percent": AUDIO_PLAYER.percent,
+                    "volume": AUDIO_PLAYER.volume,
+                    "playlist_pos": AUDIO_PLAYER.playlist_pos,
+                    "playlist_start": AUDIO_PLAYER.playlist_start,
+                    "queue": AUDIO_PLAYER.queue,
+                    "album_art": AUDIO_PLAYER.album_art
                 },
                 "timers":
                     list(map(lambda t: {

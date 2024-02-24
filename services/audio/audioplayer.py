@@ -161,3 +161,7 @@ class AudioPlayer:
     def _set_playlist_pos(self, pos):
         if pos:
             self.playlist_pos = pos + self.playlist_start
+
+
+
+AUDIO_PLAYER = AudioPlayer()

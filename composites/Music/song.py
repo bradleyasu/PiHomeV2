@@ -1,6 +1,7 @@
 from kivy.lang import Builder
 from components.Image.networkimage import BLANK_IMAGE
 from interface.gesturewidget import GestureWidget
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
@@ -8,7 +9,6 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty, Bool
 from kivy.animation import Animation
 from kivy.clock import Clock
 from util.const import GESTURE_SWIPE_DOWN
-from util.helpers import audio_player
 
 Builder.load_file("./composites/Music/song.kv")
 
@@ -35,10 +35,10 @@ class Song(GestureWidget):
 
 
     def handle_click(self):
-        audio_player().playlist_play_index(self.index)
+        AUDIO_PLAYER.playlist_play_index(self.index)
     
     def _run(self):
-        if audio_player().playlist_pos == self.index:
+        if AUDIO_PLAYER.playlist_pos == self.index:
             self.active = True
         else:
             self.active = False

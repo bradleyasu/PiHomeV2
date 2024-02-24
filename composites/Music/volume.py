@@ -1,6 +1,7 @@
 from kivy.lang import Builder
 from components.Image.networkimage import BLANK_IMAGE
 from interface.gesturewidget import GestureWidget
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme
@@ -8,7 +9,6 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty, Bool
 from kivy.animation import Animation
 from kivy.clock import Clock
 from util.const import GESTURE_SWIPE_DOWN
-from util.helpers import audio_player
 from util.tools import hex
 
 Builder.load_file("./composites/Music/volume.kv")
@@ -34,7 +34,7 @@ class Volume(GestureWidget):
             height = (self.height)
             position = (touch.y - self.y)
             self.level = position/height * 100.0
-            audio_player().set_volume(self.level)
+            AUDIO_PLAYER.set_volume(self.level)
         return False
     
     def on_touch_down(self, touch):
@@ -47,4 +47,4 @@ class Volume(GestureWidget):
     
     def _run(self):
         if not self.touching:
-            self.level = audio_player().volume
+            self.level = AUDIO_PLAYER.volume

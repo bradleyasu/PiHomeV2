@@ -16,6 +16,7 @@ from composites.ControlPanel.controlpanel import CONTROL_PANEL
 from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from server.server import SERVER
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.qr.qr import QR
 from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, TaskStatus
 from system.brightness import set_brightness
@@ -23,7 +24,6 @@ from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
 from util.const import SERVER_PORT
-from util.helpers import appmenu_open, audio_player, update_pihome
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -127,10 +127,10 @@ class DevTools(PiHomeScreen):
         print(level)
 
     def play_sound(self):
-        audio_player().play("./assets/audio/notify/001.mp3")
+        AUDIO_PLAYER.play("./assets/audio/notify/001.mp3")
 
     def stop_sound(self):
-        audio_player().stop()
+        AUDIO_PLAYER.stop()
 
     def toggle_server(self):
         if SERVER.is_online():

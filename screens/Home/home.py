@@ -20,13 +20,14 @@ from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
+from services.audio.audioplayer import AUDIO_PLAYER
 from services.audio.sfx import SFX
 from services.weather.weather import WEATHER
 from system.brightness import get_brightness, set_brightness
 from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
-from util.helpers import appmenu_open, audio_player, get_app
+from util.helpers import appmenu_open, get_app
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -66,7 +67,7 @@ class HomeScreen(PiHomeScreen):
         if self.is_first_run is True:
             SFX.play("startup_2")
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
-            Clock.schedule_once(lambda _: audio_player().clear_playlist(), 20)
+            Clock.schedule_once(lambda _: AUDIO_PLAYER.clear_playlist(), 20)
             self.is_first_run = False
 
         return super().on_enter(*args)
@@ -86,8 +87,8 @@ class HomeScreen(PiHomeScreen):
         animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
         animation.start(self)
-        # audio_player().stop()
-        # audio_player().clear_playlist()
+        # AUDIO_PLAYER.stop()
+        # AUDIO_PLAYER.clear_playlist()
 
     def run(self):
         time.ctime()

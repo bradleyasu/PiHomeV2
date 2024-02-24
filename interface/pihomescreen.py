@@ -1,8 +1,9 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
+from services.audio.audioplayer import AUDIO_PLAYER
 from system.brightness import get_brightness, set_brightness
 from util.const import GESTURE_DATABASE
-from util.helpers import audio_player, get_app, simplegesture
+from util.helpers import get_app, simplegesture
 
 class PiHomeScreen(Screen):
 
@@ -62,19 +63,19 @@ class PiHomeScreen(Screen):
             pass
 
     def on_rotary_pressed(self):
-        audio_player().toggle_play()
+        AUDIO_PLAYER.toggle_play()
         return False
 
     def on_rotary_long_pressed(self):
-        audio_player().stop()
-        audio_player().clear_playlist()
+        AUDIO_PLAYER.stop()
+        AUDIO_PLAYER.clear_playlist()
         return False
 
     def on_rotary_turn(self, direction, button_pressed):
         if direction == 1:
-            audio_player().volume_up()
+            AUDIO_PLAYER.volume_up()
         elif direction == -1:
-            audio_player().volume_down()
+            AUDIO_PLAYER.volume_down()
         return False
 
     def on_config_update(self, payload):

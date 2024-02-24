@@ -38,10 +38,6 @@ def update_pihome():
     Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 5)
 
 
-def audio_player():
-    return get_app().audio_player
-
-
 def simplegesture(name, point_list):
     g = Gesture()
     g.add_stroke(point_list)

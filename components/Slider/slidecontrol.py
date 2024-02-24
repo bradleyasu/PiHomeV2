@@ -8,7 +8,6 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty, Bool
 from kivy.animation import Animation
 from kivy.clock import Clock
 from util.const import GESTURE_SWIPE_DOWN
-from util.helpers import audio_player
 from util.tools import hex
 
 Builder.load_file("./components/Slider/slidecontrol.kv")

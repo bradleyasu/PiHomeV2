@@ -4,9 +4,9 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty, ListProperty
 from interface.pihomescreen import PiHomeScreen
 from components.WheelMenu.wheelmenu import WheelMenu
+from services.audio.audioplayer import AUDIO_PLAYER
 from util.configuration import CONFIG
 from util.const import CDN_ASSET
-from util.helpers import audio_player
 
 from util.tools import download_image_to_temp
 
@@ -38,8 +38,8 @@ class LofiScreen(PiHomeScreen):
         ]
 
     def reset(self):
-        audio_player().stop()
-        audio_player().clear_playlist()
+        AUDIO_PLAYER.stop()
+        AUDIO_PLAYER.clear_playlist()
 
     def on_enter(self, *args):
         config_image = CONFIG.get('lofi', 'image', "")
@@ -61,7 +61,7 @@ class LofiScreen(PiHomeScreen):
             self.audio_source = self.audio_source 
         elif not self.audio_source.startswith("http"):
             self.audio_source = "ytdl://ytsearch5:" + self.audio_source
-        audio_player().play(self.audio_source)
+        AUDIO_PLAYER.play(self.audio_source)
 
     def on_leave(self, *args):
         # self.reset()
