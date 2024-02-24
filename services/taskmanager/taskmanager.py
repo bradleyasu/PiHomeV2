@@ -69,16 +69,11 @@ class TaskManager():
             file_path = self.task_store
         tasks = self.tasks
 
-        # remove any task that isn't pending
-        tasks = [task for task in tasks if task.status == TaskStatus.PENDING]
+        # remove any task that isn't COMPLETED
+        tasks = [task for task in tasks if task.status != TaskStatus.COMPLETED]
 
         # remove any task that is not cacheable
         tasks = [task for task in tasks if task.cacheable == True]
-
-        # reset any task that is not completed to pending
-        for task in tasks:
-            if task.status != TaskStatus.COMPLETED:
-                task.status = TaskStatus.PENDING
 
         with open(file_path, 'wb') as file:
             pickle.dump(tasks, file)
@@ -134,7 +129,7 @@ class TaskManager():
         if self.task_screen.is_open:
             return
         for task in self.tasks:
-            if task.status == TaskStatus.PENDING:
+            if task.status == TaskStatus.PENDING or task.status == TaskStatus.IN_PROGRESS:
                 if task.start_time <= datetime.now():
                     task.status = TaskStatus.PRE_IN_PROGRESS
                     self.load_task_screen(task)
