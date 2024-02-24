@@ -76,16 +76,14 @@ class TaskScreen(PiHomeScreen):
         self.locked = False
         if self.on_confirm is not None:
             self.on_confirm.execute()
-        self.mark_task_as_completed()
+        from services.taskmanager.taskmanager import TaskStatus
+        self.task.status = TaskStatus.COMPLETED
+        self.go_back()
 
     def cancel(self):
         self.locked = False
         if self.on_cancel is not None:
             self.on_cancel.execute()
-        # TODO Create new TaskStatus for canceled ? 
-        self.mark_task_as_completed()
-
-    def mark_task_as_completed(self):
         from services.taskmanager.taskmanager import TaskStatus
-        self.task.status = TaskStatus.COMPLETED
+        self.task.status = TaskStatus.CANCELED
         self.go_back()

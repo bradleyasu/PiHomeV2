@@ -155,8 +155,8 @@ class PiHome(App):
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
         # Add primary screen manager
-        self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
+        self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager
