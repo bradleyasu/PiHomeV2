@@ -2,6 +2,7 @@
 
 import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
+from events.pihomeevent import PihomeEventFactory
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from services.weather.weather import WEATHER
@@ -18,6 +19,15 @@ class SocketHandler():
         if message == None:
             return
         message = json.loads(message)
+        if "webhook" in message:
+            payload = message["webhook"]
+            if "type" in payload:
+                event = PihomeEventFactory.create_event_from_dict(payload)
+                event.execute()
+
+        if "type" not in message:
+            return
+
         if message["type"] == "command":
             command = message["command"]
             result = execute_command(command)
