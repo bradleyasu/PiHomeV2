@@ -9,6 +9,8 @@ from kivy.uix.settings import SettingsWithSidebar
 from composites.PinPad.pinpad import PinPad
 
 from interface.pihomescreen import PiHomeScreen
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from util.const import _HOME_SCREEN, CONF_FILE
 Builder.load_file("./screens/Settings/settings.kv")
 
@@ -46,6 +48,8 @@ class SettingsScreen(PiHomeScreen):
             # get_app().manager.current = get_app().manager.previous()
             # get_app().manager.current = _HOME_SCREEN
             self.go_back()
+            # PIHOME_SCREEN_MANAGER.reload_all()
+            # WALLPAPER_SERVICE.restart()
             # toast(label="PiHome needs to be restarted for new settings to take effect")
 
         s.on_close = on_close

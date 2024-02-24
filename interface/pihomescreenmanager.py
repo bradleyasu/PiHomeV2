@@ -4,6 +4,7 @@ from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
+from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
 
@@ -35,10 +36,11 @@ class PiHomeScreenManager(ScreenManager):
         except AttributeError:
             pass
     
-    def reload_all(self, payload):
+    def reload_all(self):
         PIHOME_LOGGER.info("Reloading all screens")
-        # for screen in self.screens:
-            # screen.on_config_update(payload)
+        for screen in self.screens:
+            screen.on_config_update(CONFIG)
+        
 
     def goto(self, screen_name, pin_verified = False):
         # make sure screen isn't locked

@@ -3,6 +3,8 @@
 /task.ini
 /tasks.ini
 /theme.ini
+/timers.pihome
+/tasks.pihome
 /.idea/
 *.pyc
 *.profile
@@ -10,5 +12,3 @@ _rsz_.png
 main2.py
 .temp
 *.log
-/timers.pihome
-/tasks.pihome
