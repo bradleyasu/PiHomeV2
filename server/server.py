@@ -10,7 +10,7 @@ import websockets
 import asyncio
 from threading import Thread
 from services.audio.audioplayer import AUDIO_PLAYER
-from services.wallpaper.wallpaper import Wallpaper
+from services.wallpaper.wallpaper import WALLPAPER_SERVICE, Wallpaper
 
 from util.const import SERVER_PORT, _MUSIC_SCREEN
 from util.helpers import get_app, process_webhook, toast
@@ -39,7 +39,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def _get_status(self):
         PIHOME_LOGGER.info("Server: Getting current status from multiple services")
         try:
-            wallpaper = get_app().wallpaper_service.source
+            wallpaper = WALLPAPER_SERVICE.source
             self._set_response()
             # self.wfile.write(json.dumps({
             #     'wallpaper': wallpaper

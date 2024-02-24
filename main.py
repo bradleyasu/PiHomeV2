@@ -42,7 +42,7 @@ from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
 from services.weather.weather import Weather
-from services.wallpaper.wallpaper import Wallpaper 
+from services.wallpaper.wallpaper import WALLPAPER_SERVICE 
 
 import cProfile
 import sys
@@ -85,7 +85,6 @@ class PiHome(App):
     app_menu_open = False
     toast_open = False
     web_conf = None
-    wallpaper_service = None
 
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
@@ -116,16 +115,11 @@ class PiHome(App):
             error="./assets/images/default_background.jpg")
 
 
-        #Last step is to init services
-        self.init_services()
 
         # Flag to indicate the application is running
         self.is_running = True
         # Create the Screenmanager
 
-    def init_services(self):
-        #Init Weather Services
-        self.wallpaper_service = Wallpaper()
 
     def setup(self):
         """
@@ -173,7 +167,7 @@ class PiHome(App):
     def reload_configuration(self):
         PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
         # CONFIG = Configuration(CONF_FILE)
-        self.wallpaper_service.restart()
+        WALLPAPER_SERVICE.restart()
         PIHOME_SCREEN_MANAGER.reload_all(CONFIG)
         PIHOME_LOGGER.info("Confgiuration changes have been applied!")
 
@@ -306,9 +300,9 @@ class PiHome(App):
     def _run(self):
         # Update background url from wallpaper service
         # Other regular updates
-        self.background.url = self.wallpaper_service.current
-        self.background_color.url = self.wallpaper_service.current_color
-        self.background.set_stretch(self.wallpaper_service.allow_stretch)
+        self.background.url = WALLPAPER_SERVICE.current
+        self.background_color.url = WALLPAPER_SERVICE.current_color
+        self.background.set_stretch(WALLPAPER_SERVICE.allow_stretch)
 
     
     def _reload_background(self):

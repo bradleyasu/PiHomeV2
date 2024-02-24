@@ -19,16 +19,16 @@ class StatusEvent(PihomeEvent):
         from services.audio.audioplayer import AUDIO_PLAYER
         from services.taskmanager.taskmanager import TASK_MANAGER
         from services.weather.weather import WEATHER
-        from util.helpers import get_app
+        from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 
         # TODO: Eventually have each service have a get_status method (or to_json)
         return {
             "type": "status",
             "status": "online",
             "wallpaper": {
-                "current": get_app().wallpaper_service.current,
-                "source": get_app().wallpaper_service.source,
-                "allow_stretch": get_app().wallpaper_service.allow_stretch
+                "current": WALLPAPER_SERVICE.current,
+                "source": WALLPAPER_SERVICE.source,
+                "allow_stretch": WALLPAPER_SERVICE.allow_stretch
             },
             "weather": {
                 "weather_code": WEATHER.weather_code,

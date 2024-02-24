@@ -22,6 +22,7 @@ from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
 from services.audio.audioplayer import AUDIO_PLAYER
 from services.audio.sfx import SFX
+from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from services.weather.weather import WEATHER
 from system.brightness import get_brightness, set_brightness
 from theme.color import Color
@@ -105,7 +106,7 @@ class HomeScreen(PiHomeScreen):
         self.toggle_controls()
 
     def on_rotary_pressed(self):
-        get_app().wallpaper_service.shuffle()
+        WALLPAPER_SERVICE.shuffle()
 
     def on_rotary_turn(self, direction, pressed):
         if self.brightness_slider is None:

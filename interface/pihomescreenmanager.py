@@ -37,8 +37,8 @@ class PiHomeScreenManager(ScreenManager):
     
     def reload_all(self, payload):
         PIHOME_LOGGER.info("Reloading all screens")
-        for screen in self.screens:
-            screen.on_config_update(payload)
+        # for screen in self.screens:
+            # screen.on_config_update(payload)
 
     def goto(self, screen_name, pin_verified = False):
         # make sure screen isn't locked

@@ -208,3 +208,6 @@ class Wallpaper:
     def get_random_from_cache(self):
         random_idx = random.randint(0, len(self.url_cache) - 1)
         return self.url_cache[random_idx]
+
+
+WALLPAPER_SERVICE = Wallpaper()

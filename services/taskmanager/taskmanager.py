@@ -6,6 +6,7 @@ import os
 import pickle
 from threading import Thread
 from time import sleep
+import uuid
 from screens.Task.taskscreen import TaskScreen
 from util.phlog import PIHOME_LOGGER
 
@@ -21,7 +22,7 @@ class TaskPriority(Enum):
     MEDIUM = 2
     HIGH = 3
 class TaskManager():
-    task_store = "tasks.ini"
+    task_store = "tasks.pihome"
     is_running = False
     task_screen = None
     thread = None
@@ -110,13 +111,14 @@ class TaskManager():
     def remove_task(self, task):
         PIHOME_LOGGER.info(f"Removing Task: {task.name}")
         self.tasks.remove(task)
+        self.serialize_tasks()
 
     def remove_task_by_id(self, id):
         for task in self.tasks:
             if task.id == id:
                 self.tasks.remove(task)
-                return
-        return None
+                return True
+        return False
 
     def get_tasks(self):
         return self.tasks
@@ -186,7 +188,7 @@ class Task():
     """
     def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
         # set id to random hash
-        self.id = hash(name + description + str(datetime.now()))
+        self.id = str(uuid.uuid4())
         self.name = name
         self.description = description
         self.start_time = start_time

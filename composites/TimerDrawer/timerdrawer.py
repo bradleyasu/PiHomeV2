@@ -100,6 +100,10 @@ class TimerDrawer(GridLayout):
     def remove_widget(self, widget):
         self.timer_widgets.remove(widget)
         SFX.play("success")
+        try:
+            self.serialize()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error serializing timers: {e}")
         return super().remove_widget(widget)
 
     def on_timer_widgets(self, instance, value):
