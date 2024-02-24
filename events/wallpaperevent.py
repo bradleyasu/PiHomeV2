@@ -13,11 +13,15 @@ class WallpaperEvent(PihomeEvent):
 
     def execute(self):
         switcher = {
-            "shuffle": WALLPAPER_SERVICE.shuffle
+            "shuffle": WALLPAPER_SERVICE.shuffle,
+            "ban": WALLPAPER_SERVICE.ban_url,
         }
 
         if self.action in switcher:
-            switcher[self.action]()
+            if self.value is not None:
+                switcher[self.action](self.value)
+            else:
+                switcher[self.action]()
             return {
                 "code": 200,
                 "body": {"status": "success", "message": "Wallpaper action executed successfully"}

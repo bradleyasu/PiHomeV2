@@ -40,6 +40,7 @@ class Wallpaper:
     poller_key = None
     url_cache = []
     cache_size = 100
+    ban_list = [] # URLs that are not allowed to be used as wallpapers
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
@@ -84,10 +85,11 @@ class Wallpaper:
     def parse_reddit(self, json):
         self.cache = json
         random_child = None
-        while random_child == None or random_child["data"]["url"].endswith(".gif"):
+        while random_child == None or random_child["data"]["url"].endswith(".gif") or random_child["data"]["url"] in self.ban_list:
             # select random child from json
             rand_idx = random.randint(0, len(json["data"]["children"])) - 1
             random_child = json["data"]["children"][rand_idx]
+
 
         self.current, self.current_color = self.resize_image(random_child["data"]["url"], 1024, 1024)
         self.source = random_child["data"]["url"]
@@ -166,7 +168,6 @@ class Wallpaper:
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
-
     def find_average_color(self, url):
         PIHOME_LOGGER.info("Wallpaper Service: finding average color for {}".format(url))
         r = requests.get(url)
@@ -182,6 +183,12 @@ class Wallpaper:
             if file.startswith("_rsz") or file.startswith("_color"):
                 os.remove("{}/{}".format(TEMP_DIR, file))
         self.url_cache = []
+
+    def ban_url(self, url, shuffle = False):
+        self.ban_list.append(url)
+        if shuffle:
+            self.shuffle()
+        PIHOME_LOGGER.info("Wallpaper Service: banned url {}".format(url))
 
     def shuffle(self):
         url = self.get_random_from_cache()

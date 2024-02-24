@@ -40,6 +40,17 @@ class PihomeSfx:
             return self.SOUND_EFFECTS[key]
         return None
 
+    def stop(self, key):
+        PIHOME_LOGGER.info("Stopping sound effect: {}".format(key))
+        if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
+            self.SOUND_EFFECTS[key].stop()
+            self.SOUND_EFFECTS[key].unload()
+
+    def has(self, key):
+        if key in self.SOUND_EFFECTS:
+            return True
+        return False
+
     def populate_sources(self):
         """
         SOURCES is a diction of sound effects.  This function will populate the SOURCES dictionary with the correct paths by reading 
