@@ -20,9 +20,18 @@ class Timer:
         self.label = label
         self.duration = duration
         self.on_complete = on_complete
+        self.start_time = time.time()
         if self.on_complete is not None:
             self.add_listener(lambda _: self.process_on_complete())
         
+    def to_dict(self):
+        return {
+            "label": self.label,
+            "duration": self.duration,
+            "start_time": self.start_time,
+            "on_complete": self.on_complete
+        }
+
     def process_on_complete(self):
         event = self.generate_event(self.on_complete)
         if event is not None:

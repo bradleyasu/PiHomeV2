@@ -16,6 +16,7 @@ class SocketHandler():
         super(SocketHandler, self).__init__(**kwargs)
 
     async def handle_message(self, message, socket):
+        # TODO ALL of these need to be converted into PiHome Events and then executed
         if message == None:
             return
         message = json.loads(message)
