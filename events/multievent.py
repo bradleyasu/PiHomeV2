@@ -1,9 +1,13 @@
 import json
-from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from events.pihomeevent import PihomeEvent
 
-
 class MultiEvent(PihomeEvent):
+    """
+    The MultiEvent class is a composite event that can execute multiple events at once.  Keep in mind that the the multi event may return
+    with a successful HTTP 200 status code even if one or more of the events it contains fails.  The 200 in this case means that the multi event
+    was successully processed, not that all of the events it contains were successful.  The responses attribute of the response body will contain the
+    responses of each of the events that were executed.
+    """
     type = "multi"
     def __init__(self, events, **kwargs):
         super().__init__()
