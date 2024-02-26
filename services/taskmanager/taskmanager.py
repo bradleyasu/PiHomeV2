@@ -1,7 +1,6 @@
 import atexit
 from datetime import datetime, timedelta
 from enum import Enum
-import json
 import os
 import pickle
 from threading import Thread
@@ -22,6 +21,7 @@ class TaskPriority(Enum):
     LOW = 1
     MEDIUM = 2
     HIGH = 3
+
 class TaskManager():
     task_store = "tasks.pihome"
     is_running = False
