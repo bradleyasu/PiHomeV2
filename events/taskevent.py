@@ -7,7 +7,7 @@ from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, T
 class TaskEvent(PihomeEvent):
     type = "task"
     
-    def __init__(self, name, description, start_time, priority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, **kwargs):
+    def __init__(self, name, description, start_time, priority, is_passive = False, repeat_days = 0, on_run = None, on_confirm = None, on_cancel = None, background_image = None, **kwargs):
         super().__init__()
         self.cacheable = True
         self.name = name
@@ -17,7 +17,8 @@ class TaskEvent(PihomeEvent):
         # set self.priority to the priority enum
         self.priority = TaskPriority(priority)
         self.repeat_days = repeat_days
-        self.task_function = task_function
+        self.on_run = on_run
+        self.is_passive = is_passive
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
         self.background_image = background_image
@@ -44,7 +45,7 @@ class TaskEvent(PihomeEvent):
                 "code": 400,
                 "body": {"status": "error", "message": "Task is expired"}
             }
-        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.repeat_days, self.task_function, self.on_confirm, self.on_cancel, self.background_image, self.cacheable)
+        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel, self.background_image, self.cacheable)
         TASK_MANAGER.add_task(task)
         return {
             "code": 200,
@@ -61,7 +62,7 @@ class TaskEvent(PihomeEvent):
             "status": self.status,
             "priority": self.priority,
             "repeat_days": self.repeat_days,
-            "task_function": self.task_function,
+            "on_run": self.on_run,
             "on_confirm": self.on_confirm,
             "on_cancel": self.on_cancel
         })

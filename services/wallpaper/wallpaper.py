@@ -15,9 +15,7 @@ from util.configuration import CONFIG
 from util.const import TEMP_DIR
 from util.helpers import get_app, toast, url_hash
 import asyncio
-
 from util.phlog import PIHOME_LOGGER
-
 class Wallpaper:
     """
     Service that will continuously ping external services for fresh wallpaper depending

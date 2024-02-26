@@ -7,6 +7,7 @@ import pickle
 from threading import Thread
 from time import sleep
 import uuid
+from events.pihomeevent import PihomeEventFactory
 from screens.Task.taskscreen import TaskScreen
 from util.phlog import PIHOME_LOGGER
 
@@ -132,7 +133,8 @@ class TaskManager():
             if task.status == TaskStatus.PENDING or task.status == TaskStatus.IN_PROGRESS:
                 if task.start_time <= datetime.now():
                     task.status = TaskStatus.PRE_IN_PROGRESS
-                    self.load_task_screen(task)
+                    if not task.is_passive:
+                        self.load_task_screen(task)
                     # We want to return so that we don't process any other tasks.  This will allow the task screen to be displayed and remaining tasks will be queued 
                     return 
     
@@ -181,7 +183,7 @@ class Task():
     """
     repeat days is a list of days of the week that the task should repeat
     """
-    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, repeat_days = 0, task_function = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
+    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, is_passive = False, repeat_days = 0, on_run = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
         # set id to random hash
         self.id = str(uuid.uuid4())
         self.name = name
@@ -190,7 +192,8 @@ class Task():
         self.status = status
         self.priority = priority
         self.repeat_days = repeat_days
-        self.task_function = task_function
+        self.on_run = on_run
+        self.is_passive = is_passive
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
         self.background_image = background_image
@@ -202,15 +205,21 @@ class Task():
     def run(self):
         PIHOME_LOGGER.info(f"Running Task: {self.name}")
         self.schedule_next()
-        #### TODO SHOULD CUSTOM "EVENT" objects be passed instead of functions? #### 
-        # Thread(target=lambda _: self.task_function(self, self.on_confirm, self.on_cancel), daemon=True).start()
-        # self.status = TaskStatus.COMPLETED
+        try:
+            PihomeEventFactory.create_event_from_dict(self.on_run).execute()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to run task: {self.name} - {e}")
+
+        # if the task is passive, mark it as completed after running
+        if self.is_passive:
+            self.status = TaskStatus.COMPLETED
+        # non passive tasks are marked as completed or canceled by the user in the TaskScreen
     
     def schedule_next(self):
         if self.repeat_days > 0:
             # schedule the next task
             next_time = self.start_time + timedelta(days=self.repeat_days)
-            TASK_MANAGER.add_task(Task(self.name, self.description, next_time, TaskStatus.PENDING, self.priority, self.repeat_days, self.task_function, self.on_confirm, self.on_cancel))
+            TASK_MANAGER.add_task(Task(self.name, self.description, next_time, TaskStatus.PENDING, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel))
             PIHOME_LOGGER.info(f"Scheduled next task: {self.name} for {next_time}")
 
 
