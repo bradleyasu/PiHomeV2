@@ -206,7 +206,8 @@ class Task():
         PIHOME_LOGGER.info(f"Running Task: {self.name}")
         self.schedule_next()
         try:
-            PihomeEventFactory.create_event_from_dict(self.on_run).execute()
+            if self.on_run is not None:
+                PihomeEventFactory.create_event_from_dict(self.on_run).execute()
         except Exception as e:
             PIHOME_LOGGER.error(f"Failed to run task: {self.name} - {e}")
 
