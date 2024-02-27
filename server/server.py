@@ -59,11 +59,12 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             PIHOME_LOGGER.error(e)
 
     def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type")
-        self.end_headers()
+        self._set_response()
+        # self.send_response(200)
+        # self.send_header("Access-Control-Allow-Origin", "*")
+        # self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        # self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type")
+        # self.end_headers()
 
     
     def do_POST(self):
@@ -108,7 +109,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")  
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "*")
+        self.send_header("Access-Control-Allow-Headers", "*")
         self.end_headers()
 
         response_json = json.dumps(response_data)
