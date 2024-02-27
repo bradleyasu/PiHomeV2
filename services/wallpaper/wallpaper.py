@@ -42,13 +42,22 @@ class Wallpaper:
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
-        self._start()
+        # self._start()
+        thread = Thread(target=self._start)
+        thread.start()
+        self.thread = thread
     
     def restart(self):
+        if self.thread.is_alive():
+            self.thread.join()
+        
         if self.poller_key != None:
             PIHOME_LOGGER.info("Wallpaper Service is restarting.  {} will be replaced with new thread".format(self.poller_key))
             POLLER.unregister_api(self.poller_key)
-            self._start();
+            # self._start();
+            thread = Thread(target=self._start)
+            thread.start()
+            self.thread = thread
 
     def _start(self):
         self._cleanup()
