@@ -39,8 +39,8 @@ class RotaryEncoder():
         super(RotaryEncoder, self).__init__(**kwargs)
         if can_use_rotary and not self.is_initialized:
             GPIO.setmode(GPIO.BCM)
-            GPIO.setup(self.a_pin, GPIO.IN)
-            GPIO.setup(self.b_pin, GPIO.IN)
+            GPIO.setup(self.a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_falling, bouncetime=2500)
             GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update, bouncetime=5)
