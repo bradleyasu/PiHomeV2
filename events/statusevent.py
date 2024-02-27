@@ -78,3 +78,8 @@ class StatusEvent(PihomeEvent):
             "type": self.type
         }
     )
+
+    def to_definition(self):
+        return {
+            "type": self.type
+        }

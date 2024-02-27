@@ -38,3 +38,11 @@ class ImageEvent(PihomeEvent):
             "timeout": self.timeout,
             "reload_interval": self.reload_interval
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "image": self.type_def("string"),
+            "timeout": self.type_def("integer"),
+            "reload_interval": self.type_def("integer")
+        }

@@ -42,3 +42,13 @@ class DisplayEvent(PihomeEvent):
             "background": self.background,
             "timeout": self.timeout
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "title": self.type_def("string"),
+            "message": self.type_def("string"),
+            "image": self.type_def("string"),
+            "background": self.type_def("string", False),
+            "timeout": self.type_def("integer", False)
+        }

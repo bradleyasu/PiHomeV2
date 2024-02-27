@@ -24,3 +24,9 @@ class AppEvent(PihomeEvent):
             "app": self.app
         }
     )
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "app": self.type_def("string")
+        }

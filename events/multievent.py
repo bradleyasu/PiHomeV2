@@ -40,3 +40,10 @@ class MultiEvent(PihomeEvent):
             "type": self.type,
             "events": [event.to_json() for event in self.events]
         })
+
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "events": self.type_def("list")
+        }

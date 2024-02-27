@@ -96,7 +96,13 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             toast("An error occurred processing the server request", "warn", 10)
             PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(e))
-            PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(post_data.decode('utf-8')))
+            # get stack trace of e
+            stack_trace = e.__traceback__
+            while stack_trace:
+                readable = "File: {} | Line: {} | Function: {}".format(stack_trace.tb_frame.f_code.co_filename, stack_trace.tb_lineno, stack_trace.tb_frame.f_code.co_name)
+                PIHOME_LOGGER.error(readable)
+                stack_trace = stack_trace.tb_next
+            # PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(post_data.decode('utf-8')))
 
     def _set_response(self, code = 200, response_data = {"status": "success"}):
         self.send_response(code)

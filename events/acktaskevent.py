@@ -31,3 +31,9 @@ class AckTaskEvent(PihomeEvent):
             "type": self.type,
             "confirm": self.confirm
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "confirm": self.type_def("boolean")
+        }

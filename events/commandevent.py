@@ -30,3 +30,9 @@ class CommandEvent(PihomeEvent):
             "type": self.type,
             "command": self.command
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "command": self.type_def("string")
+        }

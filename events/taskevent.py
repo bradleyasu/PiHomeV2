@@ -15,7 +15,7 @@ class TaskEvent(PihomeEvent):
         self.start_time = self.str_to_date(start_time)
         self.status = TaskStatus.PENDING
         # set self.priority to the priority enum
-        self.priority = TaskPriority(priority)
+        self.priority = TaskPriority(priority) if priority != None else TaskPriority(1)
         self.repeat_days = repeat_days
         self.on_run = on_run
         self.is_passive = is_passive
@@ -24,6 +24,8 @@ class TaskEvent(PihomeEvent):
         self.background_image = background_image
 
     def str_to_date(self, date_str):
+        if date_str == None:
+            return datetime.now()
         if date_str.startswith("delta:"):
             # Example input could be "delta:1 days" or "delta:1 hours"
             delta = date_str.split(":")[1]
@@ -66,3 +68,17 @@ class TaskEvent(PihomeEvent):
             "on_confirm": self.on_confirm,
             "on_cancel": self.on_cancel
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "name": self.type_def("string"),
+            "description": self.type_def("string"),
+            "start_time": self.type_def("string"),
+            "status": self.type_def("string"),
+            "priority": self.type_def("integer", True, "1 = Low, 2 = Medium, 3 = High"),
+            "repeat_days": self.type_def("integer", False),
+            "on_run": self.type_def("event", False),
+            "on_confirm": self.type_def("event", False),
+            "on_cancel": self.type_def("event", False)
+        }

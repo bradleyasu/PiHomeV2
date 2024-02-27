@@ -40,3 +40,10 @@ class DeleteEvent(PihomeEvent):
             "id": self.id
         })
     
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "entity": self.type_def("string"),
+            "id": self.type_def("string")
+        }

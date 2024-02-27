@@ -38,3 +38,15 @@ class AlertEvent(PihomeEvent):
             "on_yes": self.on_yes,
             "on_no": self.on_no
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "title": self.type_def("string"),
+            "message": self.type_def("string"),
+            "timeout": self.type_def("integer"),
+            "type": self.type_def("string"),
+            "buttons": self.type_def("string"),
+            "on_yes": self.type_def("string", False),
+            "on_no": self.type_def("string", False)
+        }

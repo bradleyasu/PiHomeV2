@@ -22,7 +22,17 @@ class PihomeEvent():
     def to_json(self):
         return json.dumps({
             "type": self.type
-        })
+    })
+
+    def to_definition(self):
+        None
+    
+    def type_def(self, type, required = True, description = None):
+        return {
+            "type": type,
+            "required": required,
+            "description": description
+        }
 
     def to_webhook(self):
         return json.dumps({
@@ -76,3 +86,21 @@ class PihomeEventFactory():
         
     def create_event_from_json(json_string):
         return PihomeEventFactory.create_event_from_dict(json.loads(json_string))
+
+
+    def get_event_definitions():
+        event_objects = PihomeEventFactory._load_event_objects()
+        events = []
+        for key in event_objects:
+            event = PihomeEventFactory._dumb_init(event_objects[key]) 
+            event_def = event.to_definition()
+            if event_def is not None:
+                events.append(event_def)
+        return events
+    
+    def _dumb_init(cls):
+        argspec = inspect.signature(cls.__init__)
+        dummy_args = {param.name: None for param in argspec.parameters.values() if param.default == param.empty}
+        dummy_args.pop("self", None)
+        return cls(**dummy_args)
+    

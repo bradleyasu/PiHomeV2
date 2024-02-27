@@ -28,3 +28,11 @@ class TimerEvent(PihomeEvent):
             "label": self.label,
             "duration": self.duration
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "label": self.type_def("string"),
+            "duration": self.type_def("integer"),
+            "on_complete": self.type_def("event", False)
+        }

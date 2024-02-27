@@ -41,3 +41,11 @@ class SfxEvent(PihomeEvent):
             "state": self.state,
             "loop": self.loop
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "name": self.type_def("string"),
+            "state": self.type_def("string"),
+            "loop": self.type_def("boolean", False)
+        }

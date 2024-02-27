@@ -39,3 +39,10 @@ class WallpaperEvent(PihomeEvent):
             "action": self.action,
             "value": self.value
     })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "action": self.type_def("string"),
+            "value": self.type_def("string", False)
+        }
