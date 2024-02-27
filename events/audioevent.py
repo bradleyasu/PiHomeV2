@@ -33,7 +33,7 @@ class AudioEvent(PihomeEvent):
                 switcher[self.action]()
             return {
                 "code": 200,
-                "body": {"status": "success", "message": "App launched"}
+                "body": {"status": "success", "message": "Audio action executed successfully. Action: {} Value: {}".format(self.action, self.value)}
             }
         else:
             return {
