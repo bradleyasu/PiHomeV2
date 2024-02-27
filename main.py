@@ -1,5 +1,7 @@
 import os
 
+from networking.poller import POLLER
+
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
@@ -51,25 +53,17 @@ import platform
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from components.Image.networkimage import NetworkImage
-from kivy.graphics import Color, Ellipse, Line
+from kivy.graphics import Line
 
 from components.Toast.toast import Toast
 
-from networking.poller import POLLER, Poller
-from screens.DevTools.devtools import DevTools
-from screens.Home.home import HomeScreen
-from screens.Settings.settings import SettingsScreen
-from screens.Bus.bus import BusScreen 
-from screens.SnowCast.snowcast import SnowCast
-from util.configuration import CONFIG, Configuration
+from util.configuration import CONFIG
 from kivy.core.window import Window
-from kivy.uix.screenmanager import SlideTransition
 from util.helpers import get_app, simplegesture
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock
 from kivy.gesture import Gesture 
-from typing import List
 
 # Run PiHome on Kivy 2.0.0
 kivy.require('2.0.0')
