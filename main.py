@@ -6,6 +6,7 @@ os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 from kivy.config import Config
+from kivy.graphics import Color, Ellipse, Line
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER, PiHomeScreenManager
@@ -31,6 +32,13 @@ from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
 from screens.Lofi.lofi import LofiScreen
 from screens.PiHole.pihole import PiHoleScreen
 from screens.WhiteBoard.whiteboard import WhiteBoard
+
+
+from networking.poller import POLLER
+from screens.Settings.settings import SettingsScreen
+from util.configuration import CONFIG
+
+
 
 from util.phlog import PIHOME_LOGGER 
 

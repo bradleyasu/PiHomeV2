@@ -16,7 +16,10 @@ class PihomeSfx:
 
     def load_sfx(self):
         for key, value in self.SOURCES.items():
-            self.SOUND_EFFECTS[key] = SoundLoader.load(value)
+            try:
+                self.SOUND_EFFECTS[key] = SoundLoader.load(value)
+            except Exception as e:
+                PIHOME_LOGGER.error("Error loading sound effect: {}".format(e))
 
     def play(self, key):
         PIHOME_LOGGER.info("Playing sound effect: {}".format(key))
