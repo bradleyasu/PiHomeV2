@@ -12,7 +12,7 @@ class PihomeSfx:
     def __init__(self, **kwargs):
         super(PihomeSfx, self).__init__(**kwargs)
         self.populate_sources()
-        self.load_sfx()
+        # self.load_sfx()
 
     def load_sfx(self):
         for key, value in self.SOURCES.items():
@@ -20,7 +20,9 @@ class PihomeSfx:
 
     def play(self, key):
         PIHOME_LOGGER.info("Playing sound effect: {}".format(key))
-        if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
+        if key in self.SOURCES and self.SOURCES[key] is not None:
+            if key not in self.SOUND_EFFECTS or self.SOUND_EFFECTS[key] is None:
+                self.SOUND_EFFECTS[key] = SoundLoader.load(self.SOURCES[key])
             self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].loop = False
             self.SOUND_EFFECTS[key].play()
@@ -31,7 +33,9 @@ class PihomeSfx:
 
     def loop(self, key):
         PIHOME_LOGGER.info("Looping sound effect: {}".format(key))
-        if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
+        if key in self.SOURCES and self.SOURCES[key] is not None:
+            if key not in self.SOUND_EFFECTS or self.SOUND_EFFECTS[key] is None:
+                self.SOUND_EFFECTS[key] = SoundLoader.load(self.SOURCES[key])
             self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].loop = True
             self.SOUND_EFFECTS[key].play()
@@ -47,7 +51,7 @@ class PihomeSfx:
             self.SOUND_EFFECTS[key].unload()
 
     def has(self, key):
-        if key in self.SOUND_EFFECTS:
+        if key in self.SOURCES:
             return True
         return False
 
