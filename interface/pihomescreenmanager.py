@@ -3,20 +3,15 @@ import os
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
 from composites.PinPad.pinpad import PinPad
-from kivy.properties import NumericProperty
 from system.rotary import ROTARY_ENCODER
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
-from kivy.lang import Builder
 
-
-Builder.load_file("./interface/pihomescreenmanager.kv")
 class PiHomeScreenManager(ScreenManager):
     screens_loaded = False
     loaded_screens = {}
     app_menu = None
-    bg_alpha = NumericProperty(1)
 
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
@@ -133,9 +128,6 @@ class PiHomeScreenManager(ScreenManager):
         # goto the first screen in the loaded screens list
         self.goto(list(self.loaded_screens.keys())[0])
         self.screens_loaded = True
-
-        # Hide loading overlay
-        self.bg_alpha = 0
 
         
 PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=SlideTransition(direction="down"))
