@@ -20,6 +20,11 @@ class RotaryEncoder():
     a_pin = 17      # DT
     b_pin = 18      # CLK
     button_pin = 27 # SW
+
+    # Turn Count Threshold
+    TURN_COUNT_THRESHOLD = 10 # Number of clicks before update_callback is called (to eliminate noise)
+
+    turn_counts = 0 # Number of clicks recorded
     # rotary counter is the number of clicks
     rotary_counter = 0
     # last state is the last state of the rotary encoder
@@ -43,8 +48,8 @@ class RotaryEncoder():
             GPIO.setup(self.b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.on_falling, bouncetime=2500)
-            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update, bouncetime=5)
-            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update, bouncetime=5)
+            GPIO.add_event_detect(self.a_pin, GPIO.BOTH, callback=self.update)
+            GPIO.add_event_detect(self.b_pin, GPIO.BOTH, callback=self.update)
             self.last_button_state = GPIO.input(self.button_pin)
             self.is_initialized = True
 
@@ -104,10 +109,26 @@ class RotaryEncoder():
                     self.direction = -1
             else:
                 self.direction = 0
-            self.update_callback(self.direction, self.button_pressed)
+            # self.update_callback(self.direction, self.button_pressed)
+            self._process_turn(self.direction)
             self.last_state = clkstate
             self._lock = False
 
+    def _process_turn(self, direction):
+        """
+        This function is specifically designed to help eliminate noise from cheap rotary encoders (like mine).  There is a threshold that must be passed 
+        in any given direction before the update_call back is called.
+        """
+        self.turn_counts += direction
+
+        if self.turn_counts >= self.TURN_COUNT_THRESHOLD:
+            self.update_callback(1, self.button_pressed)
+            self.turn_counts = 0
+        elif self.turn_counts <= -self.TURN_COUNT_THRESHOLD:
+            self.update_callback(-1, self.button_pressed)
+            self.turn_counts = 0
+        else:
+            self.turn_counts += 1
 
     def reset(self):
         self.rotary_counter = 0
