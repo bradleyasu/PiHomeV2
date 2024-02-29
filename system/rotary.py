@@ -84,7 +84,7 @@ class RotaryEncoder():
 
     def debounce(self, pin):
         state = GPIO.input(pin)
-        sleep(0.1)
+        sleep(1)
         return GPIO.input(pin) == state
 
     def update(self, data):
