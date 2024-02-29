@@ -22,15 +22,13 @@ class RotaryEncoder():
     button_pin = 27 # SW
 
     # Turn Count Threshold
-    TURN_COUNT_THRESHOLD = 10 # Number of clicks before update_callback is called (to eliminate noise)
+    TURN_COUNT_THRESHOLD = 5 # Number of clicks before update_callback is called (to eliminate noise)
 
     turn_counts = 0 # Number of clicks recorded
     # rotary counter is the number of clicks
     rotary_counter = 0
     # last state is the last state of the rotary encoder
     last_state = 0
-    last_a_state = None
-    last_b_state = None
     last_button_state = 0
     # direction is the direction of the rotary encoder.  1 is clockwise, -1 is counter clockwise, 0 is no movement
     direction = 0
@@ -89,22 +87,20 @@ class RotaryEncoder():
             self.button_pressed = True
             self.press_time = time.time()
 
-    def debounce(self, pin, last_state):
+    def debounce(self, pin):
         state = GPIO.input(pin)
-        if state != last_state:
-            sleep(0.005)  # Adjust the sleep duration based on your encoder's behavior
-            state = GPIO.input(pin)
-        return state
+        sleep(0.4)
+        return GPIO.input(pin) == state
 
     def update(self, data):
         if can_use_rotary and not self._lock:
             self._lock = True
-            # a_state = GPIO.input(self.a_pin)
-            # b_state = GPIO.input(self.b_pin)
-            a_state = self.debounce(self.a_pin, self.last_a_state)
-            b_state = self.debounce(self.b_pin, self.last_b_state)
-            if a_state != self.last_a_state or b_state != self.last_b_state:
-                if a_state != b_state:
+            clkstate = GPIO.input(self.b_pin)
+            dtstate = GPIO.input(self.a_pin)
+            # clkstate = self.debounce(self.b_pin)
+            # dtstate = self.debounce(self.a_pin)
+            if clkstate != self.last_state:
+                if dtstate != clkstate:
                     if self.direction >= 0:
                         self.rotary_counter += 1
                         self.direction = 1
@@ -115,9 +111,7 @@ class RotaryEncoder():
                 self.direction = 0
             # self.update_callback(self.direction, self.button_pressed)
             self._process_turn(self.direction)
-            # self.last_state = clkstate
-            self.last_a_state = a_state
-            self.last_b_state = b_state
+            self.last_state = clkstate
             self._lock = False
 
     def _process_turn(self, direction):
