@@ -99,10 +99,10 @@ class RotaryEncoder():
     def update(self, data):
         if can_use_rotary and not self._lock:
             self._lock = True
-            # a_state = GPIO.input(self.a_pin)
-            # b_state = GPIO.input(self.b_pin)
-            a_state = self.debounce(self.a_pin, self.last_a_state)
-            b_state = self.debounce(self.b_pin, self.last_b_state)
+            a_state = GPIO.input(self.a_pin)
+            b_state = GPIO.input(self.b_pin)
+            # a_state = self.debounce(self.a_pin, self.last_a_state)
+            # b_state = self.debounce(self.b_pin, self.last_b_state)
             if a_state != self.last_a_state or b_state != self.last_b_state:
                 if a_state != b_state:
                     if self.direction >= 0:
