@@ -14,7 +14,7 @@ from services.audio.sfx import SFX
 
 
 # Plasma shader
-plasma_shader = '''
+pulse_shader = '''
 $HEADER$
 
 uniform vec2 resolution;
@@ -77,7 +77,7 @@ Builder.load_file("./components/PulseWidget/PulseWidget.kv")
 class PluseWidget(FloatLayout):
 
     # property to set the source code for fragment shader
-    fs = StringProperty(None)
+    fs = StringProperty()
     time = NumericProperty(4.0)
 
     def __init__(self, **kwargs):
@@ -93,6 +93,7 @@ class PluseWidget(FloatLayout):
 
     def burst(self):
         self.time = 0.0;
+        print("Burst")
 
 
     def run(self, *args):
@@ -123,3 +124,5 @@ class PluseWidget(FloatLayout):
         self.canvas['modelview_mat'] = win_rc['modelview_mat']
         self.canvas['frag_modelview_mat'] = win_rc['frag_modelview_mat']
 
+
+PULSER = PluseWidget(fs=pulse_shader)

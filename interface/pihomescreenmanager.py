@@ -2,7 +2,7 @@ import json
 import os
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
-from components.PulseWidget.PulseWidget import PluseWidget
+from components.PulseWidget.PulseWidget import PULSER
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
 from util.configuration import CONFIG
@@ -21,7 +21,6 @@ class PiHomeScreenManager(ScreenManager):
             self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
             self.rotary_encoder.update_callback = lambda direction, pressed: self._rotary_handler(direction, pressed)
 
-        self.pulser = PluseWidget()
 
     def _rotary_handler(self, direction, pressed):
         try:
@@ -35,7 +34,7 @@ class PiHomeScreenManager(ScreenManager):
                 self.current_screen.on_rotary_long_pressed()
             else:
                 self.current_screen.on_rotary_pressed()
-                self.pulser.burst()
+                PULSER.burst()
         except AttributeError:
             pass
     
@@ -83,7 +82,7 @@ class PiHomeScreenManager(ScreenManager):
         # the app menu will be added to the parent before the screen manager is added to the parent
         Clock.schedule_once(lambda dt: parent.add_widget(self.app_menu, index=1), 1)
 
-        self.parent.add_widget(self.pulser)
+        self.parent.add_widget(PULSER)
 
     def load_screens(self):
         """
