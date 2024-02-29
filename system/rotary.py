@@ -22,7 +22,7 @@ class RotaryEncoder():
     button_pin = 27 # SW
 
     # Turn Count Threshold
-    TURN_COUNT_THRESHOLD = 5 # Number of clicks before update_callback is called (to eliminate noise)
+    TURN_COUNT_THRESHOLD = 10 # Number of clicks before update_callback is called (to eliminate noise)
 
     turn_counts = 0 # Number of clicks recorded
     # rotary counter is the number of clicks
@@ -92,17 +92,17 @@ class RotaryEncoder():
     def debounce(self, pin, last_state):
         state = GPIO.input(pin)
         if state != last_state:
-            sleep(0.01)  # Adjust the sleep duration based on your encoder's behavior
+            sleep(0.005)  # Adjust the sleep duration based on your encoder's behavior
             state = GPIO.input(pin)
         return state
 
     def update(self, data):
         if can_use_rotary and not self._lock:
             self._lock = True
-            a_state = GPIO.input(self.a_pin)
-            b_state = GPIO.input(self.b_pin)
-            # a_state = self.debounce(self.a_pin, self.last_a_state)
-            # b_state = self.debounce(self.b_pin, self.last_b_state)
+            # a_state = GPIO.input(self.a_pin)
+            # b_state = GPIO.input(self.b_pin)
+            a_state = self.debounce(self.a_pin, self.last_a_state)
+            b_state = self.debounce(self.b_pin, self.last_b_state)
             if a_state != self.last_a_state or b_state != self.last_b_state:
                 if a_state != b_state:
                     if self.direction >= 0:
