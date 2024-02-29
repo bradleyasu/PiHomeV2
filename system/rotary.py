@@ -82,12 +82,18 @@ class RotaryEncoder():
             self.button_pressed = True
             self.press_time = time.time()
 
+    def debounce(self, pin):
+        state = GPIO.input(pin)
+        sleep(0.1)
+        return GPIO.input(pin) == state
 
     def update(self, data):
         if can_use_rotary and not self._lock:
             self._lock = True
-            clkstate = GPIO.input(self.b_pin)
-            dtstate = GPIO.input(self.a_pin)
+            # clkstate = GPIO.input(self.b_pin)
+            # dtstate = GPIO.input(self.a_pin)
+            clkstate = self.debounce(self.b_pin)
+            dtstate = self.debounce(self.a_pin)
             if clkstate != self.last_state:
                 if dtstate != clkstate:
                     if self.direction >= 0:
