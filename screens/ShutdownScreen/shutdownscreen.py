@@ -2,6 +2,7 @@
 from interface.pihomescreen import PiHomeScreen
 from kivy.properties import ColorProperty
 from kivy.lang import Builder
+from services.audio.sfx import SFX
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
 import subprocess
@@ -18,5 +19,6 @@ class ShutdownScreen(PiHomeScreen):
     def on_enter(self):
         # Prevent changing screen
         PIHOME_LOGGER.warning("Shutdown screen entered and locked.  System will restart in 5 seconds.")
+        SFX.play("shutdown")
         self.locked = True
         Clock.schedule_once(lambda _: subprocess.call(['sh', './update_and_restart.sh']), 5)
