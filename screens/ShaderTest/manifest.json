@@ -1,0 +1,9 @@
+{
+    "module": "ShaderTest.ShaderTestScreen",
+    "name": "ShaderTestScreen",
+    "id": "_debug_shader",
+    "label": "[ SHADER TEST ]",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false
+}
