@@ -111,7 +111,7 @@ class PluseWidget(FloatLayout):
             raise Exception('failed')
 
     def update_glsl(self, *largs):
-        self.time = self.time + (1/60.)
+        self.time = self.time + (1/15.)
         self.canvas['time'] = self.time #Clock.get_boottime()
         self.canvas['resolution'] = list(map(float, self.size))
         
