@@ -133,8 +133,6 @@ class RotaryEncoder():
         elif self.turn_counts <= (-1 * self.TURN_COUNT_THRESHOLD):
             self.update_callback(-1, self.button_pressed)
             self.turn_counts = 0
-        else:
-            self.turn_counts += 1
 
     def reset(self):
         self.rotary_counter = 0
