@@ -5,6 +5,8 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty
 
+
+from kivy.core.audio import SoundLoader
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage
@@ -137,3 +139,17 @@ class DevTools(PiHomeScreen):
             SERVER.stop_server()
         else:
             SERVER.start_server()
+
+
+    def on_enter(self, *args):
+        url = "https://rr3---sn-8xgp1vo-2pul.googlevideo.com/videoplayback?expire=1709337780&ei=VBjiZdeJFeG9_9EP3J2AiA8&ip=74.109.241.148&id=o-ALLuUo5hmYuUdLSWnmmfJedi9hpY8h8b58OCsN-HQCpc&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&mh=Nn&mm=31%2C29&mn=sn-8xgp1vo-2pul%2Csn-8xgp1vo-p5qe&ms=au%2Crdu&mv=m&mvi=3&pl=18&gcr=us&initcwndbps=898750&spc=UWF9fzggasD4niyPJNKYKiVzKvYnUtZ3cbXFjsryDK4EqWs&vprv=1&svpuc=1&mime=audio%2Fwebm&gir=yes&clen=4391306&dur=278.361&lmt=1706308899802101&mt=1709315833&fvip=6&keepalive=yes&fexp=24007246&c=ANDROID&txp=4532434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgQE0R0uwDzqSxnuX_9B5vtfx8_LsUlvvH__bxjLVujp0CIQCqe4oUM7hOdBOkc0gk2h60UCK-yyZZWEr08oao6fIMpw%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=APTiJQcwRgIhAPaaWdV0tV5FkPYOpHN82ZKBLn27S6Dc79TMTJQigrf4AiEAq5jcfnMox5ToATXrgG4QcMyMGSUSgOOlA7yI06Rp0nY%3D&fmt=.mp3"
+        self.sound = SoundLoader.load(url)
+        self.sound.play()
+        return super().on_enter(*args)
+
+    def on_leave(self, *args):
+        if self.sound:
+            self.sound.stop()
+            self.sound.unload()
+        return super().on_leave(*args)
+
