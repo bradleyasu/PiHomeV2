@@ -65,6 +65,9 @@ class PiHomeScreen(Screen):
     def on_rotary_pressed(self):
         AUDIO_PLAYER.toggle_play()
         return False
+    
+    def on_rotary_down(self):
+        return False
 
     def on_rotary_long_pressed(self):
         AUDIO_PLAYER.stop()

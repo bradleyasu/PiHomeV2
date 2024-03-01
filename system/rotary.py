@@ -34,6 +34,7 @@ class RotaryEncoder():
     direction = 0
     button_pressed = False
     button_callback = lambda long_press: ()
+    button_on_down_callback = lambda: ()
     update_callback = lambda direction, pressed: ()
     is_initialized = False
     press_time = 0
@@ -84,6 +85,8 @@ class RotaryEncoder():
             else:
                 self.button_callback(long_press=False)
         else:
+            if not self.button_pressed:
+                self.button_on_down_callback()
             self.button_pressed = True
             self.press_time = time.time()
 
