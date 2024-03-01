@@ -78,7 +78,7 @@ class RotaryEncoder():
             return
 
         self.last_button_state = state
-        PIHOME_LOGGER.debug("[ ROTARY ] Button pressed.")
+        PIHOME_LOGGER.info("[ ROTARY ] Button pressed.")
         if state == GPIO.HIGH:
             self.button_pressed = False
             press_duration = time.time() - self.press_time
@@ -89,9 +89,9 @@ class RotaryEncoder():
         else:
             if not self.button_pressed:
                 self.button_on_down_callback()
-                PIHOME_LOGGER.debug("[ ROTARY ] Button pressed on down callback called.")
+                PIHOME_LOGGER.info("[ ROTARY ] Button pressed on down callback called.")
             else:
-                PIHOME_LOGGER.debug("[ ROTARY ] Button already pressed on down callback not called.")
+                PIHOME_LOGGER.info("[ ROTARY ] Button already pressed on down callback not called.")
             self.button_pressed = True
             self.press_time = time.time()
 
