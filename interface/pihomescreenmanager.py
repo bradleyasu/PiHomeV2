@@ -27,14 +27,14 @@ class PiHomeScreenManager(ScreenManager):
         try:
             self.current_screen.on_rotary_turn(direction, pressed)
         except AttributeError:
-            pass
+            PIHOME_LOGGER.error("No on_rotary_turn method found in current screen")
 
     def _rotary_on_down(self):
         try:
-            self.current_screen.on_rotary_down()
             PULSER.burst()
+            self.current_screen.on_rotary_down()
         except AttributeError:
-            pass
+            PIHOME_LOGGER.error("No on_rotary_down method found in current screen")
 
     def _rotary_pressed(self, long_press = False):
         try:
@@ -43,7 +43,7 @@ class PiHomeScreenManager(ScreenManager):
             else:
                 self.current_screen.on_rotary_pressed()
         except AttributeError:
-            pass
+            PIHOME_LOGGER.error("No on_rotary_pressed method found in current screen")
     
     def reload_all(self):
         PIHOME_LOGGER.info("Reloading all screens")
