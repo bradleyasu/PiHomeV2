@@ -88,8 +88,8 @@ class PiHomeScreenManager(ScreenManager):
         # We have to wait a second before adding the app menu to the parent becuase if we don't
         # the app menu will be added to the parent before the screen manager is added to the parent
         Clock.schedule_once(lambda dt: parent.add_widget(self.app_menu, index=1), 1)
+        Clock.schedule_once(lambda dt: parent.add_widget(PULSER), 2)
 
-        self.parent.add_widget(PULSER)
 
     def load_screens(self):
         """
