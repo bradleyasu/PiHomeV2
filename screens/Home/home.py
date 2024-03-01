@@ -68,6 +68,7 @@ class HomeScreen(PiHomeScreen):
         if self.is_first_run is True:
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False
+            SFX.play("notify")
 
         return super().on_enter(*args)
 
