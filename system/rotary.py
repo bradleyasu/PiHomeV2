@@ -1,6 +1,8 @@
 import sys
 import time
 
+from util.phlog import PIHOME_LOGGER
+
 
 can_use_rotary = False
 
@@ -87,6 +89,9 @@ class RotaryEncoder():
         else:
             if not self.button_pressed:
                 self.button_on_down_callback()
+                PIHOME_LOGGER.debug("[ ROTARY ] Button pressed on down callback called.")
+            else:
+                PIHOME_LOGGER.debug("[ ROTARY ] Button already pressed on down callback not called.")
             self.button_pressed = True
             self.press_time = time.time()
 

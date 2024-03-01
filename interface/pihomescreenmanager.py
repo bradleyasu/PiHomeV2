@@ -31,6 +31,7 @@ class PiHomeScreenManager(ScreenManager):
 
     def _rotary_on_down(self):
         try:
+            PIHOME_LOGGER.debug("Rotary button pressed down BURSTING PULSER.")
             PULSER.burst()
             self.current_screen.on_rotary_down()
         except AttributeError:
