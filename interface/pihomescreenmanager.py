@@ -2,6 +2,7 @@ import json
 import os
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
+from kivy.uix.screenmanager import SwapTransition, FadeTransition, NoTransition
 from components.PulseWidget.PulseWidget import PULSER
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
@@ -57,10 +58,10 @@ class PiHomeScreenManager(ScreenManager):
             PIHOME_LOGGER.info("Screen is locked, cannot change screens.")
             return
 
-        if self.transition.direction == "up":
-            self.transition.direction = "down"
-        else:
-            self.transition.direction = "up"
+        # if self.transition.direction == "up":
+        #     self.transition.direction = "down"
+        # else:
+        #     self.transition.direction = "up"
         
         if self.loaded_screens[screen_name].requires_pin and not pin_verified:
             def unlock_screen():
@@ -141,4 +142,4 @@ class PiHomeScreenManager(ScreenManager):
         self.screens_loaded = True
 
         
-PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=SlideTransition(direction="down"))
+PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=NoTransition())

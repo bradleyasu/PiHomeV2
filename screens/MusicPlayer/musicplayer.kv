@@ -1,0 +1,55 @@
+#:kivy 2.0.0
+
+<MusicPlayerContainer>:
+    size_hint: 1, 1
+    pos_hint: {"center_x": .5, "center_y": .5}
+
+    canvas: 
+        Color:
+            rgba: 0, 0, 0, 0.2
+        Rectangle:
+            size: self.size
+            pos: self.pos
+        
+
+<MusicPlayerCard>:
+    size_hint: 0.5, 0.8
+    pos_hint: {"center_x": .7, "center_y": .5}
+
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 0.85
+        BoxShadow:
+            pos: self.pos
+            size: self.size
+            offset: 0, -10
+            spread_radius: -20, -20
+            border_radius: 10, 10, 10, 10
+            blur_radius: 80
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 1
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [20, 20, 20, 20]
+
+
+<Player>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 1
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [10, 10, 10, 10]
+
+<VinylWidget>:
+    size_hint: 0.4, 0.5
+    pos_hint: {"center_x": .22, "center_y": .5}
+    canvas:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size

@@ -1,0 +1,10 @@
+{
+    "module": "MusicPlayer.musicplayer",
+    "name": "MusicPlayerContainer",
+    "id": "_musicplayer",
+    "label": "Music Player NEW",
+    "description": "Music",
+    "hidden": false,
+    "requires_pin": false,
+    "index": -1
+}

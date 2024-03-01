@@ -4,6 +4,7 @@ from io import BytesIO
 import random
 import os
 import time
+import PIL
 import requests
 from threading import Thread
 from kivy.clock import Clock
@@ -171,7 +172,7 @@ class Wallpaper:
         PIHOME_LOGGER.info("Wallpaper Service: finding average color for {}".format(url))
         r = requests.get(url)
         pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
-        pilImage = pilImage.resize((1, 1), PILImage.ANTIALIAS)
+        pilImage = pilImage.resize((1, 1), PIL.Image.LANCZOS)
         PIHOME_LOGGER.info("Wallpaper Service: finding average color for {} complete".format(url))
         PIHOME_LOGGER.info("Wallpaper Service: average color is {}".format(pilImage.getpixel((0, 0))))
         return pilImage.getpixel((0, 0))
