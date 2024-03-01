@@ -60,6 +60,7 @@ class RotaryEncoder():
     def on_falling(self, channel):
         self.press_time = time.time()
         self._lock = True
+        self.button_on_down_callback()
         while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < (self.LONG_PRESS_THRESHOLD+0.1):
             self.duration = time.time() - self.press_time
 
@@ -78,7 +79,6 @@ class RotaryEncoder():
             return
 
         self.last_button_state = state
-        PIHOME_LOGGER.info("[ ROTARY ] Button pressed.")
         if state == GPIO.HIGH:
             self.button_pressed = False
             press_duration = time.time() - self.press_time
@@ -89,9 +89,6 @@ class RotaryEncoder():
         else:
             if not self.button_pressed:
                 self.button_on_down_callback()
-                PIHOME_LOGGER.info("[ ROTARY ] Button pressed on down callback called.")
-            else:
-                PIHOME_LOGGER.info("[ ROTARY ] Button already pressed on down callback not called.")
             self.button_pressed = True
             self.press_time = time.time()
 
