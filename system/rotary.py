@@ -78,7 +78,7 @@ class RotaryEncoder():
             return
 
         self.last_button_state = state
-        
+        PIHOME_LOGGER.debug("[ ROTARY ] Button pressed.")
         if state == GPIO.HIGH:
             self.button_pressed = False
             press_duration = time.time() - self.press_time

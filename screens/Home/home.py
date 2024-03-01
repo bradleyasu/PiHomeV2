@@ -68,7 +68,7 @@ class HomeScreen(PiHomeScreen):
         if self.is_first_run is True:
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False
-            SFX.play("notify")
+            #SFX.play("notify")
 
         return super().on_enter(*args)
 
@@ -83,7 +83,7 @@ class HomeScreen(PiHomeScreen):
         self.manager.current = 'pin'
 
     def startup_animation(self):
-        SFX.play("startup_2")
+        SFX.play("startup")
         animation = Animation(logo_opacity = 0, t='linear', d=1)
         animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
