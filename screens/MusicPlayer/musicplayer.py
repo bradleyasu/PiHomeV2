@@ -13,7 +13,6 @@ from kivy.properties import StringProperty
 from kivy.core.audio import SoundLoader
 from kivy.graphics.texture import Texture
 import numpy as np
-import alsaaudio
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
@@ -26,12 +25,12 @@ class MusicPlayerContainer(PiHomeScreen):
 
     
     def on_enter(self, *args):
-        url = "https://rr3---sn-8xgp1vo-2pul.googlevideo.com/videoplayback?expire=1709337780&ei=VBjiZdeJFeG9_9EP3J2AiA8&ip=74.109.241.148&id=o-ALLuUo5hmYuUdLSWnmmfJedi9hpY8h8b58OCsN-HQCpc&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&mh=Nn&mm=31%2C29&mn=sn-8xgp1vo-2pul%2Csn-8xgp1vo-p5qe&ms=au%2Crdu&mv=m&mvi=3&pl=18&gcr=us&initcwndbps=898750&spc=UWF9fzggasD4niyPJNKYKiVzKvYnUtZ3cbXFjsryDK4EqWs&vprv=1&svpuc=1&mime=audio%2Fwebm&gir=yes&clen=4391306&dur=278.361&lmt=1706308899802101&mt=1709315833&fvip=6&keepalive=yes&fexp=24007246&c=ANDROID&txp=4532434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgQE0R0uwDzqSxnuX_9B5vtfx8_LsUlvvH__bxjLVujp0CIQCqe4oUM7hOdBOkc0gk2h60UCK-yyZZWEr08oao6fIMpw%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=APTiJQcwRgIhAPaaWdV0tV5FkPYOpHN82ZKBLn27S6Dc79TMTJQigrf4AiEAq5jcfnMox5ToATXrgG4QcMyMGSUSgOOlA7yI06Rp0nY%3D&fmt=.mp3"
-        self.sound = SoundLoader.load(url)
-        self.sound.play()
+        # url = "https://rr3---sn-8xgp1vo-2pul.googlevideo.com/videoplayback?expire=1709337780&ei=VBjiZdeJFeG9_9EP3J2AiA8&ip=74.109.241.148&id=o-ALLuUo5hmYuUdLSWnmmfJedi9hpY8h8b58OCsN-HQCpc&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&mh=Nn&mm=31%2C29&mn=sn-8xgp1vo-2pul%2Csn-8xgp1vo-p5qe&ms=au%2Crdu&mv=m&mvi=3&pl=18&gcr=us&initcwndbps=898750&spc=UWF9fzggasD4niyPJNKYKiVzKvYnUtZ3cbXFjsryDK4EqWs&vprv=1&svpuc=1&mime=audio%2Fwebm&gir=yes&clen=4391306&dur=278.361&lmt=1706308899802101&mt=1709315833&fvip=6&keepalive=yes&fexp=24007246&c=ANDROID&txp=4532434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgQE0R0uwDzqSxnuX_9B5vtfx8_LsUlvvH__bxjLVujp0CIQCqe4oUM7hOdBOkc0gk2h60UCK-yyZZWEr08oao6fIMpw%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=APTiJQcwRgIhAPaaWdV0tV5FkPYOpHN82ZKBLn27S6Dc79TMTJQigrf4AiEAq5jcfnMox5ToATXrgG4QcMyMGSUSgOOlA7yI06Rp0nY%3D&fmt=.mp3"
+        # self.sound = SoundLoader.load(url)
+        # self.sound.play()
 
         # get audio texture for vinyl shader
-        self.vinyl.set_sound(self.sound)
+        # self.vinyl.set_sound(self.sound)
 
         return super().on_enter(*args)
 
@@ -45,12 +44,12 @@ class MusicPlayerContainer(PiHomeScreen):
 class MusicPlayerCard(BoxLayout):
     def __init__(self, **kwargs):
         super(MusicPlayerCard, self).__init__(**kwargs)
+        self.add_widget(Player())
 
 class Player(BoxLayout):
     def __init__(self, **kwargs):
         super(Player, self).__init__(**kwargs)
-
-
+        
 class PlayerQueue(BoxLayout):
     def __init__(self, **kwargs):
         super(PlayerQueue, self).__init__(**kwargs)
@@ -155,8 +154,15 @@ void main(void)
     
     // use the slope to render the distance with antialiasing
     float w = min(fwidth(d), .01);
-	gl_FragColor = vec4(vec3(smoothstep(-w, w, d)),1.0);
 
+    vec4 final_color = vec4(vec3(smoothstep(-w, w, d)), 1.0);
+
+    // replace the white in the final color with a transparent color
+    if (d > 0.0) {
+        final_color = vec4(0., 0., 0., 0.);
+    }
+
+	gl_FragColor = final_color;
 }
 '''
 
@@ -165,19 +171,6 @@ class VinylWidget(Widget):
 
     fs = StringProperty(None)
     sound = None
-
-    # Define the audio parameters
-    SAMPLE_RATE = 44100
-    NUM_CHANNELS = 2
-    SAMPLE_WIDTH = 2
-    PERIOD_SIZE = 1024
-
-    # Initialize the audio device for capture
-    capture = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NONBLOCK)
-    capture.setchannels(NUM_CHANNELS)
-    capture.setrate(SAMPLE_RATE)
-    capture.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-    capture.setperiodsize(PERIOD_SIZE)
 
     def __init__(self, **kwargs):
         # Instead of using Canvas, we will use a RenderContext,
@@ -210,15 +203,15 @@ class VinylWidget(Widget):
         self.canvas['modelview_mat'] = win_rc['modelview_mat']
         self.canvas['frag_modelview_mat'] = win_rc['frag_modelview_mat']
 
-        length, data = self.capture.read()
-        if length > 0:
-            # Process the audio data
-            audio_data = np.frombuffer(data, dtype=np.int16)
+        # length, data = self.capture.read()
+        # if length > 0:
+        #     # Process the audio data
+        #     audio_data = np.frombuffer(data, dtype=np.int16)
 
-            # Update the shader program with the audio texture
-            audio_texture = np.array(audio_data, dtype=np.uint8)
-            self.canvas['channel0'] = 0
-            self.canvas['channel0'] = audio_texture
+        #     # Update the shader program with the audio texture
+        #     audio_texture = np.array(audio_data, dtype=np.uint8)
+        #     self.canvas['channel0'] = 0
+        #     self.canvas['channel0'] = audio_texture
             
 
 
