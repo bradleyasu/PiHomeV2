@@ -1,6 +1,7 @@
 import atexit
 from datetime import datetime, timedelta
 from enum import Enum
+import hashlib
 import os
 import pickle
 from threading import Thread
@@ -101,6 +102,12 @@ class TaskManager():
 
     def add_task(self, task):
         PIHOME_LOGGER.info(f"Adding Task: {task.name}")
+        # make sure task doesn't already exist
+        for t in self.tasks:
+            if t.hash == task.hash:
+                PIHOME_LOGGER.warn(f"Task already exists: {task.name}")
+                return
+
         self.tasks.append(task)
         self.serialize_tasks()
 
@@ -183,6 +190,7 @@ class Task():
     """
     repeat days is a list of days of the week that the task should repeat
     """
+    hash = None
     def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, is_passive = False, repeat_days = 0, on_run = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
         # set id to random hash
         self.id = str(uuid.uuid4())
@@ -198,6 +206,9 @@ class Task():
         self.on_cancel = on_cancel
         self.background_image = background_image
         self.cacheable = cacheable
+
+        # create an md5 hash based on the task name, description, and start time
+        self.hash = hashlib.md5(f"{self.name}{self.description}{self.start_time}".encode()).hexdigest()
 
     def __str__(self):
         return f"Task: {self.name} - {self.description} - {self.duration} - {self.start_time} - {self.end_time} - {self.status} - {self.priority}"
