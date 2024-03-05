@@ -21,7 +21,7 @@ class Theme():
 
     BUTTON_PRIMARY            = ['primary', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
     BUTTON_SECONDARY          = ['secondary', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
-    BUTTON_DANGER             = ['danger', '', '', 'buttons']
+    BUTTON_DANGER             = ['danger', Color.RED_400, Color.DARK_RED_400, 'buttons']
     BUTTON_SUCCESS            = ['success', Color.CELERY_400, Color.DARK_CELERY_400, 'buttons']
 
     SWITCH_ACTIVE             = ['active', Color.CELERY_400, Color.DARK_CELERY_400, 'switch']

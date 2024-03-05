@@ -89,6 +89,7 @@ class HomeScreen(PiHomeScreen):
         animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
         animation.start(self)
+        self.toggle_controls()
         # AUDIO_PLAYER.stop()
         # AUDIO_PLAYER.clear_playlist()
 
@@ -126,13 +127,12 @@ class HomeScreen(PiHomeScreen):
             self.brightness_slider.level = get_brightness()
             self.add_widget(self.brightness_slider)
 
-            self.banButton = SimpleButton("danger")
+            self.banButton = SimpleButton(type="danger")
             self.banButton.text = "Ban Wallpaper"
             self.banButton.size = (dp(200), dp(50))
-            self.banButton.pos = (dp(get_app().width - 210), dp(10))
+            self.banButton.pos = (dp(get_app().width - 270), dp(10))
             self.banButton.bind(on_release=lambda x: WALLPAPER_SERVICE.ban())
             self.add_widget(self.banButton)
-
         else:
             self.remove_widget(self.brightness_slider)
             self.brightness_slider = None

@@ -26,17 +26,20 @@ class SimpleButton(ButtonBehavior, Widget):
     foregrounds={
         'primary': Theme().BUTTON_PRIMARY_TEXT,
         'secondary': Theme().BUTTON_SECONDARY_TEXT,
-        'danger': Theme().BUTTON_PRIMARY_TEXT,
+        'danger': Theme().BUTTON_PRIMARY_TEXT
     }
     accents={
         'primary': Theme().BUTTON_PRIMARY_ACCENT,
         'secondary': Theme().BUTTON_SECONDARY_ACCENT,
-        'danger': Theme().BUTTON_PRIMARY_ACCENT,
+        'danger': Theme().BUTTON_PRIMARY_ACCENT
     }
 
     def __init__(self, type = "primary", **kwargs):
        super(SimpleButton, self).__init__(**kwargs)
        
+       print("Background: ", Theme().get_color(self.backgrounds[type]))
+       print("Foreground: ", Theme().get_color(self.foregrounds[type]))
+       print("Pressed: ", Theme().get_color(self.accents[type]))    
        self.background_color = Theme().get_color(self.backgrounds[type])
        self.foreground_color = Theme().get_color(self.foregrounds[type])
        self.pressed_color = Theme().get_color(self.accents[type])
