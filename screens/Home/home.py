@@ -53,6 +53,7 @@ class HomeScreen(PiHomeScreen):
 
     is_first_run = True
     brightness_slider = None
+    banButton = None
 
 
     def __init__(self, **kwargs):
@@ -117,13 +118,22 @@ class HomeScreen(PiHomeScreen):
             self.brightness_slider.set_value(self.brightness_slider.level - 5)
 
     def toggle_controls(self):
-        if self.brightness_slider is None:
+        if self.brightness_slider is None and self.banButton is None:
             self.brightness_slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(get_app().width -30), dp(10)))
             self.brightness_slider.add_listener(lambda value: self.change_brightness(value))
             self.brightness_slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
             self.brightness_slider.active_color = hex(Color.DARK_CHARTREUSE_700)
             self.brightness_slider.level = get_brightness()
             self.add_widget(self.brightness_slider)
+
+            self.banButton = SimpleButton(type="danger")
+            self.banButton.text = "Ban Wallpaper"
+            self.banButton.size = (dp(200), dp(50))
+            self.banButton.pos = (dp(get_app().width - 270), dp(10))
+            self.banButton.bind(on_release=lambda x: WALLPAPER_SERVICE.ban())
+            self.add_widget(self.banButton)
         else:
             self.remove_widget(self.brightness_slider)
             self.brightness_slider = None
+            self.remove_widget(self.banButton)
+            self.banButton = None

@@ -12,6 +12,7 @@ from PIL import Image as PILImage, ImageOps
 from PIL import ImageFilter as PILImageFilter
 from kivy.network.urlrequest import UrlRequest
 from networking.poller import POLLER
+from services.audio.sfx import SFX
 from util.configuration import CONFIG
 from util.const import TEMP_DIR
 from util.helpers import get_app, toast, url_hash
@@ -189,6 +190,10 @@ class Wallpaper:
         if shuffle:
             self.shuffle()
         PIHOME_LOGGER.info("Wallpaper Service: banned url {}".format(url))
+
+    def ban(self):
+        self.ban_url(self.source, True)
+        SFX.play("trash")
 
     def shuffle(self):
         url = self.get_random_from_cache()

@@ -20,15 +20,18 @@ class SimpleButton(ButtonBehavior, Widget):
 
     backgrounds={
         'primary': Theme().BUTTON_PRIMARY,
-        'secondary': Theme().BUTTON_SECONDARY
+        'secondary': Theme().BUTTON_SECONDARY,
+        'danger': Theme().BUTTON_DANGER
     }
     foregrounds={
         'primary': Theme().BUTTON_PRIMARY_TEXT,
-        'secondary': Theme().BUTTON_SECONDARY_TEXT
+        'secondary': Theme().BUTTON_SECONDARY_TEXT,
+        'danger': Theme().BUTTON_PRIMARY_TEXT
     }
     accents={
         'primary': Theme().BUTTON_PRIMARY_ACCENT,
-        'secondary': Theme().BUTTON_SECONDARY_ACCENT
+        'secondary': Theme().BUTTON_SECONDARY_ACCENT,
+        'danger': Theme().BUTTON_PRIMARY_ACCENT
     }
 
     def __init__(self, type = "primary", **kwargs):

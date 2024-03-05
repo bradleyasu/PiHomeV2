@@ -226,6 +226,10 @@ class Task():
         if self.is_passive:
             self.status = TaskStatus.COMPLETED
         # non passive tasks are marked as completed or canceled by the user in the TaskScreen
+
+    def set_status(self, status: TaskStatus):
+        self.status = status
+        TASK_MANAGER.serialize_tasks()
     
     def schedule_next(self):
         if self.repeat_days > 0:
