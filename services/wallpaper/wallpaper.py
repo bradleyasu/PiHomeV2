@@ -189,6 +189,9 @@ class Wallpaper:
             self.shuffle()
         PIHOME_LOGGER.info("Wallpaper Service: banned url {}".format(url))
 
+    def ban(self):
+        self.ban_url(self.source, True)
+
     def shuffle(self):
         url = self.get_random_from_cache()
         if url == None:
