@@ -37,9 +37,6 @@ class SimpleButton(ButtonBehavior, Widget):
     def __init__(self, type = "primary", **kwargs):
        super(SimpleButton, self).__init__(**kwargs)
        
-       print("Background: ", Theme().get_color(self.backgrounds[type]))
-       print("Foreground: ", Theme().get_color(self.foregrounds[type]))
-       print("Pressed: ", Theme().get_color(self.accents[type]))    
        self.background_color = Theme().get_color(self.backgrounds[type])
        self.foreground_color = Theme().get_color(self.foregrounds[type])
        self.pressed_color = Theme().get_color(self.accents[type])
