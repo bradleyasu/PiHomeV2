@@ -77,7 +77,7 @@ class TaskScreen(PiHomeScreen):
         if self.on_confirm is not None:
             self.on_confirm.execute()
         from services.taskmanager.taskmanager import TaskStatus
-        self.task.status = TaskStatus.COMPLETED
+        self.task.set_status(TaskStatus.COMPLETED)
         self.go_back()
 
     def cancel(self):
@@ -85,5 +85,5 @@ class TaskScreen(PiHomeScreen):
         if self.on_cancel is not None:
             self.on_cancel.execute()
         from services.taskmanager.taskmanager import TaskStatus
-        self.task.status = TaskStatus.CANCELED
+        self.task.set_status(TaskStatus.CANCELED)
         self.go_back()
