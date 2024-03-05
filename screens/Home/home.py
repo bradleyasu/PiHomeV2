@@ -89,7 +89,6 @@ class HomeScreen(PiHomeScreen):
         animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
         animation.start(self)
-        self.toggle_controls()
         # AUDIO_PLAYER.stop()
         # AUDIO_PLAYER.clear_playlist()
 
