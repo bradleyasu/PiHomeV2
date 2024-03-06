@@ -9,10 +9,12 @@ from kivy.lang import Builder
 from kivy.graphics import RenderContext
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ObjectProperty
 from kivy.core.audio import SoundLoader
 from kivy.graphics.texture import Texture
 import numpy as np
+from kivy.graphics.opengl import glBindTexture, GL_TEXTURE_2D, GL_TEXTURE9, glActiveTexture, GL_TEXTURE0, glUniform1i, glGetError, glUseProgram, GL_LINEAR, GL_CLAMP_TO_EDGE, glTexParameteri, GL_TEXTURE1,GL_TEXTURE3, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T
+from services.audio.audioplayernew import AUDIO_PLAYER
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
@@ -31,6 +33,8 @@ class MusicPlayerContainer(PiHomeScreen):
 
         # get audio texture for vinyl shader
         # self.vinyl.set_sound(self.sound)
+        AUDIO_PLAYER.play("https://manifest.googlevideo.com/api/manifest/hls_playlist/expire/1709760545/ei/wYvoZa2gArjB_9EPy9-FiAM/ip/74.109.241.148/id/AS_x4uR87Kw.1/itag/234/source/yt_live_broadcast/requiressl/yes/ratebypass/yes/live/1/goi/133/sgoap/gir%3Dyes%3Bitag%3D140/rqh/1/hls_chunk_host/rr1---sn-8xgp1vo-2pue.googlevideo.com/xpc/EgVo2aDSNQ%3D%3D/playlist_duration/3600/manifest_duration/3600/vprv/1/playlist_type/DVR/initcwndbps/838750/mh/Op/mm/44/mn/sn-8xgp1vo-2pue/ms/lva/mv/m/mvi/1/pl/18/dover/13/pacing/0/short_key/1/keepalive/yes/fexp/24007246/mt/1709738443/sparams/expire,ei,ip,id,itag,source,requiressl,ratebypass,live,goi,sgoap,rqh,xpc,playlist_duration,manifest_duration,vprv,playlist_type/sig/AJfQdSswRgIhAOzZAUN4D1sVs8EGPBbf1CdrAHlvX6TKkx_XAizOGoPTAiEAm47jpaARjoi11MqBdNGVlPHZZ5A6DBOCel3QxVoZGdw%3D/lsparams/hls_chunk_host,initcwndbps,mh,mm,mn,ms,mv,mvi,pl/lsig/APTiJQcwRQIhAMZQ4avWg-eNN6Tgiv4SUS_giCZwKg5GLb2rO9rbty7GAiAQ5lpxiI5zXVx0nIoPLj4mtf1OGjWgdoroG2A7BJZRjw%3D%3D/playlist/index.m3u8")
+
 
         return super().on_enter(*args)
 
@@ -54,7 +58,7 @@ class PlayerQueue(BoxLayout):
     def __init__(self, **kwargs):
         super(PlayerQueue, self).__init__(**kwargs)
 
-        
+
 vinyl_shader = '''
 $HEADER$
 #define BARS 12.
@@ -64,6 +68,10 @@ $HEADER$
 uniform vec2 resolution;
 uniform float time;
 uniform sampler2D iChannel0;
+uniform sampler2D channel0;
+uniform sampler2D texture1;
+uniform sampler2D texture3;
+uniform sampler2D audioTexture;
 
 // rotation transform
 void tRotate(inout vec2 p, float angel) {
@@ -140,7 +148,7 @@ void main(void)
         
         float barWidth = (barsEnd - barsStart) / BARS;
         float barStart = barsStart + barWidth * (barId + .25);
-        float barAngel = texture2D(iChannel0, vec2(1. - barId / BARS, .25)).x * .5;
+        float barAngel = texture2D(audioTexture, vec2(1. - barId / BARS, .25)).x * .5;
 
         // add a little rotation to completely ruin the beautiful symmetry
         tRotate(uv, -barAngel * .2 * sin(barId + time));
@@ -158,69 +166,83 @@ void main(void)
     vec4 final_color = vec4(vec3(smoothstep(-w, w, d)), 1.0);
 
     // replace the white in the final color with a transparent color
-    if (d > 0.0) {
-        final_color = vec4(0., 0., 0., 0.);
-    }
+    //if (d > 0.0) {
+    //    final_color = vec4(0., 0., 0., 0.);
+    //}
 
 	gl_FragColor = final_color;
+
+    //float value = texture2D(iChannel0, uv).r;
+    //gl_FragColor = vec4(vec3(value), 1.0);
 }
 '''
-
 class VinylWidget(Widget):
-
-
     fs = StringProperty(None)
     sound = None
+    audio_texture = ObjectProperty(None)
 
     def __init__(self, **kwargs):
-        # Instead of using Canvas, we will use a RenderContext,
-        # and change the default shader used.
         self.canvas = RenderContext()
-
-        # call the constructor of parent
-        # if they are any graphics object, they will be added on our new canvas
         super(VinylWidget, self).__init__(**kwargs)
-
-        # We'll update our glsl variables in a clock
         Clock.schedule_interval(self.update_glsl, 1 / 60.)
-        self.audio_texture = self.create_texture((1024, 1))
+        # self.audio_texture = self.create_texture((512, 1))
+        self.audio_texture = Texture.create(size=(1, 512), colorfmt='luminance')
 
     def on_fs(self, instance, value):
-        # set the fragment shader to our source code
         shader = self.canvas.shader
         old_value = shader.fs
         shader.fs = value
         if not shader.success:
             shader.fs = old_value
-            raise Exception('failed')
+            raise Exception('Shader compilation failed')
 
     def update_glsl(self, *largs):
         self.canvas['time'] = Clock.get_boottime()
         self.canvas['resolution'] = list(map(float, self.size))
-        # This is needed for the default vertex shader.
         win_rc = Window.render_context
         self.canvas['projection_mat'] = win_rc['projection_mat']
         self.canvas['modelview_mat'] = win_rc['modelview_mat']
         self.canvas['frag_modelview_mat'] = win_rc['frag_modelview_mat']
 
-        # length, data = self.capture.read()
-        # if length > 0:
-        #     # Process the audio data
-        #     audio_data = np.frombuffer(data, dtype=np.int16)
+        if AUDIO_PLAYER.data:
+            # Update the audio texture with new data
+            audio_data = AUDIO_PLAYER.data
+            audio_array = np.frombuffer(audio_data, dtype=np.float32)
+            # audio_array = self.normalize_data(audio_array)
+            audio_bytes = audio_array.tobytes()
+            self.audio_texture.blit_buffer(audio_bytes, colorfmt='luminance', bufferfmt='float')
+        else:
+            audio_data = np.zeros(512, dtype=np.float32).tobytes()
+            self.audio_texture.blit_buffer(audio_data, colorfmt='luminance', bufferfmt='float')
+        
+        self.set_channel()
+        
+    def bytes_to_texture(self, audio_data):
+        audio_array = np.frombuffer(audio_data, dtype=np.float32)
+        audio_array = self.normalize_data(audio_array)
+        audio_bytes = audio_array.tobytes()
+        texture_size = (1, len(audio_array))
+        texture = Texture.create(size=texture_size, colorfmt='luminance')
+        texture.blit_buffer(audio_bytes, colorfmt='luminance', bufferfmt='float')
+        return texture
 
-        #     # Update the shader program with the audio texture
-        #     audio_texture = np.array(audio_data, dtype=np.uint8)
-        #     self.canvas['channel0'] = 0
-        #     self.canvas['channel0'] = audio_texture
-            
-
+    def normalize_data(self, data):
+        min_val = np.min(data)
+        max_val = np.max(data)
+        if max_val == min_val:
+            return data
+        return (data - min_val) / (max_val - min_val)
 
     def create_texture(self, size):
         return np.zeros(size)
 
-    def set_channel(self, texture):
-        self.canvas['iChannel0'] = texture
-        print("Setting channel to {}".format(texture))
+    def set_channel(self):
+        self.audio_texture.bind()
+        glActiveTexture(GL_TEXTURE3)
+        glBindTexture(GL_TEXTURE_2D, self.audio_texture.id)
+        self.canvas['audioTexture'] = 3 # Set to texture unit 0
+        self.canvas.ask_update()
+        glBindTexture(GL_TEXTURE_2D, 0)
 
     def set_center_x(self, value):
         return super().set_center_x(value)
