@@ -141,6 +141,11 @@ python3 -m pip install ffpyplayer >> $LOG
 
 # required for numpy
 sudo apt-get -y install libopenblas-dev >> $LOG
+
+# required for sounddevice
+sudo apt-get -y install libportaudio2 >> $LOG
+sudo apt-get -y install python3-cffi >> $LOG
+
 python3 -m pip install ffmpeg-python==0.2.0 >> $LOG
 python3 -m pip install numpy==1.26.4 >> $LOG
 python3 -m pip install sounddevice==0.4.6 >> $LOG

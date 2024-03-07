@@ -46,6 +46,8 @@ class AudioPlayer:
 
     def find_sound_device(self):
         PIHOME_LOGGER.info("Finding sound device")
+        sd._terminate()
+        sd._initialize()
         devices = sd.query_devices()
         for device in devices:
             if device['max_output_channels'] > 0:
@@ -100,6 +102,9 @@ class AudioPlayer:
             outdata[:] = data * self.volume
 
     def play(self, url):
+        # ensure device is found
+        if self.device is None:
+            self.device = self.find_sound_device()
         self.stop()
         self.empty_buffer = False
         thread = Thread(target=self._play, args=(url,))
