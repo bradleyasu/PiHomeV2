@@ -1,0 +1,8 @@
+Kivy==2.3.0
+mplayer.py==0.7.2.post1
+paho_mqtt==1.6.1
+Pillow==10.2.0
+pygame==2.5.2
+qrcode==7.3.1
+Requests==2.31.0
+websockets==12.0
