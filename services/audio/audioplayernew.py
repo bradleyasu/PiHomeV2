@@ -160,6 +160,7 @@ class AudioPlayer:
             PIHOME_LOGGER.error("Connection Error")
         except Exception as e:
             PIHOME_LOGGER.error("Other Error")
+            PIHOME_LOGGER.error(e)
             return
 
     def stop(self):

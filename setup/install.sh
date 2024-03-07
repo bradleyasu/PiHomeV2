@@ -139,6 +139,13 @@ python3 -m pip install kivy[base] >> $LOG
 echo "Installing ffpyplayer as audio provider..."
 python3 -m pip install ffpyplayer >> $LOG
 
+# required for numpy
+sudo apt-get -y install libopenblas-dev >> $LOG
+python3 -m pip install ffmpeg-python==0.2.0 >> $LOG
+python3 -m pip install numpy==1.26.4 >> $LOG
+python3 -m pip install sounddevice==0.4.6 >> $LOG
+python3 -m pip install Pillow==10.2.0 >> $LOG
+
 # TODO install yt-dlp from cdn
 
 echo "Setting up environment..."
