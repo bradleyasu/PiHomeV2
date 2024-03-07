@@ -233,8 +233,9 @@ class AudioPlayer:
         pass
 
     def run_youtubedl(self, url):
+        # arguments to get audio 
         process = subprocess.Popen(['youtube-dl', 
-                                    '-f', 'bestaudio',
+                                    '-f', 'bestaudio/mp3/b',
                                     '--no-warnings',
                                     '-g', url], stdout=subprocess.PIPE)
         #get the output
