@@ -30,6 +30,7 @@ class AudioPlayer:
         self.stream = None
         self.process = None
         self.paused = False
+        self.empty_buffer = False
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
@@ -53,7 +54,9 @@ class AudioPlayer:
         try:
             data = self.q.get_nowait()
             self.data = data 
+            self.empty_buffer = False
         except queue.Empty as e:
+            self.empty_buffer = True
             print('Buffer is empty: increase buffersize?')
             raise sd.CallbackAbort from e
         # assert len(data) == len(outdata)
@@ -65,28 +68,43 @@ class AudioPlayer:
         outdata[:len(data)] = data
 
     def play(self, url):
+        self.stop()
         thread = Thread(target=self._play, args=(url,))
         thread.start()
 
     def _play(self, url):
         print('Getting stream information ...')
-        try:
-            info = ffmpeg.probe(url)
-        except ffmpeg.Error as e:
-            sys.stderr.buffer.write(e.stderr)
-            sys.exit(e)
 
-        streams = info.get('streams', [])
-        if len(streams) != 1:
-            sys.exit('There must be exactly one stream available')
+        is_local = True
+        if url.startswith('http://') or url.startswith('https://'):
+            is_local = False
 
-        stream = streams[0]
 
-        if stream.get('codec_type') != 'audio':
-            sys.exit('The stream must be an audio stream')
+        if not is_local:
+            try:
+                info = ffmpeg.probe(url)
+            except ffmpeg.Error as e:
+                PIHOME_LOGGER.error(e)
+                PIHOME_LOGGER.error(e.stderr)
+                return
 
-        channels = stream['channels']
-        samplerate = float(stream['sample_rate'])
+            streams = info.get('streams', [])
+            if len(streams) != 1:
+                PIHOME_LOGGER.error('There must be exactly one stream available')
+                return
+                
+
+            stream = streams[0]
+
+            if stream.get('codec_type') != 'audio':
+                PIHOME_LOGGER.error('The stream must be an audio stream')
+                return
+
+            channels = stream['channels']
+            samplerate = float(stream['sample_rate'])
+        else:
+            channels = 2
+            samplerate = 44100
 
         try:
             print('Opening stream ...')
@@ -97,9 +115,9 @@ class AudioPlayer:
                 ac=channels,
                 ar=samplerate,
                 loglevel='quiet',
-                reconnect=1,
-                reconnect_streamed=1,
-                reconnect_delay_max=5,
+                # reconnect=1,
+                # reconnect_streamed=1,
+                # reconnect_delay_max=5,
             ).run_async(pipe_stdout=True)
             self.stream = sd.RawOutputStream(samplerate=samplerate, blocksize=self.blocksize, device=self.device, channels=channels, dtype='float32', callback=self.callback)
             read_size = self.blocksize * channels * self.stream.samplesize
@@ -109,9 +127,15 @@ class AudioPlayer:
             print('Starting Playback ...')
             with self.stream:
                 timeout = self.blocksize * self.buffersize / samplerate
-                while True:
-                    d = self.process.stdout.read(read_size)
-                    self.q.put(d, timeout=timeout)
+                code =self.process.poll()
+                while code is None and not self.empty_buffer:
+                    while True:
+                        d = self.process.stdout.read(read_size)
+                        if not d:
+                            break
+                        self.q.put(d, timeout=timeout)
+                print('End of stream: ', code)
+                self.q.empty()
         except KeyboardInterrupt:
             PIHOME_LOGGER.info('Interrupted by user')
             return

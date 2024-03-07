@@ -12,6 +12,8 @@ uniform sampler2D channel0;
 uniform sampler2D texture1;
 uniform sampler2D texture3;
 uniform sampler2D audioTexture;
+uniform float offsetX;
+uniform float offsetY;
 
 // rotation transform
 void tRotate(inout vec2 p, float angel) {
@@ -70,6 +72,11 @@ void main(void)
 
     // center
     uv -= .5;
+    
+    // Add Offsets
+    uv.x -= offsetX;
+    uv.y -= offsetY;
+
 
     // little white padding
     uv *= 2.05;
@@ -110,7 +117,7 @@ void main(void)
     //    final_color = vec4(0., 0., 0., 0.);
     //}
 
-	gl_FragColor = final_color;
+	gl_FragColor =  final_color;
 
     //float value = texture2D(iChannel0, uv).r;
     //gl_FragColor = vec4(vec3(value), 1.0);
