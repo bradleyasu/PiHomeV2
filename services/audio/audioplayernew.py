@@ -51,6 +51,7 @@ class AudioPlayer:
             if device['max_output_channels'] > 0:
                 PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
                 return device['name']
+        PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
         return None
     
     def int_or_str(self, text):
