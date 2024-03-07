@@ -78,6 +78,7 @@ class AudioPlayer:
     def callback(self, outdata, frames, time, status):
         assert frames == self.blocksize
         if status.output_underflow:
+            self.stop()
             print('Output underflow: increase blocksize?')
             raise sd.CallbackAbort
         assert not status
@@ -88,6 +89,7 @@ class AudioPlayer:
             self.empty_buffer = False
         except queue.Empty as e:
             self.empty_buffer = True
+            self.stop()
             print('Buffer is empty: increase buffersize?')
             raise sd.CallbackAbort from e
         # assert len(data) == len(outdata)
@@ -176,20 +178,25 @@ class AudioPlayer:
                 print('End of stream: ', code)
                 self.q.empty()
         except KeyboardInterrupt:
+            self.stop()
             PIHOME_LOGGER.info('Interrupted by user')
             return
         except queue.Full:
             # A timeout occurred, i.e. there was an error in the callback
+            self.stop()
             PIHOME_LOGGER.error('Error: Buffer is full')
             return
         except (ConnectionResetError, ConnectionAbortedError, TimeoutError) as e:
+            self.stop()
             PIHOME_LOGGER.error("Connection Error")
         except Exception as e:
+            self.stop()
             PIHOME_LOGGER.error("Other Error")
             PIHOME_LOGGER.error(e)
             return
 
     def stop(self):
+        PIHOME_LOGGER.info("Stopping audio")
         if self.stream:
             self.stream.stop()
         if self.process:
