@@ -20,7 +20,7 @@ from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
-from services.audio.audioplayer import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER
 from services.audio.sfx import SFX
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from services.weather.weather import WEATHER

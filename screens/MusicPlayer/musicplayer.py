@@ -62,6 +62,10 @@ class Player(BoxLayout):
         s.bind(value=lambda _, v:AUDIO_PLAYER.set_volume(v))
         player_grid.add_widget(s)
 
+        def set_volume(v):
+            s.value = v
+        AUDIO_PLAYER.add_volume_listener(lambda v: set_volume(v))
+
 
         buttons = BoxLayout(orientation='horizontal')
 

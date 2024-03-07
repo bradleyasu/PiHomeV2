@@ -1,7 +1,7 @@
 
 import json
 from events.pihomeevent import PihomeEvent
-from services.audio.audioplayer import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER
 
 
 class AudioEvent(PihomeEvent):

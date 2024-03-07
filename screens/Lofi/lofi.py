@@ -4,7 +4,7 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty, ListProperty
 from interface.pihomescreen import PiHomeScreen
 from components.WheelMenu.wheelmenu import WheelMenu
-from services.audio.audioplayer import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER
 from util.configuration import CONFIG
 from util.const import CDN_ASSET
 

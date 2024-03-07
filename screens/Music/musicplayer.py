@@ -21,7 +21,7 @@ from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from interface.pihomescreen import PiHomeScreen
 from services.albumart.albumart import AlbumArtFactory
-from services.audio.audioplayer import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER
 from services.qr.qr import QR
 from theme.color import Color
 from theme.theme import Theme

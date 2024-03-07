@@ -16,7 +16,7 @@ class StatusEvent(PihomeEvent):
     def status_body(self):
         from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
         from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
-        from services.audio.audioplayer import AUDIO_PLAYER
+        from services.audio.audioplayernew import AUDIO_PLAYER
         from services.taskmanager.taskmanager import TASK_MANAGER
         from services.weather.weather import WEATHER
         from services.wallpaper.wallpaper import WALLPAPER_SERVICE
@@ -41,7 +41,7 @@ class StatusEvent(PihomeEvent):
             }, 
             "audio": {
                 "is_playing": AUDIO_PLAYER.is_playing,
-                "is_paused": AUDIO_PLAYER.is_paused,
+                "is_paused": AUDIO_PLAYER.paused,
                 "title": AUDIO_PLAYER.title,
                 "percent": AUDIO_PLAYER.percent,
                 "volume": AUDIO_PLAYER.volume,

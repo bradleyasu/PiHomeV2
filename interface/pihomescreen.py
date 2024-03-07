@@ -1,6 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
-from services.audio.audioplayer import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER
 from system.brightness import get_brightness, set_brightness
 from util.const import GESTURE_DATABASE
 from util.helpers import get_app, simplegesture

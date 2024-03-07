@@ -4,7 +4,7 @@ import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from events.pihomeevent import PihomeEventFactory
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
-from services.audio.audioplayer import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from services.weather.weather import WEATHER

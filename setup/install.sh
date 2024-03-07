@@ -139,6 +139,8 @@ python3 -m pip install kivy[base] >> $LOG
 echo "Installing ffpyplayer as audio provider..."
 python3 -m pip install ffpyplayer >> $LOG
 
+# TODO install yt-dlp from cdn
+
 echo "Setting up environment..."
 
 echo "" >> $PROFILE

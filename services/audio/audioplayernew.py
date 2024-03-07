@@ -1,5 +1,6 @@
 import argparse
 import queue
+import subprocess
 import sys
 from time import sleep
 
@@ -20,6 +21,9 @@ class AudioPlayer:
     album_art = None
     queue = []
     data = None
+    volume_listeners = []
+    percent = 100
+    is_playing = False
 
 
     def __init__(self, device=None, blocksize=4096, buffersize=512):
@@ -44,6 +48,9 @@ class AudioPlayer:
             return int(text)
         except ValueError:
             return text
+
+    def add_volume_listener(self, listener):
+        self.volume_listeners.append(listener)
 
     def callback(self, outdata, frames, time, status):
         assert frames == self.blocksize
@@ -83,6 +90,7 @@ class AudioPlayer:
         is_local = True
         if url.startswith('http://') or url.startswith('https://'):
             is_local = False
+            url = self.run_youtubedl(url)
 
 
         if not is_local:
@@ -169,10 +177,15 @@ class AudioPlayer:
         """
         Volume must be between 0 and 1
         """
+        if volume > 1:
+            # normalize volume between 0 and 1 
+            volume = volume / 100
         if volume < 0 or volume > 1:
             PIHOME_LOGGER.error("Volume must be between 0 and 1")
             return
         self.volume = volume
+        for listener in self.volume_listeners:
+            listener(volume)
 
     def volume_up(self):
         if self.volume < 1:
@@ -182,6 +195,23 @@ class AudioPlayer:
     def volume_down(self):
         if self.volume > 0:
             self.set_volume(self.volume - 0.1)
-    
+
+    def next():
+        pass
+
+    def prev():
+        pass
+
+    def clear_playlist():
+        pass
+
+    def run_youtubedl(self, url):
+        process = subprocess.Popen(['youtube-dl', 
+                                    '-f', 'bestaudio',
+                                    '--no-warnings',
+                                    '-g', url], stdout=subprocess.PIPE)
+        #get the output
+        out, err = process.communicate()
+        return out.decode('utf-8').strip()
 
 AUDIO_PLAYER = AudioPlayer()

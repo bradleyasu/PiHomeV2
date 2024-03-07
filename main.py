@@ -46,7 +46,7 @@ from util.phlog import PIHOME_LOGGER
 from screens.DisplayEvent.displayevent import DisplayEvent
 from screens.Music.musicplayer import MusicPlayer
 from server.server import SERVER, PiHomeServer
-from services.audio.audioplayer import AudioPlayer
+from services.audio.audioplayernew import AudioPlayer
 from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, _TASK_SCREEN, _TIMERS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
