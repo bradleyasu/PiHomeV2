@@ -52,6 +52,7 @@ class AudioPlayer:
                 PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
                 return device['name']
         PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
+        self.log_sound_devices()
         return None
     
     def log_sound_devices(self):
