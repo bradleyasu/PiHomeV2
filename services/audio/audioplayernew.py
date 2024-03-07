@@ -54,6 +54,14 @@ class AudioPlayer:
         PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
         return None
     
+    def log_sound_devices(self):
+        devices = sd.query_devices()
+        PIHOME_LOGGER.warn("Sound Devices:")
+        PIHOME_LOGGER.warn("-----------------")
+        for device in devices:
+            PIHOME_LOGGER.warn(device)
+        PIHOME_LOGGER.warn("-----------------")
+    
     def int_or_str(self, text):
         """Helper function for argument parsing."""
         try:
