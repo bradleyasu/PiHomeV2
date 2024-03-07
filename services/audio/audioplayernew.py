@@ -35,6 +35,8 @@ class AudioPlayer:
         self.process = None
         self.paused = False
         self.empty_buffer = False
+        if self.device is None:
+            self.device = self.find_sound_device()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
@@ -42,6 +44,15 @@ class AudioPlayer:
     def __del__(self):
         self.stop()
 
+    def find_sound_device(self):
+        PIHOME_LOGGER.info("Finding sound device")
+        devices = sd.query_devices()
+        for device in devices:
+            if device['max_output_channels'] > 0:
+                PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
+                return device['name']
+        return None
+    
     def int_or_str(self, text):
         """Helper function for argument parsing."""
         try:
