@@ -13,8 +13,8 @@ from threading import Thread
 class AudioPlayer:
     percent = 0
     title = "No Media"
-    volume = 100.0
-    is_paused = False
+    volume = 1.0
+    paused = False
     playlist_pos = 0
     playlist_start = 0
     album_art = None
@@ -53,7 +53,8 @@ class AudioPlayer:
         assert not status
         try:
             data = self.q.get_nowait()
-            self.data = data 
+            self.data = data  # store raw data for visualizations
+            data = np.frombuffer(data, dtype='float32')
             self.empty_buffer = False
         except queue.Empty as e:
             self.empty_buffer = True
@@ -65,10 +66,14 @@ class AudioPlayer:
             data = np.zeros(len(data), dtype='float32')
         # if self.volume != 1.0:
             # data = np.multiply(data, self.volume)
-        outdata[:len(data)] = data
+        if len(data) > len(outdata):
+            self.empty_buffer = True
+        else:
+            outdata[:] = data * self.volume
 
     def play(self, url):
         self.stop()
+        self.empty_buffer = False
         thread = Thread(target=self._play, args=(url,))
         thread.start()
 
@@ -154,33 +159,29 @@ class AudioPlayer:
             self.stream.stop()
         if self.process:
             self.process.terminate()
+        # clear the queue
+        while not self.q.empty():
+            self.q.get()
+        self.data = None
+        self.empty_buffer = True
 
     def set_volume(self, volume):
-        volume = volume / 100.0
-        if self.stream:
-            self.stream.volume = volume
+        """
+        Volume must be between 0 and 1
+        """
+        if volume < 0 or volume > 1:
+            PIHOME_LOGGER.error("Volume must be between 0 and 1")
+            return
+        self.volume = volume
 
     def volume_up(self):
-        if self.stream:
-            self.stream.volume = self.stream.volume + 0.1
+        if self.volume < 1:
+            self.set_volume(self.volume + 0.1)
+
         
     def volume_down(self):
-        if self.stream:
-            self.stream.volume = self.stream.volume - 0.1
-        
-
-# Test the AudioPlayer
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Audio Player")
-    parser.add_argument('url', metavar='URL', help='stream URL')
-    parser.add_argument('-d', '--device', type=int, help='output device (numeric ID or substring)')
-    parser.add_argument('-b', '--blocksize', type=int, default=1024, help='block size (default: %(default)s)')
-    parser.add_argument('-q', '--buffersize', type=int, default=20, help='number of blocks used for buffering (default: %(default)s)')
-    args = parser.parse_args()
-
-    player = AudioPlayer(args.device, args.blocksize, args.buffersize)
-    player.play(args.url)
-
+        if self.volume > 0:
+            self.set_volume(self.volume - 0.1)
+    
 
 AUDIO_PLAYER = AudioPlayer()

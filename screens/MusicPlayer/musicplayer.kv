@@ -10,6 +10,14 @@
         Rectangle:
             size: self.size
             pos: self.pos
+
+    Label:
+        text: root.current_time
+        font_size: '60sp'
+        size_hint: 0.1, 0.1
+        pos_hint: {"center_x": .21, "center_y": .5}
+        color: 1, 1, 1, 1
+        font_name: "Nunito"
         
 
 <MusicPlayerCard>:
@@ -38,7 +46,7 @@
 <Player>:
     canvas:
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: 1, 1, 1, 0
         RoundedRectangle:
             size: self.size
             pos: self.pos

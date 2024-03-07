@@ -10,23 +10,22 @@ from services.audio.audioplayernew import AUDIO_PLAYER
 from kivy.uix.floatlayout import FloatLayout
 from screens.MusicPlayer.shaders import sVINYL
 from kivy.graphics import BindTexture
+from kivy.uix.slider import Slider
+from datetime import datetime
+from kivy.uix.gridlayout import GridLayout
+from components.Button.circlebutton import CircleButton
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
     sound = None
+    current_time = StringProperty("00:00 PM")
     def __init__(self, **kwargs):
         super(MusicPlayerContainer, self).__init__(**kwargs)
         self.add_widget(MusicPlayerCard())
 
-    
+        Clock.schedule_interval(lambda _: self.update_current_time(), 1)
+
     def on_enter(self, *args):
-        # AUDIO_PLAYER.play("https://manifest.googlevideo.com/api/manifest/hls_playlist/expire/1709846169/ei/OdrpZYrjNsye_9EP_8ORQA/ip/74.109.241.148/id/AS_x4uR87Kw.1/itag/234/source/yt_live_broadcast/requiressl/yes/ratebypass/yes/live/1/goi/133/sgoap/gir%3Dyes%3Bitag%3D140/rqh/1/hls_chunk_host/rr1---sn-8xgp1vo-2pue.googlevideo.com/xpc/EgVo2aDSNQ%3D%3D/playlist_duration/3600/manifest_duration/3600/vprv/1/playlist_type/DVR/initcwndbps/862500/mh/Op/mm/44/mn/sn-8xgp1vo-2pue/ms/lva/mv/m/mvi/1/pl/18/dover/13/pacing/0/short_key/1/keepalive/yes/fexp/24007246/mt/1709823871/sparams/expire,ei,ip,id,itag,source,requiressl,ratebypass,live,goi,sgoap,rqh,xpc,playlist_duration,manifest_duration,vprv,playlist_type/sig/AJfQdSswRQIhAPSwLvJ6OrqrT5Zxu7ktZWLRK_e2I026V1RvpJwfBxT6AiBINrL9NSqzMDMeqMLpObGdXErxWkK4S6sObzZXrpB2GA%3D%3D/lsparams/hls_chunk_host,initcwndbps,mh,mm,mn,ms,mv,mvi,pl/lsig/APTiJQcwRQIgeG5uTx_82kPVQrpyzEcSH7wJEp-Ix7UXK6lqvWUCTCgCIQCkp-KOzU1Uam9qbmTcpsAnluyTjDy9MTdhcZsNWbjrIw%3D%3D/playlist/index.m3u8")
-
-        # AUDIO_PLAYER.play("https://cf-media.sndcdn.com/0OjHiwy9wqQK.128.mp3?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiKjovL2NmLW1lZGlhLnNuZGNkbi5jb20vME9qSGl3eTl3cVFLLjEyOC5tcDMqIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzA5ODMwMDU0fX19XX0_&Signature=ZSW0AyWO1ayG6RgouLWd1Di-3-WRcAkx7zAEBcbu2h6Enwzz5z-SI7bJcRF7mA5DwqVSSCQKak5HgV5BZeDCwEHtzw6MN-sKVUCGBv-7Ei~DXhIVcAEBh~AftaY0jadvtvEu1RU~S9x8hDbt4mE810fa9sK2guFYHF8bj9cE625VMW6UAc~E7MLOkB48Io7ORv9CPrsBlkuH21d-PjCFka8b98tK119txs5u-IlU5zP0ECsfnI700pXikNjapYHckJpXPnWCTkvyRyyvp70kQIJmq4-cVYWPOPu8cNadG91LpGLrwe4vtANTg0xu2FkWfWZyBrdwtdvccTW4t412Tg__&Key-Pair-Id=APKAI6TU7MMXM5DG6EPQ")
-
-        AUDIO_PLAYER.play("/Users/bradsheets/Projects/pihome/services/audio/test.mp3")
-
-
         return super().on_enter(*args)
 
     def on_leave(self, *args):
@@ -34,6 +33,10 @@ class MusicPlayerContainer(PiHomeScreen):
             self.sound.stop()
             self.sound.unload()
         return super().on_leave(*args)
+    
+    def update_current_time(self):
+        now = datetime.now()
+        self.current_time = now.strftime("%I:%M %p")
 
 
 class MusicPlayerCard(BoxLayout):
@@ -44,11 +47,43 @@ class MusicPlayerCard(BoxLayout):
 class Player(BoxLayout):
     def __init__(self, **kwargs):
         super(Player, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.padding = 10
         
         self.vinyl = VinylWidget(fs=sVINYL)
-        self.vinyl.xOffset = 2.2
-        self.vinyl.yOffset = 0.25
+        self.vinyl.xOffset = 2.35
+        self.vinyl.yOffset = 0.81
+        self.vinyl.size_hint = (1, 1)
+        self.vinyl.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
         self.add_widget(self.vinyl)
+
+        player_grid = GridLayout(rows=2)
+        s = Slider(min=0, max=1, value=1, step=0.01)
+        s.bind(value=lambda _, v:AUDIO_PLAYER.set_volume(v))
+        player_grid.add_widget(s)
+
+
+        buttons = BoxLayout(orientation='horizontal')
+
+        stop = CircleButton(text="STOP")
+        stop.bind(on_release=lambda _: AUDIO_PLAYER.stop())
+        stop.font_size = 10
+        stop.stroke_color = (0, 0, 0, 0)
+        stop.text_color = (0, 0, 0, 1)
+
+        play= CircleButton(text="PLAY")
+        play.bind(on_release=lambda _: AUDIO_PLAYER.play("/Users/bradsheets/Projects/pihome/services/audio/test_file.mp3"))
+        play.font_size = 10
+        play.stroke_color = (0, 0, 0, 0)
+        play.text_color = (0, 0, 0, 1)
+
+
+        buttons.add_widget(play)
+        buttons.add_widget(stop)
+
+        player_grid.add_widget(buttons)
+
+        self.add_widget(player_grid)
         
 class PlayerQueue(BoxLayout):
     def __init__(self, **kwargs):
@@ -92,6 +127,7 @@ class VinylWidget(FloatLayout):
         # self.canvas['offsetY'] = 0.25
         self.canvas['offsetX'] = self.xOffset
         self.canvas['offsetY'] = self.yOffset
+        self.canvas['volume'] = AUDIO_PLAYER.volume
 
         if AUDIO_PLAYER.data:
             # Update the audio texture with new data

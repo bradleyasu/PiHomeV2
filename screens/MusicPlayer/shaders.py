@@ -14,6 +14,7 @@ uniform sampler2D texture3;
 uniform sampler2D audioTexture;
 uniform float offsetX;
 uniform float offsetY;
+uniform float volume;
 
 // rotation transform
 void tRotate(inout vec2 p, float angel) {
@@ -95,7 +96,7 @@ void main(void)
         
         float barWidth = (barsEnd - barsStart) / BARS;
         float barStart = barsStart + barWidth * (barId + .25);
-        float barAngel = texture2D(texture1, vec2(1. - barId / BARS, .25)).x * .5;
+        float barAngel = texture2D(texture1, vec2(1. - barId / BARS, .25)).x * .5 * volume;
 
         // add a little rotation to completely ruin the beautiful symmetry
         tRotate(uv, -barAngel * .2 * sin(barId + time));
@@ -113,9 +114,9 @@ void main(void)
     vec4 final_color = vec4(vec3(smoothstep(-w, w, d)), 1.0);
 
     // replace the white in the final color with a transparent color
-    //if (d > 0.0) {
-    //    final_color = vec4(0., 0., 0., 0.);
-    //}
+    if (final_color.r > .9 && final_color.g > .9 && final_color.b > .9) {
+        final_color = vec4(0., 0., 0., 0.);
+    }
 
 	gl_FragColor =  final_color;
 
