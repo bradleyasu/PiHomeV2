@@ -76,7 +76,7 @@ class Player(BoxLayout):
         stop.text_color = (0, 0, 0, 1)
 
         play= CircleButton(text="PLAY")
-        play.bind(on_release=lambda _: AUDIO_PLAYER.play("/Users/bradsheets/Projects/pihome/services/audio/test_file.mp3"))
+        play.bind(on_release=lambda _: AUDIO_PLAYER.play("services/audio/test_file.mp3"))
         play.font_size = 10
         play.stroke_color = (0, 0, 0, 0)
         play.text_color = (0, 0, 0, 1)
