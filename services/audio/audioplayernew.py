@@ -81,8 +81,9 @@ class AudioPlayer:
             # self.stop()
             PIHOME_LOGGER.error('Output underflow: increase blocksize?')
             if not self.q.empty():
-                data = self.q.get(timeout=0.5)
-                outdata[:] = data * self.volume
+                # clear buffer
+                while not self.q.empty():
+                    self.q.get()
             else:
                 outdata.fill(0)
             return
