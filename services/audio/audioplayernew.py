@@ -163,7 +163,7 @@ class AudioPlayer:
             ).run_async(pipe_stdout=True)
             self.stream = sd.RawOutputStream(samplerate=samplerate, blocksize=self.blocksize, device=self.device, channels=channels, dtype='float32', callback=self.callback)
             read_size = self.blocksize * channels * self.stream.samplesize
-            PIHOME_LOGGER('Buffering {} ...'.format(url))
+            PIHOME_LOGGER.info('Buffering {} ...'.format(url))
             for _ in range(self.buffersize):
                 self.q.put_nowait(self.process.stdout.read(read_size))
             PIHOME_LOGGER.info('Starting Playback {} ...'.format(url))
@@ -242,6 +242,7 @@ class AudioPlayer:
 
     def run_youtubedl(self, url):
         # arguments to get audio 
+        PIHOME_LOGGER.info("Fetching audio stream for url: {}".format(url))
         process = subprocess.Popen(['youtube-dl', 
                                     '-f', 'bestaudio/mp3/b',
                                     '--no-warnings',
