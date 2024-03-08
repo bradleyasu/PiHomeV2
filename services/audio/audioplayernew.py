@@ -26,7 +26,7 @@ class AudioPlayer:
     is_playing = False
 
 
-    def __init__(self, device=None, blocksize=4096, buffersize=20):
+    def __init__(self, device=None, blocksize=4096, buffersize=40):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
@@ -80,10 +80,11 @@ class AudioPlayer:
         if status.output_underflow:
             self.stop()
             print('Output underflow: increase blocksize?')
-            raise sd.CallbackAbort
+            return
         assert not status
         try:
-            data = self.q.get_nowait()
+            # data = self.q.get_nowait()
+            data = self.q.get(timeout=0.1)
             self.data = data  # store raw data for visualizations
             data = np.frombuffer(data, dtype='float32')
             self.empty_buffer = False
@@ -91,7 +92,7 @@ class AudioPlayer:
             self.empty_buffer = True
             self.stop()
             print('Buffer is empty: increase buffersize?')
-            raise sd.CallbackAbort from e
+            return
         # assert len(data) == len(outdata)
         # scaled_data = np.multiply(data_to_play, self.volume)
         if self.paused:
@@ -176,7 +177,7 @@ class AudioPlayer:
                             break
                         self.q.put(d, timeout=timeout)
                 print('End of stream: ', code)
-                self.q.empty()
+                self.stop()
         except KeyboardInterrupt:
             self.stop()
             PIHOME_LOGGER.info('Interrupted by user')

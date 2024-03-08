@@ -100,6 +100,8 @@ class VinylWidget(FloatLayout):
     audio_texture = ObjectProperty(None)
     xOffset = NumericProperty(0) 
     yOffset = NumericProperty(0)
+    last_data = None
+    bar_count = 12
 
     def __init__(self, **kwargs):
         self.canvas = RenderContext(
@@ -109,7 +111,7 @@ class VinylWidget(FloatLayout):
         )
         super(VinylWidget, self).__init__(**kwargs)
         Clock.schedule_interval(self.update_glsl, 1 / 60.)
-        self.audio_texture = Texture.create(size=(AUDIO_PLAYER.buffersize, 2), colorfmt='luminance')
+        self.audio_texture = Texture.create(size=(self.bar_count, 2), colorfmt='luminance')
         with self.canvas:
             # Bind the custom texture at index 1, which will be texture1 in the shader
             # texture0 seems to be special for kivy, so we use texture1
@@ -137,7 +139,8 @@ class VinylWidget(FloatLayout):
             # Update the audio texture with new data
             audio_data = AUDIO_PLAYER.data
             audio_array = np.frombuffer(audio_data, dtype=np.float32)
-            # audio_array = self.normalize_data(audio_array)
+            audio_array = self.data_to_fft(audio_array)
+            audio_array = audio_array / 2
             audio_bytes = audio_array.tobytes()
             self.audio_texture.blit_buffer(audio_bytes, colorfmt='luminance', bufferfmt='float')
         else:
@@ -146,14 +149,6 @@ class VinylWidget(FloatLayout):
         
         self.set_channel()
         
-    def bytes_to_texture(self, audio_data):
-        audio_array = np.frombuffer(audio_data, dtype=np.float32)
-        audio_array = self.normalize_data(audio_array)
-        audio_bytes = audio_array.tobytes()
-        texture_size = (1, len(audio_array))
-        texture = Texture.create(size=texture_size, colorfmt='luminance')
-        texture.blit_buffer(audio_bytes, colorfmt='luminance', bufferfmt='float')
-        return texture
 
     def normalize_data(self, data):
         min_val = np.min(data)
@@ -161,6 +156,37 @@ class VinylWidget(FloatLayout):
         if max_val == min_val:
             return data
         return (data - min_val) / (max_val - min_val)
+
+    
+    def data_to_fft(self, data):
+        # Convert raw data to numpy array
+        data = np.frombuffer(data, dtype=np.float32)
+
+        # If there's previous data, concatenate it with the new data
+        if self.last_data is not None:
+            data = np.concatenate((self.last_data, data))
+
+        # Remove DC offset
+        data = data - np.mean(data)
+
+        # Apply window function
+        window = np.hanning(len(data))
+        data = data * window
+
+        # Perform FFT and take the absolute value to get the magnitude
+        fft = np.fft.rfft(data, n=AUDIO_PLAYER.buffersize)
+        fft = np.abs(fft)
+
+        # Generate indices for averaging FFT bins into bars
+        indices = np.linspace(0, len(fft), self.bar_count+1, endpoint=True, dtype=int)
+
+        # Average FFT bins into bars
+        bars = np.array([np.max(fft[start:end]) for start, end in zip(indices[:-1], indices[1:])])
+
+        # Store the last half of the data for the next FFT
+        self.last_data = data[-AUDIO_PLAYER.buffersize//2:]
+
+        return bars
 
     def create_texture(self, size):
         return np.zeros(size)
