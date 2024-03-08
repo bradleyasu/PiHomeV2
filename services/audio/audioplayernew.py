@@ -79,7 +79,7 @@ class AudioPlayer:
         assert frames == self.blocksize
         if status.output_underflow:
             self.stop()
-            print('Output underflow: increase blocksize?')
+            PIHOME_LOGGER.error('Output underflow: increase blocksize?')
             return
         assert not status
         try:
@@ -91,7 +91,7 @@ class AudioPlayer:
         except queue.Empty as e:
             self.empty_buffer = True
             self.stop()
-            print('Buffer is empty: increase buffersize?')
+            PIHOME_LOGGER.error('Buffer is empty: increase buffersize?')
             return
         # assert len(data) == len(outdata)
         # scaled_data = np.multiply(data_to_play, self.volume)
@@ -149,7 +149,7 @@ class AudioPlayer:
             samplerate = 44100
 
         try:
-            print('Opening stream ...')
+            PIHOME_LOGGER.info('Opening stream {} ...'.format(url))
             self.process = ffmpeg.input(url).output(
                 'pipe:',
                 format='f32le',
@@ -163,10 +163,10 @@ class AudioPlayer:
             ).run_async(pipe_stdout=True)
             self.stream = sd.RawOutputStream(samplerate=samplerate, blocksize=self.blocksize, device=self.device, channels=channels, dtype='float32', callback=self.callback)
             read_size = self.blocksize * channels * self.stream.samplesize
-            print('Buffering ...')
+            PIHOME_LOGGER('Buffering {} ...'.format(url))
             for _ in range(self.buffersize):
                 self.q.put_nowait(self.process.stdout.read(read_size))
-            print('Starting Playback ...')
+            PIHOME_LOGGER.info('Starting Playback {} ...'.format(url))
             with self.stream:
                 timeout = self.blocksize * self.buffersize / samplerate
                 code =self.process.poll()
@@ -176,7 +176,7 @@ class AudioPlayer:
                         if not d:
                             break
                         self.q.put(d, timeout=timeout)
-                print('End of stream: ', code)
+                PIHOME_LOGGER.info('End of stream. {}'.format(url))
                 self.stop()
         except KeyboardInterrupt:
             self.stop()
