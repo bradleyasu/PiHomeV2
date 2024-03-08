@@ -185,8 +185,12 @@ class AudioPlayer:
             return
         except queue.Full:
             # A timeout occurred, i.e. there was an error in the callback
-            self.stop()
-            PIHOME_LOGGER.error('Error: Buffer is full')
+            # self.stop()
+            # clear buffer
+            PIHOME_LOGGER.error('Error: Buffer is full.  Handling by clearing buffer...')
+            while not self.q.empty():
+                self.q.get()
+            PIHOME_LOGGER.error('Buffer cleared')
             return
         except (ConnectionResetError, ConnectionAbortedError, TimeoutError) as e:
             self.stop()
