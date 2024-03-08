@@ -67,7 +67,7 @@ class Wallpaper:
             reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
             if is_top == 1:
                 reddit_url = "https://www.reddit.com/r/{}/top/.json?limit=100&t=all".format(subs)
-            self.poller_key = POLLER.register_api(reddit_url, 60 * 25, lambda json: self.parse_reddit(json));
+            self.poller_key = POLLER.register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
         elif repo == "Wallhaven":
             search = CONFIG.get("wallpaper", "whsearch", "landscape")
             if search == "":

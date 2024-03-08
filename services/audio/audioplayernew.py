@@ -26,7 +26,7 @@ class AudioPlayer:
     is_playing = False
 
 
-    def __init__(self, device=None, blocksize=1024, buffersize=512):
+    def __init__(self, device=None, blocksize=1024, buffersize=1024):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
