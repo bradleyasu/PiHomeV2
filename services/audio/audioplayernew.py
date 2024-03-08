@@ -78,32 +78,31 @@ class AudioPlayer:
     def callback(self, outdata, frames, time, status):
         assert frames == self.blocksize
         if status.output_underflow:
+            self.stop()
             PIHOME_LOGGER.error('Output underflow: increase blocksize?')
-            outdata.fill(0)
-            # self.stop()
+            return
+        assert not status
+        try:
+            # data = self.q.get_nowait()
+            data = self.q.get(timeout=0.5)
+            self.data = data  # store raw data for visualizations
+            data = np.frombuffer(data, dtype='float32')
+            self.empty_buffer = False
+        except queue.Empty as e:
+            self.empty_buffer = True
+            self.stop()
+            PIHOME_LOGGER.error('Buffer is empty: increase buffersize?')
+            return
+        # assert len(data) == len(outdata)
+        # scaled_data = np.multiply(data_to_play, self.volume)
+        if self.paused:
+            data = np.zeros(len(data), dtype='float32')
+        # if self.volume != 1.0:
+            # data = np.multiply(data, self.volume)
+        if len(data) > len(outdata):
+            self.empty_buffer = True
         else:
-            assert not status
-            try:
-                # data = self.q.get_nowait()
-                data = self.q.get(timeout=0.5)
-                self.data = data  # store raw data for visualizations
-                data = np.frombuffer(data, dtype='float32')
-                self.empty_buffer = False
-            except queue.Empty as e:
-                self.empty_buffer = True
-                self.stop()
-                PIHOME_LOGGER.error('Buffer is empty: increase buffersize?')
-                return
-            # assert len(data) == len(outdata)
-            # scaled_data = np.multiply(data_to_play, self.volume)
-            if self.paused:
-                data = np.zeros(len(data), dtype='float32')
-            # if self.volume != 1.0:
-                # data = np.multiply(data, self.volume)
-            if len(data) > len(outdata):
-                self.empty_buffer = True
-            else:
-                outdata[:] = data * self.volume
+            outdata[:] = data * self.volume
 
     def play(self, url):
         # ensure device is found
@@ -185,12 +184,8 @@ class AudioPlayer:
             return
         except queue.Full:
             # A timeout occurred, i.e. there was an error in the callback
-            # self.stop()
-            # clear buffer
-            PIHOME_LOGGER.error('Error: Buffer is full.  Handling by clearing buffer...')
-            while not self.q.empty():
-                self.q.get()
-            PIHOME_LOGGER.error('Buffer cleared')
+            self.stop()
+            PIHOME_LOGGER.error('Error: Buffer is full')
             return
         except (ConnectionResetError, ConnectionAbortedError, TimeoutError) as e:
             self.stop()
