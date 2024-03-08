@@ -26,7 +26,7 @@ class AudioPlayer:
     is_playing = False
 
 
-    def __init__(self, device=None, blocksize=4096, buffersize=40):
+    def __init__(self, device=None, blocksize=1024, buffersize=512):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
@@ -84,7 +84,7 @@ class AudioPlayer:
         assert not status
         try:
             # data = self.q.get_nowait()
-            data = self.q.get(timeout=0.1)
+            data = self.q.get(timeout=0.5)
             self.data = data  # store raw data for visualizations
             data = np.frombuffer(data, dtype='float32')
             self.empty_buffer = False
