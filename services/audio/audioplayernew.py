@@ -26,7 +26,7 @@ class AudioPlayer:
     is_playing = False
 
 
-    def __init__(self, device=None, blocksize=1024, buffersize=1024):
+    def __init__(self, device=None, blocksize=1024, buffersize=512):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
@@ -78,7 +78,8 @@ class AudioPlayer:
     def callback(self, outdata, frames, time, status):
         assert frames == self.blocksize
         if status.output_underflow:
-            self.stop()
+            outdata.fill(0)
+            # self.stop()
             PIHOME_LOGGER.error('Output underflow: increase blocksize?')
             return
         assert not status
