@@ -76,15 +76,15 @@ class AudioPlayer:
         self.volume_listeners.append(listener)
 
     def callback(self, outdata, frames, time, status):
-        assert frames == self.blocksize
+        # assert frames == self.blocksize
         if status.output_underflow:
             self.stop()
             PIHOME_LOGGER.error('Output underflow: increase blocksize?')
             return
-        assert not status
+        # assert not status
         try:
-            # data = self.q.get_nowait()
-            data = self.q.get(timeout=0.5)
+            data = self.q.get_nowait()
+            # data = self.q.get(timeout=0.5)
             self.data = data  # store raw data for visualizations
             data = np.frombuffer(data, dtype='float32')
             self.empty_buffer = False
@@ -95,8 +95,8 @@ class AudioPlayer:
             return
         # assert len(data) == len(outdata)
         # scaled_data = np.multiply(data_to_play, self.volume)
-        if self.paused:
-            data = np.zeros(len(data), dtype='float32')
+        # if self.paused:
+            # data = np.zeros(len(data), dtype='float32')
         # if self.volume != 1.0:
             # data = np.multiply(data, self.volume)
         if len(data) > len(outdata):
