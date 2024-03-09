@@ -21,6 +21,8 @@ class AudioPlayer:
     vol_delta = 10
     last_vol_up_time = 0
     last_vol_down_time = 0
+    data = None
+    buffersize = 512
 
     def __init__(self, **kwargs):
         super(AudioPlayer, self).__init__(**kwargs)
@@ -161,6 +163,15 @@ class AudioPlayer:
     def _set_playlist_pos(self, pos):
         if pos:
             self.playlist_pos = pos + self.playlist_start
+
+
+    # For deprecation purposes
+    def add_volume_listener(self, listener):
+        pass
+
+    def remove_volume_listener(self, listener):
+        pass
+
 
 
 

@@ -11,6 +11,7 @@ import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
 from threading import Thread
+from services.audio.audioplayer import AudioPlayer as OLD_AUDIO_PLAYER
 
 
 class AudioPlayer:
@@ -255,4 +256,6 @@ class AudioPlayer:
         out, err = process.communicate()
         return out.decode('utf-8').strip()
 
-AUDIO_PLAYER = AudioPlayer()
+# AUDIO_PLAYER = AudioPlayer()
+# Temporary while working out kinks
+AUDIO_PLAYER = OLD_AUDIO_PLAYER()
