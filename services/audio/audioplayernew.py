@@ -6,6 +6,7 @@ from time import sleep
 import time
 
 import ffmpeg
+from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
@@ -79,9 +80,9 @@ class AudioPlayer:
     def callback(self, outdata, frames, time, status):
         # assert frames == self.blocksize
         if status.output_underflow:
-            # self.stop()
+            self.stop()
             PIHOME_LOGGER.error('Output underflow: increase blocksize?')
-            outdata.fill(0)
+            # outdata.fill(0)
             return
         # assert not status
         try:
@@ -116,7 +117,7 @@ class AudioPlayer:
         thread.start()
 
     def _play(self, url):
-
+        WALLPAPER_SERVICE.paused = True
         is_local = True
         if url.startswith('http://') or url.startswith('https://'):
             is_local = False
@@ -172,20 +173,11 @@ class AudioPlayer:
                 timeout = self.blocksize * self.buffersize / samplerate
                 code =self.process.poll()
                 while code is None and not self.empty_buffer:
-                    buffer_recovery_count = 0
                     while True:
                         d = self.process.stdout.read(read_size)
                         if not d:
                             break
-                        try: 
-                            self.q.put(d, timeout=timeout)
-                        except queue.Full:
-                            PIHOME_LOGGER.warn('Buffer is full.  Attempting to recover {}'.format(buffer_recovery_count))
-                            time.sleep(0.1)
-                            if buffer_recovery_count > 10:
-                                PIHOME_LOGGER.error('Buffer recovery failed.  Stopping audio')
-                                self.stop()
-                                return
+                        self.q.put(d, timeout=timeout)
                 PIHOME_LOGGER.info('End of stream. {}'.format(url))
                 self.stop()
         except KeyboardInterrupt:
@@ -209,6 +201,7 @@ class AudioPlayer:
 
     def stop(self):
         PIHOME_LOGGER.info("Stopping audio")
+        WALLPAPER_SERVICE.paused = False
         if self.stream:
             self.stream.stop()
         if self.process:
