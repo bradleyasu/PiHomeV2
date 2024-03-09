@@ -91,10 +91,15 @@ class Wallpaper:
             rand_idx = random.randint(0, len(json["data"]["children"])) - 1
             random_child = json["data"]["children"][rand_idx]
 
+        thread = Thread(target=self.worker_thread, args=(random_child,))
+        thread.start()
 
+    def worker_thread(self, random_child):
         self.current, self.current_color = self.resize_image(random_child["data"]["url"], 1024, 1024)
         self.source = random_child["data"]["url"]
+        PIHOME_LOGGER.info("Wallpaper Service: setting wallpaper to {}".format(self.source))
         get_app()._reload_background()
+
 
     async def create_cache(self, urls):
         for url in urls:
