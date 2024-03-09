@@ -3,6 +3,7 @@ import queue
 import subprocess
 import sys
 from time import sleep
+import time
 
 import ffmpeg
 import sounddevice as sd
@@ -78,8 +79,9 @@ class AudioPlayer:
     def callback(self, outdata, frames, time, status):
         # assert frames == self.blocksize
         if status.output_underflow:
-            self.stop()
+            # self.stop()
             PIHOME_LOGGER.error('Output underflow: increase blocksize?')
+            outdata.fill(0)
             return
         # assert not status
         try:
@@ -156,9 +158,9 @@ class AudioPlayer:
                 ac=channels,
                 ar=samplerate,
                 loglevel='quiet',
-                # reconnect=1,
-                # reconnect_streamed=1,
-                # reconnect_delay_max=5,
+                reconnect=1,
+                reconnect_streamed=1,
+                reconnect_delay_max=5,
             ).run_async(pipe_stdout=True)
             self.stream = sd.RawOutputStream(samplerate=samplerate, blocksize=self.blocksize, device=self.device, channels=channels, dtype='float32', callback=self.callback)
             read_size = self.blocksize * channels * self.stream.samplesize
@@ -183,8 +185,9 @@ class AudioPlayer:
             return
         except queue.Full:
             # A timeout occurred, i.e. there was an error in the callback
-            self.stop()
-            PIHOME_LOGGER.error('Error: Buffer is full')
+            # self.stop()
+            # PIHOME_LOGGER.error('Error: Buffer is full')
+            time.sleep(0.5)
             return
         except (ConnectionResetError, ConnectionAbortedError, TimeoutError) as e:
             self.stop()
