@@ -110,7 +110,7 @@ class VinylWidget(FloatLayout):
             use_parent_frag_modelview=False
         )
         super(VinylWidget, self).__init__(**kwargs)
-        # Clock.schedule_interval(self.update_glsl, 1 / 60.)
+        Clock.schedule_interval(self.update_glsl, 1 / 60.)
         self.audio_texture = Texture.create(size=(self.bar_count, 2), colorfmt='luminance')
         with self.canvas:
             # Bind the custom texture at index 1, which will be texture1 in the shader
