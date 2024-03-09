@@ -114,7 +114,6 @@ class AudioPlayer:
         thread.start()
 
     def _play(self, url):
-        print('Getting stream information ...')
 
         is_local = True
         if url.startswith('http://') or url.startswith('https://'):

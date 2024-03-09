@@ -52,8 +52,8 @@ class WeatherWidget(Widget):
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
 
         if(WEATHER.enabled):
-            print("scheduled")
             Clock.schedule_interval(lambda _: self.update(), 1)
+            PIHOME_LOGGER.info("Weather is enabled.  Weather update thread will be running.")
         else: 
             PIHOME_LOGGER.warn("Weather is not enabled.  Weather update thread will not be running.")
 
