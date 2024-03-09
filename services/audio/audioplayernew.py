@@ -172,11 +172,20 @@ class AudioPlayer:
                 timeout = self.blocksize * self.buffersize / samplerate
                 code =self.process.poll()
                 while code is None and not self.empty_buffer:
+                    buffer_recovery_count = 0
                     while True:
                         d = self.process.stdout.read(read_size)
                         if not d:
                             break
-                        self.q.put(d, timeout=timeout)
+                        try: 
+                            self.q.put(d, timeout=timeout)
+                        except queue.Full:
+                            PIHOME_LOGGER.warn('Buffer is full.  Attempting to recover {}'.format(buffer_recovery_count))
+                            time.sleep(0.1)
+                            if buffer_recovery_count > 10:
+                                PIHOME_LOGGER.error('Buffer recovery failed.  Stopping audio')
+                                self.stop()
+                                return
                 PIHOME_LOGGER.info('End of stream. {}'.format(url))
                 self.stop()
         except KeyboardInterrupt:
@@ -185,9 +194,9 @@ class AudioPlayer:
             return
         except queue.Full:
             # A timeout occurred, i.e. there was an error in the callback
-            # self.stop()
-            # PIHOME_LOGGER.error('Error: Buffer is full')
-            time.sleep(0.5)
+            self.stop()
+            PIHOME_LOGGER.error('Error: Buffer is full')
+            # time.sleep(0.5)
             return
         except (ConnectionResetError, ConnectionAbortedError, TimeoutError) as e:
             self.stop()
