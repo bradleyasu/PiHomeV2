@@ -13,7 +13,9 @@ class AudioPlayer:
     title = "No Media"
     is_playing = False
     volume = 100.0
+    # is_paused is deprecated
     is_paused = False
+    paused = False
     playlist_pos = 0
     playlist_start = 0
     album_art = ""
