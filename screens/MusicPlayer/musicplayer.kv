@@ -61,4 +61,26 @@
         Rectangle:
             pos: self.pos
             size: self.size
+
+<RadioDrawer>:
+    size_hint: 1.0, 0.0
+    pos_hint: {"center_x": .5, "center_y": 0.2} 
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 0.9
+        Rectangle:
+            size: self.size
+            pos: self.pos
         
+    Carousel:
+        # canvas:
+            # Color:
+                # rgba: 0, 255, 0, 0.9
+            # Rectangle:
+                # size: self.size
+                # pos: self.pos
+        size_hint: 1, 1
+        pos_hint: {"center_x": .5, "center_y": .5}
+        id: radio_carousel
+        direction: "right"
+        loop: True

@@ -3,7 +3,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.graphics import RenderContext
 from kivy.clock import Clock
-from kivy.properties import StringProperty, ObjectProperty, NumericProperty
+from kivy.properties import StringProperty, ObjectProperty, NumericProperty, ListProperty, BooleanProperty
 from kivy.graphics.texture import Texture
 import numpy as np
 from services.audio.audioplayernew import AUDIO_PLAYER
@@ -14,6 +14,7 @@ from kivy.uix.slider import Slider
 from datetime import datetime
 from kivy.uix.gridlayout import GridLayout
 from components.Button.circlebutton import CircleButton
+from components.Button.simplebutton import SimpleButton
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
@@ -21,7 +22,9 @@ class MusicPlayerContainer(PiHomeScreen):
     current_time = StringProperty("00:00 PM")
     def __init__(self, **kwargs):
         super(MusicPlayerContainer, self).__init__(**kwargs)
-        self.add_widget(MusicPlayerCard())
+        self.add_widget(MusicPlayerCard(self.on_radio))
+        self.drawer = RadioDrawer()
+        self.add_widget(self.drawer)
 
         Clock.schedule_interval(lambda _: self.update_current_time(), 1)
 
@@ -38,17 +41,101 @@ class MusicPlayerContainer(PiHomeScreen):
         now = datetime.now()
         self.current_time = now.strftime("%I:%M %p")
 
+    def on_radio(self, *args):
+        self.drawer.is_open = not self.drawer.is_open
+
+    def on_rotary_down(self):
+        if self.drawer.is_open:
+            self.drawer.play_current()
+        self.on_radio()
+
+    def on_rotary_turn(self, direction, button_pressed):
+        if self.drawer.is_open:
+            if direction == -1:
+                self.drawer.carousel_swipe_left()
+            elif direction == 1:
+                self.drawer.carousel_swipe_right()
+        else:
+            return super().on_rotary_turn(direction, button_pressed)
+
+class RadioDrawer(BoxLayout):
+    is_open = BooleanProperty(False)
+    content = ListProperty([])
+    def __init__(self, **kwargs):
+        super(RadioDrawer, self).__init__(**kwargs)
+        self.content = [
+            {"text": "Lofi", "url": "https://tunein.com/radio/Lofi-s310777/"},
+            {"text": "Lofi 2", "url": "https://tunein.com/radio/Lofi-247-s303481/"},
+            {"text": "90s hits", "url": "https://tunein.com/radio/90s-Hits-s249946/"},
+            {"text": "80s hits", "url": "https://tunein.com/radio/80s-Hits-s249945/"},
+            {"text": "Smooth Jazz", "url": "https://tunein.com/radio/Smooth-Jazz-s249973/"},
+            {"text": "Classic Hits", "url": "https://tunein.com/radio/Classic-Hits-s249942/"},
+            {"text": "Today's Hits", "url": "https://tunein.com/todays-hits/"},
+            {"text": "Electronic Beats", "url": "https://tunein.com/radio/ADRFM---Electronic-Dance-Experience-(EDE)-s232826/"},
+            {"text": "The Siren", "url": "https://tunein.com/radio/The-Siren-s310380/"}
+        ]
+
+        self.refresh()
+
+    def on_is_open(self, *args):
+        if self.is_open:
+            self.size_hint = (1, 0.4)
+        else:
+            self.size_hint = (1.0, 0.0)
+
+    def on_content(self, *args):
+        self.refresh()
+
+    def refresh(self):
+        carousel = self.ids["radio_carousel"]
+        carousel.clear_widgets()
+        for item in self.content:
+            button = SimpleButton(text=item["text"], type="secondary", on_press=self.create_callback(item["url"]))
+            button.url = item["url"]
+            button.size_hint = (0.5, 0.5)
+            button.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+            carousel.add_widget(button)
+
+    def create_callback(self, url):
+        return lambda *args: self.play_item(url)
+
+    def play_item(self, url, *args):
+        AUDIO_PLAYER.play(url)
+        self.is_open = False
+
+    def on_touch_down(self, touch):
+        if self.is_open:
+            if self.collide_point(*touch.pos):
+                super().on_touch_down(touch)
+                return True
+            else:
+                self.is_open = False
+                return True
+        return super().on_touch_down(touch)
+
+    def play_current(self):
+        # current widget in carousel
+        selected = self.ids["radio_carousel"].current_slide
+        self.play_item(selected.url)
+
+    def carousel_swipe_left(self):
+        self.ids["radio_carousel"].load_previous()
+
+    def carousel_swipe_right(self):
+        self.ids["radio_carousel"].load_next()
+    
 
 class MusicPlayerCard(BoxLayout):
-    def __init__(self, **kwargs):
+    def __init__(self, on_radio, **kwargs):
         super(MusicPlayerCard, self).__init__(**kwargs)
-        self.add_widget(Player())
+        self.add_widget(Player(on_radio))
 
 class Player(BoxLayout):
-    def __init__(self, **kwargs):
+    def __init__(self, on_radio, **kwargs):
         super(Player, self).__init__(**kwargs)
         self.orientation = 'vertical'
         self.padding = 10
+        self.on_radio = on_radio
         
         self.vinyl = VinylWidget(fs=sVINYL)
         self.vinyl.xOffset = 2.35
@@ -81,9 +168,16 @@ class Player(BoxLayout):
         play.stroke_color = (0, 0, 0, 0)
         play.text_color = (0, 0, 0, 1)
 
+        radio = CircleButton(text="RADIO")
+        radio.bind(on_release=self.on_radio)
+        radio.font_size = 10
+        radio.stroke_color = (0, 0, 0, 0)
+        radio.text_color = (0, 0, 0, 1)
+
 
         buttons.add_widget(play)
         buttons.add_widget(stop)
+        buttons.add_widget(radio)
 
         player_grid.add_widget(buttons)
 
