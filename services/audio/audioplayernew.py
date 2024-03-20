@@ -14,6 +14,14 @@ from threading import Thread
 from services.audio.audioplayer import AudioPlayer as OLD_AUDIO_PLAYER
 
 
+# enum of audio states
+class AudioState:
+    STOPPED = 0
+    PLAYING = 1
+    PAUSED = 2
+    FETCHING = 3
+    BUFFERING = 4
+
 class AudioPlayer:
     percent = 0
     title = "No Media"
@@ -25,8 +33,10 @@ class AudioPlayer:
     queue = []
     data = None
     volume_listeners = []
+    state_listeners = []
     percent = 100
     is_playing = False
+    current_state = AudioState.STOPPED
 
 
     def __init__(self, device=None, blocksize=4096, buffersize=512):
@@ -85,6 +95,17 @@ class AudioPlayer:
     def add_volume_listener(self, listener):
         self.volume_listeners.append(listener)
 
+    def add_state_listener(self, listener):
+        self.state_listeners.append(listener)
+
+    def notify_state_listeners(self, state):
+        for listener in self.state_listeners:
+            listener(state)
+
+    def set_state(self, state):
+        self.current_state = state
+        self.notify_state_listeners(state)
+
     def audio_processing_thread(self):
         PIHOME_LOGGER.info("Starting audio processing thread")
         while True:
@@ -132,6 +153,7 @@ class AudioPlayer:
 
     def _play(self, url):
         WALLPAPER_SERVICE.paused = True
+        self.set_state(AudioState.FETCHING)
         is_local = True
         if url.startswith('http://') or url.startswith('https://'):
             is_local = False
@@ -163,7 +185,7 @@ class AudioPlayer:
         else:
             channels = 2
             samplerate = 44100
-
+        self.set_state(AudioState.BUFFERING)
         try:
             PIHOME_LOGGER.info('Opening stream {} ...'.format(url))
             self.process = ffmpeg.input(url).output(
@@ -183,6 +205,7 @@ class AudioPlayer:
             for _ in range(self.buffersize):
                 self.q_in.put_nowait(self.process.stdout.read(read_size))
             PIHOME_LOGGER.info('Starting Playback {} ...'.format(url))
+            self.set_state(AudioState.PLAYING)
             with self.stream:
                 timeout = self.blocksize * self.buffersize / samplerate
                 code =self.process.poll()
@@ -227,6 +250,7 @@ class AudioPlayer:
             self.q_out.get()
         self.data = None
         self.empty_buffer = True
+        self.set_state(AudioState.STOPPED)
 
     def set_volume(self, volume):
         """

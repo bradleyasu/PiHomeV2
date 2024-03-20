@@ -6,7 +6,7 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty, ObjectProperty, NumericProperty, ListProperty, BooleanProperty
 from kivy.graphics.texture import Texture
 import numpy as np
-from services.audio.audioplayernew import AUDIO_PLAYER
+from services.audio.audioplayernew import AUDIO_PLAYER, AudioState
 from kivy.uix.floatlayout import FloatLayout
 from screens.MusicPlayer.shaders import sVINYL
 from kivy.graphics import BindTexture
@@ -20,6 +20,7 @@ Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
     sound = None
     current_time = StringProperty("00:00 PM")
+    state = StringProperty("")
     def __init__(self, **kwargs):
         super(MusicPlayerContainer, self).__init__(**kwargs)
         self.add_widget(MusicPlayerCard(self.on_radio))
@@ -27,6 +28,17 @@ class MusicPlayerContainer(PiHomeScreen):
         self.add_widget(self.drawer)
 
         Clock.schedule_interval(lambda _: self.update_current_time(), 1)
+        AUDIO_PLAYER.add_state_listener(self.on_audio_state_change)
+
+    def on_audio_state_change(self, state):
+        if state == AudioState.FETCHING:
+            self.state = "Fetching..."
+        elif state == AudioState.BUFFERING:
+            self.state = "Buffering..."
+        elif state == AudioState.PLAYING:
+            self.state = "Playing"
+        else:
+            self.state = ""
 
     def on_enter(self, *args):
         return super().on_enter(*args)
@@ -179,6 +191,8 @@ class Player(BoxLayout):
         buttons.add_widget(play)
         buttons.add_widget(stop)
         buttons.add_widget(radio)
+
+
 
         player_grid.add_widget(buttons)
 
