@@ -72,7 +72,8 @@ class RadioDrawer(BoxLayout):
             {"text": "Classic Hits", "url": "https://tunein.com/radio/Classic-Hits-s249942/"},
             {"text": "Today's Hits", "url": "https://tunein.com/todays-hits/"},
             {"text": "Electronic Beats", "url": "https://tunein.com/radio/ADRFM---Electronic-Dance-Experience-(EDE)-s232826/"},
-            {"text": "The Siren", "url": "https://tunein.com/radio/The-Siren-s310380/"}
+            {"text": "The Siren", "url": "https://tunein.com/radio/The-Siren-s310380/"},
+            {"text": "KGAY", "url": "https://tunein.com/radio/KGAY-1065-s32088/"}
         ]
 
         self.refresh()

@@ -33,13 +33,20 @@ class AudioPlayer:
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
-        self.q = queue.Queue(maxsize=self.buffersize)
+        # self.q = queue.Queue(maxsize=self.buffersize)
+        self.q_in = queue.Queue()
+        self.q_out = queue.Queue()
+        self.q_raw = queue.Queue()
         self.stream = None
         self.process = None
         self.paused = False
         self.empty_buffer = False
         if self.device is None:
             self.device = self.find_sound_device()
+
+        # start audio procesing thread
+        self.thread = Thread(target=self.audio_processing_thread)
+        self.thread.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
@@ -78,35 +85,38 @@ class AudioPlayer:
     def add_volume_listener(self, listener):
         self.volume_listeners.append(listener)
 
-    def callback(self, outdata, frames, time, status):
-        # assert frames == self.blocksize
-        if status.output_underflow:
-            self.stop()
-            PIHOME_LOGGER.error('Output underflow: increase blocksize?')
-            # outdata.fill(0)
-            return
-        # assert not status
-        try:
-            data = self.q.get_nowait()
-            # data = self.q.get(timeout=0.5)
-            self.data = data  # store raw data for visualizations
+    def audio_processing_thread(self):
+        PIHOME_LOGGER.info("Starting audio processing thread")
+        while True:
+            try:
+                data = self.q_in.get_nowait()
+                self.data = data
+            except queue.Empty:
+                continue
+
+            # Perform the expensive operations here
             data = np.frombuffer(data, dtype='float32')
-            self.empty_buffer = False
-        except queue.Empty as e:
-            self.empty_buffer = True
-            self.stop()
-            PIHOME_LOGGER.error('Buffer is empty: increase buffersize?')
+            vol_data = data * self.volume
+
+            self.q_out.put(vol_data)
+            sleep(0.01)
+        PIHOME_LOGGER.info("Exiting audio processing thread")
+
+    def callback(self, outdata, frames, time, status):
+        if status.output_underflow:
+            print('Output underflow: increase blocksize?', file=sys.stderr)
+            outdata[:] = bytes(len(outdata))
             return
-        # assert len(data) == len(outdata)
-        # scaled_data = np.multiply(data_to_play, self.volume)
-        # if self.paused:
-            # data = np.zeros(len(data), dtype='float32')
-        # if self.volume != 1.0:
-            # data = np.multiply(data, self.volume)
-        if len(data) > len(outdata):
-            self.empty_buffer = True
-        else:
-            outdata[:] = data * self.volume
+
+        try:
+            data = self.q_out.get_nowait()
+        except queue.Empty:
+            print('Buffer is empty: increase buffersize?', file=sys.stderr)
+            outdata[:] = bytes(len(outdata))
+            return
+
+        # Convert the numpy array data to bytes
+        outdata[:] = data.tobytes()
 
     def play(self, url):
         # ensure device is found
@@ -168,7 +178,7 @@ class AudioPlayer:
             read_size = self.blocksize * channels * self.stream.samplesize
             PIHOME_LOGGER.info('Buffering {} ...'.format(url))
             for _ in range(self.buffersize):
-                self.q.put_nowait(self.process.stdout.read(read_size))
+                self.q_in.put_nowait(self.process.stdout.read(read_size))
             PIHOME_LOGGER.info('Starting Playback {} ...'.format(url))
             with self.stream:
                 timeout = self.blocksize * self.buffersize / samplerate
@@ -178,7 +188,7 @@ class AudioPlayer:
                         d = self.process.stdout.read(read_size)
                         if not d:
                             break
-                        self.q.put(d, timeout=timeout)
+                        self.q_in.put(d, timeout=timeout)
                 PIHOME_LOGGER.info('End of stream. {}'.format(url))
                 self.stop()
         except KeyboardInterrupt:
@@ -208,8 +218,10 @@ class AudioPlayer:
         if self.process:
             self.process.terminate()
         # clear the queue
-        while not self.q.empty():
-            self.q.get()
+        while not self.q_in.empty():
+            self.q_in.get()
+        while not self.q_out.empty():
+            self.q_out.get()
         self.data = None
         self.empty_buffer = True
 
@@ -256,6 +268,6 @@ class AudioPlayer:
         out, err = process.communicate()
         return out.decode('utf-8').strip()
 
-# AUDIO_PLAYER = AudioPlayer()
+AUDIO_PLAYER = AudioPlayer()
 # Temporary while working out kinks
-AUDIO_PLAYER = OLD_AUDIO_PLAYER()
+# AUDIO_PLAYER = OLD_AUDIO_PLAYER()
