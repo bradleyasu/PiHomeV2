@@ -90,7 +90,7 @@ class AudioPlayer:
         while True:
             try:
                 data = self.q_in.get_nowait()
-                self.data = data
+                # self.data = data
             except queue.Empty:
                 continue
 
@@ -110,6 +110,8 @@ class AudioPlayer:
 
         try:
             data = self.q_out.get_nowait()
+            # data is a np.frombuffer but we need to set self.data to buffer
+            self.data = data.tobytes()
         except queue.Empty:
             print('Buffer is empty: increase buffersize?', file=sys.stderr)
             outdata[:] = bytes(len(outdata))

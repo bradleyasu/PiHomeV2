@@ -205,7 +205,7 @@ class VinylWidget(FloatLayout):
             use_parent_frag_modelview=False
         )
         super(VinylWidget, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_glsl, 1 / 60.)
+        Clock.schedule_interval(self.update_glsl, 1 / 1024.)
         self.audio_texture = Texture.create(size=(self.bar_count, 2), colorfmt='luminance')
         with self.canvas:
             # Bind the custom texture at index 1, which will be texture1 in the shader
@@ -234,8 +234,8 @@ class VinylWidget(FloatLayout):
             # Update the audio texture with new data
             audio_data = AUDIO_PLAYER.data
             audio_array = np.frombuffer(audio_data, dtype=np.float32)
-            audio_array = self.data_to_fft(audio_array)
-            audio_array = audio_array / 2
+            # audio_array = self.data_to_fft(audio_data)
+            # audio_array = audio_array / 2
             audio_bytes = audio_array.tobytes()
             self.audio_texture.blit_buffer(audio_bytes, colorfmt='luminance', bufferfmt='float')
         else:
@@ -255,33 +255,22 @@ class VinylWidget(FloatLayout):
     
     def data_to_fft(self, data):
         # Convert raw data to numpy array
-        data = np.frombuffer(data, dtype=np.float32)
+        data = np.frombuffer(data, dtype=np.int16) / 2
 
-        # If there's previous data, concatenate it with the new data
-        if self.last_data is not None:
-            data = np.concatenate((self.last_data, data))
+        # scale data to be between 0 and 1.  Do this here instead of calling normalize data
+        # because we want to keep the data as an int16 for the fft
+        data = (data - np.min(data)) / (np.max(data) - np.min(data))
 
-        # Remove DC offset
-        data = data - np.mean(data)
 
-        # Apply window function
-        window = np.hanning(len(data))
-        data = data * window
-
-        # Perform FFT and take the absolute value to get the magnitude
         fft = np.fft.rfft(data, n=AUDIO_PLAYER.buffersize)
-        fft = np.abs(fft)
+        indices = np.linspace(0, len(fft), self.bar_count + 1).astype(int)
 
-        # Generate indices for averaging FFT bins into bars
-        indices = np.linspace(0, len(fft), self.bar_count+1, endpoint=True, dtype=int)
+        bars = np.array([np.mean(np.abs(fft[indices[i]:indices[i+1]])) for i in range(self.bar_count)])
 
-        # Average FFT bins into bars
-        bars = np.array([np.max(fft[start:end]) for start, end in zip(indices[:-1], indices[1:])])
-
-        # Store the last half of the data for the next FFT
-        self.last_data = data[-AUDIO_PLAYER.buffersize//2:]
 
         return bars
+
+
 
     def create_texture(self, size):
         return np.zeros(size)
