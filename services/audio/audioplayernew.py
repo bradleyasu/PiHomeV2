@@ -96,9 +96,9 @@ class AudioPlayer:
 
             # Perform the expensive operations here
             data = np.frombuffer(data, dtype='float32')
-            vol_data = data * self.volume
-
-            self.q_out.put(vol_data)
+            self.q_out.put(data)
+            # vol_data = data * self.volume
+            # self.q_out.put(vol_data)
             sleep(0.01)
         PIHOME_LOGGER.info("Exiting audio processing thread")
 
@@ -116,7 +116,8 @@ class AudioPlayer:
             return
 
         # Convert the numpy array data to bytes
-        outdata[:] = data.tobytes()
+        vol_data = data * self.volume
+        outdata[:] = vol_data.tobytes()
 
     def play(self, url):
         # ensure device is found
