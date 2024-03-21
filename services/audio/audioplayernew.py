@@ -263,6 +263,8 @@ class AudioPlayer:
         if volume < 0 or volume > 1:
             PIHOME_LOGGER.error("Volume must be between 0 and 1")
             return
+        if oneAsHundred and volume == 1:
+            volume = 1
         self.volume = volume
         for listener in self.volume_listeners:
             listener(volume)
