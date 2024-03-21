@@ -48,7 +48,8 @@ class StatusEvent(PihomeEvent):
                 "playlist_pos": AUDIO_PLAYER.playlist_pos,
                 "playlist_start": AUDIO_PLAYER.playlist_start,
                 "queue": AUDIO_PLAYER.queue,
-                "album_art": AUDIO_PLAYER.album_art
+                "album_art": AUDIO_PLAYER.album_art,
+                "state": AUDIO_PLAYER.current_state
             },
             "timers":
                 list(map(lambda t: {
