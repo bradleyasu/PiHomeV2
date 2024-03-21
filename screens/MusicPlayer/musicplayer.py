@@ -26,6 +26,7 @@ class MusicPlayerContainer(PiHomeScreen):
         self.add_widget(MusicPlayerCard(self.on_radio))
         self.drawer = RadioDrawer()
         self.add_widget(self.drawer)
+        self.disable_rotary_press_animation = True
 
         Clock.schedule_interval(lambda _: self.update_current_time(), 1)
         AUDIO_PLAYER.add_state_listener(self.on_audio_state_change)

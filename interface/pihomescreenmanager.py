@@ -32,7 +32,8 @@ class PiHomeScreenManager(ScreenManager):
 
     def _rotary_on_down(self):
         try:
-            PULSER.burst()
+            if not self.current_screen.disable_rotary_press_animation:
+                PULSER.burst()
             self.current_screen.on_rotary_down()
         except AttributeError:
             PIHOME_LOGGER.error("No on_rotary_down method found in current screen")

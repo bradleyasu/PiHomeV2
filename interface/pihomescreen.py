@@ -18,6 +18,7 @@ class PiHomeScreen(Screen):
         self.bind(on_touch_up=lambda _, touch:self.touch_up(touch))
         self.bind(on_touch_move=lambda _, touch:self.touch_move(touch))
         self.is_open = False
+        self.disable_rotary_press_animation = False
 
         # Locked screens can't be navigated away from.  Logic with in the screen implementation can take advantage of this
         self.locked = False

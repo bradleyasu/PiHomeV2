@@ -252,9 +252,10 @@ class AudioPlayer:
         self.empty_buffer = True
         self.set_state(AudioState.STOPPED)
 
-    def set_volume(self, volume):
+    def set_volume(self, volume, oneAsHundred=False):
         """
         Volume must be between 0 and 1
+        If onAsHundred is true, then volume of 1.0 is 100
         """
         if volume > 1:
             # normalize volume between 0 and 1 
@@ -268,9 +269,11 @@ class AudioPlayer:
 
     def volume_up(self):
         if self.volume < 1:
-            self.set_volume(self.volume + 0.1)
+            oneAsHundred = False
+            if self.volume > 0.5:
+                oneAsHundred = True
+            self.set_volume(self.volume + 0.1, oneAsHundred=oneAsHundred)
 
-        
     def volume_down(self):
         if self.volume > 0:
             self.set_volume(self.volume - 0.1)
