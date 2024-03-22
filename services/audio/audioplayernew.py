@@ -48,7 +48,7 @@ class AudioPlayer:
     saved_urls =[]
 
 
-    def __init__(self, device=None, blocksize=4096, buffersize=64):
+    def __init__(self, device=None, blocksize=4096, buffersize=512):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
@@ -172,7 +172,8 @@ class AudioPlayer:
         PIHOME_LOGGER.info("Starting audio processing thread")
         while True:
             try:
-                data = self.q_in.get_nowait()
+                # data = self.q_in.get_nowait()
+                data = self.q_in.get()
                 # self.data = data
             except queue.Empty:
                 continue
@@ -182,7 +183,7 @@ class AudioPlayer:
             self.q_out.put(data)
             # vol_data = data * self.volume
             # self.q_out.put(vol_data)
-            sleep(0.01)
+            # sleep(0.01)
         PIHOME_LOGGER.info("Exiting audio processing thread")
 
     def callback(self, outdata, frames, time, status):
