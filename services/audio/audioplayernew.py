@@ -1,4 +1,5 @@
 import json
+import os
 import queue
 import subprocess
 import sys
@@ -30,6 +31,7 @@ class AudioPlayer:
     playlist_start = 0
     album_art = None
     queue = []
+    queue_pos = 0
     data = None
     volume_listeners = []
     state_listeners = []
@@ -37,6 +39,7 @@ class AudioPlayer:
     is_playing = False
     current_state = AudioState.STOPPED
     current_source = None
+    player_thread = None
     """
     Saved urls is an array of json objects with a "text" and "url" key
     The text is the title of the media and the url is the url to the media
@@ -201,14 +204,16 @@ class AudioPlayer:
         vol_data = data * self.volume
         outdata[:] = vol_data.tobytes()
 
-    def play(self, url):
+    def play(self, url, reset_playlist=True):
         # ensure device is found
         if self.device is None:
             self.device = self.find_sound_device()
         self.stop()
+        if reset_playlist:
+            self.clear_playlist()
         self.empty_buffer = False
-        thread = Thread(target=self._play, args=(url,))
-        thread.start()
+        self.player_thread = Thread(target=self._play, args=(url,))
+        self.player_thread.start()
 
     def _play(self, url):
         is_local = True
@@ -223,6 +228,14 @@ class AudioPlayer:
             is_local = False
             url = self.run_youtubedl(url)
 
+        if url.startswith("folder:"):
+            self.clear_playlist()
+            directory = url.replace("folder:", "")
+            # iterate over all files in the directory and add them to the queue
+            for file in os.listdir(directory):
+                self.add_to_playlist(os.path.join(directory, file))
+            self.play(self.queue[self.queue_pos], reset_playlist=False)
+            return
 
         if not is_local:
             try:
@@ -282,7 +295,7 @@ class AudioPlayer:
                             break
                         self.q_in.put(d, timeout=timeout)
                 PIHOME_LOGGER.info('End of stream. {}'.format(url))
-                self.stop()
+                self.next()
         except KeyboardInterrupt:
             self.stop()
             PIHOME_LOGGER.info('Interrupted by user')
@@ -302,7 +315,9 @@ class AudioPlayer:
             PIHOME_LOGGER.error(e)
             return
 
-    def stop(self):
+    def stop(self, clear_playlist=False):
+        if clear_playlist:
+            self.clear_playlist()
         PIHOME_LOGGER.info("Stopping audio")
         if self.stream:
             self.stream.stop()
@@ -346,14 +361,27 @@ class AudioPlayer:
         if self.volume > 0:
             self.set_volume(self.volume - 0.1)
 
-    def next():
-        pass
+    def next(self):
+        if self.queue_pos < len(self.queue):
+            self.queue_pos += 1
+            self.play(self.queue[self.queue_pos], reset_playlist=False)
+        else:
+            self.stop()
 
-    def prev():
-        pass
+    def prev(self):
+        if self.queue_pos > 0:
+            self.queue_pos -= 1
+            self.play(self.queue[self.queue_pos], reset_playlist=False)
 
-    def clear_playlist():
-        pass
+    def clear_playlist(self):
+        self.queue = []
+        self.queue_pos = 0
+
+    def add_to_playlist(self, url):
+        self.queue.append(url)
+
+    def pop_playlist(self, index=0):
+        return self.queue.pop(index)
 
     def run_youtubedl(self, url):
         # arguments to get audio 

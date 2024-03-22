@@ -174,7 +174,7 @@ class Player(BoxLayout):
         buttons = BoxLayout(orientation='horizontal')
 
         stop = CircleButton(text="STOP")
-        stop.bind(on_release=lambda _: AUDIO_PLAYER.stop())
+        stop.bind(on_release=lambda _: AUDIO_PLAYER.stop(clear_playlist=True))
         stop.font_size = 10
         stop.stroke_color = (0, 0, 0, 0)
         stop.text_color = (0, 0, 0, 1)
@@ -219,7 +219,7 @@ class VinylWidget(FloatLayout):
             use_parent_frag_modelview=False
         )
         super(VinylWidget, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_glsl, 1 / 1024.)
+        Clock.schedule_interval(self.update_glsl, 1 / 60.)
         self.audio_texture = Texture.create(size=(self.bar_count, 2), colorfmt='luminance')
         with self.canvas:
             # Bind the custom texture at index 1, which will be texture1 in the shader
@@ -244,7 +244,7 @@ class VinylWidget(FloatLayout):
         self.canvas['offsetY'] = self.yOffset
         self.canvas['volume'] = AUDIO_PLAYER.volume
 
-        if AUDIO_PLAYER.data:
+        if AUDIO_PLAYER.data and AUDIO_PLAYER.current_state == AudioState.PLAYING:
             # Update the audio texture with new data
             audio_data = AUDIO_PLAYER.data
             audio_array = np.frombuffer(audio_data, dtype=np.float32)
