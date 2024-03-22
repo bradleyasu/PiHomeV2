@@ -12,6 +12,7 @@ class phlog:
     def __init__(self):
         self.level = CONFIG.get('logging', 'level', 'INFO')
         self.output = CONFIG.get('logging', 'out', 'pihome.log')
+        self.clear_log()
         # self.logger = logging.basicConfig(format='%(asctime)s : [ %(levelname)s ] : %(message)s', filename=self.output, level=self.levels[self.level])
         self.logger = logging.getLogger('pihome_default')
         self.logger.setLevel(self.levels[self.level])
@@ -20,6 +21,12 @@ class phlog:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.info('---------------PIHOME LOGGER STARTED---------------')
+
+
+    def clear_log(self):
+        with open(self.output, 'w') as f:
+            f.write('')
+
 
     def is_raspberry_pi(self):
         try:
