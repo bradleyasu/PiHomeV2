@@ -44,7 +44,7 @@ class AudioPlayer:
     saved_urls =[]
 
 
-    def __init__(self, device=None, blocksize=4096, buffersize=512):
+    def __init__(self, device=None, blocksize=4096, buffersize=32):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
