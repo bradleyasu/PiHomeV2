@@ -77,19 +77,6 @@ class RadioDrawer(BoxLayout):
 
     def __init__(self, **kwargs):
         super(RadioDrawer, self).__init__(**kwargs)
-        # self.content = [
-        #     {"text": "Lofi", "url": "https://tunein.com/radio/Lofi-s310777/"},
-        #     {"text": "Lofi 2", "url": "https://tunein.com/radio/Lofi-247-s303481/"},
-        #     {"text": "90s hits", "url": "https://tunein.com/radio/90s-Hits-s249946/"},
-        #     {"text": "80s hits", "url": "https://tunein.com/radio/80s-Hits-s249945/"},
-        #     {"text": "Smooth Jazz", "url": "https://tunein.com/radio/Smooth-Jazz-s249973/"},
-        #     {"text": "Classic Hits", "url": "https://tunein.com/radio/Classic-Hits-s249942/"},
-        #     {"text": "Today's Hits", "url": "https://tunein.com/todays-hits/"},
-        #     {"text": "Electronic Beats", "url": "https://tunein.com/radio/ADRFM---Electronic-Dance-Experience-(EDE)-s232826/"},
-        #     {"text": "The Siren", "url": "https://tunein.com/radio/The-Siren-s310380/"},
-        #     {"text": "KGAY", "url": "https://tunein.com/radio/KGAY-1065-s32088/"}
-        # ]
-
         self.refresh()
 
 
