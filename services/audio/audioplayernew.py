@@ -105,7 +105,12 @@ class AudioPlayer:
         Similar to add_saved_url_from_json, but instead creates a directlink to the
         currently decoded url
         """
-        json["url"] = "directlink:" + self.current_source
+        if "url" not in json:
+            json["url"] = "directlink:" + self.current_source
+        if "thumbnail" not in json:
+            json["thumbnail"] = self.album_art
+        if "text" not in json:
+            json["text"] = self.title
         self.saved_urls.append(json)
         self.serialize_saved_urls()
 
