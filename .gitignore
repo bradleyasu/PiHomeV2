@@ -13,3 +13,4 @@ main2.py
 .temp
 *.log
 timers.pihome
+*.pihome

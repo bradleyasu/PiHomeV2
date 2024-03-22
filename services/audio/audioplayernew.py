@@ -1,17 +1,17 @@
-import argparse
+import json
 import queue
 import subprocess
 import sys
 from time import sleep
-import time
 
 import ffmpeg
 import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
 from threading import Thread
-from services.audio.audioplayer import AudioPlayer as OLD_AUDIO_PLAYER
 
+
+SAVED_URL_JSON = "radio_stations.pihome"
 
 # enum of audio states
 class AudioState:
@@ -36,6 +36,12 @@ class AudioPlayer:
     percent = 100
     is_playing = False
     current_state = AudioState.STOPPED
+    """
+    Saved urls is an array of json objects with a "text" and "url" key
+    The text is the title of the media and the url is the url to the media
+    an optional "thumbnail" icon can be added as album art
+    """
+    saved_urls =[]
 
 
     def __init__(self, device=None, blocksize=4096, buffersize=512):
@@ -57,11 +63,54 @@ class AudioPlayer:
         self.thread = Thread(target=self.audio_processing_thread)
         self.thread.start()
 
+        # deserialize saved urls
+        self.deserialize_saved_urls()
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
     
     def __del__(self):
         self.stop()
+
+
+    def serialize_saved_urls(self):
+        """
+        Serializes the saved urls to the SAVED_URL_JSON file on disk
+        """
+        with open(SAVED_URL_JSON, 'w') as f:
+            f.write(json.dumps(self.saved_urls))
+
+        PIHOME_LOGGER.info("Saved urls serialized to {}".format(SAVED_URL_JSON))
+
+    def deserialize_saved_urls(self):
+        """
+        Deserializes the saved urls from the SAVED_URL_JSON file on disk
+        """
+        try:
+            with open(SAVED_URL_JSON, 'r') as f:
+                self.saved_urls = json.loads(f.read())
+        except FileNotFoundError:
+            self.saved_urls = []
+            PIHOME_LOGGER.warn("No saved urls for radio stations found")
+        
+        # LOG Saved URLS
+        for url in self.saved_urls:
+            PIHOME_LOGGER.info("Loaded saved url into radio stations: {}".format(url))
+
+    def add_saved_url_from_json(self, json):
+        """
+        Adds a saved url from a json object
+        """
+        self.saved_urls.append(json)
+        self.serialize_saved_urls()
+
+    def add_saved_url(self, text, url, thumbnail=None):
+        """
+        Adds a saved url to the saved urls list
+        """
+        self.saved_urls.append({"text": text, "url": url, "thumbnail": thumbnail})
+        self.serialize_saved_urls()
+
 
     def find_sound_device(self):
         PIHOME_LOGGER.info("Finding sound device")
@@ -298,5 +347,3 @@ class AudioPlayer:
         return out.decode('utf-8').strip()
 
 AUDIO_PLAYER = AudioPlayer()
-# Temporary while working out kinks
-# AUDIO_PLAYER = OLD_AUDIO_PLAYER()

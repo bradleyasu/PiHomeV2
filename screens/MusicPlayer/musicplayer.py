@@ -74,25 +74,28 @@ class MusicPlayerContainer(PiHomeScreen):
 class RadioDrawer(BoxLayout):
     is_open = BooleanProperty(False)
     content = ListProperty([])
+
     def __init__(self, **kwargs):
         super(RadioDrawer, self).__init__(**kwargs)
-        self.content = [
-            {"text": "Lofi", "url": "https://tunein.com/radio/Lofi-s310777/"},
-            {"text": "Lofi 2", "url": "https://tunein.com/radio/Lofi-247-s303481/"},
-            {"text": "90s hits", "url": "https://tunein.com/radio/90s-Hits-s249946/"},
-            {"text": "80s hits", "url": "https://tunein.com/radio/80s-Hits-s249945/"},
-            {"text": "Smooth Jazz", "url": "https://tunein.com/radio/Smooth-Jazz-s249973/"},
-            {"text": "Classic Hits", "url": "https://tunein.com/radio/Classic-Hits-s249942/"},
-            {"text": "Today's Hits", "url": "https://tunein.com/todays-hits/"},
-            {"text": "Electronic Beats", "url": "https://tunein.com/radio/ADRFM---Electronic-Dance-Experience-(EDE)-s232826/"},
-            {"text": "The Siren", "url": "https://tunein.com/radio/The-Siren-s310380/"},
-            {"text": "KGAY", "url": "https://tunein.com/radio/KGAY-1065-s32088/"}
-        ]
+        # self.content = [
+        #     {"text": "Lofi", "url": "https://tunein.com/radio/Lofi-s310777/"},
+        #     {"text": "Lofi 2", "url": "https://tunein.com/radio/Lofi-247-s303481/"},
+        #     {"text": "90s hits", "url": "https://tunein.com/radio/90s-Hits-s249946/"},
+        #     {"text": "80s hits", "url": "https://tunein.com/radio/80s-Hits-s249945/"},
+        #     {"text": "Smooth Jazz", "url": "https://tunein.com/radio/Smooth-Jazz-s249973/"},
+        #     {"text": "Classic Hits", "url": "https://tunein.com/radio/Classic-Hits-s249942/"},
+        #     {"text": "Today's Hits", "url": "https://tunein.com/todays-hits/"},
+        #     {"text": "Electronic Beats", "url": "https://tunein.com/radio/ADRFM---Electronic-Dance-Experience-(EDE)-s232826/"},
+        #     {"text": "The Siren", "url": "https://tunein.com/radio/The-Siren-s310380/"},
+        #     {"text": "KGAY", "url": "https://tunein.com/radio/KGAY-1065-s32088/"}
+        # ]
 
         self.refresh()
 
+
     def on_is_open(self, *args):
         if self.is_open:
+            self.content = AUDIO_PLAYER.saved_urls
             self.size_hint = (1, 0.4)
         else:
             self.size_hint = (1.0, 0.0)
@@ -176,8 +179,8 @@ class Player(BoxLayout):
         stop.stroke_color = (0, 0, 0, 0)
         stop.text_color = (0, 0, 0, 1)
 
-        play= CircleButton(text="PLAY")
-        play.bind(on_release=lambda _: AUDIO_PLAYER.play("services/audio/test_file.mp3"))
+        play = CircleButton(text="PLAY")
+        play.bind(on_release=lambda _: print("do play"))
         play.font_size = 10
         play.stroke_color = (0, 0, 0, 0)
         play.text_color = (0, 0, 0, 1)
@@ -188,15 +191,11 @@ class Player(BoxLayout):
         radio.stroke_color = (0, 0, 0, 0)
         radio.text_color = (0, 0, 0, 1)
 
-
         buttons.add_widget(play)
         buttons.add_widget(stop)
         buttons.add_widget(radio)
 
-
-
         player_grid.add_widget(buttons)
-
         self.add_widget(player_grid)
         
 class PlayerQueue(BoxLayout):

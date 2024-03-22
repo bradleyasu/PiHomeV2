@@ -17,7 +17,7 @@ import json
 from util.phlog import PIHOME_LOGGER
 
 
-BAN_LIST_JSON = "./ban_list.json"
+BAN_LIST_JSON = "./ban_list.pihome"
 class Wallpaper:
     """
     Service that will continuously ping external services for fresh wallpaper depending

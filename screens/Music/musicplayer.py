@@ -1,7 +1,4 @@
-import json
-import subprocess
 from composites.Music.song import Song
-from components.Hamburger.hamburger import Hamburger
 from components.ArrowButton.arrowbutton import ArrowButton
 from composites.Music.volume import Volume
 from composites.Reddit.redditwidget import RedditWidget

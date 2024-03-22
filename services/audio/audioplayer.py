@@ -8,6 +8,14 @@ from .mpv import MPV
 
 from util.const import TEMP_DIR
 
+"""
+!!! IMPORTANT !!! 
+
+The is the old audio player which relies on the mpv library to play audio files.
+This version is deprecated.  Please use audioplayernew.py.  Eventually, this file will be removed
+and audioplayernew.py will be renamed to audioplayer.py
+"""
+
 class AudioPlayer:
     percent = 0
     title = "No Media"
