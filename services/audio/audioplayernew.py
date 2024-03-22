@@ -6,7 +6,6 @@ from time import sleep
 import time
 
 import ffmpeg
-from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
@@ -152,7 +151,6 @@ class AudioPlayer:
         thread.start()
 
     def _play(self, url):
-        # WALLPAPER_SERVICE.paused = True
         self.set_state(AudioState.FETCHING)
         is_local = True
         if url.startswith('http://') or url.startswith('https://'):
@@ -238,7 +236,6 @@ class AudioPlayer:
 
     def stop(self):
         PIHOME_LOGGER.info("Stopping audio")
-        # WALLPAPER_SERVICE.paused = False
         if self.stream:
             self.stream.stop()
         if self.process:

@@ -1,24 +1,23 @@
-import base64
-from datetime import datetime
 from io import BytesIO
 import random
 import os
-import time
 import PIL
 import requests
-from threading import Thread
 from kivy.clock import Clock
 from PIL import Image as PILImage, ImageOps
 from PIL import ImageFilter as PILImageFilter
-from kivy.network.urlrequest import UrlRequest
 from networking.poller import POLLER
 from services.audio.sfx import SFX
 from util.configuration import CONFIG
 from util.const import TEMP_DIR
 from util.helpers import get_app, toast, url_hash
 import asyncio
+import json
 
 from util.phlog import PIHOME_LOGGER
+
+
+BAN_LIST_JSON = "./ban_list.json"
 class Wallpaper:
     """
     Service that will continuously ping external services for fresh wallpaper depending
@@ -44,9 +43,34 @@ class Wallpaper:
     ban_list = [] # URLs that are not allowed to be used as wallpapers
     paused = False
 
+
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
         Clock.schedule_once(lambda _: self._start(), 30)
+
+        # Deserialize ban list
+        self.deserialize_ban_list()
+
+
+    def serialize_ban_list(self):
+        """
+        This function will serialize the ban list to a json file on disk
+        """
+        with open(BAN_LIST_JSON, "w") as f:
+            f.write(json.dumps(self.ban_list))
+        
+    def deserialize_ban_list(self):
+        """
+        This function will deserialize the ban list from a json file on disk
+        """
+        if os.path.exists(BAN_LIST_JSON):
+            with open(BAN_LIST_JSON, "r") as f:
+                self.ban_list = json.loads(f.read())
+        
+        # Log ban list
+        for url in self.ban_list:
+            PIHOME_LOGGER.info("Wallpaper Service: banned url {}".format(url))
+
     
     def restart(self):
         if self.poller_key != None:
@@ -194,6 +218,7 @@ class Wallpaper:
         self.ban_list.append(url)
         if shuffle:
             self.shuffle()
+        self.serialize_ban_list()
         PIHOME_LOGGER.info("Wallpaper Service: banned url {}".format(url))
 
     def ban(self):
