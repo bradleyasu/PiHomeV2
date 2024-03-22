@@ -211,13 +211,14 @@ class AudioPlayer:
         thread.start()
 
     def _play(self, url):
-        self.set_state(AudioState.FETCHING)
         is_local = True
         if url.startswith('http://') or url.startswith('https://'):
+            self.set_state(AudioState.FETCHING)
             is_local = False
             url = self.run_youtubedl(url)
 
         if url.startswith("directlink:"):
+            self.set_state(AudioState.BUFFERING)
             url = url.replace("directlink:", "")
             is_local = False
             url = self.run_youtubedl(url)
@@ -229,6 +230,7 @@ class AudioPlayer:
             except ffmpeg.Error as e:
                 PIHOME_LOGGER.error(e)
                 PIHOME_LOGGER.error(e.stderr)
+                self.stop()
                 return
 
             streams = info.get('streams', [])
