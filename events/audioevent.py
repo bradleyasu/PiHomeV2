@@ -27,7 +27,8 @@ class AudioEvent(PihomeEvent):
             "previous": AUDIO_PLAYER.prev,
             "clear_queue": AUDIO_PLAYER.clear_playlist,
             "save_url": AUDIO_PLAYER.add_saved_url_from_json,
-            "save": AUDIO_PLAYER.add_saved_url_from_json
+            "save": AUDIO_PLAYER.add_saved_url_from_json,
+            "save_current": AUDIO_PLAYER.add_save_current_from_json
         }
         if self.action in switcher:
             if self.value is not None:

@@ -36,6 +36,7 @@ class AudioPlayer:
     percent = 100
     is_playing = False
     current_state = AudioState.STOPPED
+    current_source = None
     """
     Saved urls is an array of json objects with a "text" and "url" key
     The text is the title of the media and the url is the url to the media
@@ -44,7 +45,7 @@ class AudioPlayer:
     saved_urls =[]
 
 
-    def __init__(self, device=None, blocksize=4096, buffersize=32):
+    def __init__(self, device=None, blocksize=4096, buffersize=64):
         self.device = device
         self.blocksize = blocksize
         self.buffersize = buffersize
@@ -96,6 +97,16 @@ class AudioPlayer:
         # LOG Saved URLS
         for url in self.saved_urls:
             PIHOME_LOGGER.info("Loaded saved url into radio stations: {}".format(url))
+
+    
+    def add_save_current_from_json(self, json):
+        """
+        Similar to add_saved_url_from_json, but instead creates a directlink to the
+        currently decoded url
+        """
+        json["url"] = "directlink:" + self.current_source
+        self.saved_urls.append(json)
+        self.serialize_saved_urls()
 
     def add_saved_url_from_json(self, json):
         """
@@ -206,6 +217,11 @@ class AudioPlayer:
             is_local = False
             url = self.run_youtubedl(url)
 
+        if url.startswith("directlink:"):
+            url = url.replace("directlink:", "")
+            is_local = False
+            url = self.run_youtubedl(url)
+
 
         if not is_local:
             try:
@@ -233,6 +249,7 @@ class AudioPlayer:
             channels = 2
             samplerate = 44100
         self.set_state(AudioState.BUFFERING)
+        self.current_source = url
         try:
             PIHOME_LOGGER.info('Opening stream {} ...'.format(url))
             self.process = ffmpeg.input(url).output(
@@ -296,6 +313,7 @@ class AudioPlayer:
             self.q_out.get()
         self.data = None
         self.empty_buffer = True
+        self.current_source = None
         self.set_state(AudioState.STOPPED)
 
     def set_volume(self, volume, oneAsHundred=False):
