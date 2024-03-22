@@ -11,8 +11,8 @@ CDN_ASSET = "https://cdn.pihome.io/assets/{}"
 
 MQTT_COMMANDS = {
     'update': update_pihome,
-    'soften': lambda _: set_brightness(30),
-    'brighten': lambda _: set_brightness(100)
+    'soften': lambda : set_brightness(30),
+    'brighten': lambda : set_brightness(100)
 }
 
 _DISPLAY_SCREEN = "_display"
