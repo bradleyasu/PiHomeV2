@@ -19,12 +19,14 @@ class AudioEvent(PihomeEvent):
             }
         switcher = {
             "play_url": AUDIO_PLAYER.play,
+            "play": AUDIO_PLAYER.play,
             "volume": AUDIO_PLAYER.set_volume,
             "stop": AUDIO_PLAYER.stop,
             "next": AUDIO_PLAYER.next,
             "prev": AUDIO_PLAYER.prev,
             "previous": AUDIO_PLAYER.prev,
             "clear_queue": AUDIO_PLAYER.clear_playlist,
+            "save_url": AUDIO_PLAYER.add_saved_url_from_json,
             "save": AUDIO_PLAYER.add_saved_url_from_json
         }
         if self.action in switcher:

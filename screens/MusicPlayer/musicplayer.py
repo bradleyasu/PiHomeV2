@@ -6,6 +6,7 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty, ObjectProperty, NumericProperty, ListProperty, BooleanProperty
 from kivy.graphics.texture import Texture
 import numpy as np
+from kivy.uix.behaviors import ButtonBehavior
 from services.audio.audioplayernew import AUDIO_PLAYER, AudioState
 from kivy.uix.floatlayout import FloatLayout
 from screens.MusicPlayer.shaders import sVINYL
@@ -71,6 +72,19 @@ class MusicPlayerContainer(PiHomeScreen):
         else:
             return super().on_rotary_turn(direction, button_pressed)
 
+class RadioItem(ButtonBehavior, BoxLayout):
+    text = StringProperty("")
+    thumbnail = StringProperty("")
+    url = StringProperty("")
+    def __init__(self, text, url, thumbnail=None, **kwargs):
+        super(RadioItem, self).__init__(**kwargs)
+        self.text = text
+        self.url = url
+        if thumbnail is not None and thumbnail != "":
+            self.thumbnail = thumbnail
+        else:
+            self.thumbnail = "assets/images/audio_vinyl.png"
+
 class RadioDrawer(BoxLayout):
     is_open = BooleanProperty(False)
     content = ListProperty([])
@@ -94,11 +108,10 @@ class RadioDrawer(BoxLayout):
         carousel = self.ids["radio_carousel"]
         carousel.clear_widgets()
         for item in self.content:
-            button = SimpleButton(text=item["text"], type="secondary", on_press=self.create_callback(item["url"]))
-            button.url = item["url"]
-            button.size_hint = (0.5, 0.5)
-            button.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
-            carousel.add_widget(button)
+            cover = RadioItem(text=item["text"], url=item["url"], thumbnail=item["thumbnail"], on_press=self.create_callback(item["url"]))
+            cover.size_hint = (0.5, 0.5)
+            cover.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+            carousel.add_widget(cover)
 
     def create_callback(self, url):
         return lambda *args: self.play_item(url)

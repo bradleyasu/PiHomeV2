@@ -92,3 +92,22 @@
         id: radio_carousel
         direction: "right"
         loop: True
+
+<RadioItem>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 0
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    NetworkImage:
+        url: root.thumbnail
+        size_hint: 0.5, 1.0
+        pos_hint: {"center_x": .5, "center_y": .5}
+    
+    Label:
+        text: root.text
+        font_size: '28sp'
+        color: 1, 1, 1, 1
+        font_name: "Nunito"
