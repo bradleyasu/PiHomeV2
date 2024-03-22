@@ -104,3 +104,12 @@ def generate_blob_noise(width, height, num_blobs=50, max_blob_size=100):
         # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), random.randint(50, 150))
         draw.ellipse([x, y, x + blob_size, y + blob_size], fill=color)
     return noise
+
+
+def get_cpu_temp():
+    try:
+        temp = subprocess.run(["vcgencmd", "measure_temp"], stdout=subprocess.PIPE)
+        return temp.stdout.decode("utf-8").replace("temp=", "").replace("'C\n", "")
+    except Exception as e:
+        PIHOME_LOGGER.error(f"Error getting CPU temp: {e}")
+        return "N/A"

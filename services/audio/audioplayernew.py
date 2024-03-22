@@ -27,8 +27,6 @@ class AudioPlayer:
     title = "No Media"
     volume = 1.0
     paused = False
-    playlist_pos = 0
-    playlist_start = 0
     album_art = None
     queue = []
     queue_pos = 0
@@ -227,7 +225,6 @@ class AudioPlayer:
             self.set_state(AudioState.BUFFERING)
             url = url.replace("directlink:", "")
             is_local = False
-            url = self.run_youtubedl(url)
 
         if url.startswith("folder:"):
             self.clear_playlist()
@@ -389,10 +386,19 @@ class AudioPlayer:
         PIHOME_LOGGER.info("Fetching audio stream for url: {}".format(url))
         process = subprocess.Popen(['youtube-dl', 
                                     '-f', 'bestaudio/mp3/b',
+                                    '--get-title',
+                                    '--get-thumbnail',
                                     '--no-warnings',
                                     '-g', url], stdout=subprocess.PIPE)
         #get the output
         out, err = process.communicate()
-        return out.decode('utf-8').strip()
+        title = out.decode().split("\n")[0]
+        thumbnail = out.decode().split("\n")[2]
+        source = out.decode().split("\n")[1]
+        self.title = title
+        self.album_art = thumbnail
+        return source
+
+
 
 AUDIO_PLAYER = AudioPlayer()

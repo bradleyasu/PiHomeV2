@@ -1,11 +1,13 @@
 
 import json
 from events.pihomeevent import PihomeEvent
+from util.tools import get_cpu_temp
 
 class StatusEvent(PihomeEvent):
     type = "status"
-    def __init__(self, **kwargs):
+    def __init__(self, depth = "base", **kwargs):
         super().__init__()
+        self.depth = depth
 
     def execute(self):
         return {
@@ -14,13 +16,25 @@ class StatusEvent(PihomeEvent):
         }
 
     def status_body(self):
+        if self.depth == "advanced":
+            return self.return_advanced()
+        else:
+            return self.return_base()
+
+    def return_advanced(self):
+        from services.audio.audioplayernew import AUDIO_PLAYER
+        data = self.return_base()
+        data["audio"]["radio"] = AUDIO_PLAYER.saved_urls
+        data["temp"] = get_cpu_temp()
+        return data
+
+    def return_base(self):
         from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
         from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
         from services.audio.audioplayernew import AUDIO_PLAYER
         from services.taskmanager.taskmanager import TASK_MANAGER
         from services.weather.weather import WEATHER
         from services.wallpaper.wallpaper import WALLPAPER_SERVICE
-
         # TODO: Eventually have each service have a get_status method (or to_json)
         return {
             "type": "status",
@@ -44,9 +58,8 @@ class StatusEvent(PihomeEvent):
                 "is_paused": AUDIO_PLAYER.paused,
                 "title": AUDIO_PLAYER.title,
                 "percent": AUDIO_PLAYER.percent,
-                "volume": AUDIO_PLAYER.volume,
-                "playlist_pos": AUDIO_PLAYER.playlist_pos,
-                "playlist_start": AUDIO_PLAYER.playlist_start,
+                "volume": (AUDIO_PLAYER.volume * 100.0),
+                "queue_pos": AUDIO_PLAYER.queue_pos,
                 "queue": AUDIO_PLAYER.queue,
                 "album_art": AUDIO_PLAYER.album_art,
                 "state": AUDIO_PLAYER.current_state
@@ -59,7 +72,7 @@ class StatusEvent(PihomeEvent):
                     "elapsed_time": t.timer.elapsed_time
                 }, TIMER_DRAWER.timer_widgets))
             ,
-                "screens": {
+            "screens": {
                 "current": PIHOME_SCREEN_MANAGER.current_screen.name,
                 "screens": list(map(lambda n: {
                     n: {

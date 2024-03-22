@@ -20,8 +20,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     def do_GET(self):
         PIHOME_LOGGER.info("Server: GET Request Initiated")
-        if self.path == "/status" or self.path == "/undefined":
-            self._get_status()
+        if self.path.startswith("/status"):
+            self._get_status(self.path.replace("/status", "").replace("/", ""))
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
             self._get_index()
         else:
@@ -36,14 +36,14 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     #         return "application/javascript"
     #     return super().guess_type(path)
     
-    def _get_status(self):
+    def _get_status(self, service = ""):
         PIHOME_LOGGER.info("Server: Getting current status from multiple services")
         try:
-            wallpaper = WALLPAPER_SERVICE.source
-            self._set_response()
-            # self.wfile.write(json.dumps({
-            #     'wallpaper': wallpaper
-            # }).encode("utf-8"))
+            response = PihomeEventFactory.create_event_from_dict({"type": "status", "depth": "advanced"}).execute()
+            if service != "" and service in response["body"]:
+                response["body"] = response["body"][service]
+            self._set_response(response["code"], response["body"])
+
         except Exception as e:
             PIHOME_LOGGER.error("Failed to get status of services: {}".format(e))
 
