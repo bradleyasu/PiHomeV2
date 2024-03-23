@@ -56,3 +56,6 @@ class Theme():
             key = color[0] + '_dark'
             default = color[2]
         return hex(str(self.theme.get(color[3], key, default)), opacity)
+
+    def hextorgb(self, color, opacity = 1):
+        return hex(str(color), opacity)

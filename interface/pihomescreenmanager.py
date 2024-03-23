@@ -116,6 +116,9 @@ class PiHomeScreenManager(ScreenManager):
                         screen_id = metadata["id"]
                         screen_hidden = metadata["hidden"]
                         screen_requires_pin = metadata["requires_pin"]
+                        screen_icon = None
+                        if "icon" in metadata:
+                            screen_icon = metadata["icon"]
 
                         # if there is an index, use it
                         if "index" in metadata:
@@ -131,6 +134,8 @@ class PiHomeScreenManager(ScreenManager):
                         module = __import__("screens.{}".format(screen_module), fromlist=[screen_module])
                         screen = getattr(module, screen_name)(name=screen_id, label=screen_label, is_hidden=screen_hidden, requires_pin=screen_requires_pin)
                         screen.app_index = index
+                        if screen_icon:
+                            screen.icon = screen_icon
                         self.add_widget(screen)
                         self.loaded_screens[screen_id] = screen
                         PIHOME_LOGGER.info("[ PihomeScreenManager ] Loaded screen: {}".format(screen_id))

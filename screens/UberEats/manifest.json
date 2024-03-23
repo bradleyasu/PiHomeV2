@@ -1,0 +1,10 @@
+{
+    "module": "UberEats.UberEats",
+    "name": "UberEatsScreen",
+    "id": "ubereats",
+    "label": "Uber Eats",
+    "description": "",
+    "hidden": false,
+    "requires_pin": false,
+    "icon": "./screens/UberEats/icon.png"
+}

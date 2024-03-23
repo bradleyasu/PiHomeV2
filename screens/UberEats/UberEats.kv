@@ -1,0 +1,118 @@
+#:kivy 2.0.0
+#:import MapView kivy.garden.mapview.MapView
+#:import MapSource kivy.garden.mapview.MapSource
+#:import MapMarker kivy.garden.mapview.MapMarker
+<UberEatsScreen>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        size_hint: 1, 1
+        padding: 10
+        spacing: 10
+
+        MapView:
+            id: mapview
+            size_hint: 1, 1
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            lat: 40.440624
+            lon: -79.995888
+            zoom: 15
+            map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_light', min_zoom=13, max_zoom=16)
+            
+            MapMarker:
+                lat: 40.440624
+                lon: -79.995888
+                source: 'screens/UberEats/resized_marker.png'
+
+        Widget:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+            size_hint: 1, 0.3
+            pos_hint: {'center_x': 0.5, 'center_y': 1}
+
+        Label:
+            id: title
+            text: 'Uber Eats'
+            font_size: '32sp'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.9}
+
+        BoxLayout:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 1
+                BoxShadow:
+                    pos: self.pos
+                    size: self.size
+                    offset: 0, -10
+                    spread_radius: -40, -40
+                    border_radius: 20, 20, 20, 20
+                    blur_radius: 80
+                Color:
+                    rgba: 1, 1, 1, 1
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [20,]
+            orientation: 'vertical'
+            size_hint: 0.8, 0.1
+            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+            padding: 10
+
+            Label:
+                text: "Current Status"
+                font_size: '24sp'
+                size_hint: 1, 0.2
+                color: 0, 0, 0, 1
+                font_name: 'Nunito'
+
+            GridLayout:
+                cols: 4
+                size_hint: 1, 0.05
+                spacing: dp(10)
+
+                Widget:
+                    canvas:
+                        Color:
+                            rgba: root.tick_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [5,]
+
+                Widget:
+                    canvas:
+                        Color:
+                            rgba: root.tick_color_disabled
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [5,]
+
+                Widget:
+                    canvas:
+                        Color:
+                            rgba: root.tick_color_disabled
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [5,]
+
+                Widget:
+                    canvas:
+                        Color:
+                            rgba: root.tick_color_disabled
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [5,]
+                        
+    

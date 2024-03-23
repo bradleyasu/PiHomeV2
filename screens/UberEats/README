@@ -1,0 +1,11 @@
+
+This screen requares an `orders.sh` script.  The script should be placed in the `screens/UberEats` directory.
+
+The script should be a bash script that runs a curl command
+
+```bash
+#!/bin/bash
+curl -s <URL_DATA>
+```
+
+The `<URL_DATA>` is your uber eats active orders url with all headers.  The easiest way to get this is to log into uber eats in your browser, open the network tab in dev tools, and look for the request called `active_orders`.  Right click on it, and copy the curl command.  Paste that into the script.  **IMPORTANT** Make sure you set the curl command to run in silent mode with the `-s` flag.  This will prevent the script from outputting the data to the screen.  See the example above.  When you copy from your browser, it will not have the `-s` flag - you will need to manually add it. The script should be executable.
