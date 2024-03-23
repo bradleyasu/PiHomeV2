@@ -24,7 +24,6 @@
             zoom: 15
             map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_dark', min_zoom=13, max_zoom=16)
             # map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_light', min_zoom=13, max_zoom=16)
-            
             MapMarker:
                 lat: root.marker_latitude
                 lon: root.marker_longitude
@@ -49,7 +48,7 @@
         BoxLayout:
             canvas:
                 Color:
-                    rgba: 0, 0, 0, 1
+                    rgba: 1, 1, 1, 1
                 BoxShadow:
                     pos: self.pos
                     size: self.size
@@ -64,16 +63,19 @@
                     pos: self.pos
                     radius: [20,]
             orientation: 'vertical'
-            size_hint: 0.8, 0.1
+            size_hint: 0.8, 0.15
             pos_hint: {'center_x': 0.5, 'center_y': 0.1}
-            padding: 10
+            padding: dp(10)
+            spacing: dp(20)
 
             Label:
-                text: "Current Status"
-                font_size: '24sp'
+                text: root.current_status
+                font_size: '20sp'
                 size_hint: 1, 0.2
                 color: 0, 0, 0, 1
                 font_name: 'Nunito'
+                halign: 'center'
+                valign: 'middle'
 
             GridLayout:
                 cols: 4
@@ -83,7 +85,7 @@
                 Widget:
                     canvas:
                         Color:
-                            rgba: root.tick_color
+                            rgba: root.tick_color_disabled if root.ticker_count < 1 else root.tick_color
                         RoundedRectangle:
                             size: self.size
                             pos: self.pos
@@ -92,7 +94,7 @@
                 Widget:
                     canvas:
                         Color:
-                            rgba: root.tick_color_disabled
+                            rgba: root.tick_color_disabled if root.ticker_count < 2 else root.tick_color
                         RoundedRectangle:
                             size: self.size
                             pos: self.pos
@@ -101,7 +103,7 @@
                 Widget:
                     canvas:
                         Color:
-                            rgba: root.tick_color_disabled
+                            rgba: root.tick_color_disabled if root.ticker_count < 3 else root.tick_color
                         RoundedRectangle:
                             size: self.size
                             pos: self.pos
@@ -110,12 +112,32 @@
                 Widget:
                     canvas:
                         Color:
-                            rgba: root.tick_color_disabled
+                            rgba: root.tick_color_disabled if root.ticker_count < 4 else root.tick_color
                         RoundedRectangle:
                             size: self.size
                             pos: self.pos
                             radius: [5,]
-                        
+        BoxLayout:
+            canvas:
+                Color:
+                    rgba: 1, 0, 0, 0 if root.red_text == '' else 1
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [20,]
+            orientation: 'horizontal'
+            size_hint: 0.15, 0.1
+            pos_hint: {'center_x': 0.85, 'center_y': 0.18}
+            padding: dp(10)
+            Label:
+                id: time_remaining
+                text: root.red_text
+                color: 1, 1, 1, 1
+                font_size: '14sp'
+                font_name: 'Nunito'
+                valign: 'middle'
+                halign: 'center'
+
         BoxLayout:
             canvas:
                 Color:

@@ -8,9 +8,6 @@ from services.audio.sfx import SFX
 from theme.color import Color
 from theme.theme import Theme
 
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.gridlayout import GridLayout
-
 from kivy.clock import Clock
 
 from util.phlog import PIHOME_LOGGER
@@ -37,10 +34,14 @@ class UberEatsScreen(PiHomeScreen):
     error_message = StringProperty("")
     error_size_hint = ObjectProperty((1, 0))
 
-    title = StringProperty("No Orders")
+    title = StringProperty("Uber Eats")
+    current_status = StringProperty("No Active Orders")
+    red_text = StringProperty("")
     order_count = NumericProperty(0)
     marker_latitude = NumericProperty(0)
     marker_longitude = NumericProperty(0)
+
+    ticker_count = NumericProperty(0)
 
     def __init__(self, **kwargs):
         super(UberEatsScreen, self).__init__(**kwargs)
@@ -88,9 +89,15 @@ class UberEatsScreen(PiHomeScreen):
                 self.title = overview['title']
                 self.marker_latitude = courier_location['latitude']
                 self.marker_longitude = courier_location['longitude']
+
+                # self.red_text = "Arriving Soon"
             except Exception as e:
                 self.set_error("Error parsing order data: {}".format(e))
                 return
+        else:
+            self.title = "Uber Eats"
+            self.current_status = "No Active Orders"
+            self.red_text = ""
 
         self.set_error(None)
 
