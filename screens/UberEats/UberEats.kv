@@ -22,12 +22,13 @@
             lat: 40.440624
             lon: -79.995888
             zoom: 15
-            map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_light', min_zoom=13, max_zoom=16)
+            map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_dark', min_zoom=13, max_zoom=16)
+            # map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_light', min_zoom=13, max_zoom=16)
             
             MapMarker:
-                lat: 40.440624
-                lon: -79.995888
-                source: 'screens/UberEats/resized_marker.png'
+                lat: root.marker_latitude
+                lon: root.marker_longitude
+                source: 'screens/UberEats/resized_marker.png' if root.order_count > 0 else ''
 
         Widget:
             canvas:
@@ -41,7 +42,7 @@
 
         Label:
             id: title
-            text: 'Uber Eats'
+            text: root.title
             font_size: '32sp'
             pos_hint: {'center_x': 0.5, 'center_y': 0.9}
 
@@ -115,4 +116,22 @@
                             pos: self.pos
                             radius: [5,]
                         
+        BoxLayout:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+            orientation: 'horizontal'
+            # set size_hint to 1, 1 if root.error is not an empty string
+            size_hint: root.error_size_hint
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            Label:
+                text: root.error_message
+                color: 1, 0, 0, 1
+                font_size: '24sp'
+                font_name: 'Nunito'
+                halign: 'center'
+                valign: 'middle'
     
