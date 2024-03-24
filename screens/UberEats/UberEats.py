@@ -58,6 +58,11 @@ class UberEatsScreen(PiHomeScreen):
         else:
             Clock.schedule_interval(lambda _:self.order_poll(), 60)
 
+    def on_enter(self, *args):
+        if PIHOME_SCREEN_MANAGER.screens_loaded:
+            self.order_poll(force=True)
+        return super().on_enter(*args)
+
     def on_order_count(self, instance, value):
         SFX.play("long_notify")
         if value > 0:
@@ -73,7 +78,6 @@ class UberEatsScreen(PiHomeScreen):
 
     def on_marker_longitude(self, instance, value):
         mapview = self.ids.mapview
-        print("Centering on: {}, {}".format(self.marker_latitude, self.marker_longitude))
         mapview.center_on(self.marker_latitude, self.marker_longitude)
     
     def can_poll(self):
@@ -94,8 +98,8 @@ class UberEatsScreen(PiHomeScreen):
         return can_poll
 
 
-    def order_poll(self):
-        if not self.can_poll():
+    def order_poll(self, force = False):
+        if not force and not self.can_poll():
             return
         # Execute the order.sh script and get the output
         output = os.popen('bash {}'.format(ORDER_SCRIPT)).read()
