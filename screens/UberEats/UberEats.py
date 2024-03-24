@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from kivy.lang import Builder
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, ObjectProperty
 from interface.pihomescreen import PiHomeScreen
@@ -41,6 +42,12 @@ class UberEatsScreen(PiHomeScreen):
     marker_latitude = NumericProperty(0)
     marker_longitude = NumericProperty(0)
 
+    store_latitude = NumericProperty(0)
+    store_longitude = NumericProperty(0)
+
+    home_latitude = NumericProperty(0)
+    home_longitude = NumericProperty(0)
+
     ticker_count = NumericProperty(0)
 
     def __init__(self, **kwargs):
@@ -61,8 +68,33 @@ class UberEatsScreen(PiHomeScreen):
             self.error_size_hint = (1, 1)
         else:
             self.error_size_hint = (1, 0)
+
+    def on_marker_longitude(self, instance, value):
+        mapview = self.ids.mapview
+        print("Centering on: {}, {}".format(self.marker_latitude, self.marker_longitude))
+        mapview.center_on(self.marker_latitude, self.marker_longitude)
     
+    def can_poll(self):
+        """
+        This function returns true of the polling can be done.  This is used to prevent 
+        over polling the api
+        """
+        can_poll = False
+        # If the current screen is active then set can_poll to true
+        if PIHOME_SCREEN_MANAGER.current == self.name:
+            can_poll = True
+
+        # If the current time is between 6pm and 8pm then set can_poll to true
+        # Simply because it's the generic dinner time hours
+        if 18 <= int(time.strftime("%H")) <= 20:
+            can_poll = True
+        
+        return can_poll
+
+
     def order_poll(self):
+        if not self.can_poll():
+            return
         # Execute the order.sh script and get the output
         output = os.popen('bash {}'.format(ORDER_SCRIPT)).read()
 
@@ -83,14 +115,28 @@ class UberEatsScreen(PiHomeScreen):
         if len(orders) > 0:
             try:
                 order = orders[0]
+                orderInfo = order['orderInfo']
+                storeInfo = orderInfo['storeInfo']
                 overview = order['activeOrderOverview']
+                status = order['activeOrderStatus']
                 courier = order['backgroundFeedCards'][0]
                 courier_location = courier['mapEntity'][0]
+                eater_location = courier['mapEntity'][1]
                 self.title = overview['title']
                 self.marker_latitude = courier_location['latitude']
                 self.marker_longitude = courier_location['longitude']
 
-                # self.red_text = "Arriving Soon"
+                self.store_latitude = storeInfo['location']['latitude']
+                self.store_longitude = storeInfo['location']['longitude']
+
+                self.home_latitude = eater_location['latitude']
+                self.home_longitude = eater_location['longitude']
+                
+                if status is not None:
+                    self.red_text = "ETA: {}".format(status["title"])
+                    self.ticker_count = status["currentProgress"]
+                    self.current_status = status["titleSummary"]["summary"]["text"]
+
             except Exception as e:
                 self.set_error("Error parsing order data: {}".format(e))
                 return
@@ -99,6 +145,7 @@ class UberEatsScreen(PiHomeScreen):
             self.current_status = "No Active Orders"
             self.red_text = ""
 
+        PIHOME_LOGGER.info("Uber Eats Orders: {}".format(self.order_count))
         self.set_error(None)
 
     def set_error(self, error=None):

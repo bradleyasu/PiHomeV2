@@ -28,6 +28,14 @@
                 lat: root.marker_latitude
                 lon: root.marker_longitude
                 source: 'screens/UberEats/resized_marker.png' if root.order_count > 0 else ''
+            MapMarker:
+                lat: root.store_latitude
+                lon: root.store_longitude
+                source: 'screens/UberEats/restaurant.png' if root.order_count > 0 else ''
+            MapMarker:
+                lat: root.home_latitude
+                lon: root.home_longitude
+                source: 'screens/UberEats/home.png' if root.order_count > 0 else ''
 
         Widget:
             canvas:
@@ -78,7 +86,7 @@
                 valign: 'middle'
 
             GridLayout:
-                cols: 4
+                cols: 5
                 size_hint: 1, 0.05
                 spacing: dp(10)
 
@@ -113,6 +121,15 @@
                     canvas:
                         Color:
                             rgba: root.tick_color_disabled if root.ticker_count < 4 else root.tick_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [5,]
+
+                Widget:
+                    canvas:
+                        Color:
+                            rgba: root.tick_color_disabled if root.ticker_count < 5 else root.tick_color
                         RoundedRectangle:
                             size: self.size
                             pos: self.pos
