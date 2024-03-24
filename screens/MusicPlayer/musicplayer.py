@@ -3,7 +3,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 from kivy.graphics import RenderContext
 from kivy.clock import Clock
-from kivy.properties import StringProperty, ObjectProperty, NumericProperty, ListProperty, BooleanProperty
+from kivy.properties import StringProperty, ObjectProperty, NumericProperty, ListProperty, BooleanProperty, ColorProperty
 from kivy.graphics.texture import Texture
 import numpy as np
 from kivy.uix.behaviors import ButtonBehavior
@@ -151,6 +151,8 @@ class MusicPlayerCard(BoxLayout):
         self.add_widget(Player(on_radio))
 
 class Player(BoxLayout):
+    save_heart_color = ColorProperty((0.8, 0.8, 0.8, 1))
+    save_button = None
     def __init__(self, on_radio, **kwargs):
         super(Player, self).__init__(**kwargs)
         self.orientation = 'vertical'
@@ -172,6 +174,8 @@ class Player(BoxLayout):
         def set_volume(v):
             s.value = v
         AUDIO_PLAYER.add_volume_listener(lambda v: set_volume(v))
+        AUDIO_PLAYER.add_state_listener(lambda state: self.on_saves_changed())
+        AUDIO_PLAYER.add_saves_listener(lambda changes: self.on_saves_changed(changes))
 
 
         buttons = BoxLayout(orientation='horizontal')
@@ -199,7 +203,8 @@ class Player(BoxLayout):
         save.font_size = '16sp'
         save.custom_font = "ArialUnicode"
         save.stroke_color = (0, 0, 0, 0)
-        save.text_color = (1, 0, 0, 1)
+        save.text_color = self.save_heart_color
+        self.save_button = save
 
         buttons.add_widget(play)
         buttons.add_widget(stop)
@@ -208,6 +213,16 @@ class Player(BoxLayout):
 
         player_grid.add_widget(buttons)
         self.add_widget(player_grid)
+
+    def on_saves_changed(self, *args):
+        if AUDIO_PLAYER.current_source is None:
+            return
+        if not self.save_button:
+            return
+        if AUDIO_PLAYER.save_exists(AUDIO_PLAYER.current_source):
+            self.save_button.text_color = (1, 0, 0, 1)
+        else:
+            self.save_button.text_color = (0.8, 0.8, 0.8, 1)
         
 class PlayerQueue(BoxLayout):
     def __init__(self, **kwargs):

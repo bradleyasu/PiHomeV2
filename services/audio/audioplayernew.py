@@ -33,6 +33,7 @@ class AudioPlayer:
     data = None
     volume_listeners = []
     state_listeners = []
+    saves_listeners = []
     percent = 100
     is_playing = False
     current_state = AudioState.STOPPED
@@ -82,6 +83,7 @@ class AudioPlayer:
         with open(SAVED_URL_JSON, 'w') as f:
             f.write(json.dumps(self.saved_urls))
 
+        self.notify_saves_listeners(self.saved_urls)
         PIHOME_LOGGER.info("Saved urls serialized to {}".format(SAVED_URL_JSON))
 
     def deserialize_saved_urls(self):
@@ -135,8 +137,10 @@ class AudioPlayer:
 
     def save_exists(self, url):
         for saved_url in self.saved_urls:
-            if saved_url["url"] == url:
+            # if saved_url["url"] contains url anywhere in the string
+            if url in saved_url["url"]:
                 return True
+            
         return False
 
     def add_saved_url_from_json(self, json):
@@ -191,6 +195,13 @@ class AudioPlayer:
     def notify_state_listeners(self, state):
         for listener in self.state_listeners:
             listener(state)
+
+    def add_saves_listener(self, listener):
+        self.saves_listeners.append(listener)
+    
+    def notify_saves_listeners(self, saves):
+        for listener in self.saves_listeners:
+            listener(saves)
 
     def set_state(self, state):
         self.current_state = state
