@@ -104,6 +104,13 @@ class AudioPlayer:
             self.add_save_current_from_json({})
         else:
             PIHOME_LOGGER.warn("Cannot save current url, no media playing")
+
+    def remove_saved_url(self, url):
+        for i, saved_url in enumerate(self.saved_urls):
+            if saved_url["url"] == url:
+                self.saved_urls.pop(i)
+                self.serialize_saved_urls()
+                return
     
     def add_save_current_from_json(self, json):
         """
@@ -123,6 +130,8 @@ class AudioPlayer:
         if not self.save_exists(json["url"]):
             self.saved_urls.append(json)
             self.serialize_saved_urls()
+        else: 
+            self.remove_saved_url(json["url"])
 
     def save_exists(self, url):
         for saved_url in self.saved_urls:
