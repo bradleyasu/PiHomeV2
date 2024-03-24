@@ -78,6 +78,9 @@ class RadioItem(ButtonBehavior, BoxLayout):
     url = StringProperty("")
     def __init__(self, text, url, thumbnail=None, **kwargs):
         super(RadioItem, self).__init__(**kwargs)
+        # trim text to 12 characters
+        if len(text) > 12:  
+            text = text[:12] + "..."
         self.text = text
         self.url = url
         if thumbnail is not None and thumbnail != "":
@@ -175,25 +178,33 @@ class Player(BoxLayout):
 
         stop = CircleButton(text="STOP")
         stop.bind(on_release=lambda _: AUDIO_PLAYER.stop(clear_playlist=True))
-        stop.font_size = 10
+        stop.font_size = '12sp'
         stop.stroke_color = (0, 0, 0, 0)
         stop.text_color = (0, 0, 0, 1)
 
         play = CircleButton(text="PLAY")
         play.bind(on_release=lambda _: print("do play"))
-        play.font_size = 10
+        play.font_size = '12sp'
         play.stroke_color = (0, 0, 0, 0)
         play.text_color = (0, 0, 0, 1)
 
         radio = CircleButton(text="RADIO")
         radio.bind(on_release=self.on_radio)
-        radio.font_size = 10
+        radio.font_size = '12sp'
         radio.stroke_color = (0, 0, 0, 0)
         radio.text_color = (0, 0, 0, 1)
+
+        save = CircleButton(text="❤️")
+        save.bind(on_release=lambda _: AUDIO_PLAYER.save_current())
+        save.font_size = '16sp'
+        save.custom_font = "ArialUnicode"
+        save.stroke_color = (0, 0, 0, 0)
+        save.text_color = (1, 0, 0, 1)
 
         buttons.add_widget(play)
         buttons.add_widget(stop)
         buttons.add_widget(radio)
+        buttons.add_widget(save)
 
         player_grid.add_widget(buttons)
         self.add_widget(player_grid)

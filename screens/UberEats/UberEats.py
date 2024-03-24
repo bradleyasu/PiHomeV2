@@ -59,9 +59,11 @@ class UberEatsScreen(PiHomeScreen):
             Clock.schedule_interval(lambda _:self.order_poll(), 60)
 
     def on_order_count(self, instance, value):
+        SFX.play("long_notify")
         if value > 0:
             PIHOME_SCREEN_MANAGER.goto(self.name)
-            SFX.play("long_notify")
+        else:
+            self.go_back()
 
     def on_error_message(self, instance, value):
         if value is not None and value != "":

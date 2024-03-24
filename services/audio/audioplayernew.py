@@ -99,20 +99,36 @@ class AudioPlayer:
         for url in self.saved_urls:
             PIHOME_LOGGER.info("Loaded saved url into radio stations: {}".format(url))
 
+    def save_current(self):
+        if self.current_state == AudioState.PLAYING:
+            self.add_save_current_from_json({})
+        else:
+            PIHOME_LOGGER.warn("Cannot save current url, no media playing")
     
     def add_save_current_from_json(self, json):
         """
         Similar to add_saved_url_from_json, but instead creates a directlink to the
         currently decoded url
         """
+        if self.current_state != AudioState.PLAYING:
+            PIHOME_LOGGER.warn("Cannot save current url, no media playing")
+            return
         if "url" not in json:
             json["url"] = "directlink:" + self.current_source
         if "thumbnail" not in json:
             json["thumbnail"] = self.album_art
         if "text" not in json:
             json["text"] = self.title
-        self.saved_urls.append(json)
-        self.serialize_saved_urls()
+
+        if not self.save_exists(json["url"]):
+            self.saved_urls.append(json)
+            self.serialize_saved_urls()
+
+    def save_exists(self, url):
+        for saved_url in self.saved_urls:
+            if saved_url["url"] == url:
+                return True
+        return False
 
     def add_saved_url_from_json(self, json):
         """
