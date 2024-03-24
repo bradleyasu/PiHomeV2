@@ -266,6 +266,9 @@ class AudioPlayer:
             self.set_state(AudioState.BUFFERING)
             url = url.replace("directlink:", "")
             is_local = False
+            if self.save_exists(url):
+                self.title = self.saved_urls[url]["text"]
+                self.album_art = self.saved_urls[url]["thumbnail"]
 
         if url.startswith("folder:"):
             self.clear_playlist()

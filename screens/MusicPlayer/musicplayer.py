@@ -22,7 +22,6 @@ Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
     sound = None
     current_time = StringProperty("00:00 PM")
-    state = StringProperty("")
     def __init__(self, **kwargs):
         super(MusicPlayerContainer, self).__init__(**kwargs)
         self.add_widget(MusicPlayerCard(self.on_radio))
@@ -31,17 +30,6 @@ class MusicPlayerContainer(PiHomeScreen):
         self.disable_rotary_press_animation = True
 
         Clock.schedule_interval(lambda _: self.update_current_time(), 1)
-    #     AUDIO_PLAYER.add_state_listener(self.on_audio_state_change)
-
-    # def on_audio_state_change(self, state):
-    #     if state == AudioState.FETCHING:
-    #         self.state = "Fetching..."
-    #     elif state == AudioState.BUFFERING:
-    #         self.state = "Buffering..."
-    #     elif state == AudioState.PLAYING:
-    #         self.state = "Playing"
-    #     else:
-    #         self.state = ""
 
     def on_enter(self, *args):
         return super().on_enter(*args)
@@ -187,6 +175,7 @@ class Player(FloatLayout):
 
         elif state == AudioState.STOPPED:
             self.now_playing = "Media Player Stopped"
+            self.on_saves_changed()
         
         elif state == AudioState.FETCHING:
             self.now_playing = "Fetching..."
