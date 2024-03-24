@@ -59,3 +59,5 @@ class Theme():
 
     def hextorgb(self, color, opacity = 1):
         return hex(str(color), opacity)
+
+THEME = Theme()

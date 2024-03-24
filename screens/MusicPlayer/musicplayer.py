@@ -16,6 +16,7 @@ from datetime import datetime
 from kivy.uix.gridlayout import GridLayout
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
+from theme.theme import THEME
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
 class MusicPlayerContainer(PiHomeScreen):
@@ -30,17 +31,17 @@ class MusicPlayerContainer(PiHomeScreen):
         self.disable_rotary_press_animation = True
 
         Clock.schedule_interval(lambda _: self.update_current_time(), 1)
-        AUDIO_PLAYER.add_state_listener(self.on_audio_state_change)
+    #     AUDIO_PLAYER.add_state_listener(self.on_audio_state_change)
 
-    def on_audio_state_change(self, state):
-        if state == AudioState.FETCHING:
-            self.state = "Fetching..."
-        elif state == AudioState.BUFFERING:
-            self.state = "Buffering..."
-        elif state == AudioState.PLAYING:
-            self.state = "Playing"
-        else:
-            self.state = ""
+    # def on_audio_state_change(self, state):
+    #     if state == AudioState.FETCHING:
+    #         self.state = "Fetching..."
+    #     elif state == AudioState.BUFFERING:
+    #         self.state = "Buffering..."
+    #     elif state == AudioState.PLAYING:
+    #         self.state = "Playing"
+    #     else:
+    #         self.state = ""
 
     def on_enter(self, *args):
         return super().on_enter(*args)
@@ -150,79 +151,59 @@ class MusicPlayerCard(BoxLayout):
         super(MusicPlayerCard, self).__init__(**kwargs)
         self.add_widget(Player(on_radio))
 
-class Player(BoxLayout):
-    save_heart_color = ColorProperty((0.8, 0.8, 0.8, 1))
-    save_button = None
+class Player(FloatLayout):
+    now_playing = StringProperty("Media Player Stopped")
     def __init__(self, on_radio, **kwargs):
         super(Player, self).__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = 10
         self.on_radio = on_radio
-        
-        self.vinyl = VinylWidget(fs=sVINYL)
-        self.vinyl.xOffset = 2.35
-        self.vinyl.yOffset = 0.81
-        self.vinyl.size_hint = (1, 1)
-        self.vinyl.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
-        self.add_widget(self.vinyl)
-
-        player_grid = GridLayout(rows=2)
-        s = Slider(min=0, max=1, value=1, step=0.01)
-        s.bind(value=lambda _, v:AUDIO_PLAYER.set_volume(v))
-        player_grid.add_widget(s)
-
-        def set_volume(v):
-            s.value = v
-        AUDIO_PLAYER.add_volume_listener(lambda v: set_volume(v))
-        AUDIO_PLAYER.add_state_listener(lambda state: self.on_saves_changed())
+        self.ids.vinyl_widget.fs = sVINYL
+        AUDIO_PLAYER.add_volume_listener(lambda v: self.set_vol_slider_value(v))
+        AUDIO_PLAYER.add_state_listener(lambda state: self.on_state_changed(state))
         AUDIO_PLAYER.add_saves_listener(lambda changes: self.on_saves_changed(changes))
 
 
-        buttons = BoxLayout(orientation='horizontal')
+    def save_song(self):
+        AUDIO_PLAYER.save_current()
 
-        stop = CircleButton(text="STOP")
-        stop.bind(on_release=lambda _: AUDIO_PLAYER.stop(clear_playlist=True))
-        stop.font_size = '12sp'
-        stop.stroke_color = (0, 0, 0, 0)
-        stop.text_color = (0, 0, 0, 1)
+    def stop(self):
+        AUDIO_PLAYER.stop(clear_playlist=True)
 
-        play = CircleButton(text="PLAY")
-        play.bind(on_release=lambda _: print("do play"))
-        play.font_size = '12sp'
-        play.stroke_color = (0, 0, 0, 0)
-        play.text_color = (0, 0, 0, 1)
+    def set_volume(self, v):
+        AUDIO_PLAYER.set_volume(v)
 
-        radio = CircleButton(text="RADIO")
-        radio.bind(on_release=self.on_radio)
-        radio.font_size = '12sp'
-        radio.stroke_color = (0, 0, 0, 0)
-        radio.text_color = (0, 0, 0, 1)
+    def set_vol_slider_value(self, v):
+        self.ids.volume_slider.value = v
+        
+    def on_state_changed(self, state):
+        if state == AudioState.PLAYING:
+            # Update favorite heart icon if needed
+            self.on_saves_changed()
+            title = AUDIO_PLAYER.title
+            # trim title to 20 characters
+            if len(title) > 20:
+                title = title[:20] + "..."
+            self.now_playing = title
 
-        save = CircleButton(text="❤️")
-        save.bind(on_release=lambda _: AUDIO_PLAYER.save_current())
-        save.font_size = '16sp'
-        save.custom_font = "ArialUnicode"
-        save.stroke_color = (0, 0, 0, 0)
-        save.text_color = self.save_heart_color
-        self.save_button = save
-
-        buttons.add_widget(play)
-        buttons.add_widget(stop)
-        buttons.add_widget(radio)
-        buttons.add_widget(save)
-
-        player_grid.add_widget(buttons)
-        self.add_widget(player_grid)
-
+        elif state == AudioState.STOPPED:
+            self.now_playing = "Media Player Stopped"
+        
+        elif state == AudioState.FETCHING:
+            self.now_playing = "Fetching..."
+        
+        elif state == AudioState.BUFFERING:
+            self.now_playing = "Buffering..."
+    
     def on_saves_changed(self, *args):
+        save_button = self.ids.save_button
         if AUDIO_PLAYER.current_source is None:
             return
-        if not self.save_button:
+        if not save_button:
             return
         if AUDIO_PLAYER.save_exists(AUDIO_PLAYER.current_source):
-            self.save_button.text_color = (1, 0, 0, 1)
+            save_button.text_color = THEME.hextorgb("#f20236")
         else:
-            self.save_button.text_color = (0.8, 0.8, 0.8, 1)
+            save_button.text_color = (0.8, 0.8, 0.8, 1)
         
 class PlayerQueue(BoxLayout):
     def __init__(self, **kwargs):
