@@ -4,10 +4,11 @@ from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.animation import Animation
 from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
 
 Builder.load_file("./composites/AppMenu/appicon.kv")
 
-class AppIcon(Widget):
+class AppIcon(BoxLayout):
 
     background_color = ColorProperty((0,1, 0, 0))
 

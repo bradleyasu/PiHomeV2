@@ -5,5 +5,6 @@
     "label": "Pi Hole",
     "description": "",
     "hidden": false,
+    "icon": "screens/PiHole/icon.png",
     "requires_pin": false
 }

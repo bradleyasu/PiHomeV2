@@ -60,7 +60,7 @@ class HomeScreen(PiHomeScreen):
         super(HomeScreen, self).__init__(**kwargs)
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
-        self.icon = CDN_ASSET.format("default_home_icon.png")
+        # self.icon = CDN_ASSET.format("default_home_icon.png")
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture

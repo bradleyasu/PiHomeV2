@@ -24,7 +24,7 @@ from kivy.uix.button import Button
 
 Builder.load_file("./composites/AppMenu/appmenu.kv")
 
-class AppMenu(Widget):
+class AppMenu(FloatLayout):
 
     background_color = ColorProperty((0,0,0, 0.8))
     disabled = False
@@ -39,7 +39,7 @@ class AppMenu(Widget):
 
 
     def build(self):
-        view = ScrollView(size_hint=(1, 1), size=(dp(get_app().width), dp(get_app().height)))
+        view = ScrollView(size_hint=(1, 1), pos_hint={'center_x': 0.5, 'center_y': 0.5}, do_scroll_x=False, do_scroll_y=True, bar_width=0)
         self.grid = GridLayout(cols=4, padding=(dp(80), dp(80), dp(80), dp(80)), spacing=(dp(80)), size_hint_y=None)
         self.grid.bind(minimum_height=self.grid.setter('height'))
 

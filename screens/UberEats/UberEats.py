@@ -50,6 +50,9 @@ class UberEatsScreen(PiHomeScreen):
 
     ticker_count = NumericProperty(0)
 
+    hero_image = StringProperty("")
+    hero_texture = ObjectProperty(None)
+
     def __init__(self, **kwargs):
         super(UberEatsScreen, self).__init__(**kwargs)
         if not os.path.exists(ORDER_SCRIPT):
@@ -142,6 +145,8 @@ class UberEatsScreen(PiHomeScreen):
                     self.red_text = "ETA: {}".format(status["title"])
                     self.ticker_count = status["currentProgress"]
                     self.current_status = status["titleSummary"]["summary"]["text"]
+
+                self.hero_image = storeInfo['heroImageURL']
 
             except Exception as e:
                 self.set_error("Error parsing order data: {}".format(e))

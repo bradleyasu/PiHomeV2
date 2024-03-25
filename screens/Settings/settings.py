@@ -25,7 +25,6 @@ class SettingsScreen(PiHomeScreen):
         s.bind(on_close=self.closed)
         self.callback = callback
         # s.register_type("pin", PinPad)
-        self.icon = "https://cdn.pihome.io/assets/default_settings_icon.png"
 
         # Read all of the json configuations and add them to the screen
         dir = './screens/Settings/json/' 

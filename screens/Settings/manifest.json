@@ -5,5 +5,6 @@
     "label": "Settings",
     "description": "",
     "hidden": false,
+    "icon": "screens/Settings/icon.png",
     "requires_pin": true 
 }

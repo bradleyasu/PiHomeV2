@@ -2,9 +2,10 @@
     "module": "MusicPlayer.musicplayer",
     "name": "MusicPlayerContainer",
     "id": "_music",
-    "label": "Music Player NEW",
+    "label": "Music Player",
     "description": "Music",
     "hidden": false,
     "requires_pin": false,
+    "icon": "screens/MusicPlayer/icon.png",
     "index": 1
 }

@@ -11,16 +11,17 @@
         Color:
             rgba: self.background_color
         RoundedRectangle:
-            pos: self.pos
-            size: self.size
+            pos: dp(self.pos[0]), dp(self.pos[1])
+            size: dp(self.size[0]), dp(self.size[1])
 
     GridLayout:
         cols: 1
         spacing: dp(10)
-        pos: root.x, dp(root.y + root.y_pos_offset)
+        # pos: root.x, dp(root.y + root.y_pos_offset)
         NetworkImage:
             url: root.icon
             size: root.size
+            #size: dp(root.size[0]), dp(root.size[1])
         Label:
             text: root.label
             color: (1,1,1,1)
