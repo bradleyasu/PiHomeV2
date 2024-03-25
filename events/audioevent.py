@@ -21,7 +21,7 @@ class AudioEvent(PihomeEvent):
             "play_url": AUDIO_PLAYER.play,
             "play": AUDIO_PLAYER.play,
             "volume": AUDIO_PLAYER.set_volume,
-            "stop": AUDIO_PLAYER.stop,
+            "stop": lambda: AUDIO_PLAYER.stop(clear_playlist=True),
             "next": AUDIO_PLAYER.next,
             "prev": AUDIO_PLAYER.prev,
             "previous": AUDIO_PLAYER.prev,
