@@ -6,55 +6,25 @@ os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 from kivy.config import Config
-from kivy.graphics import Color, Ellipse, Line
+from kivy.graphics import Line
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from services.taskmanager.taskmanager import TASK_MANAGER
-from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER, PiHomeScreenManager
-from screens.NewYearsEve.newyearseve import NewYearsEveScreen
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
-# Config.set('kivy', 'exit_on_escape', '0')
-# Config.set('graphics', 'window_state', 'maximized')
-# Config.set('graphics', 'borderless', '1')
-# Config.set('graphics', 'fullscreen', 'auto')
-# Config.set('graphics', 'multisamples', '0')
-# Config.set('graphics', 'maxfps', '60')
-# Config.set('graphics', 'resizable', '0')
-# Config.set('graphics', 'position', 'custom')
-# Config.set('graphics', 'left', '0')
-# Config.set('graphics', 'top', '0')
 from components.Hamburger.hamburger import Hamburger
-from screens.Task.taskscreen import TaskScreen
-from screens.Timers.TimerScreen import TimerScreen
-from screens.CommandCenter.commandcenter import CommandCenterScreen
-from screens.DisplayImageEvent.displayimageevent import DisplayImageEvent
-from screens.Lofi.lofi import LofiScreen
-from screens.PiHole.pihole import PiHoleScreen
-from screens.WhiteBoard.whiteboard import WhiteBoard
-
 
 from networking.poller import POLLER
-from screens.Settings.settings import SettingsScreen
 from util.configuration import CONFIG
-
-
-
 from util.phlog import PIHOME_LOGGER 
 
-
-from screens.DisplayEvent.displayevent import DisplayEvent
-from screens.Music.musicplayer import MusicPlayer
-from server.server import SERVER, PiHomeServer
-from services.audio.audioplayernew import AudioPlayer
-from util.const import _DISPLAY_IMAGE_SCREEN, _DISPLAY_SCREEN, _DEVTOOLS_SCREEN, _HOME_SCREEN, _MUSIC_SCREEN, _SETTINGS_SCREEN, _TASK_SCREEN, _TIMERS_SCREEN, CONF_FILE, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, MQTT_COMMANDS, TEMP_DIR
+from server.server import SERVER
+from util.const import _TASK_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, TEMP_DIR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
-from services.weather.weather import Weather
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE 
-
-import cProfile
 import sys
 import kivy
 import platform

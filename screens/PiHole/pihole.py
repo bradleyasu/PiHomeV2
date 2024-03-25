@@ -3,7 +3,6 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty, ListProperty, ColorProperty
 from interface.pihomescreen import PiHomeScreen
 from networking.poller import POLLER
-from screens.CommandCenter.commandbutton import CommandButton
 from theme.theme import Theme
 from util.configuration import CONFIG
 from util.const import CDN_ASSET
