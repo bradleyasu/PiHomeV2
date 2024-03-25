@@ -10,6 +10,7 @@ import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
 from threading import Thread
+import eyed3
 
 
 SAVED_URL_JSON = "radio_stations.pihome"
@@ -39,6 +40,7 @@ class AudioPlayer:
     current_state = AudioState.STOPPED
     current_source = None
     player_thread = None
+    current_folder = None
     """
     Saved urls is an array of json objects with a "text" and "url" key
     The text is the title of the media and the url is the url to the media
@@ -118,16 +120,26 @@ class AudioPlayer:
         """
         Similar to add_saved_url_from_json, but instead creates a directlink to the
         currently decoded url
+        (wow. i hate this.  clean this up later)
         """
         if self.current_state != AudioState.PLAYING:
             PIHOME_LOGGER.warn("Cannot save current url, no media playing")
             return
         if "url" not in json:
-            json["url"] = "directlink:" + self.current_source
+            if self.current_folder is not None:
+                json["url"] = self.current_folder
+            else:
+                json["url"] = "directlink:" + self.current_source
         if "thumbnail" not in json:
-            json["thumbnail"] = self.album_art
+            if self.current_folder is not None:
+                json["thumbnail"] = None
+            else:
+                json["thumbnail"] = self.album_art
         if "text" not in json:
-            json["text"] = self.title
+            if self.current_folder is not None:
+                json["text"] = self.current_folder.split("/")[-1]
+            else:
+                json["text"] = self.title
 
         if not self.save_exists(json["url"]):
             self.saved_urls.append(json)
@@ -135,12 +147,17 @@ class AudioPlayer:
         else: 
             self.remove_saved_url(json["url"])
 
+    def find_saved_url(self, url):
+        for saved_url in self.saved_urls:
+            if saved_url["url"] == url:
+                return saved_url
+        return None
+    
     def save_exists(self, url):
         for saved_url in self.saved_urls:
             # if saved_url["url"] contains url anywhere in the string
             if url in saved_url["url"]:
                 return True
-            
         return False
 
     def add_saved_url_from_json(self, json):
@@ -242,7 +259,10 @@ class AudioPlayer:
 
         # Convert the numpy array data to bytes
         vol_data = data * self.volume
-        outdata[:] = vol_data.tobytes()
+        try:
+            outdata[:] = vol_data.tobytes()
+        except:
+            self.stop()
 
     def play(self, url, reset_playlist=True):
         # ensure device is found
@@ -266,9 +286,11 @@ class AudioPlayer:
             self.set_state(AudioState.BUFFERING)
             url = url.replace("directlink:", "")
             is_local = False
-            if self.save_exists(url):
-                self.title = self.saved_urls[url]["text"]
-                self.album_art = self.saved_urls[url]["thumbnail"]
+            saved = self.find_saved_url(url) 
+            if saved is not None:
+                self.title = saved["text"]
+                self.album_art = saved["thumbnail"]
+            
 
         if url.startswith("folder:"):
             self.clear_playlist()
@@ -277,6 +299,9 @@ class AudioPlayer:
             for file in os.listdir(directory):
                 self.add_to_playlist(os.path.join(directory, file))
             self.play(self.queue[self.queue_pos], reset_playlist=False)
+            self.album_art = None
+            self.title = url.split("/")[-1]
+            self.current_folder = url
             return
 
         if not is_local:
@@ -291,6 +316,7 @@ class AudioPlayer:
             streams = info.get('streams', [])
             if len(streams) != 1:
                 PIHOME_LOGGER.error('There must be exactly one stream available')
+                self.stop()
                 return
                 
 
@@ -305,6 +331,8 @@ class AudioPlayer:
         else:
             channels = 2
             samplerate = 44100
+            self.extract_metadata(url)
+            
         self.set_state(AudioState.BUFFERING)
         self.current_source = url
         try:
@@ -357,9 +385,30 @@ class AudioPlayer:
             PIHOME_LOGGER.error(e)
             return
 
+    def extract_metadata(self, url):
+        if not url.endswith(".mp3"):
+            return
+
+        try:
+            audiofile = eyed3.load(url)
+            self.title = audiofile.tag.title
+            album_art = audiofile.tag.images[0].image_data
+            if album_art:
+                with open("current_album_art.jpg", "wb") as f:
+                    f.write(album_art)
+                self.album_art = "current_album_art.jpg"
+            else:
+                self.album_art = None
+        
+        except Exception as e:
+            PIHOME_LOGGER.error("Error loading audio file metadata: {}".format(e))
+            return
+        
+
     def stop(self, clear_playlist=False):
         if clear_playlist:
             self.clear_playlist()
+            self.current_folder = None
         PIHOME_LOGGER.info("Stopping audio")
         if self.stream:
             self.stream.stop()

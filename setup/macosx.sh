@@ -23,4 +23,6 @@ echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
 
 #echo "Installing Flowers..."
-garden install mapview >> $LOG
+#garden install mapview >> $LOG
+
+python3 -m pip install eyed3 >> $LOG

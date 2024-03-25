@@ -65,16 +65,28 @@
 
             VinylWidget:
                 id: vinyl_widget
-                xOffset: 2.35
-                yOffset: 0.81
+                xOffset: 2.35 + root.vinyl_offset
+                yOffset: 0.81 
                 size_hint: 1, 1
                 pos_hint: {"center_x": .5, "center_y": .5}
 
-            # NetworkImage:
-            #     id: album_art
-            #     url: root.album_art if root.album_art else "https://via.placeholder.com/300"
-            #     size_hint: 1, 1
-            #     pos_hint: {"center_x": .3, "center_y": .5}
+            NetworkImage:
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 0.85
+                    BoxShadow:
+                        pos: self.pos
+                        size: self.size
+                        offset: 0, -5
+                        spread_radius: -10, -10
+                        border_radius: 10, 10, 10, 10
+                        blur_radius: 20
+                id: album_art
+                url: root.album_art if root.album_art else "screens/MusicPlayer/default_album_art.png"
+                pos_hint: {"center_x": (.5 + root.album_art_offset), "center_y": .5}
+                size: dp(190), dp(190)
+                k_ratio: False
+                stretch: True
 
         GridLayout:
             rows: 2

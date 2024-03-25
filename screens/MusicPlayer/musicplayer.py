@@ -16,6 +16,7 @@ from datetime import datetime
 from kivy.uix.gridlayout import GridLayout
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
+from kivy.animation import Animation
 from theme.theme import THEME
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
@@ -143,6 +144,8 @@ class Player(FloatLayout):
     now_playing = StringProperty("Media Player Stopped")
     is_playing = BooleanProperty(False)
     album_art = StringProperty("")
+    album_art_offset = NumericProperty(0)
+    vinyl_offset = NumericProperty(0)
     def __init__(self, on_radio, **kwargs):
         super(Player, self).__init__(**kwargs)
         self.orientation = 'vertical'
@@ -152,6 +155,16 @@ class Player(FloatLayout):
         AUDIO_PLAYER.add_state_listener(lambda state: self.on_state_changed(state))
         AUDIO_PLAYER.add_saves_listener(lambda changes: self.on_saves_changed(changes))
 
+
+    def open_vinyl_animation(self):
+        animation = Animation(vinyl_offset=0.25, duration=1)
+        animation &= Animation(album_art_offset=-0.15, duration=1)
+        animation.start(self)
+
+    def close_vinyl_animation(self):
+        animation = Animation(vinyl_offset=0, duration=1)
+        animation &= Animation(album_art_offset=0, duration=1)
+        animation.start(self)
 
     def save_song(self):
         AUDIO_PLAYER.save_current()
@@ -175,13 +188,15 @@ class Player(FloatLayout):
             if len(title) > 20:
                 title = title[:20] + "..."
             self.now_playing = title
-            self.album_art = AUDIO_PLAYER.album_art
+            self.album_art = AUDIO_PLAYER.album_art if AUDIO_PLAYER.album_art is not None else ""
             self.is_playing = True
+            self.open_vinyl_animation()
 
         elif state == AudioState.STOPPED:
             self.album_art = ""
             self.now_playing = "Media Player Stopped"
-            self.on_saves_changed()
+            self.close_vinyl_animation()
+            self.ids.save_button.text_color = (0.8, 0.8, 0.8, 1)
         
         elif state == AudioState.FETCHING:
             self.now_playing = "Fetching..."

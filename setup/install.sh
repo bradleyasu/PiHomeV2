@@ -152,6 +152,8 @@ python3 -m pip install numpy==1.26.4 >> $LOG
 python3 -m pip install sounddevice==0.4.6 >> $LOG
 python3 -m pip install Pillow==10.2.0 >> $LOG
 
+# ID3 Tag parsing
+python3 -m pip install eyed3 >> $LOG
 # TODO install yt-dlp from cdn
 
 echo "Installing Flowers..."
