@@ -141,6 +141,8 @@ class MusicPlayerCard(BoxLayout):
 
 class Player(FloatLayout):
     now_playing = StringProperty("Media Player Stopped")
+    is_playing = BooleanProperty(False)
+    album_art = StringProperty("")
     def __init__(self, on_radio, **kwargs):
         super(Player, self).__init__(**kwargs)
         self.orientation = 'vertical'
@@ -164,6 +166,7 @@ class Player(FloatLayout):
         self.ids.volume_slider.value = v
         
     def on_state_changed(self, state):
+        self.is_playing = False
         if state == AudioState.PLAYING:
             # Update favorite heart icon if needed
             self.on_saves_changed()
@@ -172,8 +175,11 @@ class Player(FloatLayout):
             if len(title) > 20:
                 title = title[:20] + "..."
             self.now_playing = title
+            self.album_art = AUDIO_PLAYER.album_art
+            self.is_playing = True
 
         elif state == AudioState.STOPPED:
+            self.album_art = ""
             self.now_playing = "Media Player Stopped"
             self.on_saves_changed()
         

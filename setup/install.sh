@@ -155,7 +155,7 @@ python3 -m pip install Pillow==10.2.0 >> $LOG
 # TODO install yt-dlp from cdn
 
 echo "Installing Flowers..."
-garden install mapview >> $LOG
+#garden install mapview >> $LOG
 
 echo "Setting up environment..."
 

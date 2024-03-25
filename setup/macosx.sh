@@ -22,5 +22,5 @@ pip install websockets >> $LOG
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
 
-echo "Installing Flowers..."
+#echo "Installing Flowers..."
 garden install mapview >> $LOG

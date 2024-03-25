@@ -1,0 +1,13 @@
+sudo: required
+
+language: generic
+
+services:
+  - docker
+  - xvfb
+
+install:
+  - docker build --tag=mapview-linux .
+
+script:
+  - docker run -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix mapview-linux /bin/sh -c 'tox'
