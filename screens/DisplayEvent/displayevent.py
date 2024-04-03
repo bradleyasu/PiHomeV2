@@ -20,7 +20,7 @@ class DisplayEvent(PiHomeScreen):
         self.background = hex(background, 1)
   
     def set_timeout(self, seconds, screen):
-        Clock.schedule_once(lambda _: PIHOME_SCREEN_MANAGER.goto(screen), int(seconds))
+        Clock.schedule_once(lambda _: self.go_back(), int(seconds))
 
     def on_enter(self, *args):
         SFX.play("multi_pop")
