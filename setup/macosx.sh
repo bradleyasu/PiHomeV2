@@ -26,5 +26,3 @@ python3 -m pip install kivy[base] >> $LOG
 #garden install mapview >> $LOG
 
 python3 -m pip install eyed3 >> $LOG
-
-python3 -m pip install homeassistant_api >> $LOG

@@ -159,9 +159,6 @@ python3 -m pip install eyed3 >> $LOG
 echo "Installing Flowers..."
 #garden install mapview >> $LOG
 
-echo "Installing Home Assistant API..."
-python3 -m pip install homeassistant_api >> $LOG
-
 echo "Setting up environment..."
 
 echo "" >> $PROFILE

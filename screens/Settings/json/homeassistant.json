@@ -1,0 +1,20 @@
+[
+    {
+        "type": "title",
+        "title": "Home Assistant"
+    },
+    {
+        "type": "string",
+        "title": "Host URL",
+        "desc": "Where is home assistant running?  Typically http://homeassistant:8123",
+        "section": "homeassistant",
+        "key": "host"
+    },
+    {
+        "type": "string",
+        "title": "Long Lived Access Token",
+        "desc": "You can typically get this in your Profile on Home Assistant.",
+        "section": "homeassistant",
+        "key": "token"
+    }
+]

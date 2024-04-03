@@ -1,6 +1,7 @@
 import os
 
 from networking.poller import POLLER
+from services.homeassistant.homeassistant import HOME_ASSISTANT
 
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
@@ -100,9 +101,11 @@ class PiHome(App):
         """
         Window.size = (self.width, self.height)
 
-
         POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 2, self.update_conf)
         Clock.schedule_interval(lambda _: self._run(), 1)
+
+        # Connect to home assistant
+        HOME_ASSISTANT.connect()
 
         # Add a custom error handler for pihome
         ExceptionManager.add_handler(PiHomeErrorHandler())
