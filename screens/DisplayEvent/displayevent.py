@@ -9,6 +9,10 @@ from kivy.properties import ColorProperty, StringProperty
 Builder.load_file("./screens/DisplayEvent/displayevent.kv")
 
 class DisplayEvent(PiHomeScreen):
+    """
+    THIS SCREEN IS POORLY NAMED. It should be "displayscreen".  It is overloading the term 'event' with the 
+    event architecture.  This screen is used to display a message to the user.  It is used by the DisplayEvent
+    """
     background = ColorProperty((0,0,0,0.9))
     title = StringProperty("<title>")
     message = StringProperty("<message>")
@@ -20,7 +24,9 @@ class DisplayEvent(PiHomeScreen):
         self.background = hex(background, 1)
   
     def set_timeout(self, seconds, screen):
-        Clock.schedule_once(lambda _: self.go_back(), int(seconds))
+        # Only go_back to previous screen if the current screen is the screen that was displayed
+        if PIHOME_SCREEN_MANAGER.current_screen == screen:
+            Clock.schedule_once(lambda _: self.go_back(), int(seconds))
 
     def on_enter(self, *args):
         SFX.play("multi_pop")

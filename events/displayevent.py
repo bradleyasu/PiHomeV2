@@ -24,7 +24,7 @@ class DisplayEvent(PihomeEvent):
         if self.background is not None:
             screen.background = self.background
         if self.timeout is not None:
-            screen.set_timeout(self.timeout, _DISPLAY_SCREEN)
+            screen.set_timeout(self.timeout)
         PIHOME_SCREEN_MANAGER.goto(_DISPLAY_SCREEN)
 
         return {
