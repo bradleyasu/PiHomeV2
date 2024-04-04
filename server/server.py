@@ -88,8 +88,12 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 PIHOME_SCREEN_MANAGER.goto(payload["app"])
             if "webhook" in payload:
                 event = PihomeEventFactory.create_event_from_dict(payload["webhook"])
-                response = event.execute()
-                self._set_response(response["code"], response["body"])
+                try:
+                    response = event.execute()
+                    self._set_response(response["code"], response["body"])
+                except Exception as e:
+                    PIHOME_LOGGER.error("Failed to execute webhook: {}".format(e))
+                    self._set_response(500, {"status": "error", "message": "Failed to execute webhook", "error": str(e)})
                 return
 
             self._set_response()

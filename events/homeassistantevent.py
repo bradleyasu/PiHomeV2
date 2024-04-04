@@ -5,7 +5,7 @@ from services.homeassistant.homeassistant import HOME_ASSISTANT
 
 class HomeAssistantEvent(PihomeEvent):
     type = "homeassistant"
-    def __init__(self, entity_id, state, data = {}, method = "set", **kwargs):
+    def __init__(self, entity_id, state = "", data = {}, method = "set", **kwargs):
         super().__init__()
         self.entity_id = entity_id
         self.domain = entity_id.split(".")[0]
@@ -44,7 +44,17 @@ class HomeAssistantEvent(PihomeEvent):
     def to_json(self):
         return json.dumps({
             "type": self.type,
-            "label": self.label,
-            "level": self.level,
-            "timeout": self.timeout
+            "entity_id": self.entity_id,
+            "state": self.state,
+            "data": self.data,
+            "method": self.method
         })
+
+    def to_definition(self):
+        return {
+            "type": self.type,
+            "entity_id": self.type_def("string"),
+            "state": self.type_def("string", False, "State to set the entity to.  Example: turn_on, turn_off"),
+            "method": self.type_def("string", True, "Method to use.  Options: set, get"),
+            "data": self.type_def("string", False, "JSON data to send to Home Assistant.  Example: {\"brightness\": 255}"),
+        }
