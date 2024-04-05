@@ -1,0 +1,10 @@
+{
+    "module": "HomeAssistantScreen.HomeAssistantScreen",
+    "name": "HomeAssistantScreen",
+    "id": "_home_assistant_screen",
+    "label": "Home Assistant",
+    "description": "Home Assistant Interface",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 10
+}
