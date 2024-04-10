@@ -28,14 +28,6 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.path = "./web" + self.path
             super().do_GET()
 
-    # def guess_type(self, path):
-    #     # Override the default MIME type guessing to handle CSS files.
-    #     if path.endswith(".css"):
-    #         return "text/css"
-    #     if path.endswith(".js"):
-    #         return "application/javascript"
-    #     return super().guess_type(path)
-    
     def _get_status(self, service = ""):
         PIHOME_LOGGER.info("Server: Getting current status from multiple services")
         try:
@@ -60,12 +52,6 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_OPTIONS(self):
         self._set_response()
-        # self.send_response(200)
-        # self.send_header("Access-Control-Allow-Origin", "*")
-        # self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        # self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type")
-        # self.end_headers()
-
     
     def do_POST(self):
         try:
@@ -119,6 +105,10 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         response_json = json.dumps(response_data)
         self.wfile.write(response_json.encode('utf-8'))
+        # clean up
+        self.wfile.flush()
+        self.wfile.close()
+        
 
  
 class PiHomeServer():
