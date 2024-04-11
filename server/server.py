@@ -59,19 +59,6 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
             # PIHOME_LOGGER.info("POST request: {} | {}".format(str(self.path), post_data.decode('utf-8')))
-            if "stop" in payload:
-                AUDIO_PLAYER.stop()
-            if "clear_queue" in payload:
-                AUDIO_PLAYER.clear_playlist()
-            if "volume" in payload: 
-                v = int(payload["volume"])
-                AUDIO_PLAYER.set_volume(v)
-            if "play" in payload:
-                url = payload["play"]
-                AUDIO_PLAYER.play(url)
-                PIHOME_SCREEN_MANAGER.goto(_MUSIC_SCREEN)
-            if "app" in payload:
-                PIHOME_SCREEN_MANAGER.goto(payload["app"])
             if "webhook" in payload:
                 event = PihomeEventFactory.create_event_from_dict(payload["webhook"])
                 try:
@@ -81,6 +68,14 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                     PIHOME_LOGGER.error("Failed to execute webhook: {}".format(e))
                     self._set_response(500, {"status": "error", "message": "Failed to execute webhook", "error": str(e)})
                 return
+            else:
+                event = PihomeEventFactory.create_event_from_dict(payload)
+                try:
+                    response = event.execute()
+                    self._set_response(response["code"], response["body"])
+                except Exception as e:
+                    PIHOME_LOGGER.error("Failed to execute event: {}".format(e))
+                    self._set_response(500, {"status": "error", "message": "Failed to execute event", "error": str(e)})
 
             self._set_response()
             # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
@@ -105,9 +100,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         response_json = json.dumps(response_data)
         self.wfile.write(response_json.encode('utf-8'))
-        # clean up
-        self.wfile.flush()
-        self.wfile.close()
+
         
 
  

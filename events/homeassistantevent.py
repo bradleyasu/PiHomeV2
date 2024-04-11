@@ -8,13 +8,24 @@ class HomeAssistantEvent(PihomeEvent):
     def __init__(self, entity_id, state = "", data = {}, method = "set", **kwargs):
         super().__init__()
         self.entity_id = entity_id
-        self.domain = entity_id.split(".")[0]
         self.state = state
         self.data = data
         self.method = method
+        if self.entity_id and "." in self.entity_id:
+            self.domain = entity_id.split(".")[0]
 
     def execute(self):
 
+        if self.entity_id is None:
+            return {
+                "code": 400,
+                "body": {"status": "error", "message": "entity_id is required"}
+            }
+        if self.method != "set" or self.method != "get":
+            return {
+                "code": 400,
+                "body": {"status": "error", "message": "method must be set or get"}
+            }
         # try to convert self.data to a dictionary
         try:
             self.data = json.loads(self.data)
@@ -52,9 +63,10 @@ class HomeAssistantEvent(PihomeEvent):
 
     def to_definition(self):
         return {
+            "comment": "Refer to entities in home assistant by their entity_id.  Example: light.living_room_light",
             "type": self.type,
             "entity_id": self.type_def("string"),
             "state": self.type_def("string", False, "State to set the entity to.  Example: turn_on, turn_off"),
             "method": self.type_def("string", True, "Method to use.  Options: set, get"),
-            "data": self.type_def("string", False, "JSON data to send to Home Assistant.  Example: {\"brightness\": 255}"),
+            "data": self.type_def("json", False, "JSON data to send to Home Assistant.  Example: {\"brightness\": 255}"),
         }
