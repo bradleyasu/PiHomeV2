@@ -21,7 +21,7 @@ class HomeAssistantEvent(PihomeEvent):
                 "code": 400,
                 "body": {"status": "error", "message": "entity_id is required"}
             }
-        if self.method != "set" or self.method != "get":
+        if self.method != "set" and self.method != "get":
             return {
                 "code": 400,
                 "body": {"status": "error", "message": "method must be set or get"}
