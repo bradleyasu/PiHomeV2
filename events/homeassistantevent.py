@@ -35,6 +35,8 @@ class HomeAssistantEvent(PihomeEvent):
                 "body": {"status": "success", "message": "Home Assistant Responded", "response": response}
             }
         else:
+            if self.method == "set":
+                response = response.json()
             return {
                 "code": 500,
                 "body": {"status": "error", "message": "Error getting response from Home Assistant.  Is Home Assistant configured correctly in PiHome?", "response": response}
