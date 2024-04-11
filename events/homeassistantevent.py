@@ -32,12 +32,12 @@ class HomeAssistantEvent(PihomeEvent):
                 response = response.json()
             return {
                 "code": 200,
-                "body": {"status": "success", "message": "State set in Home Assistant", "response": response}
+                "body": {"status": "success", "message": "Home Assistant Responded", "response": response}
             }
         else:
             return {
                 "code": 500,
-                "body": {"status": "error", "message": "Error setting state in Home Assistant.  Is Home Assistant configured correctly in PiHome?"}
+                "body": {"status": "error", "message": "Error getting response from Home Assistant.  Is Home Assistant configured correctly in PiHome?", "response": response}
             }
 
 
