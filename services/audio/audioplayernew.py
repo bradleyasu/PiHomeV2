@@ -277,6 +277,7 @@ class AudioPlayer:
 
     def _play(self, url):
         is_local = True
+        self.current_source = url
         if url.startswith('http://') or url.startswith('https://'):
             self.set_state(AudioState.FETCHING)
             is_local = False
@@ -334,7 +335,6 @@ class AudioPlayer:
             self.extract_metadata(url)
             
         self.set_state(AudioState.BUFFERING)
-        self.current_source = url
         try:
             PIHOME_LOGGER.info('Opening stream {} ...'.format(url))
             self.process = ffmpeg.input(url).output(
