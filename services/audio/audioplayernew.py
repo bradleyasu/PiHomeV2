@@ -129,7 +129,7 @@ class AudioPlayer:
             if self.current_folder is not None:
                 json["url"] = self.current_folder
             else:
-                json["url"] = "directlink:" + self.current_source
+                json["url"] = self.current_source
         if "thumbnail" not in json:
             if self.current_folder is not None:
                 json["thumbnail"] = None
