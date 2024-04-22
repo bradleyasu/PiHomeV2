@@ -120,6 +120,12 @@ class UberEatsScreen(PiHomeScreen):
         data = output['data']
         orders = data['orders']
 
+        for order in orders:
+            orderInfo = order['orderInfo']
+            orderPhase = orderInfo['orderPhase']
+            if orderPhase == "COMPLETED":
+                orders.remove(order)
+
         self.order_count = len(orders)
         if len(orders) > 0:
             try:
