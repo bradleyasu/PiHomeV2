@@ -46,6 +46,12 @@ class TaskManager():
         data.close()
 
 
+    def notify_state_change(self, id, state):
+        # Find any task that is an EventTask and has the same state_id.  If the trigger_state matches the state, run the task
+        for task in self.tasks:
+            if isinstance(task, EventTask) and task.state_id == id and task.trigger_state == state:
+                task.run()
+
     def start(self, task_screen: TaskScreen):
         if not self.is_running:
             self.is_running = True
@@ -137,6 +143,10 @@ class TaskManager():
         if self.task_screen.is_open:
             return
         for task in self.tasks:
+            # if Task is not a Scheduled task, skip it
+            if not isinstance(task, ScheduledTask):
+                continue
+
             if task.status == TaskStatus.PENDING or task.status == TaskStatus.IN_PROGRESS:
                 if task.start_time <= datetime.now():
                     task.status = TaskStatus.PRE_IN_PROGRESS
@@ -175,12 +185,17 @@ class TaskManager():
     def tasks_to_json(self):
         json_tasks = []
         for task in self.tasks:
-            start_time_str = task.start_time.strftime("%Y-%m-%d %H:%M:%S")
+            if hasattr(task, "start_time"):
+                start_time_str = task.start_time.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                start_time_str = None
             json_tasks.append({
                 "id": task.id,
                 "name": task.name,
                 "description": task.description,
                 "start_time": start_time_str,
+                "state_id": task.state_id if hasattr(task, "state_id") else None,
+                "trigger_state": task.trigger_state if hasattr(task, "trigger_state") else None,
                 "status": task.status.name,
                 "priority": task.priority.name
             })
@@ -191,15 +206,13 @@ class Task():
     repeat days is a list of days of the week that the task should repeat
     """
     hash = None
-    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, is_passive = False, repeat_days = 0, on_run = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
+    def __init__(self, name, description, status: TaskStatus, priority: TaskPriority, is_passive = False, on_run = None, on_confirm = None, on_cancel = None, background_image = None, cacheable = True):
         # set id to random hash
         self.id = str(uuid.uuid4())
         self.name = name
         self.description = description
-        self.start_time = start_time
         self.status = status
         self.priority = priority
-        self.repeat_days = repeat_days
         self.on_run = on_run
         self.is_passive = is_passive
         self.on_confirm = on_confirm
@@ -208,7 +221,24 @@ class Task():
         self.cacheable = cacheable
 
         # create an md5 hash based on the task name, description, and start time
-        self.hash = hashlib.md5(f"{self.name}{self.description}{self.start_time}".encode()).hexdigest()
+        trigger_key = self.start_time if hasattr(self, "start_time") else datetime.now()
+        self.hash = hashlib.md5(f"{self.name}{self.description}{trigger_key}".encode()).hexdigest()
+
+    def run(self):
+        print("Task Not Implemented")
+
+
+    def set_status(self, status: TaskStatus):
+        self.status = status
+        TASK_MANAGER.serialize_tasks()
+
+    
+class ScheduledTask(Task):
+
+    def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, is_passive=False, repeat_days=0, on_run=None, on_confirm=None, on_cancel=None, background_image=None, cacheable=True):
+        super().__init__(name, description, status, priority, is_passive, on_run, on_confirm, on_cancel, background_image, cacheable)
+        self.start_time = start_time
+        self.repeat_days = repeat_days
 
     def __str__(self):
         return f"Task: {self.name} - {self.description} - {self.duration} - {self.start_time} - {self.end_time} - {self.status} - {self.priority}"
@@ -226,10 +256,6 @@ class Task():
         if self.is_passive:
             self.status = TaskStatus.COMPLETED
         # non passive tasks are marked as completed or canceled by the user in the TaskScreen
-
-    def set_status(self, status: TaskStatus):
-        self.status = status
-        TASK_MANAGER.serialize_tasks()
     
     def schedule_next(self):
         if self.repeat_days > 0:
@@ -238,6 +264,25 @@ class Task():
             TASK_MANAGER.add_task(Task(self.name, self.description, next_time, TaskStatus.PENDING, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel))
             PIHOME_LOGGER.info(f"Scheduled next task: {self.name} for {next_time}")
 
+
+
+class EventTask(Task):
+
+    def __init__(self, name, description, state_id, trigger_state, status: TaskStatus, priority: TaskPriority, is_passive=False, on_run=None, on_confirm=None, on_cancel=None, background_image=None, cacheable=True):
+        super().__init__(name, description, status, priority, is_passive , on_run, on_confirm, on_cancel, background_image, cacheable)
+        self.state_id = state_id
+        self.trigger_state = trigger_state
+
+    def run(self):
+        PIHOME_LOGGER.info(f"Running Task: {self.name}")
+        try:
+            if self.on_run is not None:
+                PihomeEventFactory.create_event_from_dict(self.on_run).execute()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to run task: {self.name} - {e}")
+
+        if not self.is_passive:
+            TASK_MANAGER.load_task_screen(self)
 
 # Initialize the task manager
 TASK_MANAGER = TaskManager()

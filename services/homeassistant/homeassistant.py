@@ -3,6 +3,7 @@ import requests
 import websockets
 import asyncio
 import json
+from events.pihomeevent import PihomeEventFactory
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
@@ -80,6 +81,10 @@ class HomeAssistant:
             entity_id = data["event"]["data"]["entity_id"]
             state = data["event"]["data"]["new_state"]
             self.current_states[entity_id] = state
+            try:
+                PihomeEventFactory.create_event("state_changed", id=entity_id, state=state["state"], data=state).execute()
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Error processing state change event: {e}")
 
     def configure_connection(self):
         """

@@ -1,18 +1,33 @@
 from datetime import datetime, timedelta
 import json
 from events.pihomeevent import PihomeEvent
-from services.taskmanager.taskmanager import TASK_MANAGER, Task, TaskPriority, TaskStatus
+from services.taskmanager.taskmanager import TASK_MANAGER, EventTask, ScheduledTask, Task, TaskPriority, TaskStatus
 
 
 class TaskEvent(PihomeEvent):
     type = "task"
     
-    def __init__(self, name, description, start_time, priority, is_passive = False, repeat_days = 0, on_run = None, on_confirm = None, on_cancel = None, background_image = None, **kwargs):
+    def __init__(self, 
+                 name, 
+                 description, 
+                 priority, 
+                 start_time = None, 
+                 state_id = None,
+                 trigger_state = None,
+                 is_passive = False, 
+                 repeat_days = 0, 
+                 on_run = None, 
+                 on_confirm = None, 
+                 on_cancel = None, 
+                 background_image = None, 
+                 **kwargs):
         super().__init__()
         self.cacheable = True
         self.name = name
         self.description = description
         self.start_time = self.str_to_date(start_time)
+        self.state_id = state_id
+        self.trigger_state = trigger_state
         self.status = TaskStatus.PENDING
         # set self.priority to the priority enum
         self.priority = TaskPriority(priority) if priority != None else TaskPriority(1)
@@ -42,13 +57,24 @@ class TaskEvent(PihomeEvent):
         return self.start_time <= datetime.now()
 
     def execute(self):
-        if self.is_expired():
+        task = None
+        if self.state_id is None:
+            task = ScheduledTask(self.name, self.description, self.start_time, self.status, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel, self.background_image, self.cacheable)
+            if self.is_expired():
+                return {
+                    "code": 400,
+                    "body": {"status": "error", "message": "Task is expired"}
+                }
+        else:
+            task = EventTask(self.name, self.description, self.state_id, self.trigger_state, self.status, self.priority, self.is_passive, self.on_run, self.on_confirm, self.on_cancel, self.background_image, self.cacheable)
+
+        if task is not None:
+            TASK_MANAGER.add_task(task)
+        else:
             return {
-                "code": 400,
-                "body": {"status": "error", "message": "Task is expired"}
+                "code": 500,
+                "body": {"status": "error", "message": "Failed to create task.  Could not identify task type."}
             }
-        task = Task(self.name, self.description, self.start_time, self.status, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel, self.background_image, self.cacheable)
-        TASK_MANAGER.add_task(task)
         return {
             "code": 200,
             "body": {"status": "success", "message": "Task added", "task_id": task.id}
@@ -61,6 +87,8 @@ class TaskEvent(PihomeEvent):
             "name": self.name,
             "description": self.description,
             "start_time": self.start_time,
+            "state_id": self.state_id,
+            "trigger_state": self.trigger_state,
             "status": self.status,
             "priority": self.priority,
             "repeat_days": self.repeat_days,
@@ -71,10 +99,13 @@ class TaskEvent(PihomeEvent):
 
     def to_definition(self):
         return {
+            "comment": "Tasks can be scheduled to run at a specific time or triggered by a state change. A state_id OR start_time must be provided, but not both.",
             "type": self.type,
             "name": self.type_def("string"),
             "description": self.type_def("string"),
-            "start_time": self.type_def("string"),
+            "start_time": self.type_def("string", False),
+            "state_id": self.type_def("string", False),
+            "trigger_state": self.type_def("string", False),
             "status": self.type_def("string"),
             "priority": self.type_def("integer", True, "1 = Low, 2 = Medium, 3 = High"),
             "repeat_days": self.type_def("integer", False),

@@ -15,12 +15,12 @@ class HomeAssistantEvent(PihomeEvent):
             self.domain = entity_id.split(".")[0]
 
     def execute(self):
-
         if self.entity_id is None:
             return {
                 "code": 400,
                 "body": {"status": "error", "message": "entity_id is required"}
             }
+            
         if self.method != "set" and self.method != "get":
             return {
                 "code": 400,
