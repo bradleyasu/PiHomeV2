@@ -24,6 +24,11 @@ class DisplayImageEvent(PiHomeScreen):
         return super().on_leave(*args)
 
     def on_enter(self, *args):
+        ni_image = self.ids["ni_image"]
+        # refresh the image
+        ni_image.source = self.image
+        ni_image.reload()
+
         SFX.play("multi_pop")
         return super().on_enter(*args)
     
