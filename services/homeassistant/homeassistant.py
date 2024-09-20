@@ -21,6 +21,7 @@ class HomeAssistant:
 
     current_states = {}
     websocket = None
+    listeners = []
     
     def __init__(self, **kwargs):
         super(HomeAssistant, self).__init__(**kwargs)
@@ -75,6 +76,10 @@ class HomeAssistant:
     async def _send_message(self, message):
         await self.websocket.send(json.dumps(message))
 
+
+    def add_listener(self, listener):
+        self.listeners.append(listener)
+
     def _handle_message(self, data):
         # find and update state in current states
         if "event" in data and "event_type" in data["event"] and data["event"]["event_type"] == "state_changed":
@@ -85,6 +90,10 @@ class HomeAssistant:
                 PihomeEventFactory.create_event("state_changed", id=entity_id, state=state["state"], data=state).execute()
             except Exception as e:
                 PIHOME_LOGGER.error(f"Error processing state change event: {e}")
+            
+            # Notify All Listeners
+            for listener in self.listeners:
+                listener.on_state_change(entity_id, state["state"], state)
 
     def configure_connection(self):
         """
@@ -149,6 +158,7 @@ class HomeAssistant:
     def update_service(self, domain, state, entity_id, data):
         service = f"{domain}/{state}"
         data["entity_id"] = entity_id
+        print(f"Updating service: {service} with data: {data}")
         response = self.make_request(f"services/{service}", method="post", data=data)
         return response
 
@@ -185,6 +195,16 @@ class HomeAssistant:
             if "light" in entity_id:
                 lights[entity_id] = state
 
+
+class HomeAssistantListener:
+    def __init__(self, callback):
+        self.callback = callback
+
+    def set_callback(self, callback):
+        self.callback = callback
+
+    def on_state_change(self, id, state, data):
+        self.callback(id, state, data)
 
 
 HOME_ASSISTANT = HomeAssistant()

@@ -234,6 +234,9 @@ class Task():
 
     
 class ScheduledTask(Task):
+    '''
+    ScheduledTask is a task that is scheduled to run at a specific time and can repeat on specific days
+    '''
 
     def __init__(self, name, description, start_time, status: TaskStatus, priority: TaskPriority, is_passive=False, repeat_days=0, on_run=None, on_confirm=None, on_cancel=None, background_image=None, cacheable=True):
         super().__init__(name, description, status, priority, is_passive, on_run, on_confirm, on_cancel, background_image, cacheable)
@@ -267,6 +270,9 @@ class ScheduledTask(Task):
 
 
 class EventTask(Task):
+    '''
+    EventTask is a task that is triggered by a state change event somewhere in PiHome, for example, a light turning on or off in Home Assistant
+    '''
 
     def __init__(self, name, description, state_id, trigger_state, status: TaskStatus, priority: TaskPriority, is_passive=False, on_run=None, on_confirm=None, on_cancel=None, background_image=None, cacheable=True):
         super().__init__(name, description, status, priority, is_passive , on_run, on_confirm, on_cancel, background_image, cacheable)

@@ -1,0 +1,127 @@
+#:kivy 2.0.0
+#:import Knob kivy.garden.knob.Knob
+<HomeAssistantMediaPlayer>:
+    size_hint: 1, 1
+    BoxLayout:
+        canvas:
+            Color:
+                rgba: 0.1, 0.1, 0.1, 1
+            RoundedRectangle:
+                size: self.size
+                pos: self.pos
+                radius: [20,]
+        orientation: 'horizontal'
+        padding: 10
+        spacing: 10
+        size_hint: 1, 1
+
+        # Image:
+            # source: root.media_player_thumbnail
+            # size_hint: 0.5, 1
+
+        NetworkImage:
+            url: root.media_player_thumbnail
+            size_hint: 1, 1
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.9, 1
+
+            #Padding Label
+            Label:
+                size_hint: 1, 0.1
+
+
+            Label:
+                text: root.media_player_title
+                font_size: 15
+                size_hint: 1, 0.1
+                font_size: '16sp'
+                font_name: 'Nunito'
+                color: root.label_color
+
+            Label:
+                text: root.media_player_artist
+                font_size: 15
+                size_hint: 1, 0.1
+                font_size: '12sp'
+                font_name: 'Nunito'
+                color: root.label_color
+
+            Label:
+                text: root.media_player_album
+                font_size: 15
+                size_hint: 1, 0.1
+                font_size: '12sp'
+                font_name: 'Nunito'
+                color: root.label_color
+            #Padding Label
+            Label:
+                size_hint: 1, 0.1
+
+
+
+            GridLayout:
+                cols: 3
+                size_hint: 1, 0.2
+                # center align
+
+
+                CircleButton:
+                    text: "←"
+                    on_press: root.media_player_previous()
+                    stroke_color: 0, 0, 0, 0
+                    text_color: 1, 1, 1, 1
+                    font_size: '36sp'
+                    custom_font: 'ArialUnicode'
+                    size_hint: 0.5, 1
+
+                CircleButton:
+                    text: '❙❙'
+                    on_press: root.media_player_play_pause()
+                    stroke_color: 0, 0, 0, 0
+                    text_color: 1, 1, 1, 1
+                    font_size: '42sp'
+                    custom_font: 'ArialUnicode'
+                    size_hint: 0.5, 1
+
+                CircleButton:
+                    text: '→'
+                    on_press: root.media_player_next()
+                    stroke_color: 0, 0, 0, 0
+                    text_color: 1, 1, 1, 1
+                    font_size: '36sp'
+                    custom_font: 'ArialUnicode'
+                    size_hint: 0.5, 1
+
+
+            # Knob:
+            #     id: volume_slider
+            #     pos_hint: {"center_x": .5, "center_y": .5}
+            #     value: root.media_player_volume
+            #     min: 0
+            #     max:  1
+            #     step: 0.1
+            #     on_value: root.set_volume(self.value)
+            #     knobimg_source: 'libs/garden/garden.knob/img/knob_metal.png'
+            #     knobimg_bgcolor: 1, 1, 1, 1
+            #     markeroff_color: 0, 0, 0, 0
+            #     marker_color: 0.5, 0.8, 0.5, 1
+            
+            #Padding Label
+            Label:
+                size_hint: 1, 0.1
+
+
+            ProgressBar:
+                value: root.media_player_position
+                max: root.media_player_duration
+                size_hint: 1, 0.1
+
+            Label:
+                text: root.media_player_name
+                font_size: 10
+                size_hint: 1, 0.1
+                font_size: '12sp'
+                font_name: 'Nunito'
+                color: root.label_color
