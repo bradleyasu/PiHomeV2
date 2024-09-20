@@ -4,6 +4,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty, NumericProperty, BooleanProperty, ColorProperty
 from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
+from util.configuration import CONFIG
 
 
 
@@ -35,6 +36,9 @@ class HomeAssistantMediaPlayer(BoxLayout):
         self.entity_id = entity_id
         self.listener = HomeAssistantListener(self.on_state_change)
         HOME_ASSISTANT.add_listener(self.listener)
+        self.HA_URL = CONFIG.get("homeassistant", "host", "http://homeassistant:8123")
+        self.HA_TOKEN = CONFIG.get("homeassistant", "token", "")
+        self.API_URL = f"{self.HA_URL}"
 
     
     def increase_volume(self):
@@ -69,23 +73,26 @@ class HomeAssistantMediaPlayer(BoxLayout):
             return
 
         if self.entity_id == id:
-            print(f"State changed: {id} to {state}")
             try:
+                # check if media_player_thumbnail starts with http
+                self.media_player_thumbnail = data["attributes"]["entity_picture"]
+                if not self.media_player_thumbnail.startswith("http"):
+                    self.media_player_thumbnail = self.API_URL + self.media_player_thumbnail
+
+
                 self.media_player_title = data["attributes"]["media_title"]
-                self.media_player_album = data["attributes"]["media_album_name"]
-                self.media_player_artist = data["attributes"]["media_artist"]
+                # limit title length to 50 characters
+                if len(self.media_player_title) > 24:
+                    self.media_player_title = self.media_player_title[:24] + "..."
                 self.media_player_name = data["attributes"]["friendly_name"]
                 self.media_player_app = data["attributes"]["app_name"]
-                self.media_player_thumbnail = data["attributes"]["entity_picture"]
+                self.media_player_album = data["attributes"]["media_album_name"]
+                self.media_player_artist = data["attributes"]["media_artist"]
                 self.media_player_volume = data["attributes"]["volume_level"]
                 self.media_player_is_muted = data["attributes"]["is_volume_muted"]
                 self.media_player_duration = data["attributes"]["media_duration"]
                 self.media_player_position = data["attributes"]["media_position"]
                 
-                # check if media_player_thumbnail starts with http
-                if not self.media_player_thumbnail.startswith("http"):
-                    self.media_player_thumbnail = ""
-
             except KeyError:
                 pass
 
