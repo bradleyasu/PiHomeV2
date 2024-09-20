@@ -6,6 +6,7 @@ from kivy.properties import StringProperty, NumericProperty, BooleanProperty, Co
 from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
 
 
+
 Builder.load_file("./screens/HomeAssistantScreen/HomeAssistantMediaPlayer.kv")
 
 class HomeAssistantMediaPlayer(BoxLayout):
@@ -80,6 +81,11 @@ class HomeAssistantMediaPlayer(BoxLayout):
                 self.media_player_is_muted = data["attributes"]["is_volume_muted"]
                 self.media_player_duration = data["attributes"]["media_duration"]
                 self.media_player_position = data["attributes"]["media_position"]
+                
+                # check if media_player_thumbnail starts with http
+                if not self.media_player_thumbnail.startswith("http"):
+                    self.media_player_thumbnail = ""
+
             except KeyError:
                 pass
 

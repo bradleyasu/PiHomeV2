@@ -10,10 +10,10 @@ This might become a Kivy widget when experimentation will be done.
 
 
 from kivy.clock import Clock
-from kivy.app import App
-from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
 from kivy.graphics import RenderContext
+from kivy.app import App
+from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import StringProperty
 
 from interface.pihomescreen import PiHomeScreen
@@ -24,23 +24,82 @@ from kivy.lang import Builder
 plasma_shader = '''
 $HEADER$
 
-uniform vec2 resolution;
-uniform float time;
+// Kivy-compatible shader (GLSL ES 2.0)
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+#define S(a,b,t) smoothstep(a,b,t)
+
+uniform float time;  // equivalent to iTime
+uniform vec2 resolution;  // equivalent to iResolution
+
+mat2 Rot(float a)
+{
+    float s = sin(a);
+    float c = cos(a);
+    return mat2(c, -s, s, c);
+}
+
+vec2 hash(vec2 p)
+{
+    p = vec2(dot(p, vec2(2127.1, 81.17)), dot(p, vec2(1269.5, 283.37)));
+    return fract(sin(p) * 43758.5453);
+}
+
+float noise(in vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    float n = mix(
+        mix(dot(-1.0 + 2.0 * hash(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
+            dot(-1.0 + 2.0 * hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+        mix(dot(-1.0 + 2.0 * hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+            dot(-1.0 + 2.0 * hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+    return 0.5 + 0.5 * n;
+}
 
 void main(void)
 {
-   vec4 frag_coord = frag_modelview_mat * gl_FragCoord;
-   float x = frag_coord.x;
-   float y = frag_coord.y;
-   float mov0 = x+y+cos(sin(time)*2.)*100.+sin(x/100.)*1000.;
-   float mov1 = y / resolution.y / 0.2 + time;
-   float mov2 = x / resolution.x / 0.2;
-   float c1 = abs(sin(mov1+time)/2.+mov2/2.-mov1-mov2+time);
-   float c2 = abs(sin(c1+sin(mov0/1000.+time)
-              +sin(y/40.+time)+sin((x+y)/100.)*3.));
-   float c3 = abs(sin(c2+cos(mov1+mov2+c2)+cos(mov2)+sin(x/1000.)));
-   gl_FragColor = vec4( c1,c2,c3,1.0);
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    float ratio = resolution.x / resolution.y;
+
+    vec2 tuv = uv;
+    tuv -= 0.5;
+
+    // rotate with Noise
+    float degree = noise(vec2(time * 0.1, tuv.x * tuv.y));
+
+    tuv.y *= 1.0 / ratio;
+    tuv *= Rot(radians((degree - 0.5) * 720.0 + 180.0));
+    tuv.y *= ratio;
+
+    // Wave warp with sin
+    float frequency = 5.0;
+    float amplitude = 30.0;
+    float speed = time * 2.0;
+    tuv.x += sin(tuv.y * frequency + speed) / amplitude;
+    tuv.y += sin(tuv.x * frequency * 1.5 + speed) / (amplitude * 0.5);
+
+    // draw the image
+    vec3 colorYellow = vec3(0.957, 0.804, 0.623);
+    vec3 colorDeepBlue = vec3(0.192, 0.384, 0.933);
+    vec3 layer1 = mix(colorYellow, colorDeepBlue, S(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x));
+
+    vec3 colorRed = vec3(0.910, 0.510, 0.8);
+    vec3 colorBlue = vec3(0.350, 0.71, 0.953);
+    vec3 layer2 = mix(colorRed, colorBlue, S(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x));
+
+    vec3 finalComp = mix(layer1, layer2, S(0.5, -0.3, tuv.y));
+
+    vec3 col = finalComp;
+
+    gl_FragColor = vec4(col, 1.0);
 }
+
 '''
 
 

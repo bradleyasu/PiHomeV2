@@ -1,17 +1,26 @@
 #:kivy 2.0.0
 #:import Knob kivy.garden.knob.Knob
 <HomeAssistantScreen>:
+    # canvas.before:
+        # Color:
+            # rgba: 0, 0, 0, 1
+        # Rectangle:
+            # size: self.size
+            # pos: self.pos
+
+    # BoxLayout:
+    #     orientation: 'vertical'
+    #     size: root.size
+    #     pos: root.pos
+    #     size_hint: 1, 1
+    #     id: home_assistant_screen_root
+    #     padding: dp(40)
+
+<ShaderWidget>:
     canvas.before:
         Color:
-            rgba: 0, 0, 0, 1
+            rgb: 1, 0, 0
         Rectangle:
-            size: self.size
             pos: self.pos
-
-    BoxLayout:
-        orientation: 'vertical'
-        size: root.size
-        pos: root.pos
-        size_hint: 1, 1
-        id: home_assistant_screen_root
-        padding: dp(40)
+            size: self.size
+    

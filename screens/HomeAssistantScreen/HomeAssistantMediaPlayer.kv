@@ -5,7 +5,7 @@
     BoxLayout:
         canvas:
             Color:
-                rgba: 0.1, 0.1, 0.1, 1
+                rgba: 0.1, 0.1, 0.1, 0
             RoundedRectangle:
                 size: self.size
                 pos: self.pos
@@ -20,7 +20,7 @@
             # size_hint: 0.5, 1
 
         NetworkImage:
-            url: root.media_player_thumbnail
+            url: root.media_player_thumbnail if root.media_player_thumbnail else "screens/HomeAssistantScreen/default_album_art.png"
             size_hint: 1, 1
         
         BoxLayout:
@@ -113,10 +113,10 @@
                 size_hint: 1, 0.1
 
 
-            ProgressBar:
-                value: root.media_player_position
-                max: root.media_player_duration
-                size_hint: 1, 0.1
+            # ProgressBar:
+            #     value: root.media_player_position
+            #     max: root.media_player_duration
+            #     size_hint: 1, 0.1
 
             Label:
                 text: root.media_player_name
