@@ -19,9 +19,12 @@
             # source: root.media_player_thumbnail
             # size_hint: 0.5, 1
 
-        NetworkImage:
-            url: root.media_player_thumbnail if root.media_player_thumbnail else "screens/HomeAssistantScreen/default_album_art.png"
-            size_hint: 1, 1
+        BoxLayout:
+            orientation: 'vertical'
+            padding: 20
+            NetworkImage:
+                url: root.media_player_thumbnail if root.media_player_thumbnail else "screens/HomeAssistantScreen/default_album_art.png"
+                size_hint: 1, 1
         
         BoxLayout:
             orientation: 'vertical'
@@ -34,9 +37,9 @@
 
             Label:
                 text: root.media_player_title
-                font_size: 15
+                font_size: 42
                 size_hint: 1, 0.1
-                font_size: '16sp'
+                font_size: '28sp'
                 font_name: 'Nunito'
                 color: root.label_color
 
@@ -44,7 +47,7 @@
                 text: root.media_player_artist
                 font_size: 15
                 size_hint: 1, 0.1
-                font_size: '12sp'
+                font_size: '16sp'
                 font_name: 'Nunito'
                 color: root.label_color
 

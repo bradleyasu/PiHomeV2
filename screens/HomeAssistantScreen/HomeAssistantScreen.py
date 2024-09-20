@@ -125,18 +125,14 @@ class HomeAssistantScreen(PiHomeScreen):
         return super().on_pre_enter(*args)
 
 
-    def on_rotary_up(self):
+    def on_rotary_down(self):
         self.media_player_widget.media_player_play_pause()
 
     def on_rotary_turn(self, direction, button_pressed):
-        if self.drawer.is_open:
-            if direction == -1:
-                self.media_player_widget.decrease_volume()
-            elif direction == 1:
-                self.media_player_widget.increase_volume()
-        else:
-            return super().on_rotary_turn(direction, button_pressed)
-
+        if direction == -1:
+            self.media_player_widget.decrease_volume()
+        elif direction == 1:
+            self.media_player_widget.increase_volume()
 
 
     def on_state_change(self, id, state, data):
