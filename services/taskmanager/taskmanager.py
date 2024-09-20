@@ -189,16 +189,20 @@ class TaskManager():
                 start_time_str = task.start_time.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 start_time_str = None
-            json_tasks.append({
-                "id": task.id,
-                "name": task.name,
-                "description": task.description,
-                "start_time": start_time_str,
-                "state_id": task.state_id if hasattr(task, "state_id") else None,
-                "trigger_state": task.trigger_state if hasattr(task, "trigger_state") else None,
-                "status": task.status.name,
-                "priority": task.priority.name
-            })
+            try:
+                json_tasks.append({
+                    "id": task.id,
+                    "name": task.name,
+                    "description": task.description,
+                    "start_time": start_time_str,
+                    "state_id": task.state_id if hasattr(task, "state_id") else None,
+                    "trigger_state": task.trigger_state if hasattr(task, "trigger_state") else None,
+                    "status": task.status.name,
+                    "priority": task.priority.name
+                })
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Failed to convert task to json: {e}")
+                PIHOME_LOGGER.error(f"Task: {task.name}: {task.description} with status {task.status} and priority {task.priority}")
         return json_tasks
 
 class Task():
