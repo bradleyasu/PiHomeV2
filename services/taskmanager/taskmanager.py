@@ -268,7 +268,7 @@ class ScheduledTask(Task):
         if self.repeat_days > 0:
             # schedule the next task
             next_time = self.start_time + timedelta(days=self.repeat_days)
-            TASK_MANAGER.add_task(Task(self.name, self.description, next_time, TaskStatus.PENDING, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel))
+            TASK_MANAGER.add_task(ScheduledTask(self.name, self.description, next_time, TaskStatus.PENDING, self.priority, self.is_passive, self.repeat_days, self.on_run, self.on_confirm, self.on_cancel))
             PIHOME_LOGGER.info(f"Scheduled next task: {self.name} for {next_time}")
 
 
