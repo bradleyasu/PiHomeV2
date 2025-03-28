@@ -35,13 +35,18 @@ class HomeAssistant:
             await self.websocket.close()
 
     def connect(self):
-        self.configure_connection()
+        try:
+            self.configure_connection()
 
-        # this thread will monitor for event changes in home assistant
-        self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
-        thread = Thread(target=self._start_loop)
-        thread.start()
-        self.current_states = self.get_all_states()
+            # this thread will monitor for event changes in home assistant
+            self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
+            thread = Thread(target=self._start_loop)
+            thread.start()
+            self.current_states = self.get_all_states()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error connecting to Home Assistant: {e}")
+            self.ha_is_available = False
+            return False
 
     def _start_loop(self):
         loop = asyncio.new_event_loop()
