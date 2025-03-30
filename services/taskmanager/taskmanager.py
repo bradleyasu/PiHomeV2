@@ -254,14 +254,17 @@ class ScheduledTask(Task):
         PIHOME_LOGGER.info(f"Running Task: {self.name}")
         self.schedule_next()
         try:
+            # if the task is passive, mark it as completed before running 
+            # If the tasks restarts the pihome (etc), the task will be marked as completed
+            # and the task will not be run again
+            if self.is_passive:
+                self.status = TaskStatus.COMPLETED
+
             if self.on_run is not None:
                 PihomeEventFactory.create_event_from_dict(self.on_run).execute()
         except Exception as e:
             PIHOME_LOGGER.error(f"Failed to run task: {self.name} - {e}")
 
-        # if the task is passive, mark it as completed after running
-        if self.is_passive:
-            self.status = TaskStatus.COMPLETED
         # non passive tasks are marked as completed or canceled by the user in the TaskScreen
     
     def schedule_next(self):
