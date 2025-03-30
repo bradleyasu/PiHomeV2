@@ -31,7 +31,7 @@ class PiHoleScreen(PiHomeScreen):
     background_color_secondary = ColorProperty(theme.get_color(theme.BACKGROUND_SECONDARY, 0.8))
 
     HOST = "http://pi.hole"
-    ROUTE = "/admin/api.php"
+    ROUTE = "/api.php"
     PARAMS = "?summary&auth"
 
 
