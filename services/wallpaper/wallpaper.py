@@ -100,13 +100,20 @@ class Wallpaper:
             wh_url = "https://wallhaven.cc/api/v1/search?q={}&sorting=random".format(search)
             self.poller_key = POLLER.register_api(wh_url, 60 * 5, lambda json: self.parse_wallhaven(json))
         elif repo == "Custom":
-            self.current = CONFIG.get("wallpaper", "custom_url", self.default)
-            self.source = CONFIG.get("wallpaper", "custom_url", self.default)
-            if self.current == "":
-                self.current = self.default
+            custom_url = CONFIG.get("wallpaper", "custom_url", self.default)
+            self.poller_key = POLLER.register_api(custom_url, 60 * 5, lambda json: self.parse_custom(json));
         else:
             self.poller_key = POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
+
+    def parse_custom(self, json):
+        if self.paused:
+            return
+        self.cache = json
+        source = json.get("img", self.default)
+        self.current, self.current_color = self.resize_image(source, 1024, 1024)
+        self.source = source
+        get_app()._reload_background()
 
     def parse_reddit(self, json):
         if self.paused:

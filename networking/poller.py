@@ -44,16 +44,28 @@ class Poller:
             PIHOME_LOGGER.warn("{} does not exist in the poller.  No changes were made".format(key))
 
     def api_call(self, url, on_resp):
+        PIHOME_LOGGER.info("Polling API: {}".format(url))
         url = url.replace(" ", "%20")
         # info("[ POLL ] Initializing API Call: {}".format(url))
+
+        def result_handler(req, result):
+            PIHOME_LOGGER.warn("Request Status: {}".format(req.resp_status))
+            if req.error:
+                PIHOME_LOGGER.error("An Error Occurred while polling api. Request Handler Error:  {}".format(req.error))
+            else:
+                PIHOME_LOGGER.info("Polling API: {} returned {}".format(url, result))
+                on_resp(result)
+
         req = UrlRequest(
             url=url, 
-            on_success = lambda request, 
-            result: on_resp(result),
+            timeout=20,
+            on_finish=lambda r: PIHOME_LOGGER.info("Finished polling api: {} and request status: {}".format(url, r.resp_status)),
+            on_success = lambda request, result: result_handler(request, result),
             # set the user agent to firefox to avoid 403 errors
             req_headers={'User-Agent': 'Mozilla/5.0'},
             on_error=lambda r, d: PIHOME_LOGGER.error("An Error Occurred while polling api. {}".format(d)),
-            on_failure=lambda r, d: PIHOME_LOGGER.error("A failure occurred while polling api. {}".format(d))
+            # on_progress=lambda r, a, b: PIHOME_LOGGER.info(f"Progress for {url}: {a}/{b}"),
+            on_failure=lambda r, d: PIHOME_LOGGER.error("A failure occurred while polling api. {}".format(d)),
         )
 
         # Log any errors from the request

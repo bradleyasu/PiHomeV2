@@ -1,5 +1,6 @@
 from email.mime import audio
 import subprocess
+from components.Image.networkimage import NetworkImage
 from components.Slider.slidecontrol import SlideControl
 
 from composites.Reddit.redditwidget import RedditWidget
@@ -22,6 +23,7 @@ from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
 from services.audio.audioplayernew import AUDIO_PLAYER
 from services.audio.sfx import SFX
+from services.qr.qr import QR
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from services.weather.weather import WEATHER
 from system.brightness import get_brightness, set_brightness
@@ -55,6 +57,8 @@ class HomeScreen(PiHomeScreen):
     brightness_slider = None
     banButton = None
 
+    disable_rotary_press_animation = True
+
 
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
@@ -64,6 +68,7 @@ class HomeScreen(PiHomeScreen):
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
+
 
     def on_enter(self, *args):
         if self.is_first_run is True:
@@ -132,8 +137,17 @@ class HomeScreen(PiHomeScreen):
             self.banButton.pos = (dp(get_app().width - 270), dp(10))
             self.banButton.bind(on_release=lambda x: WALLPAPER_SERVICE.ban())
             self.add_widget(self.banButton)
+
+            qr = QR().from_url(WALLPAPER_SERVICE.source)
+            self.qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(10), dp(10)))
+            # center the qr code
+            self.qr_img.pos = (dp(get_app().width - 320), dp(100))
+            self.add_widget(self.qr_img)
         else:
             self.remove_widget(self.brightness_slider)
             self.brightness_slider = None
             self.remove_widget(self.banButton)
             self.banButton = None
+
+            self.remove_widget(self.qr_img)
+            self.qr_img = None
