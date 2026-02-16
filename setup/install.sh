@@ -134,6 +134,39 @@ sudo sh -c 'echo "deb https://non-gnu.uvt.nl/debian $(lsb_release -sc) uvt" >> /
 sudo apt update
 sudo apt install -t "o=UvT" mpv
 
+
+# Installing nqptp, a shairport dependency 
+
+sudo git clone https://github.com/mikebrady/nqptp.git
+cd nqptp
+sudo autoreconf -fi # about a minute on a Raspberry Pi.
+sudo ./configure --with-systemd-startup
+sudo make
+sudo make install
+cd ..
+
+sudo systemctl enable nqptp
+sudo systemctl start nqptp
+
+# Install AirPlay services 'shairport'
+sudo apt install --no-install-recommends build-essential git autoconf automake libtool \
+   libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev \
+   libplist-dev libsodium-dev uuid-dev libgcrypt-dev xxd libplist-utils \
+   libavutil-dev libavcodec-dev libavformat-dev
+
+# Install shairport sync
+sudo git clone https://github.com/mikebrady/shairport-sync.git
+cd shairport-sync
+sudo autoreconf -fi # about 1.5 minutes on a Raspberry Pi B
+sudo ./configure --sysconfdir=/etc --with-alsa --with-soxr --with-avahi --with-ssl=openssl --with-systemd-startup --with-airplay-2
+sudo  make 
+sudo make install
+sh user-service-install.sh
+cd ..
+
+
+# make install
+
 echo "Installing Kivy..."
 python3 -m pip install kivy[base] >> $LOG
 
