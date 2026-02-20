@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 # Install Script: sudo curl -sSL https://pihome.io/install | bash
@@ -108,10 +108,10 @@ sudo apt-get -y install mpv libmpv1 >> $LOG
 # sudo apt-get -y install vlc >> $LOG
 
 # MQTT Services
-python3 -m pip install paho-mqtt >> $LOG
+python3 -m pip install --break-system-packages paho-mqtt >> $LOG
 
 # QR Code Services
-python3 -m pip install qrcode[pil] >> $LOG
+python3 -m pip install --break-system-packages qrcode[pil] >> $LOG
 
 # VLC 
 # python3 -m pip install python-vlc >> $LOG
@@ -120,10 +120,10 @@ python3 -m pip install qrcode[pil] >> $LOG
 # python3 -m pip install playsound >> $LOG
 
 # python3 -m pip install mpyg321 >> $LOG
-python3 -m pip install mplayer.py >> $LOG
-python3 -m pip install python-mpv >> $LOG
+python3 -m pip install --break-system-packages mplayer.py >> $LOG
+python3 -m pip install --break-system-packages python-mpv >> $LOG
 
-python3 -m pip install websockets >> $LOG
+python3 -m pip install --break-system-packages websockets >> $LOG
 
 # Update MPV
 
@@ -168,10 +168,10 @@ cd ..
 # make install
 
 echo "Installing Kivy..."
-python3 -m pip install kivy[base] >> $LOG
+python3 -m pip install --break-system-packages kivy[base] >> $LOG
 
 echo "Installing ffpyplayer as audio provider..."
-python3 -m pip install ffpyplayer >> $LOG
+python3 -m pip install --break-system-packages ffpyplayer >> $LOG
 
 # required for numpy
 sudo apt-get -y install libopenblas-dev >> $LOG
@@ -180,13 +180,13 @@ sudo apt-get -y install libopenblas-dev >> $LOG
 sudo apt-get -y install libportaudio2 >> $LOG
 sudo apt-get -y install python3-cffi >> $LOG
 
-python3 -m pip install ffmpeg-python==0.2.0 >> $LOG
-python3 -m pip install numpy==1.26.4 >> $LOG
-python3 -m pip install sounddevice==0.4.6 >> $LOG
-python3 -m pip install Pillow==10.2.0 >> $LOG
+python3 -m pip install --break-system-packages ffmpeg-python==0.2.0 >> $LOG
+python3 -m pip install --break-system-packages numpy==1.26.4 >> $LOG
+python3 -m pip install --break-system-packages sounddevice==0.4.6 >> $LOG
+python3 -m pip install --break-system-packages Pillow==10.2.0 >> $LOG
 
 # ID3 Tag parsing
-python3 -m pip install eyed3 >> $LOG
+python3 -m pip install --break-system-packages eyed3 >> $LOG
 # TODO install yt-dlp from cdn
 
 echo "Installing Flowers..."
