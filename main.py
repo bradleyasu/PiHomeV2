@@ -127,8 +127,10 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
-        self.layout.add_widget(self.background_color)
-        self.layout.add_widget(self.background)
+        # DEBUG: Temporarily disable backgrounds to test if they're blocking content
+        # self.layout.add_widget(self.background_color)
+        # self.layout.add_widget(self.background)
+        PIHOME_LOGGER.warning("DEBUG: Backgrounds disabled for testing")
         # Add primary screen manager - force it to match layout size
         PIHOME_SCREEN_MANAGER.size = (self.width, self.height)
         PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
