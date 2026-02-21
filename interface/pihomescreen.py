@@ -4,6 +4,7 @@ from services.audio.audioplayernew import AUDIO_PLAYER
 from system.brightness import get_brightness, set_brightness
 from util.const import GESTURE_DATABASE
 from util.helpers import get_app, simplegesture
+from util.phlog import PIHOME_LOGGER
 
 class PiHomeScreen(Screen):
 
@@ -33,6 +34,7 @@ class PiHomeScreen(Screen):
 
     def on_enter(self, *args):
         self.is_open = True
+        PIHOME_LOGGER.info(f"PiHomeScreen.on_enter() - Screen: {self.name}, Size: {self.size}, Pos: {self.pos}")
         return super().on_enter(*args)
 
     def show(self):

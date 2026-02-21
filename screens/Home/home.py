@@ -62,20 +62,28 @@ class HomeScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
+        PIHOME_LOGGER.info("HomeScreen.__init__() called")
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         # Get app size safely - it might not be set yet during initialization
         try:
             self.size = App.get_running_app().get_size()
-        except (AttributeError, TypeError):
+            PIHOME_LOGGER.info(f"HomeScreen size set to: {self.size}")
+        except (AttributeError, TypeError) as e:
             # If app not ready, use default size - will be updated when screen enters
             self.size = (800, 480)
+            PIHOME_LOGGER.warning(f"App not ready, using default size: {e}")
         # self.icon = CDN_ASSET.format("default_home_icon.png")
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
+        PIHOME_LOGGER.info("HomeScreen.__init__() complete")
 
 
     def on_enter(self, *args):
+        PIHOME_LOGGER.info("HomeScreen.on_enter() called")
+        PIHOME_LOGGER.info(f"HomeScreen size: {self.size}, pos: {self.pos}")
+        PIHOME_LOGGER.info(f"HomeScreen opacity: {self.opacity}")
+        
         if self.is_first_run is True:
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False

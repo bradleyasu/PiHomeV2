@@ -59,6 +59,8 @@ class PiHomeScreenManager(ScreenManager):
             PIHOME_LOGGER.info("Screen is locked, cannot change screens.")
             return
 
+        PIHOME_LOGGER.info(f"goto() called for screen: {screen_name}")
+        
         # if self.transition.direction == "up":
         #     self.transition.direction = "down"
         # else:
@@ -75,14 +77,18 @@ class PiHomeScreenManager(ScreenManager):
             # Prevent the screen from changing until pin is verified
             self.current_screen.locked = True
         else:
+            PIHOME_LOGGER.info(f"Setting current screen to: {screen_name}")
             self.current = screen_name
+            PIHOME_LOGGER.info(f"Current screen is now: {self.current}")
 
         ### TODO Add pin check here - replace goto_screen in main.py
         # self.current = screen_name
 
     def on_parent(self, base_widget, parent):
         # Add the app menu to the parent of the screen manager
+        PIHOME_LOGGER.info("on_parent called, loading screens...")
         self.load_screens()
+        PIHOME_LOGGER.info(f"Screens loaded: {len(self.loaded_screens)}")
 
         # Create an App Menu for the screens
         from composites.AppMenu.appmenu import AppMenu
@@ -101,7 +107,10 @@ class PiHomeScreenManager(ScreenManager):
         load the screen into the screen manager.
         """
         if self.screens_loaded:
+            PIHOME_LOGGER.info("Screens already loaded, skipping...")
             return
+        
+        PIHOME_LOGGER.info("Loading screens from ./screens/ directory...")
         screen_dir = "./screens/"
         for root, dirs, files in os.walk(screen_dir):
             for file in files:
@@ -142,9 +151,17 @@ class PiHomeScreenManager(ScreenManager):
         # sort the screens by their index
         self.loaded_screens = {k: v for k, v in sorted(self.loaded_screens.items(), key=lambda item: item[1].app_index)}
 
-
+        PIHOME_LOGGER.info(f"Total screens loaded: {len(self.loaded_screens)}")
+        PIHOME_LOGGER.info(f"Screen order: {list(self.loaded_screens.keys())}")
+        
         # goto the first screen in the loaded screens list
-        self.goto(list(self.loaded_screens.keys())[0])
+        if len(self.loaded_screens) > 0:
+            first_screen = list(self.loaded_screens.keys())[0]
+            PIHOME_LOGGER.info(f"Navigating to first screen: {first_screen}")
+            self.goto(first_screen)
+        else:
+            PIHOME_LOGGER.error("No screens loaded!")
+        
         self.screens_loaded = True
 
         

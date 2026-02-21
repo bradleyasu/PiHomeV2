@@ -131,6 +131,15 @@ class PiHome(App):
         self.layout.add_widget(self.background)
         # Add primary screen manager
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
+        
+        # Force screen loading if on_parent didn't trigger it
+        if not PIHOME_SCREEN_MANAGER.screens_loaded:
+            PIHOME_LOGGER.warning("Screens not loaded in on_parent, loading manually...")
+            PIHOME_SCREEN_MANAGER.load_screens()
+        
+        PIHOME_LOGGER.info(f"Screen manager has {len(PIHOME_SCREEN_MANAGER.loaded_screens)} screens loaded")
+        PIHOME_LOGGER.info(f"Current screen: {PIHOME_SCREEN_MANAGER.current}")
+        
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
 
