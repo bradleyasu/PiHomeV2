@@ -31,7 +31,6 @@ import kivy
 import platform
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
-from components.Image.networkimage import NetworkImage
 from kivy.graphics import Line
 
 from components.Toast.toast import Toast
@@ -68,13 +67,8 @@ class PiHome(App):
 
         self.menu_button = Hamburger()
 
-        # Background rectangles will be created in build() using canvas instructions
-        self.bg_color_rect = None
-        self.bg_rect = None
-
         # Flag to indicate the application is running
         self.is_running = True
-        # Create the Screenmanager
 
 
     def setup(self):
@@ -110,12 +104,22 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
-        # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
-        # TODO: Re-enable backgrounds once we figure out why they block content on Raspberry Pi
-        
-        # Add primary screen manager - force it to match layout size
+        # Add primary screen manager with integrated background
+        # Background is rendered in ScreenManager's canvas.before to ensure proper z-ordering
         PIHOME_SCREEN_MANAGER.size = (self.width, self.height)
         PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
+        
+        # Load default background initially
+        try:
+            from kivy.core.image import Image as CoreImage
+            default_bg = "./assets/images/default_background.jpg"
+            if os.path.exists(default_bg):
+                texture = CoreImage(default_bg, keep_data=True).texture
+                PIHOME_SCREEN_MANAGER.set_background_texture(texture)
+                PIHOME_LOGGER.info("Default background loaded")
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to load default background: {e}")
+        
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         
         # Force screen loading if on_parent didn't trigger it
@@ -276,33 +280,46 @@ class PiHome(App):
         # TODO validate json
         # important
         self.web_conf = json
-    
-    def _update_background_size(self, instance, size):
-        """Update background rectangle sizes when layout resizes"""
-        if self.bg_color_rect:
-            self.bg_color_rect.size = size
-        if self.bg_rect:
-            self.bg_rect.size = size
-    
-    def _update_background_pos(self, instance, pos):
-        """Update background rectangle positions when layout moves"""
-        if self.bg_color_rect:
-            self.bg_color_rect.pos = pos
-        if self.bg_rect:
-            self.bg_rect.pos = pos
 
     def _run(self):
-        # Update background textures from wallpaper service
-        # Temporarily disabled while we debug Raspberry Pi rendering issues
-        pass
+        # Update background texture from wallpaper service
+        from kivy.core.image import Image as CoreImage
+        from kivy.loader import Loader
+        
+        try:
+            wallpaper_path = WALLPAPER_SERVICE.current
+            if wallpaper_path and wallpaper_path != "":
+                # Use Kivy's async loader for better performance with URLs
+                if wallpaper_path.startswith('http'):
+                    proxyimg = Loader.image(wallpaper_path)
+                    if proxyimg.loaded:
+                        PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture)
+                    else:
+                        # Bind to load event for async loading
+                        def on_img_load(instance):
+                            PIHOME_SCREEN_MANAGER.set_background_texture(instance.texture)
+                        proxyimg.bind(on_load=on_img_load)
+                else:
+                    # For local files, load directly
+                    if os.path.exists(wallpaper_path):
+                        texture = CoreImage(wallpaper_path, keep_data=True).texture
+                        PIHOME_SCREEN_MANAGER.set_background_texture(texture)
+        except Exception as e:
+            PIHOME_LOGGER.debug(f"Background update: {e}")
 
     
     def _reload_background(self):
         """
         Updates the background image, clearing the cache
         """
-        # Temporarily disabled while we debug Raspberry Pi rendering issues
-        pass
+        from kivy.loader import Loader
+        current_path = WALLPAPER_SERVICE.current
+        if current_path:
+            # Clear from cache if it's a URL
+            if current_path.startswith('http'):
+                Loader.image(current_path).reload()
+            # Force reload by calling _run
+            self._run()
 
     def on_start(self):
         """

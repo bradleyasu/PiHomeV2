@@ -22,6 +22,28 @@ class PiHomeScreenManager(ScreenManager):
             self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
             self.rotary_encoder.update_callback = lambda direction, pressed: self._rotary_handler(direction, pressed)
             self.rotary_encoder.button_on_down_callback = lambda: self._rotary_on_down()
+        
+        # Add background to ScreenManager's canvas.before so it renders behind all screens
+        with self.canvas.before:
+            from kivy.graphics import Rectangle, Color
+            Color(1, 1, 1, 1)
+            self.bg_rect = Rectangle(pos=self.pos, size=self.size)
+            
+        # Bind to size and position changes
+        self.bind(size=self._update_bg_size, pos=self._update_bg_pos)
+    
+    def _update_bg_size(self, instance, size):
+        """Update background size when ScreenManager resizes"""
+        self.bg_rect.size = size
+    
+    def _update_bg_pos(self, instance, pos):
+        """Update background position when ScreenManager moves"""
+        self.bg_rect.pos = pos
+    
+    def set_background_texture(self, texture):
+        """Set the background texture"""
+        if texture:
+            self.bg_rect.texture = texture
 
 
     def _rotary_handler(self, direction, pressed):
