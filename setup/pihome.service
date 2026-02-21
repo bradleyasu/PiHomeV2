@@ -1,0 +1,21 @@
+[Unit]
+Description=PiHome Smart Home Interface
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/usr/local/PiHome
+Environment="KIVY_AUDIO=ffpyplayer"
+Environment="KIVY_VIDEO=video_ffpyplayer"
+Environment="DISPLAY=:0"
+Environment="HOME=/root"
+ExecStart=/usr/bin/python3 /usr/local/PiHome/main.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

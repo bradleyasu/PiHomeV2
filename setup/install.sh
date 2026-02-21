@@ -203,10 +203,38 @@ clear
 
 echo $PINK
 echo ""
-echo "Preparing to launch PiHome..."
+echo "Setting up PiHome systemd service..."
 echo ""
 echo $ENDCOLOR
+
+# Make scripts executable
 cd $PIHOME
 chmod 755 ./launch.sh
 chmod 755 ./update.sh
-./launch.sh
+chmod 755 ./setup/install-service.sh
+
+# Install and enable the systemd service
+echo "Installing PiHome as a system service..."
+sudo cp $PIHOME/setup/pihome.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable pihome.service
+
+echo $PINK
+echo ""
+echo "╔════════════════════════════════════════════╗"
+echo "║  PiHome Installation Complete!             ║"
+echo "╚════════════════════════════════════════════╝"
+echo ""
+echo $ENDCOLOR
+echo "PiHome has been configured to start automatically on boot."
+echo ""
+echo "Commands:"
+echo "  sudo systemctl start pihome     - Start PiHome now"
+echo "  sudo systemctl status pihome    - Check service status"
+echo "  sudo systemctl stop pihome      - Stop the service"
+echo "  sudo systemctl restart pihome   - Restart the service"
+echo "  sudo journalctl -u pihome -f    - View live logs"
+echo ""
+echo "To start PiHome now, run: sudo systemctl start pihome"
+echo "Or reboot the system to start automatically."
+echo ""
