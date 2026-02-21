@@ -80,6 +80,22 @@ class PiHomeScreenManager(ScreenManager):
             PIHOME_LOGGER.info(f"Setting current screen to: {screen_name}")
             self.current = screen_name
             PIHOME_LOGGER.info(f"Current screen is now: {self.current}")
+            
+            # Debug: Check screen properties after navigation
+            current_screen_obj = self.loaded_screens.get(screen_name)
+            if current_screen_obj:
+                PIHOME_LOGGER.info(f"Screen {screen_name} properties:")
+                PIHOME_LOGGER.info(f"  - opacity: {current_screen_obj.opacity}")
+                PIHOME_LOGGER.info(f"  - size: {current_screen_obj.size}")
+                PIHOME_LOGGER.info(f"  - pos: {current_screen_obj.pos}")
+                PIHOME_LOGGER.info(f"  - parent: {current_screen_obj.parent}")
+                PIHOME_LOGGER.info(f"ScreenManager properties:")
+                PIHOME_LOGGER.info(f"  - SM opacity: {self.opacity}")
+                PIHOME_LOGGER.info(f"  - SM size: {self.size}")
+                PIHOME_LOGGER.info(f"  - SM pos: {self.pos}")
+                PIHOME_LOGGER.info(f"  - SM canvas: {self.canvas}")
+            else:
+                PIHOME_LOGGER.error(f"Screen {screen_name} not found in loaded_screens!")
 
         ### TODO Add pin check here - replace goto_screen in main.py
         # self.current = screen_name
