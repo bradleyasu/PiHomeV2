@@ -68,26 +68,9 @@ class PiHome(App):
 
         self.menu_button = Hamburger()
 
-
-
-        self.background_color = NetworkImage(
-            "", 
-            size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), 
-            enable_stretch=True, 
-            loader="./assets/images/default_background.jpg",  
-            error="./assets/images/default_background.jpg"
-        )
-
-        self.background = NetworkImage(
-            "", 
-            size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), 
-            enable_stretch=True, 
-            loader="./assets/images/default_background.jpg",  
-            error="./assets/images/default_background.jpg")
-
-
+        # Background rectangles will be created in build() using canvas instructions
+        self.bg_color_rect = None
+        self.bg_rect = None
 
         # Flag to indicate the application is running
         self.is_running = True
@@ -126,11 +109,31 @@ class PiHome(App):
         self.menu_button.pos = (dp(10), dp(400))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
+        
         # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
-        # DEBUG: Temporarily disable backgrounds to test if they're blocking content
-        # self.layout.add_widget(self.background_color)
-        # self.layout.add_widget(self.background)
-        PIHOME_LOGGER.warning("DEBUG: Backgrounds disabled for testing")
+        # Add backgrounds using canvas.before to ensure they render behind everything
+        with self.layout.canvas.before:
+            from kivy.graphics import Rectangle, Color
+            from kivy.core.image import Image as CoreImage
+            # Background color layer
+            Color(1, 1, 1, 1)
+            self.bg_color_rect = Rectangle(pos=self.layout.pos, size=self.layout.size)
+            # Background image layer  
+            self.bg_rect = Rectangle(pos=self.layout.pos, size=self.layout.size)
+            
+            # Load default background initially
+            try:
+                default_bg = "./assets/images/default_background.jpg"
+                if os.path.exists(default_bg):
+                    texture = CoreImage(default_bg, keep_data=True).texture
+                    if texture:
+                        self.bg_rect.texture = texture
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Failed to load default background: {e}")
+            
+        # Bind layout size changes to update background rectangles
+        self.layout.bind(size=self._update_background_size, pos=self._update_background_pos)
+        
         # Add primary screen manager - force it to match layout size
         PIHOME_SCREEN_MANAGER.size = (self.width, self.height)
         PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
@@ -294,21 +297,51 @@ class PiHome(App):
         # TODO validate json
         # important
         self.web_conf = json
+    
+    def _update_background_size(self, instance, size):
+        """Update background rectangle sizes when layout resizes"""
+        self.bg_color_rect.size = size
+        self.bg_rect.size = size
+    
+    def _update_background_pos(self, instance, pos):
+        """Update background rectangle positions when layout moves"""
+        self.bg_color_rect.pos = pos
+        self.bg_rect.pos = pos
 
     def _run(self):
-        # Update background url from wallpaper service
-        # Other regular updates
-        self.background.url = WALLPAPER_SERVICE.current
-        self.background_color.url = WALLPAPER_SERVICE.current_color
-        self.background.set_stretch(WALLPAPER_SERVICE.allow_stretch)
+        # Update background textures from wallpaper service
+        from kivy.core.image import Image as CoreImage
+        from kivy.loader import Loader
+        
+        try:
+            wallpaper_path = WALLPAPER_SERVICE.current
+            if wallpaper_path and wallpaper_path != "":
+                # Use Kivy's async loader for better performance
+                if wallpaper_path.startswith('http'):
+                    # For URLs, use async loader
+                    proxyimg = Loader.image(wallpaper_path)
+                    if proxyimg.loaded:
+                        self.bg_rect.texture = proxyimg.texture
+                    else:
+                        # Bind to load event for async loading
+                        proxyimg.bind(on_load=lambda instance: setattr(self.bg_rect, 'texture', instance.texture))
+                else:
+                    # For local files, load directly
+                    if os.path.exists(wallpaper_path):
+                        texture = CoreImage(wallpaper_path, keep_data=True).texture
+                        if texture:
+                            self.bg_rect.texture = texture
+        except Exception as e:
+            PIHOME_LOGGER.debug(f"Background update: {e}")
 
     
     def _reload_background(self):
         """
         Updates the background image, clearing the cache
         """
-        self.background.reload()
-        self.background_color.reload()
+        # Force reload by clearing texture and calling _run again
+        self.bg_rect.texture = None
+        self._run()
 
     def on_start(self):
         """
