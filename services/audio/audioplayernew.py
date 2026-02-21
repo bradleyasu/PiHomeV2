@@ -68,8 +68,9 @@ class AudioPlayer:
         #     self.device = self.find_sound_device()
 
         # start audio procesing thread
-        self.thread = Thread(target=self.audio_processing_thread, daemon=True)
-        self.thread.start()
+        # TODO REVISIT THIS - Temporarily disabled as it interfers with shairport-sync on Raspberry Pi - need to find a better way to handle audio processing without locking the device
+        # self.thread = Thread(target=self.audio_processing_thread, daemon=True)
+        # self.thread.start()
 
         # deserialize saved urls
         self.deserialize_saved_urls()
