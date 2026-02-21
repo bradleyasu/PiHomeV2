@@ -63,7 +63,12 @@ class HomeScreen(PiHomeScreen):
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
-        self.size = App.get_running_app().get_size()
+        # Get app size safely - it might not be set yet during initialization
+        try:
+            self.size = App.get_running_app().get_size()
+        except (AttributeError, TypeError):
+            # If app not ready, use default size - will be updated when screen enters
+            self.size = (800, 480)
         # self.icon = CDN_ASSET.format("default_home_icon.png")
         # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)

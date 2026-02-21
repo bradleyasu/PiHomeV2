@@ -114,7 +114,7 @@ class PiHome(App):
     def build(self):
         self.setup()
         self.layout.size = (self.width, self.height)
-        self.layout.size_hint = (1,1)
+        self.layout.size_hint = (None, None)  # Use explicit size, not percentage
         self.layout.pos = (0,0)
 
 
@@ -134,8 +134,12 @@ class PiHome(App):
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
 
-        # Startup TaskManager
-        TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
+        # Startup TaskManager - only if task screen is loaded
+        if _TASK_SCREEN in PIHOME_SCREEN_MANAGER.loaded_screens:
+            TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
+        else:
+            # Retry after screens are loaded
+            Clock.schedule_once(lambda dt: TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens.get(_TASK_SCREEN)), 0.5)
 
         return self.layout
     
