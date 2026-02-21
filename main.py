@@ -111,28 +111,7 @@ class PiHome(App):
         self.menu_button.size_hint = (None, None)
         
         # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
-        # Add backgrounds using canvas.before to ensure they render behind everything
-        with self.layout.canvas.before:
-            from kivy.graphics import Rectangle, Color
-            from kivy.core.image import Image as CoreImage
-            # Background color layer
-            Color(1, 1, 1, 1)
-            self.bg_color_rect = Rectangle(pos=self.layout.pos, size=self.layout.size)
-            # Background image layer  
-            self.bg_rect = Rectangle(pos=self.layout.pos, size=self.layout.size)
-            
-            # Load default background initially
-            try:
-                default_bg = "./assets/images/default_background.jpg"
-                if os.path.exists(default_bg):
-                    texture = CoreImage(default_bg, keep_data=True).texture
-                    if texture:
-                        self.bg_rect.texture = texture
-            except Exception as e:
-                PIHOME_LOGGER.error(f"Failed to load default background: {e}")
-            
-        # Bind layout size changes to update background rectangles
-        self.layout.bind(size=self._update_background_size, pos=self._update_background_pos)
+        # TODO: Re-enable backgrounds once we figure out why they block content on Raspberry Pi
         
         # Add primary screen manager - force it to match layout size
         PIHOME_SCREEN_MANAGER.size = (self.width, self.height)
@@ -300,48 +279,30 @@ class PiHome(App):
     
     def _update_background_size(self, instance, size):
         """Update background rectangle sizes when layout resizes"""
-        self.bg_color_rect.size = size
-        self.bg_rect.size = size
+        if self.bg_color_rect:
+            self.bg_color_rect.size = size
+        if self.bg_rect:
+            self.bg_rect.size = size
     
     def _update_background_pos(self, instance, pos):
         """Update background rectangle positions when layout moves"""
-        self.bg_color_rect.pos = pos
-        self.bg_rect.pos = pos
+        if self.bg_color_rect:
+            self.bg_color_rect.pos = pos
+        if self.bg_rect:
+            self.bg_rect.pos = pos
 
     def _run(self):
         # Update background textures from wallpaper service
-        from kivy.core.image import Image as CoreImage
-        from kivy.loader import Loader
-        
-        try:
-            wallpaper_path = WALLPAPER_SERVICE.current
-            if wallpaper_path and wallpaper_path != "":
-                # Use Kivy's async loader for better performance
-                if wallpaper_path.startswith('http'):
-                    # For URLs, use async loader
-                    proxyimg = Loader.image(wallpaper_path)
-                    if proxyimg.loaded:
-                        self.bg_rect.texture = proxyimg.texture
-                    else:
-                        # Bind to load event for async loading
-                        proxyimg.bind(on_load=lambda instance: setattr(self.bg_rect, 'texture', instance.texture))
-                else:
-                    # For local files, load directly
-                    if os.path.exists(wallpaper_path):
-                        texture = CoreImage(wallpaper_path, keep_data=True).texture
-                        if texture:
-                            self.bg_rect.texture = texture
-        except Exception as e:
-            PIHOME_LOGGER.debug(f"Background update: {e}")
+        # Temporarily disabled while we debug Raspberry Pi rendering issues
+        pass
 
     
     def _reload_background(self):
         """
         Updates the background image, clearing the cache
         """
-        # Force reload by clearing texture and calling _run again
-        self.bg_rect.texture = None
-        self._run()
+        # Temporarily disabled while we debug Raspberry Pi rendering issues
+        pass
 
     def on_start(self):
         """
