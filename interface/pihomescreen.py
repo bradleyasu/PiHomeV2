@@ -23,6 +23,9 @@ class PiHomeScreen(Screen):
         
         # Ensure screen fills the screen manager
         self.size_hint = (1, 1)
+        
+        # Bind to parent changes to update size
+        self.bind(parent=self._on_parent_change)
 
         # Locked screens can't be navigated away from.  Logic with in the screen implementation can take advantage of this
         self.locked = False
@@ -32,13 +35,13 @@ class PiHomeScreen(Screen):
         self.is_open = False
         return super().on_pre_leave(*args)
 
-    def on_parent(self, widget, parent):
-        # When added to screen manager, ensure we match its size
+    def _on_parent_change(self, instance, parent):
+        """Called when parent (ScreenManager) is set or changed"""
         if parent and self.size_hint == (1, 1):
             self.size = parent.size
+            PIHOME_LOGGER.info(f"Screen {self.name} got parent, size set to: {self.size}")
             # Bind to parent size changes
             parent.bind(size=self._update_size_from_parent)
-        return super().on_parent(widget, parent)
     
     def _update_size_from_parent(self, instance, value):
         """Update size when parent (ScreenManager) size changes"""
