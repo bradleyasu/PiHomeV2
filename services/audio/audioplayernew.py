@@ -10,6 +10,7 @@ import ffmpeg
 # import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
+from util.configuration import CONFIG
 from threading import Thread
 import eyed3
 
@@ -68,9 +69,8 @@ class AudioPlayer:
         #     self.device = self.find_sound_device()
 
         # start audio procesing thread
-        # TODO REVISIT THIS - Temporarily disabled as it interfers with shairport-sync on Raspberry Pi - need to find a better way to handle audio processing without locking the device
-        # self.thread = Thread(target=self.audio_processing_thread, daemon=True)
-        # self.thread.start()
+        self.thread = Thread(target=self.audio_processing_thread, daemon=True)
+        self.thread.start()
 
         # deserialize saved urls
         self.deserialize_saved_urls()
@@ -276,9 +276,12 @@ class AudioPlayer:
             self.stop()
 
     def play(self, url, reset_playlist=True):
-        # ensure device is found
+        # ensure device is found - only auto-detect if not specified in config
         if self.device is None:
             self.device = self.find_sound_device()
+            PIHOME_LOGGER.info(f"Auto-detected audio device: {self.device}")
+        else:
+            PIHOME_LOGGER.info(f"Using configured audio device: {self.device}")
         self.stop()
         if reset_playlist:
             self.clear_playlist()
@@ -523,5 +526,9 @@ class AudioPlayer:
         return source
 
 
-
-AUDIO_PLAYER = AudioPlayer()
+# Read audio device from configuration
+# Support formats: hw:0,0 (ALSA), "Device Name", or None for auto-detect
+_audio_device = CONFIG.get('audio', 'device', None)
+if _audio_device == "" or _audio_device == "auto":
+    _audio_device = None
+AUDIO_PLAYER = AudioPlayer(device=_audio_device)

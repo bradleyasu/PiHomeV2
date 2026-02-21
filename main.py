@@ -3,8 +3,13 @@ import os
 from networking.poller import POLLER
 from services.homeassistant.homeassistant import HOME_ASSISTANT
 
+# Set audio backend for Kivy
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
+
+# Configure ALSA to use hw:0,0 for sound effects (ffpyplayer backend)
+os.environ["AUDIODEV"] = "hw:0,0"
+os.environ["ALSA_CARD"] = "0"
 
 from kivy.config import Config
 from kivy.graphics import Line
