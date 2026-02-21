@@ -54,8 +54,8 @@ class PiHomeScreenManager(ScreenManager):
         
 
     def goto(self, screen_name, pin_verified = False):
-        # make sure screen isn't locked
-        if self.current_screen.locked:
+        # make sure screen isn't locked (and that there is a current screen)
+        if self.current_screen and self.current_screen.locked:
             PIHOME_LOGGER.info("Screen is locked, cannot change screens.")
             return
 
