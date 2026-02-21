@@ -35,13 +35,19 @@ class NetworkImage(Widget):
         super(NetworkImage, self).__init__(**kwargs)
         Loader.loading_image = BLANK_IMAGE
     
-        self.url = url
-        self.size = size
-        self.pos = pos
         self.stretch = enable_stretch
         self.k_ratio = not enable_stretch
         self.loader = loader
         self.error = error
+        
+        # If URL is empty but loader is provided, use loader as initial URL
+        if (url == "" or url is None) and loader is not None:
+            self.url = loader
+        else:
+            self.url = url
+            
+        self.size = size
+        self.pos = pos
         
         if self.auto_refresh_interval > 0:
             Clock.schedule_interval(lambda _: self.reload(), self.auto_refresh_interval)
@@ -56,13 +62,13 @@ class NetworkImage(Widget):
         self.ids["network_image_async_source"].reload()
 
     def on_error(self, a = None, b = None):
-        pass
-        # if self.error is not None:
-            # self.url = self.error
+        # Fall back to error image if URL fails to load
+        if self.error is not None and self.url != self.error:
+            self.url = self.error
     
     def on_load(self):
-        pass
-        # if self.loader is not None:
-            # self.url = self.loader
+        # Use loader image if specified and URL is empty
+        if self.loader is not None and (self.url == "" or self.url is None):
+            self.url = self.loader
 
 

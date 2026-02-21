@@ -1,11 +1,14 @@
-#!/bin/zsh
+#!/bin/sh
 
 alias python=python3
 alias pip=pip3
+LOG=./install.log
 pip install kivy
 
 echo "Installing ffpyplayer as audio provider..."
 pip install ffpyplayer >> $LOG
+pip install ffmpeg >> $LOG
+pip install numpy >> $LOG
 
 #python -m pip install kivy
 

@@ -177,7 +177,12 @@ class PiHomeServer():
             self._run()
                 
     
-    async def websocket_server(self, websocket, path):
+    async def websocket_server(self, websocket):
+        """
+        WebSocket handler - compatible with websockets 10.0+
+        In older versions, this received (websocket, path) but newer versions only pass websocket.
+        Path is now accessible via websocket.request.path if needed.
+        """
         toast("Socket Connected", "info", 2)
         try:
             async for message in websocket:
