@@ -249,6 +249,12 @@ class PiHome(App):
     """
     def quit(self):
         self.is_running = False
+        # Cleanup audio device before exit
+        try:
+            from services.audio.audioplayernew import AUDIO_PLAYER
+            AUDIO_PLAYER.cleanup()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
         get_app().stop()
         sys.exit("PiHome Terminated")
 
@@ -313,6 +319,12 @@ class PiHome(App):
  
 
     def on_stop(self):
+        # Cleanup audio device
+        try:
+            from services.audio.audioplayernew import AUDIO_PLAYER
+            AUDIO_PLAYER.cleanup()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
         SERVER.stop_server()
         PIHOME_LOGGER.info("=================================== PIHOME SHUTDOWN ===================================")
     #     self.profile.disable()

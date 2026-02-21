@@ -61,8 +61,10 @@ class AudioPlayer:
         self.process = None
         self.paused = False
         self.empty_buffer = False
-        if self.device is None:
-            self.device = self.find_sound_device()
+        # Don't probe audio device at init - do it lazily when needed
+        # This prevents locking the device when PiHome starts
+        # if self.device is None:
+        #     self.device = self.find_sound_device()
 
         # start audio procesing thread
         self.thread = Thread(target=self.audio_processing_thread)
@@ -72,10 +74,10 @@ class AudioPlayer:
         self.deserialize_saved_urls()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.stop()
+        self.cleanup()
     
     def __del__(self):
-        self.stop()
+        self.cleanup()
 
 
     def serialize_saved_urls(self):
@@ -177,15 +179,19 @@ class AudioPlayer:
 
     def find_sound_device(self):
         PIHOME_LOGGER.info("Finding sound device")
-        sd._terminate()
-        sd._initialize()
-        devices = sd.query_devices()
-        for device in devices:
-            if device['max_output_channels'] > 0:
-                PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
-                return device['name']
-        PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
-        self.log_sound_devices()
+        # Don't terminate/reinitialize - just query existing state
+        # sd._terminate()
+        # sd._initialize()
+        try:
+            devices = sd.query_devices()
+            for device in devices:
+                if device['max_output_channels'] > 0:
+                    PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
+                    return device['name']
+            PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
+            self.log_sound_devices()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error finding sound device: {e}")
         return None
     
     def log_sound_devices(self):
@@ -411,7 +417,13 @@ class AudioPlayer:
             self.current_folder = None
         PIHOME_LOGGER.info("Stopping audio")
         if self.stream:
-            self.stream.stop()
+            try:
+                self.stream.stop()
+                self.stream.close()  # Properly release the device
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Error closing stream: {e}")
+            finally:
+                self.stream = None
         if self.process:
             self.process.terminate()
         # clear the queue
@@ -423,6 +435,16 @@ class AudioPlayer:
         self.empty_buffer = True
         self.current_source = None
         self.set_state(AudioState.STOPPED)
+    
+    def cleanup(self):
+        """Full cleanup including device release"""
+        self.stop(clear_playlist=True)
+        try:
+            # Terminate sounddevice to release all audio resources
+            sd._terminate()
+            PIHOME_LOGGER.info("Audio device cleanup complete")
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error during cleanup: {e}")
 
     def set_volume(self, volume, oneAsHundred=False):
         """
