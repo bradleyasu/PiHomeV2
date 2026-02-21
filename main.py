@@ -31,6 +31,7 @@ import kivy
 import platform
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
+from components.Image.networkimage import NetworkImage  # Keep imported for .kv files
 from kivy.graphics import Line
 
 from components.Toast.toast import Toast
