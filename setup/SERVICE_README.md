@@ -64,24 +64,33 @@ sudo systemctl disable pihome
 
 ## Viewing Logs
 
+Logs are written to files in `/usr/local/PiHome/`:
+- `pihome.log` - Standard output logs
+- `pihome-error.log` - Error logs
+
 ### View recent logs
 ```bash
-sudo journalctl -u pihome
+tail -n 50 /usr/local/PiHome/pihome.log
 ```
 
 ### Follow logs in real-time
 ```bash
-sudo journalctl -u pihome -f
+tail -f /usr/local/PiHome/pihome.log
 ```
 
-### View logs since boot
+### View error logs
 ```bash
-sudo journalctl -u pihome -b
+tail -f /usr/local/PiHome/pihome-error.log
 ```
 
 ### View last 100 lines
 ```bash
-sudo journalctl -u pihome -n 100
+tail -n 100 /usr/local/PiHome/pihome.log
+```
+
+### Search logs
+```bash
+grep "error" /usr/local/PiHome/pihome.log
 ```
 
 ## Troubleshooting
@@ -95,7 +104,7 @@ sudo journalctl -u pihome -n 100
 
 2. View error logs:
    ```bash
-   sudo journalctl -u pihome -n 50
+   tail -n 50 /usr/local/PiHome/pihome-error.log
    ```
 
 3. Verify the main.py file exists:
@@ -113,7 +122,7 @@ sudo journalctl -u pihome -n 100
 
 Check the logs for Python errors:
 ```bash
-sudo journalctl -u pihome -f
+tail -f /usr/local/PiHome/pihome-error.log
 ```
 
 The service is configured to restart automatically on failure with a 10-second delay.

@@ -129,11 +129,17 @@ python3 -m pip install --break-system-packages websockets >> $LOG
 
 curl https://non-gnu.uvt.nl/debian/uvt_key.gpg --output uvt_key.gpg
 sudo mv uvt_key.gpg /etc/apt/trusted.gpg.d
-sudo apt install apt-transport-https
+sudo apt-get -y install apt-transport-https
 sudo sh -c 'echo "deb https://non-gnu.uvt.nl/debian $(lsb_release -sc) uvt" >> /etc/apt/sources.list.d/non-gnu-uvt.list'
-sudo apt update
-sudo apt install -t "o=UvT" mpv
+sudo apt-get -y update
+sudo apt-get -y install -t "o=UvT" mpv
 
+
+# Install AirPlay services 'shairport'
+sudo apt-get -y install --no-install-recommends build-essential git autoconf automake libtool system-dev\
+   libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev \
+   libplist-dev libsodium-dev uuid-dev libgcrypt-dev xxd libplist-utils \
+   libavutil-dev libavcodec-dev libavformat-dev >> $LOG
 
 # Installing nqptp, a shairport dependency 
 
@@ -148,11 +154,6 @@ cd ..
 sudo systemctl enable nqptp
 sudo systemctl start nqptp
 
-# Install AirPlay services 'shairport'
-sudo apt install --no-install-recommends build-essential git autoconf automake libtool \
-   libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev \
-   libplist-dev libsodium-dev uuid-dev libgcrypt-dev xxd libplist-utils \
-   libavutil-dev libavcodec-dev libavformat-dev
 
 # Install shairport sync
 sudo git clone https://github.com/mikebrady/shairport-sync.git
@@ -163,6 +164,10 @@ sudo  make
 sudo make install
 sh user-service-install.sh
 cd ..
+
+# IMPORTANT, MAKE SURE THE CURRENT USER HAS AUDIO GROUP PERMISSIONS TO USE SHAIRPORT SYNC
+CURRENT_USER=$(whoami)
+sudo usermod -aG audio "$CURRENT_USER"  
 
 
 # make install
@@ -233,8 +238,11 @@ echo "  sudo systemctl start pihome     - Start PiHome now"
 echo "  sudo systemctl status pihome    - Check service status"
 echo "  sudo systemctl stop pihome      - Stop the service"
 echo "  sudo systemctl restart pihome   - Restart the service"
-echo "  sudo journalctl -u pihome -f    - View live logs"
+echo "  tail -f /usr/local/PiHome/pihome.log         - View live logs"
 echo ""
 echo "To start PiHome now, run: sudo systemctl start pihome"
 echo "Or reboot the system to start automatically."
 echo ""
+
+echo "Restarting system to apply changes..."
+sudo reboot
