@@ -118,9 +118,9 @@ class PiHomeServer():
         super(PiHomeServer, self).__init__(**kwargs)
 
     def start_server(self):
-        self.SERVER_THREAD = Thread(target=self._run)
+        self.SERVER_THREAD = Thread(target=self._run, daemon=True)
         self.SERVER_THREAD.start()
-        self.SOCKET_THREAD = Thread(target=self._run_socket)
+        self.SOCKET_THREAD = Thread(target=self._run_socket, daemon=True)
         self.SOCKET_THREAD.start()
         
         PIHOME_LOGGER.info("Server: PiHome Server has started")

@@ -68,7 +68,7 @@ class AudioPlayer:
         #     self.device = self.find_sound_device()
 
         # start audio procesing thread
-        self.thread = Thread(target=self.audio_processing_thread)
+        self.thread = Thread(target=self.audio_processing_thread, daemon=True)
         self.thread.start()
 
         # deserialize saved urls
@@ -282,7 +282,7 @@ class AudioPlayer:
         if reset_playlist:
             self.clear_playlist()
         self.empty_buffer = False
-        self.player_thread = Thread(target=self._play, args=(url,))
+        self.player_thread = Thread(target=self._play, args=(url,), daemon=True)
         self.player_thread.start()
 
     def _play(self, url):

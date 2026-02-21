@@ -75,7 +75,7 @@ class Timer:
             return
         self.start_time = time.time()
         self.is_running = True
-        threading.Thread(target=self.update).start()
+        threading.Thread(target=self.update, daemon=True).start()
 
     def stop(self, notify=False):
         """

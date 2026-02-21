@@ -40,7 +40,7 @@ class HomeAssistant:
 
             # this thread will monitor for event changes in home assistant
             self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
-            thread = Thread(target=self._start_loop)
+            thread = Thread(target=self._start_loop, daemon=True)
             thread.start()
             self.current_states = self.get_all_states()
         except Exception as e:

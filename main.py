@@ -27,6 +27,7 @@ from networking.mqtt import MQTT
 
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE 
 import sys
+import signal
 import kivy
 import platform
 from kivy.app import App
@@ -252,15 +253,31 @@ class PiHome(App):
     Quit PiHome and clean up resources
     """
     def quit(self):
+        PIHOME_LOGGER.info("PiHome shutting down...")
         self.is_running = False
-        # Cleanup audio device before exit
+        
+        # Stop server first
+        try:
+            SERVER.stop_server()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error stopping server: {e}")
+        
+        # Cleanup audio device
         try:
             from services.audio.audioplayernew import AUDIO_PLAYER
             AUDIO_PLAYER.cleanup()
         except Exception as e:
             PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
-        get_app().stop()
-        sys.exit("PiHome Terminated")
+        
+        # Stop Kivy app
+        try:
+            self.stop()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error stopping Kivy app: {e}")
+        
+        PIHOME_LOGGER.info("PiHome terminated")
+        # Force exit to ensure we don't hang
+        os._exit(0)
 
     def remove_toast(self):
         self.toast_open = False
@@ -348,20 +365,44 @@ class PiHome(App):
  
 
     def on_stop(self):
-        # Cleanup audio device
-        try:
-            from services.audio.audioplayernew import AUDIO_PLAYER
-            AUDIO_PLAYER.cleanup()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
-        SERVER.stop_server()
+        # Cleanup audio device if not already done
+        if self.is_running:
+            try:
+                from services.audio.audioplayernew import AUDIO_PLAYER
+                AUDIO_PLAYER.cleanup()
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
+            try:
+                SERVER.stop_server()
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Error stopping server: {e}")
         PIHOME_LOGGER.info("=================================== PIHOME SHUTDOWN ===================================")
     #     self.profile.disable()
     #     self.profile.dump_stats('pihome.profile')
     #     self.profile.print_stats()
 
+def signal_handler(sig, frame):
+    """Handle SIGINT (CTRL+C) and SIGTERM gracefully"""
+    PIHOME_LOGGER.info(f"Received signal {sig}, shutting down...")
+    try:
+        if app and hasattr(app, 'quit'):
+            app.quit()
+        else:
+            sys.exit(0)
+    except Exception as e:
+        PIHOME_LOGGER.error(f"Error during shutdown: {e}")
+        sys.exit(1)
+
 # Start PiHome
 app = PiHome()
-app.run()
-# PiHome().run()
+
+# Register signal handlers for graceful shutdown
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
+try:
+    app.run()
+except KeyboardInterrupt:
+    PIHOME_LOGGER.info("KeyboardInterrupt received, shutting down...")
+    app.quit()
 
