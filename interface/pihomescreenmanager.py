@@ -166,5 +166,6 @@ class PiHomeScreenManager(ScreenManager):
 
         
 PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=NoTransition())
-# Ensure the screen manager fills its parent
+# Ensure the screen manager fills its parent and has explicit size
 PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
+PIHOME_SCREEN_MANAGER.size = (800, 480)  # Default size, will be updated by parent

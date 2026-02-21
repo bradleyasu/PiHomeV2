@@ -32,8 +32,25 @@ class PiHomeScreen(Screen):
         self.is_open = False
         return super().on_pre_leave(*args)
 
+    def on_parent(self, widget, parent):
+        # When added to screen manager, ensure we match its size
+        if parent and self.size_hint == (1, 1):
+            self.size = parent.size
+            # Bind to parent size changes
+            parent.bind(size=self._update_size_from_parent)
+        return super().on_parent(widget, parent)
+    
+    def _update_size_from_parent(self, instance, value):
+        """Update size when parent (ScreenManager) size changes"""
+        if self.size_hint == (1, 1):
+            self.size = value
+            PIHOME_LOGGER.info(f"Screen {self.name} size updated to: {self.size}")
+
     def on_enter(self, *args):
         self.is_open = True
+        # Force update size from parent when entering
+        if self.manager and self.size_hint == (1, 1):
+            self.size = self.manager.size
         PIHOME_LOGGER.info(f"PiHomeScreen.on_enter() - Screen: {self.name}, Size: {self.size}, Pos: {self.pos}")
         return super().on_enter(*args)
 

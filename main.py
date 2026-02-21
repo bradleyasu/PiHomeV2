@@ -114,7 +114,7 @@ class PiHome(App):
     def build(self):
         self.setup()
         self.layout.size = (self.width, self.height)
-        self.layout.size_hint = (None, None)  # Use explicit size, not percentage
+        self.layout.size_hint = (1, 1)  # Use percentage to fill window
         self.layout.pos = (0,0)
 
 
@@ -129,7 +129,9 @@ class PiHome(App):
         # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
-        # Add primary screen manager
+        # Add primary screen manager - force it to match layout size
+        PIHOME_SCREEN_MANAGER.size = (self.width, self.height)
+        PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         
         # Force screen loading if on_parent didn't trigger it
