@@ -6,7 +6,8 @@ import sys
 from time import sleep
 
 import ffmpeg
-import sounddevice as sd
+# Don't import sounddevice at module level - it initializes PortAudio and locks the DAC
+# import sounddevice as sd
 import numpy as np
 from util.phlog import PIHOME_LOGGER
 from threading import Thread
@@ -179,6 +180,8 @@ class AudioPlayer:
 
     def find_sound_device(self):
         PIHOME_LOGGER.info("Finding sound device")
+        # Lazy import sounddevice only when needed
+        import sounddevice as sd
         # Don't terminate/reinitialize - just query existing state
         # sd._terminate()
         # sd._initialize()
@@ -195,6 +198,7 @@ class AudioPlayer:
         return None
     
     def log_sound_devices(self):
+        import sounddevice as sd
         devices = sd.query_devices()
         PIHOME_LOGGER.warn("Sound Devices:")
         PIHOME_LOGGER.warn("-----------------")
@@ -354,6 +358,8 @@ class AudioPlayer:
                 reconnect_streamed=1,
                 reconnect_delay_max=5,
             ).run_async(pipe_stdout=True)
+            # Lazy import sounddevice when actually playing
+            import sounddevice as sd
             self.stream = sd.RawOutputStream(samplerate=samplerate, blocksize=self.blocksize, device=self.device, channels=channels, dtype='float32', callback=self.callback)
             read_size = self.blocksize * channels * self.stream.samplesize
             PIHOME_LOGGER.info('Buffering {} ...'.format(url))
@@ -441,6 +447,7 @@ class AudioPlayer:
         self.stop(clear_playlist=True)
         try:
             # Terminate sounddevice to release all audio resources
+            import sounddevice as sd
             sd._terminate()
             PIHOME_LOGGER.info("Audio device cleanup complete")
         except Exception as e:
