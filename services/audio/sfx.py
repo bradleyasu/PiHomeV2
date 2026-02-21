@@ -12,17 +12,34 @@ class PihomeSfx:
     def __init__(self, **kwargs):
         super(PihomeSfx, self).__init__(**kwargs)
         self.populate_sources()
-        self.load_sfx()
+        # Don't load SFX at init - load lazily when first played
+        # This prevents locking the audio device when PiHome starts
 
-    def load_sfx(self):
-        for key, value in self.SOURCES.items():
-            try:
-                self.SOUND_EFFECTS[key] = SoundLoader.load(value)
-            except Exception as e:
-                PIHOME_LOGGER.error("Error loading sound effect: {}".format(e))
+    def load_sfx(self, key):
+        """Load a specific sound effect on-demand"""
+        if key not in self.SOURCES:
+            PIHOME_LOGGER.warn(f"Sound effect '{key}' not found in sources")
+            return False
+        
+        if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
+            return True  # Already loaded
+        
+        try:
+            PIHOME_LOGGER.info(f"Loading sound effect: {key}")
+            self.SOUND_EFFECTS[key] = SoundLoader.load(self.SOURCES[key])
+            return self.SOUND_EFFECTS[key] is not None
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error loading sound effect '{key}': {e}")
+            return False
 
     def play(self, key):
         PIHOME_LOGGER.info("Playing sound effect: {}".format(key))
+        # Load on-demand if not already loaded
+        if key not in self.SOUND_EFFECTS or self.SOUND_EFFECTS[key] is None:
+            if not self.load_sfx(key):
+                PIHOME_LOGGER.error(f"Failed to load sound effect: {key}")
+                return None
+        
         if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
             self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].loop = False
@@ -34,6 +51,12 @@ class PihomeSfx:
 
     def loop(self, key):
         PIHOME_LOGGER.info("Looping sound effect: {}".format(key))
+        # Load on-demand if not already loaded
+        if key not in self.SOUND_EFFECTS or self.SOUND_EFFECTS[key] is None:
+            if not self.load_sfx(key):
+                PIHOME_LOGGER.error(f"Failed to load sound effect: {key}")
+                return None
+        
         if key in self.SOUND_EFFECTS and self.SOUND_EFFECTS[key] is not None:
             self.SOUND_EFFECTS[key].load()
             self.SOUND_EFFECTS[key].loop = True
