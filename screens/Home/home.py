@@ -32,6 +32,7 @@ from theme.theme import Theme
 from kivy.factory import Factory
 from util.helpers import appmenu_open, get_app
 from util.tools import hex
+from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
 from kivy.animation import Animation
 from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN
