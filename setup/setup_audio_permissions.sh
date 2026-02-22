@@ -14,24 +14,24 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# 1. Create pihome group if it doesn't exist
-if ! getent group pihome > /dev/null 2>&1; then
-    echo "[1/6] Creating pihome group..."
-    groupadd pihome
-    echo "✓ Created pihome group"
+# 1. Create pihome-grp group if it doesn't exist
+if ! getent group pihome-grp > /dev/null 2>&1; then
+    echo "[1/6] Creating pihome-grp group..."
+    groupadd pihome-grp
+    echo "✓ Created pihome-grp group"
 else
-    echo "[1/6] pihome group already exists"
+    echo "[1/6] pihome-grp group already exists"
 fi
 
-# 2. Create pihome user if it doesn't exist
-if ! id -u pihome > /dev/null 2>&1; then
-    echo "[2/6] Creating pihome system user..."
-    useradd -r -s /bin/false -d /usr/local/PiHome -g pihome -c "PiHome Service User" pihome
-    echo "✓ Created pihome user"
+# 2. Create pihome-user if it doesn't exist
+if ! id -u pihome-user > /dev/null 2>&1; then
+    echo "[2/6] Creating pihome-user system user..."
+    useradd -r -s /bin/false -d /usr/local/PiHome -g pihome-grp -c "PiHome Service User" pihome-user
+    echo "✓ Created pihome-user"
 else
-    echo "[2/6] pihome user already exists"
-    # Ensure user is in pihome group
-    usermod -g pihome pihome
+    echo "[2/6] pihome-user already exists"
+    # Ensure user is in pihome-grp group
+    usermod -g pihome-grp pihome-user
 fi
 
 # 3. Ensure shairport-sync user is in audio group (for hw:1,0 access)
@@ -43,14 +43,14 @@ else
     echo "[3/6] WARNING: shairport-sync user not found. Install shairport-sync first."
 fi
 
-# 4. Verify pihome user is NOT in audio group (isolation)
-echo "[4/6] Ensuring pihome user is NOT in audio group (for isolation)..."
-if groups pihome | grep -q audio; then
-    echo "⚠ Removing pihome from audio group..."
-    gpasswd -d pihome audio
-    echo "✓ pihome removed from audio group"
+# 4. Verify pihome-user is NOT in audio group (isolation)
+echo "[4/6] Ensuring pihome-user is NOT in audio group (for isolation)..."
+if groups pihome-user | grep -q audio; then
+    echo "⚠ Removing pihome-user from audio group..."
+    gpasswd -d pihome-user audio
+    echo "✓ pihome-user removed from audio group"
 else
-    echo "✓ pihome user is not in audio group (correct)"
+    echo "✓ pihome-user is not in audio group (correct)"
 fi
 
 # 5. Create udev rules to control device access
@@ -73,19 +73,19 @@ SUBSYSTEM=="sound", KERNEL=="pcmC1D0p", GROUP="audio", MODE="0660"
 # All sound devices for card1 (hw:1,0)
 SUBSYSTEM=="sound", KERNEL=="card1", GROUP="audio", MODE="0660"
 
-# Grant bcm2835 (hw:0,0) to pihome group
+# Grant bcm2835 (hw:0,0) to pihome-grp group
 # This allows PiHome to play audio on the built-in output
-# shairport-sync (NOT in pihome group) will not use this device
+# shairport-sync (NOT in pihome-grp group) will not use this device
 
 # PCM control devices for card0 (hw:0,0)
-SUBSYSTEM=="sound", KERNEL=="controlC0", GROUP="pihome", MODE="0660"
+SUBSYSTEM=="sound", KERNEL=="controlC0", GROUP="pihome-grp", MODE="0660"
 
 # PCM playback devices for card0 (hw:0,0)
-SUBSYSTEM=="sound", KERNEL=="pcmC0D0p", GROUP="pihome", MODE="0660"
-SUBSYSTEM=="sound", KERNEL=="pcmC0D1p", GROUP="pihome", MODE="0660"
+SUBSYSTEM=="sound", KERNEL=="pcmC0D0p", GROUP="pihome-grp", MODE="0660"
+SUBSYSTEM=="sound", KERNEL=="pcmC0D1p", GROUP="pihome-grp", MODE="0660"
 
 # All sound devices for card0 (hw:0,0)
-SUBSYSTEM=="sound", KERNEL=="card0", GROUP="pihome", MODE="0660"
+SUBSYSTEM=="sound", KERNEL=="card0", GROUP="pihome-grp", MODE="0660"
 EOF
 
 echo "✓ Created /etc/udev/rules.d/99-audio-isolation.rules"
@@ -100,16 +100,16 @@ echo ""
 echo "=== Setup Complete ==="
 echo ""
 echo "Summary:"
-echo "  - pihome user: Member of 'pihome' group, can access hw:0,0 only"
+echo "  - pihome-user: Member of 'pihome-grp' group, can access hw:0,0 only"
 echo "  - shairport-sync user: Member of 'audio' group, can access hw:1,0 only"
-echo "  - hw:0,0 devices: Owned by 'pihome' group (mode 0660)"
+echo "  - hw:0,0 devices: Owned by 'pihome-grp' group (mode 0660)"
 echo "  - hw:1,0 devices: Owned by 'audio' group (mode 0660)"
 echo ""
 echo "Current device permissions:"
 ls -l /dev/snd/by-id/ 2>/dev/null || ls -l /dev/snd/ || echo "  (run on Raspberry Pi to see devices)"
 echo ""
 echo "Next steps:"
-echo "  1. Update pihome.service to use User=pihome, Group=pihome"
-echo "  2. Set ownership: sudo chown -R pihome:pihome /usr/local/PiHome"
+echo "  1. Update pihome.service to use User=pihome-user, Group=pihome-grp"
+echo "  2. Set ownership: sudo chown -R pihome-user:pihome-grp /usr/local/PiHome"
 echo "  3. Restart services: sudo systemctl daemon-reload && sudo systemctl restart pihome"
 echo ""

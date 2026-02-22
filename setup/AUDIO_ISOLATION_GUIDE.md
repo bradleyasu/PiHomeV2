@@ -44,9 +44,9 @@ Block PiHome from accessing hw:1,0 entirely using Linux user permissions and ude
 ```
 
 **Key Points:**
-- `pihome` user is in `pihome` group → can access hw:0,0 only
+- `pihome-user` is in `pihome-grp` group → can access hw:0,0 only
 - `shairport-sync` user is in `audio` group → can access hw:1,0 only
-- hw:0,0 device permissions: owned by `pihome` group, mode `0660`
+- hw:0,0 device permissions: owned by `pihome-grp` group, mode `0660`
 - hw:1,0 device permissions: owned by `audio` group, mode `0660`
 - PiHome **physically cannot** open hw:1,0 (permission denied)
 
@@ -80,10 +80,10 @@ sudo bash setup_audio_permissions.sh
 ```
 
 **This script will:**
-- Create `pihome` system user and group
-- Add `pihome` user to `pihome` group (hw:0,0 access)
+- Create `pihome-user` system user and `pihome-grp` group
+- Add `pihome-user` to `pihome-grp` group (hw:0,0 access)
 - Add `shairport-sync` to `audio` group (hw:1,0 access)
-- Create udev rules to set hw:0,0 to `pihome` group
+- Create udev rules to set hw:0,0 to `pihome-grp` group
 - Create udev rules to set hw:1,0 to `audio` group
 - Reload udev rules
 
@@ -93,8 +93,8 @@ sudo bash setup_audio_permissions.sh
 # Move new code to /usr/local/PiHome
 sudo cp -r /home/pi/PiHome-staging/* /usr/local/PiHome/
 
-# Set ownership to pihome user
-sudo chown -R pihome:pihome /usr/local/PiHome
+# Set ownership to pihome-user
+sudo chown -R pihome-user:pihome-grp /usr/local/PiHome
 
 # Keep execute permissions on scripts
 sudo chmod +x /usr/local/PiHome/*.sh
@@ -110,16 +110,16 @@ sudo cp /usr/local/PiHome/setup/pihome.service /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
 
-### 6. Grant X11 Access to pihome User
+### 6. Grant X11 Access to pihome-user
 
 Since PiHome needs GUI access but runs as non-root:
 
 ```bash
-# Allow pihome user to access X11 display
-xhost +local:pihome
+# Allow pihome-user to access X11 display
+xhost +local:pihome-user
 
 # Make persistent by adding to ~/.xinitrc or display manager config
-echo "xhost +local:pihome" | sudo tee -a /etc/X11/Xsession.d/90-pihome-xhost
+echo "xhost +local:pihome-user" | sudo tee -a /etc/X11/Xsession.d/90-pihome-xhost
 ```
 
 ### 7. Test Device Permissions
@@ -129,15 +129,15 @@ echo "xhost +local:pihome" | sudo tee -a /etc/X11/Xsession.d/90-pihome-xhost
 ls -l /dev/snd/
 
 # Should see:
-# - controlC0 owned by pihome group
+# - controlC0 owned by pihome-grp group
 # - controlC1 owned by audio group
 
-# Test as pihome user (should FAIL for hw:1,0)
-sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine
+# Test as pihome-user (should FAIL for hw:1,0)
+sudo -u pihome-user speaker-test -D hw:1,0 -c 2 -t sine
 # Expected: "Permission denied" or "Device or resource busy"
 
-# Test as pihome user (should WORK for hw:0,0)
-sudo -u pihome speaker-test -D hw:0,0 -c 2 -t sine -l 1
+# Test as pihome-user (should WORK for hw:0,0)
+sudo -u pihome-user speaker-test -D hw:0,0 -c 2 -t sine -l 1
 # Expected: Plays test tone on bcm2835
 ```
 
@@ -188,24 +188,24 @@ sudo -u shairport-sync speaker-test -D hw:1,0 -c 2 -t sine -l 1
 sudo journalctl -u pihome -n 50
 
 # Common issues:
-# - File ownership: sudo chown -R pihome:pihome /usr/local/PiHome
-# - X11 access: xhost +local:pihome
+# - File ownership: sudo chown -R pihome-user:pihome-grp /usr/local/PiHome
+# - X11 access: xhost +local:pihome-user
 # - Missing dependencies: pip3 install -r requirements.txt
 ```
 
 ### "Permission denied" on hw:0,0
 
 ```bash
-# Verify pihome user is in pihome group
-groups pihome
+# Verify pihome-user is in pihome-grp group
+groups pihome-user
 
-# Should show: pihome
+# Should show: pihome-grp
 
 # If not, fix it
-sudo usermod -g pihome pihome
+sudo usermod -g pihome-grp pihome-user
 sudo systemctl restart pihome
 
-# Verify hw:0,0 devices are owned by pihome group
+# Verify hw:0,0 devices are owned by pihome-grp group
 ls -l /dev/snd/controlC0
 
 # If not, reload udev
@@ -241,22 +241,22 @@ sudo reboot
 
 ### PiHome Can Access hw:1,0 (Isolation Broken)
 
-**This is the critical issue!** If pihome can access hw:1,0, the isolation isn't working.
+**This is the critical issue!** If pihome-user can access hw:1,0, the isolation isn't working.
 
 **Diagnosis Steps:**
 
 ```bash
-# 1. Check if pihome is in audio group (SHOULD NOT BE)
-groups pihome
-# Should show: pihome
+# 1. Check if pihome-user is in audio group (SHOULD NOT BE)
+groups pihome-user
+# Should show: pihome-grp
 # Should NOT show: audio
 
 # 2. Check device permissions
 ls -l /dev/snd/controlC1
 # Should show: crw-rw---- 1 root audio
 
-# 3. Try to access as pihome (should fail)
-sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1
+# 3. Try to access as pihome-user (should fail)
+sudo -u pihome-user speaker-test -D hw:1,0 -c 2 -t sine -l 1
 # Should show: "Permission denied" or "No such device"
 ```
 
@@ -293,7 +293,7 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 
 # Step 5: Test again
-sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1
+sudo -u pihome-user speaker-test -D hw:1,0 -c 2 -t sine -l 1
 # Should now fail with "Permission denied"
 
 # Step 6: If still not working, rerun setup script
@@ -306,9 +306,9 @@ sudo reboot
 
 **After reboot, verify:**
 ```bash
-groups pihome                    # Should NOT include 'audio'
+groups pihome-user               # Should NOT include 'audio'
 ls -l /dev/snd/controlC1         # Should be owned by 'audio' group
-sudo -u pihome aplay -D hw:1,0   # Should fail with permission denied
+sudo -u pihome-user aplay -D hw:1,0   # Should fail with permission denied
 ```
 
 ---

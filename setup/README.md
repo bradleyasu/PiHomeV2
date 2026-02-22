@@ -6,13 +6,13 @@ Configuration files and scripts for deploying PiHome on Raspberry Pi.
 
 ### Service Configuration
 - **`pihome.service`** - systemd service unit file for PiHome
-  - Runs as `pihome` user (non-root) for security
-  - Restricted to `audio` group (hw:0,0 access only)
+  - Runs as `pihome-user` user (non-root) for security
+  - Restricted to `pihome-grp` group (hw:0,0 access only)
   - Auto-restart on failure
 
 ### Setup Scripts
 - **`setup_audio_permissions.sh`** - **RUN THIS FIRST on Raspberry Pi**
-  - Creates `pihome` system user
+  - Creates `pihome-user` system user and `pihome-grp` group
   - Creates `shairport` group for hw:1,0 isolation
   - Sets up udev rules to restrict DAC Pro (hw:1,0) access
   - Configures group memberships
@@ -20,13 +20,13 @@ Configuration files and scripts for deploying PiHome on Raspberry Pi.
 
 - **`test_audio_permissions.sh`** - Verify setup is working
   - Tests user permissions
-  - Verifies device access (pihome should NOT access hw:1,0)
+  - Verifies device access (pihome-user should NOT access hw:1,0)
   - Checks service status
   - **Provides troubleshooting if isolation is broken**
   - **Usage:** `bash test_audio_permissions.sh`
 
 - **`fix_audio_isolation.sh`** - **Emergency fix if isolation is broken**
-  - Removes pihome from audio group
+  - Removes pihome-user from audio group
   - Manually fixes device permissions
   - Reloads udev rules
   - Tests isolation after fix
@@ -62,14 +62,14 @@ sudo bash setup_audio_permissions.sh
 
 # 4. Install code
 sudo cp -r /tmp/pihome-update/* /usr/local/PiHome/
-sudo chown -R pihome:pihome /usr/local/PiHome
+sudo chown -R pihome-user:pihome-grp /usr/local/PiHome
 
 # 5. Install service
 sudo cp /usr/local/PiHome/setup/pihome.service /etc/systemd/system/
 sudo systemctl daemon-reload
 
 # 6. Grant X11 access
-xhost +local:pihome
+xhost +local:pihome-user
 
 # 7. Start service
 sudo systemctl start pihome
@@ -77,7 +77,7 @@ sudo systemctl start pihome
 # 8. Test permissions
 bash /usr/local/PiHome/setup/test_audio_permissions.sh
 
-# If test shows pihome can access hw:1,0, run emergency fix:
+# If test shows pihome-user can access hw:1,0, run emergency fix:
 # sudo bash /usr/local/PiHome/setup/fix_audio_isolation.sh
 ```
 
@@ -90,7 +90,7 @@ See **AUDIO_ISOLATION_GUIDE.md** for full details.
 **Problem:** PiHome's SDL2 was scanning/interfering with shairport-sync's hw:1,0 DAC
 
 **Solution:** OS-level device permissions
-- PiHome runs as `pihome` user → can access hw:0,0 only (via `pihome` group)
+- PiHome runs as `pihome-user` user → can access hw:0,0 only (via `pihome-grp` group)
 - shairport-sync runs as `shairport-sync` user → can access hw:1,0 only (via `audio` group)
 - udev rules enforce permissions at kernel level
 - Even if SDL2 scans, kernel denies access to hw:1,0
@@ -103,13 +103,13 @@ See **AUDIO_ISOLATION_GUIDE.md** for full details.
 
 ```
 hw:0,0 (bcm2835 Headphones)
-├── Group: pihome
-├── Access: pihome user ✓
+├── Group: pihome-grp
+├── Access: pihome-user ✓
 └── PiHome plays here
 
 hw:1,0 (DAC Pro PCM5122)
 ├── Group: audio
-├── Access: pihome user ✗ (permission denied)
+├── Access: pihome-user ✗ (permission denied)
 ├── Access: shairport-sync user ✓
 └── AirPlay audio plays here
 ```
@@ -127,7 +127,7 @@ sudo journalctl -u pihome -n 50
 **No GUI display:**
 ```bash
 # Grant X11 access
-xhost +local:pihome
+xhost +local:pihome-user
 ```
 
 **Still accessing hw:1,0:**
@@ -138,8 +138,8 @@ xhost +local:pihome
 sudo bash /usr/local/PiHome/setup/fix_audio_isolation.sh
 
 # Or manually:
-# 1. Remove pihome from audio group
-sudo gpasswd -d pihome audio
+# 1. Remove pihome-user from audio group
+sudo gpasswd -d pihome-user audio
 
 # 2. Reload udev rules
 sudo udevadm control --reload-rules
@@ -152,15 +152,15 @@ sudo reboot
 bash /usr/local/PiHome/setup/test_audio_permissions.sh
 ```
 
-**pihome is in audio group (causes hw:1,0 access):**
+**pihome-user is in audio group (causes hw:1,0 access):**
 ```bash
 # Remove from audio group immediately
-sudo gpasswd -d pihome audio
+sudo gpasswd -d pihome-user audio
 sudo systemctl restart pihome
 
 # Verify
-groups pihome
-# Should show: pihome (NOT audio)
+groups pihome-user
+# Should show: pihome-grp (NOT audio)
 ```
 
 ---

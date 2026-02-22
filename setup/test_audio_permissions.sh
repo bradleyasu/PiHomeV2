@@ -13,10 +13,10 @@ NC='\033[0m' # No Color
 
 # Test 1: Check users exist
 echo "[Test 1] Checking users..."
-if id -u pihome > /dev/null 2>&1; then
-    echo -e "${GREEN}✓${NC} pihome user exists"
+if id -u pihome-user > /dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} pihome-user exists"
 else
-    echo -e "${RED}✗${NC} pihome user NOT found"
+    echo -e "${RED}✗${NC} pihome-user NOT found"
     exit 1
 fi
 
@@ -30,16 +30,16 @@ fi
 echo ""
 echo "[Test 2] Checking group memberships..."
 
-if groups pihome | grep -q "^pihome" || groups pihome | grep -q " pihome"; then
-    echo -e "${GREEN}✓${NC} pihome is in 'pihome' group (can access hw:0,0)"
+if groups pihome-user | grep -q "^pihome-grp" || groups pihome-user | grep -q " pihome-grp"; then
+    echo -e "${GREEN}✓${NC} pihome-user is in 'pihome-grp' group (can access hw:0,0)"
 else
-    echo -e "${RED}✗${NC} pihome NOT in 'pihome' group"
+    echo -e "${RED}✗${NC} pihome-user NOT in 'pihome-grp' group"
 fi
 
-if groups pihome | grep -q audio; then
-    echo -e "${YELLOW}⚠${NC} WARNING: pihome is in 'audio' group (should be isolated)"
+if groups pihome-user | grep -q audio; then
+    echo -e "${YELLOW}⚠${NC} WARNING: pihome-user is in 'audio' group (should be isolated)"
 else
-    echo -e "${GREEN}✓${NC} pihome is NOT in 'audio' group (correct isolation)"
+    echo -e "${GREEN}✓${NC} pihome-user is NOT in 'audio' group (correct isolation)"
 fi
 
 if id -u shairport-sync > /dev/null 2>&1; then
@@ -54,13 +54,13 @@ fi
 echo ""
 echo "[Test 3] Checking device permissions..."
 
-# Check hw:0,0 (should be pihome group)
+# Check hw:0,0 (should be pihome-grp group)
 if [ -e /dev/snd/controlC0 ]; then
     CONTROL_GROUP=$(stat -c '%G' /dev/snd/controlC0 2>/dev/null || stat -f '%Sg' /dev/snd/controlC0 2>/dev/null)
-    if [ "$CONTROL_GROUP" = "pihome" ]; then
-        echo -e "${GREEN}✓${NC} /dev/snd/controlC0 owned by 'pihome' group"
+    if [ "$CONTROL_GROUP" = "pihome-grp" ]; then
+        echo -e "${GREEN}✓${NC} /dev/snd/controlC0 owned by 'pihome-grp' group"
     else
-        echo -e "${YELLOW}⚠${NC} /dev/snd/controlC0 owned by '$CONTROL_GROUP' (expected: pihome)"
+        echo -e "${YELLOW}⚠${NC} /dev/snd/controlC0 owned by '$CONTROL_GROUP' (expected: pihome-grp)"
     fi
     ls -l /dev/snd/controlC0
 else
@@ -97,32 +97,32 @@ echo ""
 echo "[Test 5] Testing device access (requires speaker-test)..."
 
 if command -v speaker-test > /dev/null 2>&1; then
-    # Test pihome access to hw:0,0 (should work)
-    echo -n "  Testing pihome access to hw:0,0... "
-    if sudo -u pihome speaker-test -D hw:0,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
+    # Test pihome-user access to hw:0,0 (should work)
+    echo -n "  Testing pihome-user access to hw:0,0... "
+    if sudo -u pihome-user speaker-test -D hw:0,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
         echo -e "${GREEN}✓ SUCCESS${NC}"
     else
         echo -e "${RED}✗ FAILED${NC}"
     fi
 
-    # Test pihome access to hw:1,0 (should fail)
-    echo -n "  Testing pihome access to hw:1,0... "
-    if sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
+    # Test pihome-user access to hw:1,0 (should fail)
+    echo -n "  Testing pihome-user access to hw:1,0... "
+    if sudo -u pihome-user speaker-test -D hw:1,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
         echo -e "${RED}✗ UNEXPECTED SUCCESS (should be denied)${NC}"
         echo ""
-        echo "=== TROUBLESHOOTING: pihome can access hw:1,0 ==="
+        echo "=== TROUBLESHOOTING: pihome-user can access hw:1,0 ==="
         echo ""
         echo "This should NOT happen. The isolation is broken."
         echo ""
         echo "Possible causes and fixes:"
         echo ""
-        echo "1. Check if pihome user is in audio group (should NOT be):"
-        echo "   $ groups pihome"
-        if groups pihome | grep -q audio; then
-            echo -e "   ${RED}FOUND: pihome IS in audio group${NC}"
-            echo "   FIX: sudo gpasswd -d pihome audio"
+        echo "1. Check if pihome-user is in audio group (should NOT be):"
+        echo "   $ groups pihome-user"
+        if groups pihome-user | grep -q audio; then
+            echo -e "   ${RED}FOUND: pihome-user IS in audio group${NC}"
+            echo "   FIX: sudo gpasswd -d pihome-user audio"
         else
-            echo -e "   ${GREEN}OK: pihome is NOT in audio group${NC}"
+            echo -e "   ${GREEN}OK: pihome-user is NOT in audio group${NC}"
         fi
         echo ""
         echo "2. Check device permissions on hw:1,0:"
@@ -184,7 +184,7 @@ echo ""
 echo "=== Test Complete ==="
 echo ""
 echo "Expected results:"
-echo "  ✓ pihome can access hw:0,0"
-echo "  ✓ pihome CANNOT access hw:1,0 (permission denied)"
+echo "  ✓ pihome-user can access hw:0,0"
+echo "  ✓ pihome-user CANNOT access hw:1,0 (permission denied)"
 echo "  ✓ shairport-sync can access hw:1,0"
 echo ""

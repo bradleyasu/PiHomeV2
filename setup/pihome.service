@@ -5,8 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pihome
-Group=pihome
+User=pihome-user
+Group=pihome-grp
 WorkingDirectory=/usr/local/PiHome
 Environment="KIVY_AUDIO=sdl2"
 Environment="KIVY_VIDEO=null"
