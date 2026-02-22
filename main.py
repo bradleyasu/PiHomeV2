@@ -1,8 +1,6 @@
 import os
 
-from networking.poller import POLLER
-from services.homeassistant.homeassistant import HOME_ASSISTANT
-
+# CRITICAL: Set environment variables BEFORE any imports that might initialize SDL/audio
 # Disable Kivy audio - we use direct ffmpeg/ffplay subprocess calls instead
 # This prevents audio backend from probing/interfering with hw:1,0 (DAC)
 os.environ["KIVY_AUDIO"] = "sdl2"  # SDL2 won't initialize on headless systems
@@ -11,6 +9,10 @@ os.environ["KIVY_VIDEO"] = "null"
 os.environ["SDL_AUDIODRIVER"] = "dummy"
 # Prevent pygame from initializing if accidentally imported
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+
+# Now safe to import modules (after env vars are set)
+from networking.poller import POLLER
+from services.homeassistant.homeassistant import HOME_ASSISTANT
 
 from kivy.config import Config
 from kivy.graphics import Line
