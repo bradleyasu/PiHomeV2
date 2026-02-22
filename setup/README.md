@@ -22,7 +22,15 @@ Configuration files and scripts for deploying PiHome on Raspberry Pi.
   - Tests user permissions
   - Verifies device access (pihome should NOT access hw:1,0)
   - Checks service status
+  - **Provides troubleshooting if isolation is broken**
   - **Usage:** `bash test_audio_permissions.sh`
+
+- **`fix_audio_isolation.sh`** - **Emergency fix if isolation is broken**
+  - Removes pihome from audio group
+  - Manually fixes device permissions
+  - Reloads udev rules
+  - Tests isolation after fix
+  - **Usage:** `sudo bash fix_audio_isolation.sh`
 
 - **`install.sh`** - Original installation script (deprecated)
 - **`install-service.sh`** - Service installation (use setup_audio_permissions.sh instead)
@@ -68,6 +76,9 @@ sudo systemctl start pihome
 
 # 8. Test permissions
 bash /usr/local/PiHome/setup/test_audio_permissions.sh
+
+# If test shows pihome can access hw:1,0, run emergency fix:
+# sudo bash /usr/local/PiHome/setup/fix_audio_isolation.sh
 ```
 
 See **AUDIO_ISOLATION_GUIDE.md** for full details.
@@ -121,12 +132,35 @@ xhost +local:pihome
 
 **Still accessing hw:1,0:**
 ```bash
-# Verify permissions
-ls -l /dev/snd/controlC1
-# Should show: crw-rw---- 1 root audio
+# THIS IS CRITICAL - Isolation is broken!
 
-# Test isolation
+# Run emergency fix script
+sudo bash /usr/local/PiHome/setup/fix_audio_isolation.sh
+
+# Or manually:
+# 1. Remove pihome from audio group
+sudo gpasswd -d pihome audio
+
+# 2. Reload udev rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# 3. Reboot
+sudo reboot
+
+# 4. Test again
 bash /usr/local/PiHome/setup/test_audio_permissions.sh
+```
+
+**pihome is in audio group (causes hw:1,0 access):**
+```bash
+# Remove from audio group immediately
+sudo gpasswd -d pihome audio
+sudo systemctl restart pihome
+
+# Verify
+groups pihome
+# Should show: pihome (NOT audio)
 ```
 
 ---

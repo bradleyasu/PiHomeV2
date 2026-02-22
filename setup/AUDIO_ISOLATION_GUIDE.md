@@ -239,6 +239,80 @@ sudo reboot
 
 ---
 
+### PiHome Can Access hw:1,0 (Isolation Broken)
+
+**This is the critical issue!** If pihome can access hw:1,0, the isolation isn't working.
+
+**Diagnosis Steps:**
+
+```bash
+# 1. Check if pihome is in audio group (SHOULD NOT BE)
+groups pihome
+# Should show: pihome
+# Should NOT show: audio
+
+# 2. Check device permissions
+ls -l /dev/snd/controlC1
+# Should show: crw-rw---- 1 root audio
+
+# 3. Try to access as pihome (should fail)
+sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1
+# Should show: "Permission denied" or "No such device"
+```
+
+**Fix Steps:**
+
+```bash
+# QUICK FIX: Run the emergency fix script
+cd /usr/local/PiHome/setup
+sudo bash fix_audio_isolation.sh
+
+# This script will automatically:
+# - Remove pihome from audio group
+# - Fix device permissions
+# - Reload udev rules
+# - Test the isolation
+
+# OR manually:
+
+# Step 1: Remove pihome from audio group if present
+sudo gpasswd -d pihome audio
+
+# Step 2: Verify udev rules file exists and is correct
+cat /etc/udev/rules.d/99-audio-isolation.rules
+# Should show hw:1,0 devices assigned to audio group
+
+# Step 3: Fix device ownership manually (temporary)
+sudo chgrp audio /dev/snd/controlC1
+sudo chgrp audio /dev/snd/pcmC1D0p
+sudo chmod 0660 /dev/snd/controlC1
+sudo chmod 0660 /dev/snd/pcmC1D0p
+
+# Step 4: Reload udev rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# Step 5: Test again
+sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1
+# Should now fail with "Permission denied"
+
+# Step 6: If still not working, rerun setup script
+cd /usr/local/PiHome/setup
+sudo bash setup_audio_permissions.sh
+
+# Step 7: Reboot to ensure all changes take effect
+sudo reboot
+```
+
+**After reboot, verify:**
+```bash
+groups pihome                    # Should NOT include 'audio'
+ls -l /dev/snd/controlC1         # Should be owned by 'audio' group
+sudo -u pihome aplay -D hw:1,0   # Should fail with permission denied
+```
+
+---
+
 ## Rollback (if needed)
 
 ```bash

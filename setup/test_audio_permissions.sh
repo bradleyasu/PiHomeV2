@@ -109,6 +109,43 @@ if command -v speaker-test > /dev/null 2>&1; then
     echo -n "  Testing pihome access to hw:1,0... "
     if sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
         echo -e "${RED}✗ UNEXPECTED SUCCESS (should be denied)${NC}"
+        echo ""
+        echo "=== TROUBLESHOOTING: pihome can access hw:1,0 ==="
+        echo ""
+        echo "This should NOT happen. The isolation is broken."
+        echo ""
+        echo "Possible causes and fixes:"
+        echo ""
+        echo "1. Check if pihome user is in audio group (should NOT be):"
+        echo "   $ groups pihome"
+        if groups pihome | grep -q audio; then
+            echo -e "   ${RED}FOUND: pihome IS in audio group${NC}"
+            echo "   FIX: sudo gpasswd -d pihome audio"
+        else
+            echo -e "   ${GREEN}OK: pihome is NOT in audio group${NC}"
+        fi
+        echo ""
+        echo "2. Check device permissions on hw:1,0:"
+        echo "   $ ls -l /dev/snd/controlC1"
+        ls -l /dev/snd/controlC1
+        ACTUAL_GROUP=$(stat -c '%G' /dev/snd/controlC1 2>/dev/null || stat -f '%Sg' /dev/snd/controlC1 2>/dev/null)
+        if [ "$ACTUAL_GROUP" != "audio" ]; then
+            echo -e "   ${RED}WRONG: Group is '$ACTUAL_GROUP' (should be 'audio')${NC}"
+            echo "   FIX: sudo chgrp audio /dev/snd/controlC1"
+        else
+            echo -e "   ${GREEN}OK: Group is 'audio'${NC}"
+        fi
+        echo ""
+        echo "3. Reload udev rules and reapply permissions:"
+        echo "   $ sudo udevadm control --reload-rules"
+        echo "   $ sudo udevadm trigger"
+        echo ""
+        echo "4. If still failing, run setup script again:"
+        echo "   $ sudo bash /usr/local/PiHome/setup/setup_audio_permissions.sh"
+        echo ""
+        echo "5. After fixing, reboot to ensure all changes take effect:"
+        echo "   $ sudo reboot"
+        echo ""
     else
         echo -e "${GREEN}✓ DENIED (as expected)${NC}"
     fi
