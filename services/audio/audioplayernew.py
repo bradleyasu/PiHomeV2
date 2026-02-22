@@ -180,12 +180,10 @@ class AudioPlayer:
 
 
     def find_sound_device(self):
-        PIHOME_LOGGER.info("Finding sound device")
+        """Only called when device is not specified in config"""
+        PIHOME_LOGGER.info("Auto-detecting sound device")
         # Lazy import sounddevice only when needed
         import sounddevice as sd
-        # Don't terminate/reinitialize - just query existing state
-        # sd._terminate()
-        # sd._initialize()
         try:
             devices = sd.query_devices()
             for device in devices:

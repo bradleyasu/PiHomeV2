@@ -7,9 +7,12 @@ from services.homeassistant.homeassistant import HOME_ASSISTANT
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
-# Configure ALSA to use hw:0,0 for sound effects (ffpyplayer backend)
-os.environ["AUDIODEV"] = "hw:0,0"
-os.environ["ALSA_CARD"] = "0"
+# Configure ALSA for PiHome process to use hw:0,0 for SFX (ffpyplayer)
+# This prevents interference with shairport-sync on hw:1,0 (DAC)
+import pathlib
+_asoundrc = pathlib.Path(__file__).parent / ".asoundrc"
+if _asoundrc.exists():
+    os.environ["ALSA_CONFIG_PATH"] = str(_asoundrc)
 
 from kivy.config import Config
 from kivy.graphics import Line

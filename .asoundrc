@@ -1,0 +1,13 @@
+# ALSA configuration for PiHome process only
+# This ensures ffpyplayer (sound effects) uses hw:0,0 instead of hw:1,0 (DAC)
+
+pcm.!default {
+    type hw
+    card 0
+    device 0
+}
+
+ctl.!default {
+    type hw
+    card 0
+}
