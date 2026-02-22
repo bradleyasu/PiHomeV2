@@ -12,11 +12,8 @@ os.environ["SDL_AUDIODRIVER"] = "dummy"
 os.environ["SDL_DISKAUDIO_NWRITE"] = "0"  # Disable disk audio
 os.environ["SDL_DISKAUDIODEVICE"] = "/dev/null"  # Redirect disk audio
 os.environ["AUDIODEV"] = "/dev/null"  # Prevent ALSA device enumeration
-# Use EGL window provider on Raspberry Pi to avoid SDL audio interference
-# On other platforms (macOS, etc.) use default SDL2
-if platform.system() == 'Linux':
-    # Only use egl_rpi on Linux (Raspberry Pi)
-    os.environ["KIVY_WINDOW"] = "egl_rpi"
+# Let Kivy use default SDL2 window provider (works on all platforms)
+# The critical setting is SDL_AUDIODRIVER=dummy to prevent audio device scanning
 # Prevent pygame from initializing if accidentally imported
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
