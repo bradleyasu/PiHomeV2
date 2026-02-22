@@ -7,6 +7,12 @@ os.environ["KIVY_AUDIO"] = "sdl2"  # SDL2 won't initialize on headless systems
 os.environ["KIVY_VIDEO"] = "null"
 # Prevent SDL2 from probing audio devices entirely
 os.environ["SDL_AUDIODRIVER"] = "dummy"
+# Additional SDL environment variables to prevent audio interference
+os.environ["SDL_DISKAUDIO_NWRITE"] = "0"  # Disable disk audio
+os.environ["SDL_DISKAUDIODEVICE"] = "/dev/null"  # Redirect disk audio
+os.environ["AUDIODEV"] = "/dev/null"  # Prevent ALSA device enumeration
+# Try using EGL window provider instead of SDL2 to avoid SDL audio interference
+os.environ["KIVY_WINDOW"] = "egl_rpi"
 # Prevent pygame from initializing if accidentally imported
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 

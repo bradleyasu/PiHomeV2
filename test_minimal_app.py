@@ -9,6 +9,7 @@ import sys
 os.environ["SDL_AUDIODRIVER"] = "dummy"
 os.environ["KIVY_AUDIO"] = "sdl2"
 os.environ["KIVY_VIDEO"] = "null"
+os.environ["KIVY_WINDOW"] = "egl_rpi"  # Use EGL instead of SDL2 for window
 
 print("Starting minimal PiHome app for 10 seconds...")
 print("="*60)

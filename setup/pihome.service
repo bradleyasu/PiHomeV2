@@ -9,6 +9,7 @@ User=root
 WorkingDirectory=/usr/local/PiHome
 Environment="KIVY_AUDIO=sdl2"
 Environment="KIVY_VIDEO=null"
+Environment="KIVY_WINDOW=egl_rpi"
 Environment="SDL_AUDIODRIVER=dummy"
 Environment="DISPLAY=:0"
 Environment="HOME=/root"
