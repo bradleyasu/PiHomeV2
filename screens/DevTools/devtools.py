@@ -6,7 +6,6 @@ from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty
 
 
-from kivy.core.audio import SoundLoader
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage

@@ -7,6 +7,8 @@ from services.homeassistant.homeassistant import HOME_ASSISTANT
 # This prevents audio backend from probing/interfering with hw:1,0 (DAC)
 os.environ["KIVY_AUDIO"] = "sdl2"  # SDL2 won't initialize on headless systems
 os.environ["KIVY_VIDEO"] = "null"
+# Prevent SDL2 from probing audio devices entirely
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 # Configure ALSA for PiHome process to use hw:0,0
 # This prevents interference with shairport-sync on hw:1,0 (DAC)
