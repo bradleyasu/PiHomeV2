@@ -1,0 +1,153 @@
+#!/bin/bash
+# Test audio device permissions after setup
+# Run this on the Raspberry Pi to verify the isolation is working
+
+echo "=== Audio Device Permission Test ==="
+echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Test 1: Check users exist
+echo "[Test 1] Checking users..."
+if id -u pihome > /dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} pihome user exists"
+else
+    echo -e "${RED}✗${NC} pihome user NOT found"
+    exit 1
+fi
+
+if id -u shairport-sync > /dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} shairport-sync user exists"
+else
+    echo -e "${YELLOW}⚠${NC} shairport-sync user NOT found (install shairport-sync first)"
+fi
+
+# Test 2: Check groups
+echo ""
+echo "[Test 2] Checking group memberships..."
+
+if groups pihome | grep -q "^pihome" || groups pihome | grep -q " pihome"; then
+    echo -e "${GREEN}✓${NC} pihome is in 'pihome' group (can access hw:0,0)"
+else
+    echo -e "${RED}✗${NC} pihome NOT in 'pihome' group"
+fi
+
+if groups pihome | grep -q audio; then
+    echo -e "${YELLOW}⚠${NC} WARNING: pihome is in 'audio' group (should be isolated)"
+else
+    echo -e "${GREEN}✓${NC} pihome is NOT in 'audio' group (correct isolation)"
+fi
+
+if id -u shairport-sync > /dev/null 2>&1; then
+    if groups shairport-sync | grep -q audio; then
+        echo -e "${GREEN}✓${NC} shairport-sync is in 'audio' group (can access hw:1,0)"
+    else
+        echo -e "${RED}✗${NC} shairport-sync NOT in 'audio' group"
+    fi
+fi
+
+# Test 3: Check device permissions
+echo ""
+echo "[Test 3] Checking device permissions..."
+
+# Check hw:0,0 (should be pihome group)
+if [ -e /dev/snd/controlC0 ]; then
+    CONTROL_GROUP=$(stat -c '%G' /dev/snd/controlC0 2>/dev/null || stat -f '%Sg' /dev/snd/controlC0 2>/dev/null)
+    if [ "$CONTROL_GROUP" = "pihome" ]; then
+        echo -e "${GREEN}✓${NC} /dev/snd/controlC0 owned by 'pihome' group"
+    else
+        echo -e "${YELLOW}⚠${NC} /dev/snd/controlC0 owned by '$CONTROL_GROUP' (expected: pihome)"
+    fi
+    ls -l /dev/snd/controlC0
+else
+    echo -e "${YELLOW}⚠${NC} /dev/snd/controlC0 not found"
+fi
+
+# Check hw:1,0 (should be audio group)
+if [ -e /dev/snd/controlC1 ]; then
+    CONTROL_GROUP=$(stat -c '%G' /dev/snd/controlC1 2>/dev/null || stat -f '%Sg' /dev/snd/controlC1 2>/dev/null)
+    if [ "$CONTROL_GROUP" = "audio" ]; then
+        echo -e "${GREEN}✓${NC} /dev/snd/controlC1 owned by 'audio' group"
+    else
+        echo -e "${YELLOW}⚠${NC} /dev/snd/controlC1 owned by '$CONTROL_GROUP' (expected: audio)"
+    fi
+    ls -l /dev/snd/controlC1
+else
+    echo -e "${YELLOW}⚠${NC} /dev/snd/controlC1 not found (hw:1,0 may not be connected)"
+fi
+
+# Test 4: Check udev rules
+echo ""
+echo "[Test 4] Checking udev rules..."
+
+if [ -f /etc/udev/rules.d/99-audio-isolation.rules ]; then
+    echo -e "${GREEN}✓${NC} /etc/udev/rules.d/99-audio-isolation.rules exists"
+    echo "   Content:"
+    cat /etc/udev/rules.d/99-audio-isolation.rules | grep -v '^#' | grep -v '^$' | sed 's/^/   /'
+else
+    echo -e "${RED}✗${NC} udev rules file NOT found"
+fi
+
+# Test 5: Test actual device access
+echo ""
+echo "[Test 5] Testing device access (requires speaker-test)..."
+
+if command -v speaker-test > /dev/null 2>&1; then
+    # Test pihome access to hw:0,0 (should work)
+    echo -n "  Testing pihome access to hw:0,0... "
+    if sudo -u pihome speaker-test -D hw:0,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ SUCCESS${NC}"
+    else
+        echo -e "${RED}✗ FAILED${NC}"
+    fi
+
+    # Test pihome access to hw:1,0 (should fail)
+    echo -n "  Testing pihome access to hw:1,0... "
+    if sudo -u pihome speaker-test -D hw:1,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
+        echo -e "${RED}✗ UNEXPECTED SUCCESS (should be denied)${NC}"
+    else
+        echo -e "${GREEN}✓ DENIED (as expected)${NC}"
+    fi
+
+    # Test shairport-sync access to hw:1,0 (should work)
+    if id -u shairport-sync > /dev/null 2>&1; then
+        echo -n "  Testing shairport-sync access to hw:1,0... "
+        if sudo -u shairport-sync speaker-test -D hw:1,0 -c 2 -t sine -l 1 > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ SUCCESS${NC}"
+        else
+            echo -e "${RED}✗ FAILED${NC}"
+        fi
+    fi
+else
+    echo -e "${YELLOW}⚠${NC} speaker-test not found, skipping access tests"
+    echo "   Install with: sudo apt-get install alsa-utils"
+fi
+
+# Test 6: List all sound devices
+echo ""
+echo "[Test 6] Sound devices:"
+ls -lh /dev/snd/ 2>/dev/null | grep -v '^total'
+
+# Test 7: Check service status
+echo ""
+echo "[Test 7] Service status:"
+if systemctl is-active --quiet pihome; then
+    echo -e "${GREEN}✓${NC} pihome service is running"
+    echo "  User: $(systemctl show pihome -p User --value)"
+    echo "  Group: $(systemctl show pihome -p Group --value)"
+else
+    echo -e "${YELLOW}⚠${NC} pihome service is not running"
+fi
+
+echo ""
+echo "=== Test Complete ==="
+echo ""
+echo "Expected results:"
+echo "  ✓ pihome can access hw:0,0"
+echo "  ✓ pihome CANNOT access hw:1,0 (permission denied)"
+echo "  ✓ shairport-sync can access hw:1,0"
+echo ""

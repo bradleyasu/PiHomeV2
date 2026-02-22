@@ -5,12 +5,15 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
+User=pihome
+Group=pihome
 WorkingDirectory=/usr/local/PiHome
-Environment="KIVY_AUDIO=ffpyplayer"
-Environment="KIVY_VIDEO=video_ffpyplayer"
+Environment="KIVY_AUDIO=sdl2"
+Environment="KIVY_VIDEO=null"
+Environment="SDL_AUDIODRIVER=dummy"
 Environment="DISPLAY=:0"
-Environment="HOME=/root"
+Environment="HOME=/usr/local/PiHome"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
 ExecStart=/usr/bin/python3 /usr/local/PiHome/main.py
 Restart=on-failure
 RestartSec=10
