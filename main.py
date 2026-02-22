@@ -9,13 +9,8 @@ os.environ["KIVY_AUDIO"] = "sdl2"  # SDL2 won't initialize on headless systems
 os.environ["KIVY_VIDEO"] = "null"
 # Prevent SDL2 from probing audio devices entirely
 os.environ["SDL_AUDIODRIVER"] = "dummy"
-
-# Configure ALSA for PiHome process to use hw:0,0
-# This prevents interference with shairport-sync on hw:1,0 (DAC)
-import pathlib
-_asoundrc = pathlib.Path(__file__).parent / ".asoundrc"
-if _asoundrc.exists():
-    os.environ["ALSA_CONFIG_PATH"] = str(_asoundrc)
+# Prevent pygame from initializing if accidentally imported
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 from kivy.config import Config
 from kivy.graphics import Line
