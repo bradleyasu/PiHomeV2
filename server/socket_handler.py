@@ -3,7 +3,7 @@
 import json
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from events.pihomeevent import PihomeEventFactory
-from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+# PIHOME_SCREEN_MANAGER import removed - was unused
 from services.audio.audioplayernew import AUDIO_PLAYER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE

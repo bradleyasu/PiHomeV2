@@ -1,4 +1,5 @@
 import os
+import platform
 
 # CRITICAL: Set environment variables BEFORE any imports that might initialize SDL/audio
 # Disable Kivy audio - we use direct ffmpeg/ffplay subprocess calls instead
@@ -11,8 +12,11 @@ os.environ["SDL_AUDIODRIVER"] = "dummy"
 os.environ["SDL_DISKAUDIO_NWRITE"] = "0"  # Disable disk audio
 os.environ["SDL_DISKAUDIODEVICE"] = "/dev/null"  # Redirect disk audio
 os.environ["AUDIODEV"] = "/dev/null"  # Prevent ALSA device enumeration
-# Try using EGL window provider instead of SDL2 to avoid SDL audio interference
-os.environ["KIVY_WINDOW"] = "egl_rpi"
+# Use EGL window provider on Raspberry Pi to avoid SDL audio interference
+# On other platforms (macOS, etc.) use default SDL2
+if platform.system() == 'Linux':
+    # Only use egl_rpi on Linux (Raspberry Pi)
+    os.environ["KIVY_WINDOW"] = "egl_rpi"
 # Prevent pygame from initializing if accidentally imported
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
@@ -24,10 +28,14 @@ from kivy.config import Config
 from kivy.graphics import Line
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from services.taskmanager.taskmanager import TASK_MANAGER
-from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 
 Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
+
+# NOW safe to import screen manager - it uses a lazy proxy that won't instantiate
+# until first accessed, which happens after Config.set() above
+from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+
 from components.Hamburger.hamburger import Hamburger
 
 from networking.poller import POLLER

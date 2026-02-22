@@ -126,5 +126,40 @@ class TimerDrawer(GridLayout):
         animation.start(self)
 
 
-TIMER_DRAWER = TimerDrawer() 
+# Lazy proxy to avoid Window initialization during import
+_REAL_TIMER_DRAWER = None
+
+class _TimerDrawerProxy:
+    """Proxy that creates the real timer drawer on first access"""
+    
+    def _get_real_drawer(self):
+        global _REAL_TIMER_DRAWER
+        if _REAL_TIMER_DRAWER is None:
+            _REAL_TIMER_DRAWER = TimerDrawer()
+        return _REAL_TIMER_DRAWER
+    
+    def __getattr__(self, name):
+        return getattr(self._get_real_drawer(), name)
+    
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._get_real_drawer(), name, value)
+    
+    @property
+    def __class__(self):
+        if _REAL_TIMER_DRAWER is not None:
+            return _REAL_TIMER_DRAWER.__class__
+        return TimerDrawer
+    
+    def __bool__(self):
+        return True
+    
+    def __repr__(self):
+        if _REAL_TIMER_DRAWER is None:
+            return "<TimerDrawer (not yet initialized)>"
+        return repr(_REAL_TIMER_DRAWER)
+
+TIMER_DRAWER = _TimerDrawerProxy()
     

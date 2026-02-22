@@ -4,12 +4,16 @@ Minimal PiHome app that exits after 10 seconds to test if App itself breaks hw:1
 """
 import os
 import sys
+import platform
 
 # Must set BEFORE importing Kivy
 os.environ["SDL_AUDIODRIVER"] = "dummy"
 os.environ["KIVY_AUDIO"] = "sdl2"
 os.environ["KIVY_VIDEO"] = "null"
-os.environ["KIVY_WINDOW"] = "egl_rpi"  # Use EGL instead of SDL2 for window
+os.environ["AUDIODEV"] = "/dev/null"
+# Only use egl_rpi on Linux (Raspberry Pi)
+if platform.system() == 'Linux':
+    os.environ["KIVY_WINDOW"] = "egl_rpi"
 
 print("Starting minimal PiHome app for 10 seconds...")
 print("="*60)
@@ -27,6 +31,8 @@ print("Importing PiHome modules...")
 from services.audio.audioplayernew import AUDIO_PLAYER
 from services.audio.sfx import SFX
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+
+print("Modules imported successfully")
 
 class MinimalPiHomeTest(App):
     def build(self):

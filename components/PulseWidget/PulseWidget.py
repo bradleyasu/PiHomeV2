@@ -1,4 +1,3 @@
-
 from kivy.clock import Clock
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
@@ -10,7 +9,7 @@ from kivy.uix.image import Image
 from interface.pihomescreen import PiHomeScreen
 from kivy.lang import Builder
 
-from services.audio.sfx import SFX
+# SFX import removed - not used in this module
 
 
 # Plasma shader
@@ -125,4 +124,39 @@ class PluseWidget(FloatLayout):
         self.canvas['frag_modelview_mat'] = win_rc['frag_modelview_mat']
 
 
-PULSER = PluseWidget(fs=pulse_shader)
+# Lazy proxy to avoid Window initialization during import
+_REAL_PULSER = None
+
+class _PulserProxy:
+    """Proxy that creates the real pulser on first access"""
+    
+    def _get_real_pulser(self):
+        global _REAL_PULSER
+        if _REAL_PULSER is None:
+            _REAL_PULSER = PluseWidget(fs=pulse_shader)
+        return _REAL_PULSER
+    
+    def __getattr__(self, name):
+        return getattr(self._get_real_pulser(), name)
+    
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._get_real_pulser(), name, value)
+    
+    @property
+    def __class__(self):
+        if _REAL_PULSER is not None:
+            return _REAL_PULSER.__class__
+        return PluseWidget
+    
+    def __bool__(self):
+        return True
+    
+    def __repr__(self):
+        if _REAL_PULSER is None:
+            return "<PluseWidget (not yet initialized)>"
+        return repr(_REAL_PULSER)
+
+PULSER = _PulserProxy()

@@ -4,7 +4,7 @@ import json
 import socketserver
 import time
 from events.pihomeevent import PihomeEventFactory
-from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+# PIHOME_SCREEN_MANAGER import removed - was unused
 from server.socket_handler import SocketHandler
 import websockets
 import asyncio

@@ -202,8 +202,44 @@ class PiHomeScreenManager(ScreenManager):
         
         self.screens_loaded = True
 
-        
-PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=NoTransition())
-# Ensure the screen manager fills its parent and has explicit size
-PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
-PIHOME_SCREEN_MANAGER.size = (800, 480)  # Default size, will be updated by parent
+
+# Lazy proxy to avoid Window initialization during import
+# When any code accesses PIHOME_SCREEN_MANAGER, it creates the instance on-demand
+_REAL_SCREEN_MANAGER = None
+
+class _ScreenManagerProxy:
+    """Proxy that creates the real screen manager on first access"""
+    
+    def _get_real_manager(self):
+        global _REAL_SCREEN_MANAGER
+        if _REAL_SCREEN_MANAGER is None:
+            _REAL_SCREEN_MANAGER = PiHomeScreenManager(transition=NoTransition())
+            _REAL_SCREEN_MANAGER.size_hint = (1, 1)
+            _REAL_SCREEN_MANAGER.size = (800, 480)
+        return _REAL_SCREEN_MANAGER
+    
+    def __getattr__(self, name):
+        return getattr(self._get_real_manager(), name)
+    
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._get_real_manager(), name, value)
+    
+    # Make isinstance() checks pass
+    @property
+    def __class__(self):
+        if _REAL_SCREEN_MANAGER is not None:
+            return _REAL_SCREEN_MANAGER.__class__
+        return PiHomeScreenManager
+    
+    def __bool__(self):
+        return True
+    
+    def __repr__(self):
+        if _REAL_SCREEN_MANAGER is None:
+            return "<PiHomeScreenManager (not yet initialized)>"
+        return repr(_REAL_SCREEN_MANAGER)
+
+PIHOME_SCREEN_MANAGER = _ScreenManagerProxy()
