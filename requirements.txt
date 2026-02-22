@@ -7,5 +7,4 @@ Pillow==10.2.0
 pygame==2.5.2
 qrcode==7.3.1
 Requests==2.31.0
-sounddevice==0.4.6
 websockets==12.0

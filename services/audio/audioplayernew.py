@@ -1,14 +1,15 @@
 import json
 import os
-import queue
 import subprocess
 import sys
+import signal
 from time import sleep
 
 import ffmpeg
-# Don't import sounddevice at module level - it initializes PortAudio and locks the DAC
-# import sounddevice as sd
-import numpy as np
+# PortAudio/sounddevice removed - using direct ffmpeg subprocess to avoid device scanning
+# This prevents PortAudio from probing/locking ALL audio devices at initialization,
+# which was interfering with other audio services like shairport-sync.
+# Now ffmpeg outputs directly to ALSA without scanning other devices.
 from util.phlog import PIHOME_LOGGER
 from util.configuration import CONFIG
 from threading import Thread
@@ -51,26 +52,12 @@ class AudioPlayer:
     saved_urls =[]
 
 
-    def __init__(self, device=None, blocksize=4096, buffersize=512):
-        self.device = device
-        self.blocksize = blocksize
-        self.buffersize = buffersize
-        # self.q = queue.Queue(maxsize=self.buffersize)
-        self.q_in = queue.Queue()
-        self.q_out = queue.Queue()
-        self.q_raw = queue.Queue()
-        self.stream = None
+    def __init__(self, device=None):
+        self.device = device if device else "default"  # ALSA device name
         self.process = None
         self.paused = False
-        self.empty_buffer = False
-        # Don't probe audio device at init - do it lazily when needed
-        # This prevents locking the device when PiHome starts
-        # if self.device is None:
-        #     self.device = self.find_sound_device()
-
-        # start audio procesing thread
-        self.thread = Thread(target=self.audio_processing_thread, daemon=True)
-        self.thread.start()
+        # No PortAudio initialization - using ffmpeg subprocess instead
+        PIHOME_LOGGER.info(f"AudioPlayer initialized with ALSA device: {self.device}")
 
         # deserialize saved urls
         self.deserialize_saved_urls()
@@ -178,32 +165,7 @@ class AudioPlayer:
         self.saved_urls.append({"text": text, "url": url, "thumbnail": thumbnail})
         self.serialize_saved_urls()
 
-
-    def find_sound_device(self):
-        """Only called when device is not specified in config"""
-        PIHOME_LOGGER.info("Auto-detecting sound device")
-        # Lazy import sounddevice only when needed
-        import sounddevice as sd
-        try:
-            devices = sd.query_devices()
-            for device in devices:
-                if device['max_output_channels'] > 0:
-                    PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
-                    return device['name']
-            PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
-            self.log_sound_devices()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error finding sound device: {e}")
-        return None
-    
-    def log_sound_devices(self):
-        import sounddevice as sd
-        devices = sd.query_devices()
-        PIHOME_LOGGER.warn("Sound Devices:")
-        PIHOME_LOGGER.warn("-----------------")
-        for device in devices:
-            PIHOME_LOGGER.warn(device)
-        PIHOME_LOGGER.warn("-----------------")
+    # PortAudio methods removed - no longer needed with ffmpeg subprocess
     
     def int_or_str(self, text):
         """Helper function for argument parsing."""
@@ -233,57 +195,11 @@ class AudioPlayer:
         self.current_state = state
         self.notify_state_listeners(state)
 
-    def audio_processing_thread(self):
-        PIHOME_LOGGER.info("Starting audio processing thread")
-        while True:
-            try:
-                # data = self.q_in.get_nowait()
-                data = self.q_in.get()
-                # self.data = data
-            except queue.Empty:
-                continue
-
-            # Perform the expensive operations here
-            data = np.frombuffer(data, dtype='float32')
-            self.q_out.put(data)
-            # vol_data = data * self.volume
-            # self.q_out.put(vol_data)
-            # sleep(0.01)
-        PIHOME_LOGGER.info("Exiting audio processing thread")
-
-    def callback(self, outdata, frames, time, status):
-        if status.output_underflow:
-            print('Output underflow: increase blocksize?', file=sys.stderr)
-            outdata[:] = bytes(len(outdata))
-            return
-
-        try:
-            data = self.q_out.get_nowait()
-            # data is a np.frombuffer but we need to set self.data to buffer
-            self.data = data.tobytes()
-        except queue.Empty:
-            print('Buffer is empty: increase buffersize?', file=sys.stderr)
-            outdata[:] = bytes(len(outdata))
-            return
-
-        # Convert the numpy array data to bytes
-        vol_data = data * self.volume
-        try:
-            outdata[:] = vol_data.tobytes()
-        except:
-            self.stop()
-
     def play(self, url, reset_playlist=True):
-        # ensure device is found - only auto-detect if not specified in config
-        if self.device is None:
-            self.device = self.find_sound_device()
-            PIHOME_LOGGER.info(f"Auto-detected audio device: {self.device}")
-        else:
-            PIHOME_LOGGER.info(f"Using configured audio device: {self.device}")
+        PIHOME_LOGGER.info(f"Playing audio on ALSA device: {self.device}")
         self.stop()
         if reset_playlist:
             self.clear_playlist()
-        self.empty_buffer = False
         self.player_thread = Thread(target=self._play, args=(url,), daemon=True)
         self.player_thread.start()
 
@@ -317,86 +233,57 @@ class AudioPlayer:
             self.current_folder = url
             return
 
-        if not is_local:
-            try:
-                info = ffmpeg.probe(url)
-            except ffmpeg.Error as e:
-                PIHOME_LOGGER.error(e)
-                PIHOME_LOGGER.error(e.stderr)
-                self.stop()
-                return
-
-            streams = info.get('streams', [])
-            if len(streams) != 1:
-                PIHOME_LOGGER.error('There must be exactly one stream available')
-                self.stop()
-                return
-                
-
-            stream = streams[0]
-
-            if stream.get('codec_type') != 'audio':
-                PIHOME_LOGGER.error('The stream must be an audio stream')
-                return
-
-            channels = stream['channels']
-            samplerate = float(stream['sample_rate'])
-        else:
-            channels = 2
-            samplerate = 44100
+        if is_local:
             self.extract_metadata(url)
             
         self.set_state(AudioState.BUFFERING)
         try:
-            PIHOME_LOGGER.info('Opening stream {} ...'.format(url))
-            self.process = ffmpeg.input(url).output(
-                'pipe:',
-                format='f32le',
-                acodec='pcm_f32le',
-                ac=channels,
-                ar=samplerate,
-                loglevel='quiet',
-                reconnect=1,
-                reconnect_streamed=1,
-                reconnect_delay_max=5,
-            ).run_async(pipe_stdout=True)
-            # Lazy import sounddevice when actually playing
-            import sounddevice as sd
-            self.stream = sd.RawOutputStream(samplerate=samplerate, blocksize=self.blocksize, device=self.device, channels=channels, dtype='float32', callback=self.callback)
-            read_size = self.blocksize * channels * self.stream.samplesize
-            PIHOME_LOGGER.info('Buffering {} ...'.format(url))
-            for _ in range(self.buffersize):
-                self.q_in.put_nowait(self.process.stdout.read(read_size))
+            PIHOME_LOGGER.info(f'Playing {url} via ffmpeg to ALSA device {self.device}')
+            
+            # Build ffmpeg command with ALSA output (no PortAudio scanning!)
+            cmd = [
+                'ffmpeg',
+                '-i', url,
+                '-f', 'alsa',
+                '-af', f'volume={self.volume}',
+                '-reconnect', '1',
+                '-reconnect_streamed', '1',
+                '-reconnect_delay_max', '5',
+                self.device
+            ]
+            
+            PIHOME_LOGGER.info(f'FFmpeg command: {" ".join(cmd)}')
+            self.process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE
+            )
+            
             PIHOME_LOGGER.info('Starting Playback {} ...'.format(url))
             self.set_state(AudioState.PLAYING)
-            with self.stream:
-                timeout = self.blocksize * self.buffersize / samplerate
-                code =self.process.poll()
-                while code is None and not self.empty_buffer:
-                    while True:
-                        d = self.process.stdout.read(read_size)
-                        if not d:
-                            break
-                        self.q_in.put(d, timeout=timeout)
+            
+            # Wait for process to complete
+            return_code = self.process.wait()
+            
+            if return_code == 0:
                 PIHOME_LOGGER.info('End of stream. {}'.format(url))
                 self.next()
+            elif return_code == -signal.SIGTERM:
+                PIHOME_LOGGER.info('Playback stopped by user')
+            else:
+                PIHOME_LOGGER.error(f'FFmpeg exited with code {return_code}')
+                stderr = self.process.stderr.read().decode('utf-8', errors='ignore')
+                if stderr:
+                    PIHOME_LOGGER.error(f'FFmpeg error: {stderr[:500]}')
+                
         except KeyboardInterrupt:
             self.stop()
             PIHOME_LOGGER.info('Interrupted by user')
             return
-        except queue.Full:
-            # A timeout occurred, i.e. there was an error in the callback
-            self.stop()
-            PIHOME_LOGGER.error('Error: Buffer is full')
-            # time.sleep(0.5)
-            return
-        except (ConnectionResetError, ConnectionAbortedError, TimeoutError) as e:
-            self.stop()
-            PIHOME_LOGGER.error("Connection Error")
         except Exception as e:
             self.stop()
-            PIHOME_LOGGER.error("Other Error")
-            PIHOME_LOGGER.error(e)
+            PIHOME_LOGGER.error(f"Playback error: {e}")
             return
 
     def extract_metadata(self, url):
@@ -424,41 +311,31 @@ class AudioPlayer:
             self.clear_playlist()
             self.current_folder = None
         PIHOME_LOGGER.info("Stopping audio")
-        if self.stream:
-            try:
-                self.stream.stop()
-                self.stream.close()  # Properly release the device
-            except Exception as e:
-                PIHOME_LOGGER.error(f"Error closing stream: {e}")
-            finally:
-                self.stream = None
         if self.process:
-            self.process.terminate()
-        # clear the queue
-        while not self.q_in.empty():
-            self.q_in.get()
-        while not self.q_out.empty():
-            self.q_out.get()
+            try:
+                self.process.terminate()
+                self.process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                PIHOME_LOGGER.warning("Process didn't terminate, killing it")
+                self.process.kill()
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Error stopping process: {e}")
+            finally:
+                self.process = None
         self.data = None
-        self.empty_buffer = True
         self.current_source = None
         self.set_state(AudioState.STOPPED)
     
     def cleanup(self):
-        """Full cleanup including device release"""
+        """Full cleanup"""
         self.stop(clear_playlist=True)
-        try:
-            # Terminate sounddevice to release all audio resources
-            import sounddevice as sd
-            sd._terminate()
-            PIHOME_LOGGER.info("Audio device cleanup complete")
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error during cleanup: {e}")
+        PIHOME_LOGGER.info("Audio player cleanup complete")
 
     def set_volume(self, volume, oneAsHundred=False):
         """
         Volume must be between 0 and 1
         If onAsHundred is true, then volume of 1.0 is 100
+        Note: With ffmpeg backend, volume changes take effect on next track
         """
         if volume > 1:
             # normalize volume between 0 and 1 
