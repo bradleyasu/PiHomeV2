@@ -45,6 +45,7 @@ Block PiHome from accessing hw:1,0 entirely using Linux user permissions and ude
 
 **Key Points:**
 - `pihome-user` is in `pihome-grp` group → can access hw:0,0 only
+- `pihome-user` is in `gpio`, `video`, `render` groups → can access GPIO pins and GPU
 - `shairport-sync` user is in `audio` group → can access hw:1,0 only
 - hw:0,0 device permissions: owned by `pihome-grp` group, mode `0660`
 - hw:1,0 device permissions: owned by `audio` group, mode `0660`
@@ -82,6 +83,7 @@ sudo bash setup_audio_permissions.sh
 **This script will:**
 - Create `pihome-user` system user and `pihome-grp` group
 - Add `pihome-user` to `pihome-grp` group (hw:0,0 access)
+- Add `pihome-user` to `gpio`, `video`, `render` groups (hardware access)
 - Add `shairport-sync` to `audio` group (hw:1,0 access)
 - Create udev rules to set hw:0,0 to `pihome-grp` group
 - Create udev rules to set hw:1,0 to `audio` group

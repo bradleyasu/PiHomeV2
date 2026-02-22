@@ -36,6 +36,15 @@ else
     echo -e "${RED}✗${NC} pihome-user NOT in 'pihome-grp' group"
 fi
 
+# Check hardware access groups
+for group in gpio video render; do
+    if groups pihome-user | grep -q $group; then
+        echo -e "${GREEN}✓${NC} pihome-user is in '$group' group (hardware access)"
+    else
+        echo -e "${YELLOW}⚠${NC} pihome-user NOT in '$group' group (may need for GPIO/GPU)"
+    fi
+done
+
 if groups pihome-user | grep -q audio; then
     echo -e "${YELLOW}⚠${NC} WARNING: pihome-user is in 'audio' group (should be isolated)"
 else

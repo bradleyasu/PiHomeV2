@@ -33,6 +33,19 @@ usermod -g pihome-grp pihome-user
 echo "✓ Primary group set to pihome-grp"
 
 echo ""
+echo "[3.5/7] Ensuring pihome-user has hardware access groups..."
+for group in gpio video render; do
+    if getent group $group > /dev/null 2>&1; then
+        if ! groups pihome-user | grep -q $group; then
+            usermod -a -G $group pihome-user
+            echo "✓ Added pihome-user to $group group"
+        else
+            echo "✓ pihome-user already in $group group"
+        fi
+    fi
+done
+
+echo ""
 echo "[4/7] Fixing device permissions manually..."
 
 # Fix hw:1,0 (DAC Pro) permissions

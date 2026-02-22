@@ -16,35 +16,46 @@ fi
 
 # 1. Create pihome-grp group if it doesn't exist
 if ! getent group pihome-grp > /dev/null 2>&1; then
-    echo "[1/6] Creating pihome-grp group..."
+    echo "[1/7] Creating pihome-grp group..."
     groupadd pihome-grp
     echo "✓ Created pihome-grp group"
 else
-    echo "[1/6] pihome-grp group already exists"
+    echo "[1/7] pihome-grp group already exists"
 fi
 
 # 2. Create pihome-user if it doesn't exist
 if ! id -u pihome-user > /dev/null 2>&1; then
-    echo "[2/6] Creating pihome-user system user..."
+    echo "[2/7] Creating pihome-user system user..."
     useradd -r -s /bin/false -d /usr/local/PiHome -g pihome-grp -c "PiHome Service User" pihome-user
     echo "✓ Created pihome-user"
 else
-    echo "[2/6] pihome-user already exists"
+    echo "[2/7] pihome-user already exists"
     # Ensure user is in pihome-grp group
     usermod -g pihome-grp pihome-user
 fi
 
 # 3. Ensure shairport-sync user is in audio group (for hw:1,0 access)
 if id -u shairport-sync > /dev/null 2>&1; then
-    echo "[3/6] Adding shairport-sync to audio group (hw:1,0 access)..."
+    echo "[3/7] Adding shairport-sync to audio group (hw:1,0 access)..."
     usermod -a -G audio shairport-sync
     echo "✓ shairport-sync user added to audio group"
 else
-    echo "[3/6] WARNING: shairport-sync user not found. Install shairport-sync first."
+    echo "[3/7] WARNING: shairport-sync user not found. Install shairport-sync first."
 fi
 
-# 4. Verify pihome-user is NOT in audio group (isolation)
-echo "[4/6] Ensuring pihome-user is NOT in audio group (for isolation)..."
+# 4. Add pihome-user to hardware access groups (GPIO, GPU, etc.)
+echo "[4/7] Adding pihome-user to gpio, video, render groups (hardware access)..."
+for group in gpio video render; do
+    if getent group $group > /dev/null 2>&1; then
+        usermod -a -G $group pihome-user
+        echo "✓ Added pihome-user to $group group"
+    else
+        echo "⚠ Group $group does not exist, skipping"
+    fi
+done
+
+# 5. Verify pihome-user is NOT in audio group (isolation)
+echo "[5/7] Ensuring pihome-user is NOT in audio group (for isolation)..."
 if groups pihome-user | grep -q audio; then
     echo "⚠ Removing pihome-user from audio group..."
     gpasswd -d pihome-user audio
@@ -53,8 +64,8 @@ else
     echo "✓ pihome-user is not in audio group (correct)"
 fi
 
-# 5. Create udev rules to control device access
-echo "[5/6] Creating udev rules for device access control..."
+# 6. Create udev rules to control device access
+echo "[6/7] Creating udev rules for device access control..."
 cat > /etc/udev/rules.d/99-audio-isolation.rules << 'EOF'
 # Audio device isolation for PiHome and shairport-sync
 # hw:0,0 (bcm2835) → pihome group
@@ -90,8 +101,8 @@ EOF
 
 echo "✓ Created /etc/udev/rules.d/99-audio-isolation.rules"
 
-# 6. Reload udev rules
-echo "[6/6] Reloading udev rules..."
+# 7. Reload udev rules
+echo "[7/7] Reloading udev rules..."
 udevadm control --reload-rules
 udevadm trigger
 echo "✓ udev rules reloaded"
@@ -100,7 +111,9 @@ echo ""
 echo "=== Setup Complete ==="
 echo ""
 echo "Summary:"
-echo "  - pihome-user: Member of 'pihome-grp' group, can access hw:0,0 only"
+echo "  - pihome-user: Member of 'pihome-grp, gpio, video, render' groups"
+echo "  - pihome-user can access: hw:0,0 (audio), GPIO pins, GPU/display"
+echo "  - pihome-user CANNOT access: hw:1,0 (DAC Pro - isolated)"
 echo "  - shairport-sync user: Member of 'audio' group, can access hw:1,0 only"
 echo "  - hw:0,0 devices: Owned by 'pihome-grp' group (mode 0660)"
 echo "  - hw:1,0 devices: Owned by 'audio' group (mode 0660)"

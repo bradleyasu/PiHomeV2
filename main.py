@@ -1,11 +1,13 @@
 import os
 
-from networking.poller import POLLER
-from services.homeassistant.homeassistant import HOME_ASSISTANT
-
 # Set audio backend for Kivy
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
+
+from networking.poller import POLLER
+from services.homeassistant.homeassistant import HOME_ASSISTANT
+
 
 # Configure ALSA for PiHome process to use hw:0,0 for SFX (ffpyplayer)
 # This prevents interference with shairport-sync on hw:1,0 (DAC)
