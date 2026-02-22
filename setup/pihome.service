@@ -7,8 +7,8 @@ Wants=network-online.target
 Type=simple
 User=root
 WorkingDirectory=/usr/local/PiHome
-Environment="KIVY_AUDIO=ffpyplayer"
-Environment="KIVY_VIDEO=video_ffpyplayer"
+Environment="KIVY_AUDIO=sdl2"
+Environment="KIVY_VIDEO=null"
 Environment="DISPLAY=:0"
 Environment="HOME=/root"
 ExecStart=/usr/bin/python3 /usr/local/PiHome/main.py

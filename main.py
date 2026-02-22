@@ -3,11 +3,12 @@ import os
 from networking.poller import POLLER
 from services.homeassistant.homeassistant import HOME_ASSISTANT
 
-# Set audio backend for Kivy
-os.environ["KIVY_AUDIO"] = "ffpyplayer"
-os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
+# Disable Kivy audio - we use direct ffmpeg/ffplay subprocess calls instead
+# This prevents audio backend from probing/interfering with hw:1,0 (DAC)
+os.environ["KIVY_AUDIO"] = "sdl2"  # SDL2 won't initialize on headless systems
+os.environ["KIVY_VIDEO"] = "null"
 
-# Configure ALSA for PiHome process to use hw:0,0 for SFX (ffpyplayer)
+# Configure ALSA for PiHome process to use hw:0,0
 # This prevents interference with shairport-sync on hw:1,0 (DAC)
 import pathlib
 _asoundrc = pathlib.Path(__file__).parent / ".asoundrc"
@@ -276,6 +277,13 @@ class PiHome(App):
             AUDIO_PLAYER.cleanup()
         except Exception as e:
             PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
+        
+        # Cleanup SFX processes
+        try:
+            from services.audio.sfx import SFX
+            SFX.cleanup()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error cleaning up SFX: {e}")
         
         # Stop Kivy app
         try:
