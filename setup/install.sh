@@ -196,6 +196,7 @@ python3 -m pip install --break-system-packages eyed3 >> $LOG
 
 echo "Installing Flowers..."
 #garden install mapview >> $LOG
+sudo cp .asoundrc /root/.asoundrc
 
 echo "Setting up environment..."
 
