@@ -35,7 +35,15 @@ uint32_t SDL_OpenAudioDevice(const char* device, int iscapture,
 
 // Helper to check and block card1 paths
 static inline int should_block_path(const char *pathname) {
-    return pathname && strstr(pathname, "card1");
+    if (!pathname) return 0;
+    
+    // Block both relative "card1" and full paths containing "card1"
+    // This catches both openat(dirfd, "card1", ...) and openat(AT_FDCWD, "/sys/.../card1/...", ...)
+    if (strstr(pathname, "card1") != NULL) {
+        return 1;
+    }
+    
+    return 0;
 }
 
 // Intercept standard openat
