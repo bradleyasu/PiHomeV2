@@ -34,7 +34,7 @@ echo "✓ Primary group set to pihome-grp"
 
 echo ""
 echo "[3.5/7] Ensuring pihome-user has hardware access groups..."
-for group in gpio video render; do
+for group in gpio video render input; do
     if getent group $group > /dev/null 2>&1; then
         if ! groups pihome-user | grep -q $group; then
             usermod -a -G $group pihome-user

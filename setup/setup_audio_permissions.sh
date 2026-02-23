@@ -43,9 +43,9 @@ else
     echo "[3/7] WARNING: shairport-sync user not found. Install shairport-sync first."
 fi
 
-# 4. Add pihome-user to hardware access groups (GPIO, GPU, etc.)
-echo "[4/7] Adding pihome-user to gpio, video, render groups (hardware access)..."
-for group in gpio video render; do
+# 4. Add pihome-user to hardware access groups (GPIO, GPU, touchscreen, etc.)
+echo "[4/7] Adding pihome-user to gpio, video, render, input groups (hardware access)..."
+for group in gpio video render input; do
     if getent group $group > /dev/null 2>&1; then
         usermod -a -G $group pihome-user
         echo "✓ Added pihome-user to $group group"
@@ -111,8 +111,8 @@ echo ""
 echo "=== Setup Complete ==="
 echo ""
 echo "Summary:"
-echo "  - pihome-user: Member of 'pihome-grp, gpio, video, render' groups"
-echo "  - pihome-user can access: hw:0,0 (audio), GPIO pins, GPU/display"
+echo "  - pihome-user: Member of 'pihome-grp, gpio, video, render, input' groups"
+echo "  - pihome-user can access: hw:0,0 (audio), GPIO pins, GPU/display, touchscreen/input"
 echo "  - pihome-user CANNOT access: hw:1,0 (DAC Pro - isolated)"
 echo "  - shairport-sync user: Member of 'audio' group, can access hw:1,0 only"
 echo "  - hw:0,0 devices: Owned by 'pihome-grp' group (mode 0660)"

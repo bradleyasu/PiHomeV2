@@ -13,7 +13,7 @@ Configuration files and scripts for deploying PiHome on Raspberry Pi.
 ### Setup Scripts
 - **`setup_audio_permissions.sh`** - **RUN THIS FIRST on Raspberry Pi**
   - Creates `pihome-user` system user and `pihome-grp` group
-  - Adds `pihome-user` to `gpio`, `video`, `render` groups (hardware access)
+  - Adds `pihome-user` to `gpio`, `video`, `render`, `input` groups (hardware access)
   - Creates `shairport` group for hw:1,0 isolation
   - Sets up udev rules to restrict DAC Pro (hw:1,0) access
   - Configures group memberships

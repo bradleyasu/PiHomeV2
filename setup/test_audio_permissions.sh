@@ -37,11 +37,11 @@ else
 fi
 
 # Check hardware access groups
-for group in gpio video render; do
+for group in gpio video render input; do
     if groups pihome-user | grep -q $group; then
         echo -e "${GREEN}✓${NC} pihome-user is in '$group' group (hardware access)"
     else
-        echo -e "${YELLOW}⚠${NC} pihome-user NOT in '$group' group (may need for GPIO/GPU)"
+        echo -e "${YELLOW}⚠${NC} pihome-user NOT in '$group' group (may need for GPIO/GPU/touchscreen)"
     fi
 done
 
