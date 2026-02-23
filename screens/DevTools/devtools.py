@@ -6,7 +6,6 @@ from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty
 
 
-from kivy.core.audio import SoundLoader
 from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.Image.networkimage import NetworkImage
@@ -129,10 +128,12 @@ class DevTools(PiHomeScreen):
         print(level)
 
     def play_sound(self):
-        AUDIO_PLAYER.play("./assets/audio/notify/001.mp3")
+        pass
+        #AUDIO_PLAYER.play("./assets/audio/notify/001.mp3")
 
     def stop_sound(self):
-        AUDIO_PLAYER.stop()
+        # AUDIO_PLAYER.stop()
+        pass
 
     def toggle_server(self):
         if SERVER.is_online():

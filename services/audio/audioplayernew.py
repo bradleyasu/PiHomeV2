@@ -182,28 +182,30 @@ class AudioPlayer:
     def find_sound_device(self):
         """Only called when device is not specified in config"""
         PIHOME_LOGGER.info("Auto-detecting sound device")
-        # Lazy import sounddevice only when needed
-        import sounddevice as sd
-        try:
-            devices = sd.query_devices()
-            for device in devices:
-                if device['max_output_channels'] > 0:
-                    PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
-                    return device['name']
-            PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
-            self.log_sound_devices()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error finding sound device: {e}")
         return None
+        # Lazy import sounddevice only when needed
+        # import sounddevice as sd
+        # try:
+        #     devices = sd.query_devices()
+        #     for device in devices:
+        #         if device['max_output_channels'] > 0:
+        #             PIHOME_LOGGER.info(f"Found sound device: {device['name']}")
+        #             return device['name']
+        #     PIHOME_LOGGER.error("NO SOUND DEVICE FOUND!")
+        #     self.log_sound_devices()
+        # except Exception as e:
+        #     PIHOME_LOGGER.error(f"Error finding sound device: {e}")
+        # return None
     
     def log_sound_devices(self):
-        import sounddevice as sd
-        devices = sd.query_devices()
-        PIHOME_LOGGER.warn("Sound Devices:")
-        PIHOME_LOGGER.warn("-----------------")
-        for device in devices:
-            PIHOME_LOGGER.warn(device)
-        PIHOME_LOGGER.warn("-----------------")
+        return None
+        # import sounddevice as sd
+        # devices = sd.query_devices()
+        # PIHOME_LOGGER.warn("Sound Devices:")
+        # PIHOME_LOGGER.warn("-----------------")
+        # for device in devices:
+        #     PIHOME_LOGGER.warn(device)
+        # PIHOME_LOGGER.warn("-----------------")
     
     def int_or_str(self, text):
         """Helper function for argument parsing."""
@@ -288,6 +290,7 @@ class AudioPlayer:
         self.player_thread.start()
 
     def _play(self, url):
+        return None
         is_local = True
         self.current_source = url
         if url.startswith('http://') or url.startswith('https://'):
@@ -446,14 +449,15 @@ class AudioPlayer:
     
     def cleanup(self):
         """Full cleanup including device release"""
-        self.stop(clear_playlist=True)
-        try:
-            # Terminate sounddevice to release all audio resources
-            import sounddevice as sd
-            sd._terminate()
-            PIHOME_LOGGER.info("Audio device cleanup complete")
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error during cleanup: {e}")
+        return None
+        # self.stop(clear_playlist=True)
+        # try:
+        #     # Terminate sounddevice to release all audio resources
+        #     import sounddevice as sd
+        #     sd._terminate()
+        #     PIHOME_LOGGER.info("Audio device cleanup complete")
+        # except Exception as e:
+        #     PIHOME_LOGGER.error(f"Error during cleanup: {e}")
 
     def set_volume(self, volume, oneAsHundred=False):
         """
