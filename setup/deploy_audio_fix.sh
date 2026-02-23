@@ -23,7 +23,7 @@ if [ ! -f sdl2_audio_stub.c ]; then
     exit 1
 fi
 
-gcc -shared -fPIC -o /tmp/libsdl2_audio_stub.so sdl2_audio_stub.c
+gcc -shared -fPIC -o /tmp/libsdl2_audio_stub.so sdl2_audio_stub.c -ldl
 if [ $? -ne 0 ]; then
     echo "Error: Compilation failed"
     exit 1
