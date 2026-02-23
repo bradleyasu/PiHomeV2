@@ -24,46 +24,42 @@ SendSIGKILL=yes
 StandardOutput=append:/usr/local/PiHome/pihome.log
 StandardError=append:/usr/local/PiHome/pihome-error.log
 
-# Restrict device access at cgroup level
+# Restrict device access: Allow broad access except hw:1,0
 DevicePolicy=closed
 
-# Standard system devices
+# Allow entire device classes (broad access)
+DeviceAllow=char-usb rw          # USB devices
+DeviceAllow=char-input rw        # All input devices (touchscreen, keyboard, mouse)
+DeviceAllow=char-drm rw          # All DRM/GPU devices
+DeviceAllow=char-tty rw          # TTY devices
+DeviceAllow=char-pts rw          # Pseudo-terminals
+
+# Standard character devices
 DeviceAllow=/dev/null rw
 DeviceAllow=/dev/zero rw
 DeviceAllow=/dev/full rw
 DeviceAllow=/dev/random r
 DeviceAllow=/dev/urandom r
-DeviceAllow=/dev/tty rw
-DeviceAllow=/dev/pts/* rw
-DeviceAllow=/dev/ptmx rw
 
-# Display devices (framebuffer and DRM/GPU)
-DeviceAllow=/dev/fb0 rw
-DeviceAllow=/dev/dri/card0 rw
-DeviceAllow=/dev/dri/renderD128 rw
-DeviceAllow=char-drm rw
-
-# GPIO devices (for rotary encoder)
+# GPIO (for rotary encoder)
 DeviceAllow=/dev/gpiomem rw
-DeviceAllow=/dev/gpiochip0 rw
-DeviceAllow=/dev/gpiochip1 rw
-DeviceAllow=char-gpio rw
+DeviceAllow=/dev/gpiochip* rw
 
-# Input devices (touchscreen, keyboard, mouse)
-DeviceAllow=/dev/input/event* rw
-DeviceAllow=/dev/input/mice rw
-DeviceAllow=/dev/input/mouse* rw
-DeviceAllow=char-input rw
+# Framebuffer
+DeviceAllow=/dev/fb* rw
 
-# EXPLICITLY ALLOW only hw:0,0 sound devices (bcm2835)
+# ONLY hw:0,0 sound devices - explicitly enumerate to exclude hw:1,0
 DeviceAllow=/dev/snd/controlC0 rw
 DeviceAllow=/dev/snd/pcmC0D0p rw
+DeviceAllow=/dev/snd/pcmC0D0c rw
 DeviceAllow=/dev/snd/pcmC0D1p rw
 DeviceAllow=/dev/snd/timer r
-DeviceAllow=char-alsa rw
+# Note: hw:1,0 devices (controlC1, pcmC1*) are NOT listed = kernel blocks them
 
-# hw:1,0 devices (DAC Pro) are NOT listed above
-# Therefore BLOCKED by kernel cgroups - cannot be accessed even for scanning
+# Additional security hardening
+PrivateTmp=yes
+ProtectKernelModules=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 
 # Additional isolation
 PrivateTmp=yes
