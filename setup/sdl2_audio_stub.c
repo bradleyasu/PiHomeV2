@@ -33,20 +33,24 @@ uint32_t SDL_OpenAudioDevice(const char* device, int iscapture,
 //   /sys/devices/.../sound/card1/pcmC1D0p/uevent
 // Reading these files triggers a kernel uevent that corrupts the PCM5122 DAC
 
+// Helper to check and block card1 paths
+static inline int should_block_path(const char *pathname) {
+    return pathname && strstr(pathname, "card1");
+}
+
+// Intercept standard openat
 int openat(int dirfd, const char *pathname, int flags, ...) {
-    // Get original openat function
     static int (*real_openat)(int, const char*, int, ...) = NULL;
     if (!real_openat) {
         real_openat = dlsym(RTLD_NEXT, "openat");
     }
     
-    // Block any sysfs access to card1 (our DAC)
-    if (pathname && strstr(pathname, "card1")) {
-        errno = ENOENT;  // No such file or directory
+    // Block card1 sysfs access
+    if (should_block_path(pathname)) {
+        errno = ENOENT;
         return -1;
     }
     
-    // Pass through to real openat for everything else
     mode_t mode = 0;
     if (flags & O_CREAT) {
         va_list args;
@@ -57,4 +61,58 @@ int openat(int dirfd, const char *pathname, int flags, ...) {
     }
     
     return real_openat(dirfd, pathname, flags);
+}
+
+// Intercept fortified openat (used by gcc -D_FORTIFY_SOURCE)
+int __openat_2(int dirfd, const char *pathname, int flags) {
+    static int (*real_openat_2)(int, const char*, int) = NULL;
+    if (!real_openat_2) {
+        real_openat_2 = dlsym(RTLD_NEXT, "__openat_2");
+    }
+    
+    if (should_block_path(pathname)) {
+        errno = ENOENT;
+        return -1;
+    }
+    
+    return real_openat_2(dirfd, pathname, flags);
+}
+
+// Intercept 64-bit openat
+int openat64(int dirfd, const char *pathname, int flags, ...) {
+    static int (*real_openat64)(int, const char*, int, ...) = NULL;
+    if (!real_openat64) {
+        real_openat64 = dlsym(RTLD_NEXT, "openat64");
+    }
+    
+    if (should_block_path(pathname)) {
+        errno = ENOENT;
+        return -1;
+    }
+    
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list args;
+        va_start(args, flags);
+        mode = va_arg(args, mode_t);
+        va_end(args);
+        return real_openat64(dirfd, pathname, flags, mode);
+    }
+    
+    return real_openat64(dirfd, pathname, flags);
+}
+
+// Intercept fortified 64-bit openat
+int __openat64_2(int dirfd, const char *pathname, int flags) {
+    static int (*real_openat64_2)(int, const char*, int) = NULL;
+    if (!real_openat64_2) {
+        real_openat64_2 = dlsym(RTLD_NEXT, "__openat64_2");
+    }
+    
+    if (should_block_path(pathname)) {
+        errno = ENOENT;
+        return -1;
+    }
+    
+    return real_openat64_2(dirfd, pathname, flags);
 }
