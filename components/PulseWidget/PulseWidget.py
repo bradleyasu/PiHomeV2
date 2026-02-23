@@ -4,13 +4,12 @@ from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
 from kivy.graphics import RenderContext
-from kivy.properties import StringProperty, BooleanProperty, NumericProperty
+from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.image import Image
 
 from interface.pihomescreen import PiHomeScreen
 from kivy.lang import Builder
 
-from services.audio.sfx import SFX
 
 
 # Plasma shader
