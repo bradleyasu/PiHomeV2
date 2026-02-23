@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// Uncomment for debug logging
+// Uncomment for debug logging (will spam journalctl)
 // #define DEBUG_STUB 1
 
 #ifdef DEBUG_STUB
@@ -266,14 +266,19 @@ ssize_t readlink(const char *pathname, char *buf, size_t bufsiz) {
         real_readlink = dlsym(RTLD_NEXT, "readlink");
     }
     
-    // Don't block the readlink itself, but check the result
     ssize_t result = real_readlink(pathname, buf, bufsiz);
     
-    // If the link points to card1, pretend it failed
-    if (result > 0 && result < bufsiz) {
-        buf[result] = '\0';
-        if (should_block_path(buf)) {
-            DEBUG_LOG("BLOCKED readlink result: %s", buf);
+    // If the link points to card1, block it
+    // Check without modifying the buffer permanently
+    if (result > 0) {
+        // Make a temporary null-terminated copy for checking
+        char temp[4096];
+        size_t check_len = (result < sizeof(temp) - 1) ? result : sizeof(temp) - 1;
+        memcpy(temp, buf, check_len);
+        temp[check_len] = '\0';
+        
+        if (should_block_path(temp)) {
+            DEBUG_LOG("BLOCKED readlink result: %s", temp);
             errno = ENOENT;
             return -1;
         }
@@ -282,39 +287,13 @@ ssize_t readlink(const char *pathname, char *buf, size_t bufsiz) {
     return result;
 }
 
-// Intercept stat() variants to hide card1
-int stat(const char *pathname, struct stat *statbuf) {
-    static int (*real_stat)(const char*, struct stat*) = NULL;
-    if (!real_stat) {
-        real_stat = dlsym(RTLD_NEXT, "stat");
-    }
-    
-    if (should_block_path(pathname)) {
-        errno = ENOENT;
-        return -1;
-    }
-    
-    return real_stat(pathname, statbuf);
-}
-
-int lstat(const char *pathname, struct stat *statbuf) {
-    static int (*real_lstat)(const char*, struct stat*) = NULL;
-    if (!real_lstat) {
-        real_lstat = dlsym(RTLD_NEXT, "lstat");
-    }
-    
-    if (should_block_path(pathname)) {
-        errno = ENOENT;
-        return -1;
-    }
-    
-    return real_lstat(pathname, statbuf);
-}
+// NOTE: Removed stat/lstat/access interception - too invasive and causes segfaults
+// We only intercept actual file opening, not metadata/existence checks
 
 // Constructor - called when library loads
 __attribute__((constructor))
 static void stub_init(void) {
     DEBUG_LOG("=== STUB LIBRARY LOADED ===");
-    DEBUG_LOG("All card1 access will be blocked");
+    DEBUG_LOG("All card1 file opens will be blocked");
 }
 
