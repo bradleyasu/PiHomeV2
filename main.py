@@ -1,8 +1,8 @@
 import os
 
 # Set audio backend for Kivy
-os.environ["KIVY_AUDIO"] = "ffpyplayer"
-os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
+os.environ["KIVY_AUDIO"] = "pygame"
+os.environ["KIVY_VIDEO"] = "ffmpeg"
 os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 from networking.poller import POLLER
