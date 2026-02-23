@@ -8,6 +8,7 @@ Type=simple
 User=pihome-user
 Group=pihome-grp
 WorkingDirectory=/usr/local/PiHome
+Environment="LD_PRELOAD=/usr/local/lib/libsdl2_audio_stub.so"
 Environment="KIVY_AUDIO=sdl2"
 Environment="KIVY_VIDEO=null"
 Environment="SDL_AUDIODRIVER=dummy"

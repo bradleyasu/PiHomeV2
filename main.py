@@ -1,19 +1,5 @@
 import os
 
-# In main.py, BEFORE any Kivy imports
-import os
-os.environ['KIVY_NO_ARGS'] = '1'
-os.environ['KIVY_NO_CONSOLELOG'] = '1'
-
-# Completely disable SDL2 audio subsystem initialization
-import ctypes
-try:
-    SDL2 = ctypes.CDLL("libSDL2-2.0.so.0")
-    SDL2.SDL_InitSubSystem(0x00000010)  # SDL_INIT_AUDIO
-    SDL2.SDL_QuitSubSystem(0x00000010)  # Immediately quit it
-except:
-    pass
-
 # Set audio backend for Kivy
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
