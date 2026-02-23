@@ -26,24 +26,44 @@ StandardError=append:/usr/local/PiHome/pihome-error.log
 
 # Restrict device access at cgroup level
 DevicePolicy=closed
+
+# Standard system devices
 DeviceAllow=/dev/null rw
 DeviceAllow=/dev/zero rw
+DeviceAllow=/dev/full rw
+DeviceAllow=/dev/random r
 DeviceAllow=/dev/urandom r
 DeviceAllow=/dev/tty rw
 DeviceAllow=/dev/pts/* rw
-DeviceAllow=/dev/fb0 rw
-DeviceAllow=/dev/dri/* rw
-DeviceAllow=/dev/gpiomem rw
-DeviceAllow=/dev/gpiochip* rw
-DeviceAllow=/dev/input/* rw
+DeviceAllow=/dev/ptmx rw
 
-# EXPLICITLY ALLOW only hw:0,0 sound devices
+# Display devices (framebuffer and DRM/GPU)
+DeviceAllow=/dev/fb0 rw
+DeviceAllow=/dev/dri/card0 rw
+DeviceAllow=/dev/dri/renderD128 rw
+DeviceAllow=char-drm rw
+
+# GPIO devices (for rotary encoder)
+DeviceAllow=/dev/gpiomem rw
+DeviceAllow=/dev/gpiochip0 rw
+DeviceAllow=/dev/gpiochip1 rw
+DeviceAllow=char-gpio rw
+
+# Input devices (touchscreen, keyboard, mouse)
+DeviceAllow=/dev/input/event* rw
+DeviceAllow=/dev/input/mice rw
+DeviceAllow=/dev/input/mouse* rw
+DeviceAllow=char-input rw
+
+# EXPLICITLY ALLOW only hw:0,0 sound devices (bcm2835)
 DeviceAllow=/dev/snd/controlC0 rw
 DeviceAllow=/dev/snd/pcmC0D0p rw
 DeviceAllow=/dev/snd/pcmC0D1p rw
 DeviceAllow=/dev/snd/timer r
+DeviceAllow=char-alsa rw
 
-# hw:1,0 devices are NOT listed, therefore BLOCKED by kernel
+# hw:1,0 devices (DAC Pro) are NOT listed above
+# Therefore BLOCKED by kernel cgroups - cannot be accessed even for scanning
 
 # Additional isolation
 PrivateTmp=yes
