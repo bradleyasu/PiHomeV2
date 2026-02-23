@@ -11,6 +11,7 @@ WorkingDirectory=/usr/local/PiHome
 Environment="KIVY_AUDIO=sdl2"
 Environment="KIVY_VIDEO=null"
 Environment="SDL_AUDIODRIVER=dummy"
+Environment="ALSA_CONFIG_PATH=/etc/asound.conf"
 Environment="DISPLAY=:0"
 Environment="HOME=/usr/local/PiHome"
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
