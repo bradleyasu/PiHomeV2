@@ -24,5 +24,31 @@ SendSIGKILL=yes
 StandardOutput=append:/usr/local/PiHome/pihome.log
 StandardError=append:/usr/local/PiHome/pihome-error.log
 
+# Restrict device access at cgroup level
+DevicePolicy=closed
+DeviceAllow=/dev/null rw
+DeviceAllow=/dev/zero rw
+DeviceAllow=/dev/urandom r
+DeviceAllow=/dev/tty rw
+DeviceAllow=/dev/pts/* rw
+DeviceAllow=/dev/fb0 rw
+DeviceAllow=/dev/dri/* rw
+DeviceAllow=/dev/gpiomem rw
+DeviceAllow=/dev/gpiochip* rw
+DeviceAllow=/dev/input/* rw
+
+# EXPLICITLY ALLOW only hw:0,0 sound devices
+DeviceAllow=/dev/snd/controlC0 rw
+DeviceAllow=/dev/snd/pcmC0D0p rw
+DeviceAllow=/dev/snd/pcmC0D1p rw
+DeviceAllow=/dev/snd/timer r
+
+# hw:1,0 devices are NOT listed, therefore BLOCKED by kernel
+
+# Additional isolation
+PrivateTmp=yes
+ProtectKernelModules=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
 [Install]
 WantedBy=multi-user.target
