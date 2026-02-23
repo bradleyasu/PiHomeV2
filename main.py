@@ -101,7 +101,6 @@ class PiHome(App):
 
     # the root widget
     def build(self):
-        return
         self.setup()
         self.layout.size = (self.width, self.height)
         self.layout.size_hint = (1, 1)  # Use percentage to fill window
