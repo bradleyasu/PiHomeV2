@@ -3,7 +3,6 @@ import os
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.screenmanager import SwapTransition, FadeTransition, NoTransition
-from components.PulseWidget.PulseWidget import PULSER
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
 from util.configuration import CONFIG
@@ -54,8 +53,8 @@ class PiHomeScreenManager(ScreenManager):
 
     def _rotary_on_down(self):
         try:
-            if not self.current_screen.disable_rotary_press_animation:
-                PULSER.burst()
+            # if not self.current_screen.disable_rotary_press_animation:
+                # PULSER.burst()
             self.current_screen.on_rotary_down()
         except AttributeError:
             PIHOME_LOGGER.error("No on_rotary_down method found in current screen")
@@ -134,7 +133,7 @@ class PiHomeScreenManager(ScreenManager):
         # We have to wait a second before adding the app menu to the parent becuase if we don't
         # the app menu will be added to the parent before the screen manager is added to the parent
         Clock.schedule_once(lambda dt: parent.add_widget(self.app_menu, index=1), 1)
-        Clock.schedule_once(lambda dt: parent.add_widget(PULSER), 2)
+        # Clock.schedule_once(lambda dt: parent.add_widget(PULSER), 2)
 
 
     def load_screens(self):
