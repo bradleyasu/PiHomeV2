@@ -1,0 +1,33 @@
+[Unit]
+Description=PiHome Smart Home Interface (Safe Start)
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Run as root for modprobe/systemctl access
+User=root
+Group=root
+WorkingDirectory=/usr/local/PiHome
+# Use the safe start wrapper
+ExecStart=/usr/local/bin/pihome_safe_start.sh
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=5
+KillMode=control-group
+KillSignal=SIGTERM
+SendSIGKILL=yes
+StandardOutput=append:/var/log/pihome.log
+StandardError=append:/var/log/pihome-error.log
+
+# Environment for PiHome when it runs
+Environment="KIVY_AUDIO=sdl2"
+Environment="KIVY_VIDEO=null"
+Environment="SDL_AUDIODRIVER=dummy"
+Environment="ALSA_CONFIG_PATH=/etc/asound.conf"
+Environment="DISPLAY=:0"
+Environment="HOME=/usr/local/PiHome"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+
+[Install]
+WantedBy=multi-user.target
