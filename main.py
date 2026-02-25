@@ -136,14 +136,14 @@ class PiHome(App):
         self.background.size_hint = (None, None)
         
         # NOTE: Widget rendering order is critical here.
-        self.layout.add_widget(self.background_color)  # Will be at bottom
-        self.layout.add_widget(self.background)  # On top of background_color
+        # self.layout.add_widget(self.background_color)  # Will be at bottom
+        # self.layout.add_widget(self.background)  # On top of background_color
         
         # Explicitly add foreground widgets at index 0 to ensure they're always on top
         # This is necessary for proper rendering on Raspberry Pi touchscreen
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
-        self.layout.add_widget(TIMER_DRAWER)
-        self.layout.add_widget(self.menu_button)
+        # self.layout.add_widget(TIMER_DRAWER)
+        # self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager
         TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
