@@ -126,13 +126,22 @@ class PiHome(App):
         self.menu_button.pos = (dp(10), dp(400))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
-        # NOTE: Ordering is important here.  Kivy will render the last added widget on top of the previous
-        self.layout.add_widget(self.background_color)
-        self.layout.add_widget(self.background)
-        # Add primary screen manager
-        self.layout.add_widget(PIHOME_SCREEN_MANAGER)
-        self.layout.add_widget(TIMER_DRAWER)
-        self.layout.add_widget(self.menu_button)
+        
+        # Ensure backgrounds have fixed sizes (no auto-sizing) for consistent rendering on Pi
+        self.background_color.size_hint = (None, None)
+        self.background.size_hint = (None, None)
+        
+        # NOTE: Widget rendering order is critical here.
+        # On Raspberry Pi, explicit indices ensure proper z-ordering.
+        # Backgrounds must be added first, then foreground widgets with index=0 to force them on top.
+        self.layout.add_widget(self.background_color)  # Will be at bottom
+        self.layout.add_widget(self.background)  # On top of background_color
+        
+        # Explicitly add foreground widgets at index 0 to ensure they're always on top
+        # This is necessary for proper rendering on Raspberry Pi touchscreen
+        self.layout.add_widget(PIHOME_SCREEN_MANAGER, index=0)
+        self.layout.add_widget(TIMER_DRAWER, index=0)
+        self.layout.add_widget(self.menu_button, index=0)
 
         # Startup TaskManager
         TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
