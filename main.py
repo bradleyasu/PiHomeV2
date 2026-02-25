@@ -7,7 +7,8 @@ os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 from kivy.config import Config
-from kivy.graphics import Line
+from kivy.graphics import Line, Rectangle
+from kivy.graphics.context_instructions import Color
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
@@ -127,21 +128,30 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
-        # Ensure backgrounds have fixed sizes (no auto-sizing) for consistent rendering on Pi
-        self.background_color.size_hint = (None, None)
-        self.background.size_hint = (None, None)
+        # Use canvas.before to draw backgrounds - this bypasses widget ordering issues on Raspberry Pi
+        # Canvas instructions ALWAYS render in the correct order regardless of platform
+        with self.layout.canvas.before:
+            Color(1, 1, 1, 1)
+            self.background_color_rect = Rectangle(
+                size=self.layout.size,
+                pos=self.layout.pos
+            )
+            self.background_rect = Rectangle(
+                size=self.layout.size,
+                pos=self.layout.pos
+            )
         
-        # NOTE: Widget rendering order is critical here.
-        # On Raspberry Pi, explicit indices ensure proper z-ordering.
-        # Backgrounds must be added first, then foreground widgets with index=0 to force them on top.
-        self.layout.add_widget(self.background_color)  # Will be at bottom
-        self.layout.add_widget(self.background)  # On top of background_color
+        # Bind texture updates from the AsyncImage children to canvas rectangles
+        # We schedule this to happen after the widgets are fully initialized
+        Clock.schedule_once(lambda dt: self._bind_background_textures(), 0.1)
         
-        # Explicitly add foreground widgets at index 0 to ensure they're always on top
-        # This is necessary for proper rendering on Raspberry Pi touchscreen
-        self.layout.add_widget(PIHOME_SCREEN_MANAGER, index=0)
-        self.layout.add_widget(TIMER_DRAWER, index=0)
-        self.layout.add_widget(self.menu_button, index=0)
+        # Update canvas size when layout size changes
+        self.layout.bind(size=self._update_canvas_size, pos=self._update_canvas_pos)
+        
+        # Add foreground widgets normally
+        self.layout.add_widget(PIHOME_SCREEN_MANAGER)
+        self.layout.add_widget(TIMER_DRAWER)
+        self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager
         TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
@@ -301,6 +311,50 @@ class PiHome(App):
         """
         self.background.reload()
         self.background_color.reload()
+    
+    def _bind_background_textures(self):
+        """Bind to AsyncImage texture changes after widgets are initialized"""
+        try:
+            bg_color_img = self.background_color.ids.get("network_image_async_source")
+            bg_img = self.background.ids.get("network_image_async_source")
+            
+            if bg_color_img:
+                bg_color_img.bind(texture=self._update_background_color_texture)
+                # Set initial texture if already loaded
+                if bg_color_img.texture:
+                    self.background_color_rect.texture = bg_color_img.texture
+                    
+            if bg_img:
+                bg_img.bind(texture=self._update_background_texture)
+                # Set initial texture if already loaded
+                if bg_img.texture:
+                    self.background_rect.texture = bg_img.texture
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Error binding background textures: {e}")
+    
+    def _update_background_color_texture(self, instance, value):
+        """Update canvas rectangle texture when NetworkImage texture changes"""
+        if hasattr(self, 'background_color_rect') and value:
+            self.background_color_rect.texture = value
+    
+    def _update_background_texture(self, instance, value):
+        """Update canvas rectangle texture when NetworkImage texture changes"""
+        if hasattr(self, 'background_rect') and value:
+            self.background_rect.texture = value
+    
+    def _update_canvas_size(self, instance, value):
+        """Update canvas rectangle sizes when layout size changes"""
+        if hasattr(self, 'background_color_rect'):
+            self.background_color_rect.size = value
+        if hasattr(self, 'background_rect'):
+            self.background_rect.size = value
+    
+    def _update_canvas_pos(self, instance, value):
+        """Update canvas rectangle positions when layout position changes"""
+        if hasattr(self, 'background_color_rect'):
+            self.background_color_rect.pos = value
+        if hasattr(self, 'background_rect'):
+            self.background_rect.pos = value
 
     def on_start(self):
         """
