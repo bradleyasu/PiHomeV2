@@ -54,13 +54,17 @@ Window.softinput_mode = 'below_target'
 
 class PiHome(App):
 
-    layout = FloatLayout()
     app_menu_open = False
     toast_open = False
     web_conf = None
 
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
+        
+        # Create layout as instance variable, not class variable
+        # This ensures it's created after Window is properly initialized
+        # Critical for Raspberry Pi OpenGL ES rendering
+        self.layout = FloatLayout()
 
         self.height = CONFIG.get_int('window', 'height', 480)
         self.width = CONFIG.get_int('window', 'width', 800)
@@ -132,16 +136,14 @@ class PiHome(App):
         self.background.size_hint = (None, None)
         
         # NOTE: Widget rendering order is critical here.
-        # On Raspberry Pi, explicit indices ensure proper z-ordering.
-        # Backgrounds must be added first, then foreground widgets with index=0 to force them on top.
-        # self.layout.add_widget(self.background_color)  # Will be at bottom
-        # self.layout.add_widget(self.background)  # On top of background_color
+        self.layout.add_widget(self.background_color)  # Will be at bottom
+        self.layout.add_widget(self.background)  # On top of background_color
         
         # Explicitly add foreground widgets at index 0 to ensure they're always on top
         # This is necessary for proper rendering on Raspberry Pi touchscreen
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
-        # self.layout.add_widget(TIMER_DRAWER)
-        # self.layout.add_widget(self.menu_button)
+        self.layout.add_widget(TIMER_DRAWER)
+        self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager
         TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
