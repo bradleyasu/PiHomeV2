@@ -134,13 +134,13 @@ class PiHome(App):
         # NOTE: Widget rendering order is critical here.
         # On Raspberry Pi, explicit indices ensure proper z-ordering.
         # Backgrounds must be added first, then foreground widgets with index=0 to force them on top.
-        self.layout.add_widget(self.background_color)  # Will be at bottom
-        self.layout.add_widget(self.background)  # On top of background_color
+        # self.layout.add_widget(self.background_color)  # Will be at bottom
+        # self.layout.add_widget(self.background)  # On top of background_color
         
         # Explicitly add foreground widgets at index 0 to ensure they're always on top
         # This is necessary for proper rendering on Raspberry Pi touchscreen
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
-        # self.layout.add_widget(TIMER_DRAWER)
+        self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager
