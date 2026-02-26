@@ -3,6 +3,7 @@ import os
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.screenmanager import SwapTransition, FadeTransition, NoTransition
+from kivy.graphics import Color, Rectangle
 from components.PulseWidget.PulseWidget import PULSER
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
@@ -17,6 +18,11 @@ class PiHomeScreenManager(ScreenManager):
 
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
+        # set background color to transparent so that the background image can be seen
+        with self.canvas.before:
+            self.background_color = Color(0, 0, 0, 0) 
+
+
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
             self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
