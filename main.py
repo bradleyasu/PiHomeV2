@@ -42,6 +42,7 @@ from util.helpers import get_app, simplegesture
 from kivy.metrics import dp
 from kivy.base import ExceptionManager 
 from kivy.clock import Clock
+from kivy.core.image import Image as CoreImage
 from kivy.gesture import Gesture 
 
 # Run PiHome on Kivy 2.0.0
@@ -92,6 +93,10 @@ class PiHome(App):
 
 
 
+        self.background_color = CoreImage("./assets/images/default_background.jpg", ext="jpg")
+        self.background = CoreImage("./assets/images/default_background.jpg", ext="jpg")
+
+
         # Flag to indicate the application is running
         self.is_running = True
         # Create the Screenmanager
@@ -130,9 +135,6 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
-        # Ensure backgrounds have fixed sizes (no auto-sizing) for consistent rendering on Pi
-        # self.background_color.size_hint = (None, None)
-        # self.background.size_hint = (None, None)
         
         # NOTE: Widget rendering order is critical here.
         self.layout.add_widget(self.background_color)  # Will be at bottom

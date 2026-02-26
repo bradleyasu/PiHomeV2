@@ -53,7 +53,8 @@ class NetworkImage(Widget):
 
 
     def reload(self):
-        self.ids["network_image_async_source"].reload()
+        if "network_image_async_source" in self.ids:
+            self.ids["network_image_async_source"].reload()
 
     def on_error(self, a = None, b = None):
         pass
@@ -64,5 +65,9 @@ class NetworkImage(Widget):
         pass
         # if self.loader is not None:
             # self.url = self.loader
+
+    def on_auto_refresh_interval(self, instance, value):
+        if value > 0:
+            Clock.schedule_interval(lambda _: self.reload(), value)
 
 
