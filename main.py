@@ -30,6 +30,9 @@ import kivy
 import platform
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
+from components.Image.networkimage import NetworkImage
+from kivy.graphics import Line
+
 from components.Toast.toast import Toast
 
 from kivy.core.window import Window
@@ -64,6 +67,28 @@ class PiHome(App):
         self.toast = Toast(on_reset=self.remove_toast)
 
         self.menu_button = Hamburger()
+        self.bg_color_rect = None
+        self.bg_rect = None
+
+        # Initialize backgrounds with default images immediately to prevent black screen on Pi
+        # AsyncImage with empty source renders as opaque black on Raspberry Pi OpenGL ES
+        default_bg = "./assets/images/default_background.jpg"
+        self.background_color = NetworkImage(
+            default_bg, 
+            size=(dp(self.width), dp(self.height)), 
+            pos=(0,0), 
+            enable_stretch=True, 
+            loader=default_bg,  
+            error=default_bg
+        )
+
+        self.background = NetworkImage(
+            default_bg, 
+            size=(dp(self.width), dp(self.height)), 
+            pos=(0,0), 
+            enable_stretch=True, 
+            loader=default_bg,  
+            error=default_bg)
 
         # Flag to indicate the application is running
         self.is_running = True
@@ -103,22 +128,19 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
-        # Add widgets - backgrounds are now rendered in PIHOME_SCREEN_MANAGER's canvas
+        # Add background widgets first (bottom layer)
+        self.layout.add_widget(self.background_color)
+        self.layout.add_widget(self.background)
+        
+        # Add foreground widgets
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
 
-        # Startup TaskManager after screens are loaded
-        Clock.schedule_once(lambda dt: self._start_task_manager(), 0.5)
+        # Startup TaskManager
+        TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
 
         return self.layout
-    
-    def _start_task_manager(self):
-        """Start task manager once screens are loaded"""
-        if _TASK_SCREEN in PIHOME_SCREEN_MANAGER.loaded_screens:
-            TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
-        else:
-            PIHOME_LOGGER.error("Task screen not loaded, cannot start task manager")
     
     def reload_configuration(self):
         PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
@@ -256,15 +278,19 @@ class PiHome(App):
         self.web_conf = json
 
     def _run(self):
-        # Background updates now handled by PIHOME_SCREEN_MANAGER
-        pass
+        # Update background url from wallpaper service
+        # Other regular updates
+        self.background.url = WALLPAPER_SERVICE.current
+        self.background_color.url = WALLPAPER_SERVICE.current_color
+        self.background.set_stretch(WALLPAPER_SERVICE.allow_stretch)
 
     
     def _reload_background(self):
         """
         Updates the background image, clearing the cache
         """
-        PIHOME_SCREEN_MANAGER.reload_background()
+        self.background.reload()
+        self.background_color.reload()
 
     def on_start(self):
         """

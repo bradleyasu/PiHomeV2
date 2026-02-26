@@ -4,20 +4,8 @@
     pos: root.pos
     size: root.size
     size_hint: None, None
-    canvas.before:
-        Color:
-            rgba: (0, 1, 0, 0) 
-        Rectangle:
-            pos: root.pos
-            size: root.size
     
     AsyncImage:
-        canvas.before:
-            Color:
-                rgba: (1, 0, 1, 0)
-            Rectangle:
-                pos: root.pos
-                size: root.size
         id: network_image_async_source
         size_hint: None, None
         source: root.url
@@ -26,6 +14,6 @@
         keep_ratio: root.k_ratio
         allow_stretch: root.stretch
         on_error: root.on_error()
-        on_load: root.on_load() # and self.remove_from_cache()
+        on_load: root.on_load()
         anim_delay: 0.1
         anim_loop: 1
