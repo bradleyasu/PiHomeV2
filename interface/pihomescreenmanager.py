@@ -19,10 +19,9 @@ class PiHomeScreenManager(ScreenManager):
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
 
-        # Explicitly set transparent background for Raspberry Pi OpenGL ES compatibility
-        # On Pi, widgets don't default to transparent like on macOS
+        # Background rectangle in canvas.before so it renders behind all screens
         with self.canvas.before:
-            Color(0, 0, 0, 0)  # Fully transparent
+            Color(1, 1, 1, 1)
             self.bg_rect = Rectangle(pos=self.pos, size=self.size)
         
         # Update background when size/pos changes
@@ -37,8 +36,12 @@ class PiHomeScreenManager(ScreenManager):
     def _update_bg(self, *args):
         """Update background rectangle to match widget size/position"""
         self.bg_rect.pos = self.pos
-        self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
+
+    def set_background_texture(self, texture):
+        """Set the background texture"""
+        if texture:
+            self.bg_rect.texture = texture
 
 
     def _rotary_handler(self, direction, pressed):

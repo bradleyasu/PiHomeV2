@@ -67,32 +67,9 @@ class PiHome(App):
         self.toast = Toast(on_reset=self.remove_toast)
 
         self.menu_button = Hamburger()
-        self.bg_color_rect = None
-        self.bg_rect = None
-
-        # Initialize backgrounds with default images immediately to prevent black screen on Pi
-        # AsyncImage with empty source renders as opaque black on Raspberry Pi OpenGL ES
-        default_bg = "./assets/images/default_background.jpg"
-        self.background_color = NetworkImage(
-            default_bg, 
-            size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), 
-            enable_stretch=True, 
-            loader=default_bg,  
-            error=default_bg
-        )
-
-        self.background = NetworkImage(
-            default_bg, 
-            size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), 
-            enable_stretch=True, 
-            loader=default_bg,  
-            error=default_bg)
 
         # Flag to indicate the application is running
         self.is_running = True
-        # Create the Screenmanager
 
 
     def setup(self):
@@ -128,11 +105,16 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
-        # Add background widgets first (bottom layer)
-        self.layout.add_widget(self.background_color)
-        self.layout.add_widget(self.background)
+        # Load default background into ScreenManager canvas
+        try:
+            from kivy.core.image import Image as CoreImage
+            default_bg = "./assets/images/default_background.jpg"
+            if os.path.exists(default_bg):
+                texture = CoreImage(default_bg, keep_data=True).texture
+                PIHOME_SCREEN_MANAGER.set_background_texture(texture)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to load default background: {e}")
 
-        # Add foreground widgets
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
@@ -278,19 +260,37 @@ class PiHome(App):
         self.web_conf = json
 
     def _run(self):
-        # Update background url from wallpaper service
-        # Other regular updates
-        self.background.url = WALLPAPER_SERVICE.current
-        self.background_color.url = WALLPAPER_SERVICE.current_color
-        self.background.set_stretch(WALLPAPER_SERVICE.allow_stretch)
+        # Update background texture from wallpaper service
+        try:
+            wallpaper_path = WALLPAPER_SERVICE.current
+            if wallpaper_path and wallpaper_path != "":
+                from kivy.core.image import Image as CoreImage
+                from kivy.loader import Loader
+                if wallpaper_path.startswith('http'):
+                    proxyimg = Loader.image(wallpaper_path)
+                    if proxyimg.loaded:
+                        PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture)
+                    else:
+                        def on_img_load(instance):
+                            PIHOME_SCREEN_MANAGER.set_background_texture(instance.texture)
+                        proxyimg.bind(on_load=on_img_load)
+                else:
+                    if os.path.exists(wallpaper_path):
+                        texture = CoreImage(wallpaper_path, keep_data=True).texture
+                        PIHOME_SCREEN_MANAGER.set_background_texture(texture)
+        except Exception as e:
+            PIHOME_LOGGER.debug(f"Background update: {e}")
 
     
     def _reload_background(self):
         """
         Updates the background image, clearing the cache
         """
-        self.background.reload()
-        self.background_color.reload()
+        from kivy.loader import Loader
+        current_path = WALLPAPER_SERVICE.current
+        if current_path and current_path.startswith('http'):
+            Loader.image(current_path).reload()
+        self._run()
 
     def on_start(self):
         """
