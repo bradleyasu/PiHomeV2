@@ -75,7 +75,7 @@ class PiHome(App):
 
 
         self.background_color = NetworkImage(
-            "./assets/images/default_background.jpg", 
+            "", 
             size=(dp(self.width), dp(self.height)), 
             pos=(0,0), 
             enable_stretch=True, 
@@ -84,7 +84,7 @@ class PiHome(App):
         )
 
         self.background = NetworkImage(
-            "./assets/images/default_background.jpg", 
+            "", 
             size=(dp(self.width), dp(self.height)), 
             pos=(0,0), 
             enable_stretch=True, 
