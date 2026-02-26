@@ -141,7 +141,7 @@ class PiHome(App):
         
         # Explicitly add foreground widgets at index 0 to ensure they're always on top
         # This is necessary for proper rendering on Raspberry Pi touchscreen
-        # self.layout.add_widget(PIHOME_SCREEN_MANAGER)
+        self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         # self.layout.add_widget(TIMER_DRAWER)
         # self.layout.add_widget(self.menu_button)
 
