@@ -59,3 +59,12 @@ class MQTT:
         self.client.subscribe(self.feed)
         PIHOME_LOGGER.info("[ MQTT ] Client active and actively listening for messages!")
 
+    def disconnect(self):
+        """Properly disconnect and cleanup MQTT client"""
+        if self.client is not None:
+            try:
+                self.client.loop_stop()
+                self.client.disconnect()
+                PIHOME_LOGGER.info("[ MQTT ] Client disconnected and cleaned up")
+            except Exception as e:
+                PIHOME_LOGGER.error(f"[ MQTT ] Error during disconnect: {e}")

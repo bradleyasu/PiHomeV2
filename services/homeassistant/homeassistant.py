@@ -22,13 +22,32 @@ class HomeAssistant:
     current_states = {}
     websocket = None
     listeners = []
+    event_thread = None
+    event_loop = None
+    is_shutting_down = False
     
     def __init__(self, **kwargs):
         super(HomeAssistant, self).__init__(**kwargs)
 
     def __del__(self):
-        self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
-        asyncio.get_event_loop().run_until_complete(self.disconnect())
+        self.shutdown()
+
+    def shutdown(self):
+        """Immediately shutdown Home Assistant connection"""
+        if self.is_shutting_down:
+            return
+        
+        PIHOME_LOGGER.info("Home Assistant: Shutting down...")
+        self.is_shutting_down = True
+        
+        try:
+            self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
+        except:
+            pass
+        
+        # Stop the event loop immediately
+        if self.event_loop and self.event_loop.is_running():
+            self.event_loop.call_soon_threadsafe(self.event_loop.stop)
 
     async def disconnect(self):
         if self.websocket:
@@ -40,8 +59,8 @@ class HomeAssistant:
 
             # this thread will monitor for event changes in home assistant
             self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
-            thread = Thread(target=self._start_loop)
-            thread.start()
+            self.event_thread = Thread(target=self._start_loop, daemon=True)
+            self.event_thread.start()
             self.current_states = self.get_all_states()
         except Exception as e:
             PIHOME_LOGGER.error(f"Error connecting to Home Assistant: {e}")
@@ -49,9 +68,13 @@ class HomeAssistant:
             return False
 
     def _start_loop(self):
-        loop = asyncio.new_event_loop()
-        loop.create_task(self._connect_to_websocket())
-        loop.run_forever()
+        self.event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.event_loop)
+        self.event_loop.create_task(self._connect_to_websocket())
+        try:
+            self.event_loop.run_forever()
+        finally:
+            self.event_loop.close()
 
     async def _connect_to_websocket(self):
         socket_url = f"{self.HA_URL}/websocket".replace("http://", "ws://")
@@ -73,10 +96,15 @@ class HomeAssistant:
             await self._send_message(message)
             PIHOME_LOGGER.info("Subscribed to Home Assistant events.")
             self.set_state(self.PIHOME_CONNECTED_SENSOR, "on")
-            while True:
-                message = await self.websocket.recv()
-                data = json.loads(message)
-                self._handle_message(data)
+            while not self.is_shutting_down:
+                try:
+                    message = await self.websocket.recv()
+                    data = json.loads(message)
+                    self._handle_message(data)
+                except Exception as e:
+                    if not self.is_shutting_down:
+                        PIHOME_LOGGER.error(f"WebSocket error: {e}")
+                    break
 
     async def _send_message(self, message):
         await self.websocket.send(json.dumps(message))

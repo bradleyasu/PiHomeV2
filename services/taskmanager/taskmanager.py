@@ -56,7 +56,8 @@ class TaskManager():
         if not self.is_running:
             self.is_running = True
             self.task_screen = task_screen
-            self.thread = Thread(target=self.run_service, daemon=True).start()
+            self.thread = Thread(target=self.run_service, daemon=True)
+            self.thread.start()
             PIHOME_LOGGER.info("Task Manager is has started")
         else:
             PIHOME_LOGGER.warn("Task Manager is already running")
@@ -64,8 +65,7 @@ class TaskManager():
     def stop(self):
         if self.is_running:
             self.is_running = False
-            self.thread.join()
-            PIHOME_LOGGER.info("Task Manager is has stopped")
+            PIHOME_LOGGER.info("Task Manager stopped")
 
     def restart(self):
         PIHOME_LOGGER.info("Task Manager is restarting")

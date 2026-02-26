@@ -93,9 +93,6 @@ class PiHome(App):
 
 
 
-        self.background_color = CoreImage("./assets/images/default_background.jpg", ext="jpg")
-        self.background = CoreImage("./assets/images/default_background.jpg", ext="jpg")
-
 
         # Flag to indicate the application is running
         self.is_running = True
@@ -261,12 +258,8 @@ class PiHome(App):
     """
     def quit(self):
         self.is_running = False
-        # Cleanup audio device before exit
-        try:
-            from services.audio.audioplayernew import AUDIO_PLAYER
-            AUDIO_PLAYER.cleanup()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
+        PIHOME_LOGGER.info("Quit requested - initiating shutdown...")
+        # on_stop() will handle all cleanup
         get_app().stop()
         sys.exit("PiHome Terminated")
 
@@ -331,14 +324,37 @@ class PiHome(App):
  
 
     def on_stop(self):
-        # Cleanup audio device
+        PIHOME_LOGGER.info("=================================== PIHOME SHUTDOWN ===================================")
+        # Set shutdown flags and let daemon threads die automatically
+        try:
+            TIMER_DRAWER.shutdown()
+        except:
+            pass
+        try:
+            TASK_MANAGER.is_running = False
+        except:
+            pass
         try:
             from services.audio.audioplayernew import AUDIO_PLAYER
-            AUDIO_PLAYER.cleanup()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error cleaning up audio: {e}")
-        SERVER.stop_server()
-        PIHOME_LOGGER.info("=================================== PIHOME SHUTDOWN ===================================")
+            AUDIO_PLAYER.is_shutting_down = True
+            AUDIO_PLAYER.stop(clear_playlist=True)
+        except:
+            pass
+        try:
+            HOME_ASSISTANT.is_shutting_down = True
+        except:
+            pass
+        try:
+            if hasattr(self, 'mqtt') and self.mqtt:
+                self.mqtt.client.loop_stop()
+        except:
+            pass
+        try:
+            SERVER.shutting_down = True
+            if SERVER.httpd:
+                SERVER.httpd.shutdown()
+        except:
+            pass
     #     self.profile.disable()
     #     self.profile.dump_stats('pihome.profile')
     #     self.profile.print_stats()

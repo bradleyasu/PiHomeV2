@@ -42,6 +42,7 @@ class AudioPlayer:
     current_source = None
     player_thread = None
     current_folder = None
+    is_shutting_down = False
     """
     Saved urls is an array of json objects with a "text" and "url" key
     The text is the title of the media and the url is the url to the media
@@ -68,7 +69,7 @@ class AudioPlayer:
         #     self.device = self.find_sound_device()
 
         # start audio procesing thread
-        self.thread = Thread(target=self.audio_processing_thread)
+        self.thread = Thread(target=self.audio_processing_thread, daemon=True)
         self.thread.start()
 
         # deserialize saved urls
@@ -236,10 +237,10 @@ class AudioPlayer:
 
     def audio_processing_thread(self):
         PIHOME_LOGGER.info("Starting audio processing thread")
-        while True:
+        while not self.is_shutting_down:
             try:
                 # data = self.q_in.get_nowait()
-                data = self.q_in.get()
+                data = self.q_in.get(timeout=0.5)
                 # self.data = data
             except queue.Empty:
                 continue
@@ -443,15 +444,14 @@ class AudioPlayer:
         self.set_state(AudioState.STOPPED)
     
     def cleanup(self):
-        """Full cleanup including device release"""
+        """Immediate cleanup"""
+        self.is_shutting_down = True
         self.stop(clear_playlist=True)
         try:
-            # Terminate sounddevice to release all audio resources
             import sounddevice as sd
             sd._terminate()
-            PIHOME_LOGGER.info("Audio device cleanup complete")
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Error during cleanup: {e}")
+        except:
+            pass
 
     def set_volume(self, volume, oneAsHundred=False):
         """

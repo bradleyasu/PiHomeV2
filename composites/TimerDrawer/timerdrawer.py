@@ -125,6 +125,12 @@ class TimerDrawer(GridLayout):
 
         animation.start(self)
 
+    def shutdown(self):
+        """Stop all active timers immediately"""
+        for timer_widget in self.timer_widgets:
+            if timer_widget.timer and timer_widget.timer.is_running:
+                timer_widget.timer.is_running = False
+
 
 TIMER_DRAWER = TimerDrawer() 
     

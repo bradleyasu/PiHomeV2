@@ -15,6 +15,7 @@ class Timer:
         self.elapsed_time = 0
         self.is_running = False
         self.listeners = []
+        self.timer_thread = None
         if label is None:
             label = "{} second timer".format(duration)
         self.label = label
@@ -75,7 +76,8 @@ class Timer:
             return
         self.start_time = time.time()
         self.is_running = True
-        threading.Thread(target=self.update).start()
+        self.timer_thread = threading.Thread(target=self.update, daemon=True)
+        self.timer_thread.start()
 
     def stop(self, notify=False):
         """
