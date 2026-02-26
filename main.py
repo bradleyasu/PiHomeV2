@@ -125,11 +125,14 @@ class PiHome(App):
         return self.layout
     
     def reload_configuration(self):
-        PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
-        # CONFIG = Configuration(CONF_FILE)
+        PIHOME_LOGGER.info("Configuration changes detected. Reloading services...")
+        # Re-read base.ini into memory — Kivy's SettingsPanel wrote to it externally
+        CONFIG.reload()
+        # Restart wallpaper service so it picks up new source/stretch/subreddit settings
         WALLPAPER_SERVICE.restart()
-        PIHOME_SCREEN_MANAGER.reload_all(CONFIG)
-        PIHOME_LOGGER.info("Confgiuration changes have been applied!")
+        # Notify all screens so they can react to config changes
+        PIHOME_SCREEN_MANAGER.reload_all()
+        PIHOME_LOGGER.info("Configuration reload complete.")
 
     def restart(self):
         """

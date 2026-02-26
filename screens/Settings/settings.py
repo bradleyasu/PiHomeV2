@@ -44,12 +44,11 @@ class SettingsScreen(PiHomeScreen):
         
         # Override on_close event to return to the previous screen
         def on_close():
-            # get_app().manager.current = get_app().manager.previous()
-            # get_app().manager.current = _HOME_SCREEN
             self.go_back()
-            # PIHOME_SCREEN_MANAGER.reload_all()
-            # WALLPAPER_SERVICE.restart()
-            # toast(label="PiHome needs to be restarted for new settings to take effect")
+            # Write config and reload all services with new values
+            self.config.write()
+            from util.helpers import get_app
+            get_app().reload_configuration()
 
         s.on_close = on_close
         self.add_widget(s)

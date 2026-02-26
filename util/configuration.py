@@ -31,5 +31,9 @@ class Configuration:
         with open(self.name, 'w') as configfile:  # save
             self.c.write(configfile)
 
+    def reload(self):
+        """Re-read the config file into memory. Call after external writes (e.g. Kivy SettingsPanel)."""
+        self.c.read(self.name)
+
 
 CONFIG = Configuration("base.ini")
