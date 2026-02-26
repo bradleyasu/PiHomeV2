@@ -20,6 +20,8 @@ class PiHomeScreen(Screen):
         self.is_open = False
         self.disable_rotary_press_animation = False
 
+        self.size_hint = (1, 1)
+
         # Locked screens can't be navigated away from.  Logic with in the screen implementation can take advantage of this
         self.locked = False
 

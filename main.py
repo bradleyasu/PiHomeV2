@@ -131,6 +131,9 @@ class PiHome(App):
         # Add background widgets first (bottom layer)
         self.layout.add_widget(self.background_color)
         self.layout.add_widget(self.background)
+
+        PIHOME_SCREEN_MANAGER.size = (self.width, self.height)
+        PIHOME_SCREEN_MANAGER.size_hint = (1, 1)
         
         # Add foreground widgets
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
