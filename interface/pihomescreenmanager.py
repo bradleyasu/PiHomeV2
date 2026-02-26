@@ -10,6 +10,7 @@ from system.rotary import ROTARY_ENCODER
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
+from kivy.loader import Loader
 
 class PiHomeScreenManager(ScreenManager):
     screens_loaded = False
@@ -19,14 +20,24 @@ class PiHomeScreenManager(ScreenManager):
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
 
-        # Explicitly set transparent background for Raspberry Pi OpenGL ES compatibility
-        # On Pi, widgets don't default to transparent like on macOS
+        # Background images for wallpaper
+        self._background_color_texture = None
+        self._background_texture = None
+        self._current_wallpaper_url = ""
+        self._current_wallpaper_color_url = ""
+        self._allow_stretch = True
+        
+        # Setup background rendering on canvas
         with self.canvas.before:
-            Color(0, 0, 0, 0)  # Fully transparent
+            Color(1, 1, 1, 1)
+            self.bg_color_rect = Rectangle(pos=self.pos, size=self.size)
             self.bg_rect = Rectangle(pos=self.pos, size=self.size)
         
         # Update background when size/pos changes
         self.bind(pos=self._update_bg, size=self._update_bg)
+        
+        # Schedule wallpaper updates
+        Clock.schedule_interval(lambda dt: self._update_wallpaper(), 1)
 
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
@@ -36,8 +47,105 @@ class PiHomeScreenManager(ScreenManager):
     
     def _update_bg(self, *args):
         """Update background rectangle to match widget size/position"""
-        self.bg_rect.pos = self.pos
-        self.bg_rect.size = self.size
+        if self._allow_stretch:
+            self.bg_color_rect.pos = self.pos
+            self.bg_color_rect.size = self.size
+            self.bg_rect.pos = self.pos
+            self.bg_rect.size = self.size
+        else:
+            # Keep aspect ratio - this will be handled when texture loads
+            self._update_texture_sizing()
+    
+    def _update_texture_sizing(self):
+        """Update texture sizing based on stretch mode"""
+        if self._allow_stretch:
+            self.bg_color_rect.pos = self.pos
+            self.bg_color_rect.size = self.size
+            self.bg_rect.pos = self.pos
+            self.bg_rect.size = self.size
+        else:
+            # Keep aspect ratio for both textures
+            if self._background_color_texture:
+                self._apply_aspect_ratio(self.bg_color_rect, self._background_color_texture)
+            if self._background_texture:
+                self._apply_aspect_ratio(self.bg_rect, self._background_texture)
+    
+    def _apply_aspect_ratio(self, rect, texture):
+        """Apply aspect ratio sizing to a rectangle with a texture"""
+        if not texture:
+            return
+        
+        aspect = texture.width / float(texture.height)
+        w_aspect = self.width / float(self.height)
+        
+        if aspect > w_aspect:
+            # Image is wider
+            new_width = self.width
+            new_height = self.width / aspect
+        else:
+            # Image is taller
+            new_height = self.height
+            new_width = self.height * aspect
+        
+        # Center the image
+        rect.size = (new_width, new_height)
+        rect.pos = (
+            self.x + (self.width - new_width) / 2,
+            self.y + (self.height - new_height) / 2
+        )
+    
+    def _update_wallpaper(self):
+        """Update wallpaper from WALLPAPER_SERVICE"""
+        from services.wallpaper.wallpaper import WALLPAPER_SERVICE
+        
+        # Check if stretch mode changed
+        if self._allow_stretch != WALLPAPER_SERVICE.allow_stretch:
+            self._allow_stretch = WALLPAPER_SERVICE.allow_stretch
+            self._update_texture_sizing()
+        
+        # Update background color if changed
+        if self._current_wallpaper_color_url != WALLPAPER_SERVICE.current_color:
+            self._current_wallpaper_color_url = WALLPAPER_SERVICE.current_color
+            if self._current_wallpaper_color_url:
+                proxyimg = Loader.image(self._current_wallpaper_color_url, nocache=False)
+                proxyimg.bind(on_load=lambda img: self._set_bg_color_texture(img.texture))
+        
+        # Update background if changed
+        if self._current_wallpaper_url != WALLPAPER_SERVICE.current:
+            self._current_wallpaper_url = WALLPAPER_SERVICE.current
+            if self._current_wallpaper_url:
+                proxyimg = Loader.image(self._current_wallpaper_url, nocache=False)
+                proxyimg.bind(on_load=lambda img: self._set_bg_texture(img.texture))
+    
+    def _set_bg_color_texture(self, texture):
+        """Set the background color texture"""
+        self._background_color_texture = texture
+        self.bg_color_rect.texture = texture
+        self._update_texture_sizing()
+    
+    def _set_bg_texture(self, texture):
+        """Set the background texture"""
+        self._background_texture = texture
+        self.bg_rect.texture = texture
+        self._update_texture_sizing()
+    
+    def reload_background(self):
+        """Force reload backgrounds from cache"""
+        if self._current_wallpaper_url:
+            try:
+                Loader.image(self._current_wallpaper_url).remove_from_cache()
+            except:
+                pass
+            proxyimg = Loader.image(self._current_wallpaper_url, nocache=True)
+            proxyimg.bind(on_load=lambda img: self._set_bg_texture(img.texture))
+        
+        if self._current_wallpaper_color_url:
+            try:
+                Loader.image(self._current_wallpaper_color_url).remove_from_cache()
+            except:
+                pass
+            proxyimg = Loader.image(self._current_wallpaper_color_url, nocache=True)
+            proxyimg.bind(on_load=lambda img: self._set_bg_color_texture(img.texture))
 
 
     def _rotary_handler(self, direction, pressed):

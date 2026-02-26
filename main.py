@@ -16,7 +16,6 @@ Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 Config.set('graphics', 'verify_gl_main_thread', '0')
 from components.Hamburger.hamburger import Hamburger
 
-from networking.poller import POLLER
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER 
 
@@ -31,12 +30,8 @@ import kivy
 import platform
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
-from components.Image.networkimage import NetworkImage
-from kivy.graphics import Line
-
 from components.Toast.toast import Toast
 
-from util.configuration import CONFIG
 from kivy.core.window import Window
 from util.helpers import get_app, simplegesture
 from kivy.metrics import dp
@@ -69,30 +64,6 @@ class PiHome(App):
         self.toast = Toast(on_reset=self.remove_toast)
 
         self.menu_button = Hamburger()
-        self.bg_color_rect = None
-        self.bg_rect = None
-
-
-
-        self.background_color = NetworkImage(
-            "", 
-            size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), 
-            enable_stretch=True, 
-            loader="./assets/images/default_background.jpg",  
-            error="./assets/images/default_background.jpg"
-        )
-
-        self.background = NetworkImage(
-            "", 
-            size=(dp(self.width), dp(self.height)), 
-            pos=(0,0), 
-            enable_stretch=True, 
-            loader="./assets/images/default_background.jpg",  
-            error="./assets/images/default_background.jpg")
-
-
-
 
         # Flag to indicate the application is running
         self.is_running = True
@@ -132,13 +103,7 @@ class PiHome(App):
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
-        
-        # NOTE: Widget rendering order is critical here.
-        self.layout.add_widget(self.background_color)  # Will be at bottom
-        self.layout.add_widget(self.background)  # On top of background_color
-        
-        # Explicitly add foreground widgets at index 0 to ensure they're always on top
-        # This is necessary for proper rendering on Raspberry Pi touchscreen
+        # Add widgets - backgrounds are now rendered in PIHOME_SCREEN_MANAGER's canvas
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
@@ -284,19 +249,15 @@ class PiHome(App):
         self.web_conf = json
 
     def _run(self):
-        # Update background url from wallpaper service
-        # Other regular updates
-        self.background.url = WALLPAPER_SERVICE.current
-        self.background_color.url = WALLPAPER_SERVICE.current_color
-        self.background.set_stretch(WALLPAPER_SERVICE.allow_stretch)
+        # Background updates now handled by PIHOME_SCREEN_MANAGER
+        pass
 
     
     def _reload_background(self):
         """
         Updates the background image, clearing the cache
         """
-        self.background.reload()
-        self.background_color.reload()
+        PIHOME_SCREEN_MANAGER.reload_background()
 
     def on_start(self):
         """
