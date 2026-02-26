@@ -33,7 +33,7 @@ class NetworkImage(Widget):
 
     def __init__(self, url = "", size=(dp(50), dp(50)), pos=(dp(10), dp(10)), enable_stretch = False, loader = None, error = None, **kwargs):
         super(NetworkImage, self).__init__(**kwargs)
-        # Loader.loading_image = BLANK_IMAGE
+        Loader.loading_image = BLANK_IMAGE
     
         self.url = url
         self.size = size
