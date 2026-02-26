@@ -61,9 +61,6 @@ class PiHome(App):
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
         
-        # Create layout as instance variable, not class variable
-        # This ensures it's created after Window is properly initialized
-        # Critical for Raspberry Pi OpenGL ES rendering
         self.layout = FloatLayout()
 
         self.height = CONFIG.get_int('window', 'height', 480)
@@ -71,6 +68,8 @@ class PiHome(App):
         self.toast = Toast(on_reset=self.remove_toast)
 
         self.menu_button = Hamburger()
+        self.bg_color_rect = None
+        self.bg_rect = None
 
 
 
