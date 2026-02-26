@@ -177,7 +177,8 @@ class PiHomeServer():
             self._run()
                 
     
-    async def websocket_server(self, websocket, path):
+    async def websocket_server(self, websocket):
+        # websockets 10+ no longer passes path as a second argument
         toast("Socket Connected", "info", 2)
         try:
             async for message in websocket:
