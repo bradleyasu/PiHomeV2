@@ -136,7 +136,7 @@ class PiHome(App):
         
         # NOTE: Widget rendering order is critical here.
         # self.layout.add_widget(self.background_color)  # Will be at bottom
-        self.layout.add_widget(self.background)  # On top of background_color
+        # self.layout.add_widget(self.background)  # On top of background_color
         
         # Explicitly add foreground widgets at index 0 to ensure they're always on top
         # This is necessary for proper rendering on Raspberry Pi touchscreen
