@@ -18,10 +18,8 @@ class PiHomeScreenManager(ScreenManager):
 
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
-        # set background color to transparent so that the background image can be seen
-        with self.canvas.before:
-            self.background_color = Color(0, 0, 0, 0) 
 
+        self.background_color = Color(0, 0, 0, 0)  # Black background
 
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
