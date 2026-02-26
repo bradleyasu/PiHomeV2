@@ -19,13 +19,25 @@ class PiHomeScreenManager(ScreenManager):
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
 
-        self.background_color = Color(0, 0, 0, 0)  # Black background
+        # Explicitly set transparent background for Raspberry Pi OpenGL ES compatibility
+        # On Pi, widgets don't default to transparent like on macOS
+        with self.canvas.before:
+            Color(0, 0, 0, 0)  # Fully transparent
+            self.bg_rect = Rectangle(pos=self.pos, size=self.size)
+        
+        # Update background when size/pos changes
+        self.bind(pos=self._update_bg, size=self._update_bg)
 
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
             self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
             self.rotary_encoder.update_callback = lambda direction, pressed: self._rotary_handler(direction, pressed)
             self.rotary_encoder.button_on_down_callback = lambda: self._rotary_on_down()
+    
+    def _update_bg(self, *args):
+        """Update background rectangle to match widget size/position"""
+        self.bg_rect.pos = self.pos
+        self.bg_rect.size = self.size
 
 
     def _rotary_handler(self, direction, pressed):
