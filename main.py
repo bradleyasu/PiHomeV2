@@ -131,12 +131,12 @@ class PiHome(App):
         self.menu_button.size_hint = (None, None)
         
         # Ensure backgrounds have fixed sizes (no auto-sizing) for consistent rendering on Pi
-        self.background_color.size_hint = (None, None)
-        self.background.size_hint = (None, None)
+        # self.background_color.size_hint = (None, None)
+        # self.background.size_hint = (None, None)
         
         # NOTE: Widget rendering order is critical here.
         # self.layout.add_widget(self.background_color)  # Will be at bottom
-        # self.layout.add_widget(self.background)  # On top of background_color
+        self.layout.add_widget(self.background)  # On top of background_color
         
         # Explicitly add foreground widgets at index 0 to ensure they're always on top
         # This is necessary for proper rendering on Raspberry Pi touchscreen
