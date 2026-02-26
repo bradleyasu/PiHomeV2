@@ -19,13 +19,19 @@ class PiHomeScreenManager(ScreenManager):
     def __init__(self, **kwargs):
         super(PiHomeScreenManager, self).__init__(**kwargs)
 
-        # Background rectangle in canvas.before so it renders behind all screens
+        # Three canvas layers: stretched backdrop, dim overlay, centered image
         with self.canvas.before:
             Color(1, 1, 1, 1)
-            self.bg_rect = Rectangle(pos=self.pos, size=self.size)
-        
-        # Update background when size/pos changes
+            self.bg_stretch_rect = Rectangle(pos=self.pos, size=self.size)
+            self.bg_dim_color = Color(0, 0, 0, 0)  # alpha controlled at runtime
+            self.bg_dim_rect = Rectangle(pos=self.pos, size=self.size)
+            Color(1, 1, 1, 1)
+            self.bg_main_rect = Rectangle(pos=self.pos, size=self.size)
+
         self.bind(pos=self._update_bg, size=self._update_bg)
+
+        self._bg_texture = None
+        self._bg_allow_stretch = True
 
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
@@ -34,14 +40,47 @@ class PiHomeScreenManager(ScreenManager):
             self.rotary_encoder.button_on_down_callback = lambda: self._rotary_on_down()
     
     def _update_bg(self, *args):
-        """Update background rectangle to match widget size/position"""
-        self.bg_rect.pos = self.pos
-        self.bg_rect.size = self.size
+        """Update background rectangles to match widget size/position"""
+        self.bg_stretch_rect.pos = self.pos
+        self.bg_stretch_rect.size = self.size
+        self.bg_dim_rect.pos = self.pos
+        self.bg_dim_rect.size = self.size
+        if not self._bg_allow_stretch and self._bg_texture:
+            self._apply_pillarbox_geometry(self._bg_texture)
+        else:
+            self.bg_main_rect.pos = self.pos
+            self.bg_main_rect.size = self.size
 
-    def set_background_texture(self, texture):
-        """Set the background texture"""
-        if texture:
-            self.bg_rect.texture = texture
+    def _apply_pillarbox_geometry(self, texture):
+        """Compute centered fit-to-height rect using only texture metadata — no pixel readback."""
+        tw = texture.width
+        th = texture.height
+        sw, sh = self.size
+        scale = sh / th
+        scaled_w = tw * scale
+        x = self.pos[0] + (sw - scaled_w) / 2.0
+        self.bg_main_rect.pos = (x, self.pos[1])
+        self.bg_main_rect.size = (scaled_w, sh)
+
+    def set_background_texture(self, texture, allow_stretch=True):
+        """Set the background texture.
+
+        allow_stretch=True: image fills screen.
+        allow_stretch=False: stretched+dimmed backdrop with centered fit-to-height image on top.
+        """
+        if not texture:
+            return
+        self._bg_texture = texture
+        self._bg_allow_stretch = allow_stretch
+        self.bg_stretch_rect.texture = texture
+        self.bg_main_rect.texture = texture
+        if allow_stretch:
+            self.bg_dim_color.a = 0
+            self.bg_main_rect.pos = self.pos
+            self.bg_main_rect.size = self.size
+        else:
+            self.bg_dim_color.a = 0.5
+            self._apply_pillarbox_geometry(texture)
 
 
     def _rotary_handler(self, direction, pressed):

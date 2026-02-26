@@ -111,7 +111,7 @@ class PiHome(App):
             default_bg = "./assets/images/default_background.jpg"
             if os.path.exists(default_bg):
                 texture = CoreImage(default_bg, keep_data=True).texture
-                PIHOME_SCREEN_MANAGER.set_background_texture(texture)
+                PIHOME_SCREEN_MANAGER.set_background_texture(texture, bool(WALLPAPER_SERVICE.allow_stretch))
         except Exception as e:
             PIHOME_LOGGER.error(f"Failed to load default background: {e}")
 
@@ -263,21 +263,22 @@ class PiHome(App):
         # Update background texture from wallpaper service
         try:
             wallpaper_path = WALLPAPER_SERVICE.current
+            allow_stretch = bool(WALLPAPER_SERVICE.allow_stretch)
             if wallpaper_path and wallpaper_path != "":
                 from kivy.core.image import Image as CoreImage
                 from kivy.loader import Loader
                 if wallpaper_path.startswith('http'):
                     proxyimg = Loader.image(wallpaper_path)
                     if proxyimg.loaded:
-                        PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture)
+                        PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture, allow_stretch)
                     else:
                         def on_img_load(instance):
-                            PIHOME_SCREEN_MANAGER.set_background_texture(instance.texture)
+                            PIHOME_SCREEN_MANAGER.set_background_texture(instance.texture, allow_stretch)
                         proxyimg.bind(on_load=on_img_load)
                 else:
                     if os.path.exists(wallpaper_path):
                         texture = CoreImage(wallpaper_path, keep_data=True).texture
-                        PIHOME_SCREEN_MANAGER.set_background_texture(texture)
+                        PIHOME_SCREEN_MANAGER.set_background_texture(texture, allow_stretch)
         except Exception as e:
             PIHOME_LOGGER.debug(f"Background update: {e}")
 
