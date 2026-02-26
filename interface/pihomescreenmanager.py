@@ -58,17 +58,20 @@ class PiHomeScreenManager(ScreenManager):
     
     def _update_texture_sizing(self):
         """Update texture sizing based on stretch mode"""
-        if self._allow_stretch:
-            self.bg_color_rect.pos = self.pos
-            self.bg_color_rect.size = self.size
-            self.bg_rect.pos = self.pos
-            self.bg_rect.size = self.size
-        else:
-            # Keep aspect ratio for both textures
-            if self._background_color_texture:
-                self._apply_aspect_ratio(self.bg_color_rect, self._background_color_texture)
-            if self._background_texture:
-                self._apply_aspect_ratio(self.bg_rect, self._background_texture)
+        try:
+            if self._allow_stretch:
+                self.bg_color_rect.pos = self.pos
+                self.bg_color_rect.size = self.size
+                self.bg_rect.pos = self.pos
+                self.bg_rect.size = self.size
+            else:
+                # Keep aspect ratio for both textures
+                if self._background_color_texture:
+                    self._apply_aspect_ratio(self.bg_color_rect, self._background_color_texture)
+                if self._background_texture:
+                    self._apply_aspect_ratio(self.bg_rect, self._background_texture)
+        except Exception as e:
+            PIHOME_LOGGER.error("Error updating texture sizing: {}".format(e))
     
     def _apply_aspect_ratio(self, rect, texture):
         """Apply aspect ratio sizing to a rectangle with a texture"""
@@ -96,38 +99,50 @@ class PiHomeScreenManager(ScreenManager):
     
     def _update_wallpaper(self):
         """Update wallpaper from WALLPAPER_SERVICE"""
-        from services.wallpaper.wallpaper import WALLPAPER_SERVICE
+        try:
+            from services.wallpaper.wallpaper import WALLPAPER_SERVICE
+        except ImportError:
+            return  # Service not ready yet
         
-        # Check if stretch mode changed
-        if self._allow_stretch != WALLPAPER_SERVICE.allow_stretch:
-            self._allow_stretch = WALLPAPER_SERVICE.allow_stretch
-            self._update_texture_sizing()
-        
-        # Update background color if changed
-        if self._current_wallpaper_color_url != WALLPAPER_SERVICE.current_color:
-            self._current_wallpaper_color_url = WALLPAPER_SERVICE.current_color
-            if self._current_wallpaper_color_url:
-                proxyimg = Loader.image(self._current_wallpaper_color_url, nocache=False)
-                proxyimg.bind(on_load=lambda img: self._set_bg_color_texture(img.texture))
-        
-        # Update background if changed
-        if self._current_wallpaper_url != WALLPAPER_SERVICE.current:
-            self._current_wallpaper_url = WALLPAPER_SERVICE.current
-            if self._current_wallpaper_url:
-                proxyimg = Loader.image(self._current_wallpaper_url, nocache=False)
-                proxyimg.bind(on_load=lambda img: self._set_bg_texture(img.texture))
+        try:
+            # Check if stretch mode changed
+            if self._allow_stretch != WALLPAPER_SERVICE.allow_stretch:
+                self._allow_stretch = WALLPAPER_SERVICE.allow_stretch
+                self._update_texture_sizing()
+            
+            # Update background color if changed
+            if self._current_wallpaper_color_url != WALLPAPER_SERVICE.current_color:
+                self._current_wallpaper_color_url = WALLPAPER_SERVICE.current_color
+                if self._current_wallpaper_color_url:
+                    proxyimg = Loader.image(self._current_wallpaper_color_url, nocache=False)
+                    proxyimg.bind(on_load=lambda img: self._set_bg_color_texture(img.texture))
+            
+            # Update background if changed
+            if self._current_wallpaper_url != WALLPAPER_SERVICE.current:
+                self._current_wallpaper_url = WALLPAPER_SERVICE.current
+                if self._current_wallpaper_url:
+                    proxyimg = Loader.image(self._current_wallpaper_url, nocache=False)
+                    proxyimg.bind(on_load=lambda img: self._set_bg_texture(img.texture))
+        except Exception as e:
+            PIHOME_LOGGER.error("Error updating wallpaper: {}".format(e))
     
     def _set_bg_color_texture(self, texture):
         """Set the background color texture"""
-        self._background_color_texture = texture
-        self.bg_color_rect.texture = texture
-        self._update_texture_sizing()
+        try:
+            self._background_color_texture = texture
+            self.bg_color_rect.texture = texture
+            self._update_texture_sizing()
+        except Exception as e:
+            PIHOME_LOGGER.error("Error setting background color texture: {}".format(e))
     
     def _set_bg_texture(self, texture):
         """Set the background texture"""
-        self._background_texture = texture
-        self.bg_rect.texture = texture
-        self._update_texture_sizing()
+        try:
+            self._background_texture = texture
+            self.bg_rect.texture = texture
+            self._update_texture_sizing()
+        except Exception as e:
+            PIHOME_LOGGER.error("Error setting background texture: {}".format(e))
     
     def reload_background(self):
         """Force reload backgrounds from cache"""

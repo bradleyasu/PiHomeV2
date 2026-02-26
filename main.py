@@ -108,10 +108,17 @@ class PiHome(App):
         self.layout.add_widget(TIMER_DRAWER)
         self.layout.add_widget(self.menu_button)
 
-        # Startup TaskManager
-        TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
+        # Startup TaskManager after screens are loaded
+        Clock.schedule_once(lambda dt: self._start_task_manager(), 0.5)
 
         return self.layout
+    
+    def _start_task_manager(self):
+        """Start task manager once screens are loaded"""
+        if _TASK_SCREEN in PIHOME_SCREEN_MANAGER.loaded_screens:
+            TASK_MANAGER.start(PIHOME_SCREEN_MANAGER.loaded_screens[_TASK_SCREEN])
+        else:
+            PIHOME_LOGGER.error("Task screen not loaded, cannot start task manager")
     
     def reload_configuration(self):
         PIHOME_LOGGER.info("Confgiruation changes have been made.  Resetting services....")
