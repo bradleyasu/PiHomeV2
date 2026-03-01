@@ -22,39 +22,41 @@ class PiHomeSwitch(Widget):
     enabled = BooleanProperty(False)
     offset = NumericProperty(0)
 
-    border_color = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
-    background_inactive_color = theme.get_color(theme.SWITCH_INACTIVE)
-    background_active_color = theme.get_color(theme.SWITCH_ACTIVE)
-    background_color = ColorProperty(theme.get_color(theme.SWITCH_INACTIVE))
-    button_color = ColorProperty(theme.get_color(theme.BUTTON_PRIMARY))
+    track_inactive_color = theme.get_color(theme.SWITCH_INACTIVE)
+    track_active_color   = theme.get_color(theme.SWITCH_ACTIVE)
+    track_color  = ColorProperty(theme.get_color(theme.SWITCH_INACTIVE))
+    thumb_color  = ColorProperty([1, 1, 1, 1])
 
-    def __init__(self, size = (dp(100), dp(40)), on_change = lambda _: (), **kwargs):
+    def __init__(self, size=(dp(50), dp(28)), on_change=lambda _: (), **kwargs):
         super(PiHomeSwitch, self).__init__(**kwargs)
         self.size = size
         self.on_change = on_change
+        # start thumb at left inset
+        self.offset = dp(3)
+
+    def _thumb_on_target(self):
+        return self.width - (self.height - dp(6)) - dp(3)
 
     def animate_on(self):
-        animation = Animation(offset = (self.width - dp(4) - (self.width / 2)), t='out_bounce', d=0.2)
-        animation += Animation(background_color = self.background_active_color, t='linear', d=0.2)
-        animation.start(self)
+        anim = (
+            Animation(offset=self._thumb_on_target(), t='out_back', d=0.25)
+            & Animation(track_color=self.track_active_color, t='out_quad', d=0.2)
+        )
+        anim.start(self)
 
     def animate_off(self):
-        animation = Animation(offset = (0), t='out_bounce', d=0.2)
-        animation += Animation(background_color = self.background_inactive_color, t='linear', d=0.2)
-        animation.start(self)
-    
+        anim = (
+            Animation(offset=dp(3), t='out_back', d=0.25)
+            & Animation(track_color=self.track_inactive_color, t='out_quad', d=0.2)
+        )
+        anim.start(self)
+
     def on_enabled(self, instance, value):
         if value:
             self.animate_on()
         else:
-            self.animate_off() 
+            self.animate_off()
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.enabled = not self.enabled
-            # self.on_change(self.enabled)
-            # if self.enabled:
-            #     self.animate_on()
-            # else:
-            #     self.animate_off()
-            # return False

@@ -95,7 +95,7 @@ class BusScreen(PiHomeScreen):
         header.bind(size=_sync_header, pos=_sync_header)
 
         # Left: title + live stop name
-        left_col = BoxLayout(orientation='vertical', spacing=dp(1))
+        left_col = BoxLayout(orientation='vertical', spacing=dp(1), size_hint_x=1)
         title_lbl = Label(
             text="Bus Arrivals",
             font_size="18sp",
@@ -124,7 +124,7 @@ class BusScreen(PiHomeScreen):
         right_col = BoxLayout(
             orientation='horizontal',
             size_hint=(None, None),
-            size=(dp(180), dp(52)),
+            size=(dp(136), dp(52)),
             spacing=dp(8),
             pos_hint={'center_y': 0.5},
         )
@@ -136,7 +136,7 @@ class BusScreen(PiHomeScreen):
             halign='right', valign='middle',
         )
         self.bound_label.bind(size=lambda w, s: setattr(w, 'text_size', s))
-        s = PiHomeSwitch(size=(dp(96), dp(36)), size_hint=(None, None), pos_hint={'center_y': 0.5})
+        s = PiHomeSwitch(size=(dp(50), dp(28)), size_hint=(None, None), pos_hint={'center_y': 0.5})
         s.bind(enabled=lambda x, y: self.set_outbound(y))
         right_col.add_widget(self.bound_label)
         right_col.add_widget(s)
