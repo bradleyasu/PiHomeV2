@@ -146,6 +146,9 @@ class WeatherWidget(Widget):
                 self._clock_event = None
                 PIHOME_LOGGER.info("WeatherWidget: clock stopped after config update")
         self._apply_theme_colors()
+        for widget in self.walk():
+            if isinstance(widget, WeatherDetails):
+                widget.on_config_update(config)
 
     def update(self):
         try:

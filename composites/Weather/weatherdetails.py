@@ -44,6 +44,16 @@ class WeatherDetails(Widget):
         self.parseDetails()
         Clock.schedule_interval(lambda _: self.parseDetails(), 1)
 
+    def on_config_update(self, config=None):
+        t = Theme()
+        self.text_color = t.get_color(t.TEXT_PRIMARY)
+        if t.mode == 1:
+            self.card_bg_color     = [1.0, 1.0, 1.0, 0.07]
+            self.card_border_color = [1.0, 1.0, 1.0, 0.04]
+        else:
+            self.card_bg_color     = [0.0, 0.0, 0.0, 0.05]
+            self.card_border_color = [0.0, 0.0, 0.0, 0.07]
+
     
     def parseDetails(self):
         """
