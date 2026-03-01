@@ -1,9 +1,11 @@
 import json
 import os
+import platform
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.screenmanager import SwapTransition, FadeTransition, NoTransition
 from kivy.graphics import Color, Rectangle
+from kivy.core.window import Window
 from components.PulseWidget.PulseWidget import PULSER
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
@@ -38,7 +40,22 @@ class PiHomeScreenManager(ScreenManager):
             self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
             self.rotary_encoder.update_callback = lambda direction, pressed: self._rotary_handler(direction, pressed)
             self.rotary_encoder.button_on_down_callback = lambda: self._rotary_on_down()
+
+        # Keyboard bindings for local development (macOS / non-Pi)
+        # Up/Down arrows simulate rotary turn; Space simulates rotary press
+        if platform.system() != 'Linux':
+            Window.bind(on_key_down=self._on_key_down)
     
+    def _on_key_down(self, window, key, scancode, codepoint, modifier):
+        """Simulate rotary encoder via keyboard for local testing."""
+        if key == 273:    # Up arrow  → clockwise turn
+            self._rotary_handler(1, False)
+        elif key == 274:  # Down arrow → counter-clockwise turn
+            self._rotary_handler(-1, False)
+        elif key == 32:   # Spacebar  → encoder press
+            self._rotary_on_down()
+            self._rotary_pressed(long_press=False)
+
     def _update_bg(self, *args):
         """Update background rectangles to match widget size/position"""
         self.bg_stretch_rect.pos = self.pos

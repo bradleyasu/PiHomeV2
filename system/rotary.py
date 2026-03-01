@@ -24,7 +24,7 @@ class RotaryEncoder():
     button_pin = 27 # SW
 
     # Turn Count Threshold
-    TURN_COUNT_THRESHOLD = 5 # Number of clicks before update_callback is called (to eliminate noise)
+    TURN_COUNT_THRESHOLD = 2 # Number of clicks before update_callback is called (to eliminate noise)
 
     turn_counts = 0 # Number of clicks recorded
     # rotary counter is the number of clicks
@@ -61,14 +61,21 @@ class RotaryEncoder():
         self.press_time = time.time()
         self._lock = True
         self.button_on_down_callback()
-        while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < (self.LONG_PRESS_THRESHOLD+0.1):
-            self.duration = time.time() - self.press_time
+        # Poll until button is released or long-press threshold is exceeded.
+        # Use a local variable so we never read a stale self.duration from a
+        # previous press (which would cause a short press to be misidentified
+        # as a long press, or an AttributeError on the very first press).
+        while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < (self.LONG_PRESS_THRESHOLD + 0.1):
+            pass
 
-        self.button_callback(long_press=(self.duration > self.LONG_PRESS_THRESHOLD))
+        duration = time.time() - self.press_time
+        self.button_callback(long_press=(duration > self.LONG_PRESS_THRESHOLD))
 
+        # Wait for full physical release before unlocking so the turn handler
+        # doesn't pick up noise from the button spring-back.
         while GPIO.input(channel) == GPIO.LOW:
             pass
-        
+
         self._lock = False
 
 
