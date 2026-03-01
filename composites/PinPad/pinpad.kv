@@ -1,8 +1,7 @@
 #:kivy 2.0.0
-#: import ew kivy.uix.effectwidget
 <PinPad>:
-    # size: 800, 480
     canvas.before:
+        # Scrim
         Color:
             rgba: self.background_color
         Rectangle:
@@ -10,44 +9,65 @@
             size: self.size
 
     canvas:
+        # Card shadow
+        Color:
+            rgba: 0, 0, 0, 0.5
+        BoxShadow:
+            pos: self.width / 2 - dp(160), self.y_position
+            size: dp(320), dp(405)
+            offset: 0, -12
+            spread_radius: -16, -16
+            border_radius: 24, 24, 24, 24
+            blur_radius: 60
+        # Card surface
         Color:
             rgba: self.pinpad_background_color
         RoundedRectangle:
-            size: dp(350), dp(450)
-            pos: self.width / 2 -  dp(175), self.y_position
+            size: dp(320), dp(405)
+            pos: self.width / 2 - dp(160), self.y_position
+            radius: [dp(24)]
 
     canvas.after:
+        # Empty dot rings — anchored to y_position so they animate with the card
         Color:
-            rgba: self.pinpad_button_color
+            rgba: root.dot_empty_color
+        Line:
+            width: dp(1.5)
+            circle: root.width/2 - dp(45), root.y_position + dp(330), dp(8), 0, 360
+        Line:
+            width: dp(1.5)
+            circle: root.width/2 - dp(15), root.y_position + dp(330), dp(8), 0, 360
+        Line:
+            width: dp(1.5)
+            circle: root.width/2 + dp(15), root.y_position + dp(330), dp(8), 0, 360
+        Line:
+            width: dp(1.5)
+            circle: root.width/2 + dp(45), root.y_position + dp(330), dp(8), 0, 360
+        # Filled dots (angle_end drives 0=empty, 360=full)
+        Color:
+            rgba: root.dot_filled_color
         Ellipse:
             angle_start: 0
             angle_end: self.pin_one
-            size: dp(20), dp(20)
-            pos: self.width /2 - dp(97), self.height / 2 + dp(150)
+            size: dp(16), dp(16)
+            pos: root.width/2 - dp(53), root.y_position + dp(322)
         Ellipse:
             angle_start: 0
             angle_end: self.pin_two
-            size: dp(20), dp(20)
-            pos: self.width /2 - dp(37), self.height / 2 + dp(150)
+            size: dp(16), dp(16)
+            pos: root.width/2 - dp(23), root.y_position + dp(322)
         Ellipse:
             angle_start: 0
             angle_end: self.pin_three
-            size: dp(20), dp(20)
-            pos: self.width /2 + dp(23), self.height / 2 + dp(150)
+            size: dp(16), dp(16)
+            pos: root.width/2 + dp(7), root.y_position + dp(322)
         Ellipse:
             angle_start: 0
             angle_end: self.pin_four
-            size: dp(20), dp(20)
-            pos: self.width /2 + dp(83), self.height / 2 + dp(150)
-
+            size: dp(16), dp(16)
+            pos: root.width/2 + dp(37), root.y_position + dp(322)
 
     FloatLayout:
-        # canvas:
-        #     Color:
-        #         rgba: (1, 1, 0, 0.1)
-        #     Rectangle:
-        #         size: root.size
-        #         pos: 0, 0
         id: pin_pad_float_container
         pos: 0, 0
         size_hint: None, None
@@ -55,27 +75,23 @@
 
         Label:
             text: 'PIN REQUIRED'
-            # pos: root.width/2 - self.width / 2, root.y_position - dp(self.height) + dp(root.height/2)
-            # Place label in the center, top of the pinpad
-            pos: root.width/2 - self.width / 2, root.y_position + dp(380)
-            font_size: '12sp'
+            size: dp(300), dp(24)
+            pos: root.width/2 - dp(150), root.y_position + dp(368)
+            font_size: '13sp'
+            bold: True
             size_hint: None, None
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
             color: root.pinpad_button_color
             font_name: 'Nunito'
 
         GridLayout:
-            # canvas:
-            #     Color:
-            #         rgba: (1, 1, 0, 1)
-            #     Rectangle:
-            #         size: self.size
-            #         pos: root.width / 2 -  dp(120),  root.y_position
             id: pin_pad_layout
             cols: 3
             rows: 4
-            spacing: dp(32)
+            spacing: dp(24)
             size_hint: None, None
-            size: dp(215), dp(330)
-            pos: root.width / 2 -  dp(105), root.y_position
+            size: dp(198), dp(272)
+            pos: root.width / 2 - dp(99), root.y_position + dp(20)
             opacity: root.pinpad_opacity
-

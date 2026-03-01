@@ -22,17 +22,20 @@ Builder.load_file("./composites/PinPad/pinpad.kv")
 class PinPad(Widget):
     background_color = ColorProperty((0,0,0,0))
     pinpad_background_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_SECONDARY, 0))
-    pinpad_button_color = ColorProperty(hex(Color.INDIGO_600, 1))
+    pinpad_button_color = ColorProperty(Theme().get_color(Theme().BUTTON_PRIMARY))
     pinpad_opacity = NumericProperty(0)
     y_position = NumericProperty(0)
     code = StringProperty()
+
+    dot_empty_color  = ColorProperty([1, 1, 1, 0.25])
+    dot_filled_color = ColorProperty(Theme().get_color(Theme().BUTTON_PRIMARY))
 
     pin_one   = NumericProperty(0)
     pin_two   = NumericProperty(0)
     pin_three = NumericProperty(0)
     pin_four  = NumericProperty(0)
 
-    def __init__(self, on_enter = lambda _: print('enter'), **kwargs):
+    def __init__(self, on_enter=lambda _: print('enter'), **kwargs):
         super(PinPad, self).__init__(**kwargs)
         self.pin = CONFIG.get('security', 'pin', '')
         self.on_enter = on_enter
@@ -40,35 +43,43 @@ class PinPad(Widget):
 
         app_size = App.get_running_app().get_size()
         self.ids.pin_pad_float_container.size = app_size
-        pin_grid = self.ids.pin_pad_layout 
-        pin_grid.bind(on_touch_down=lambda x,y:self.touch_check(x,y))
+        pin_grid = self.ids.pin_pad_layout
+        pin_grid.bind(on_touch_down=lambda x, y: self.touch_check(x, y))
+
+        accent = self.pinpad_button_color
 
         for i in range(9):
-           button = CircleButton(text=str(i + 1))
-           button.stroke_color = self.pinpad_button_color
-           button.text_color = self.pinpad_button_color
-           button.bind(on_release=lambda x: self.update_code(x.text))
-           pin_grid.add_widget(button)
+            button = CircleButton(text=str(i + 1), size=(dp(50), dp(50)))
+            button.stroke_color = accent
+            button.text_color = accent
+            button.bind(on_release=lambda x: self.update_code(x.text))
+            pin_grid.add_widget(button)
 
-        button = CircleButton(text='DELETE')
-        button.bind(on_release=self.backspace)
-        button.stroke_color = self.pinpad_background_color
-        button.text_color = self.pinpad_button_color
-        button.font_size = '10sp'
-        pin_grid.add_widget(button)
+        # DELETE button — backspace symbol
+        delete_btn = CircleButton(text='⌫', size=(dp(50), dp(50)))
+        delete_btn.font_size = '22sp'
+        delete_btn.custom_font = 'ArialUnicode'
+        delete_btn.stroke_color = [0, 0, 0, 0]
+        delete_btn.text_color = list(accent[:3]) + [0.6]
+        delete_btn.bind(on_release=self.backspace)
+        pin_grid.add_widget(delete_btn)
 
-        button = CircleButton(text='0')
-        button.stroke_color = self.pinpad_button_color
-        button.text_color = self.pinpad_button_color
-        button.bind(on_release=lambda x: self.update_code(x.text))
-        pin_grid.add_widget(button)
+        # Zero
+        zero_btn = CircleButton(text='0', size=(dp(50), dp(50)))
+        zero_btn.stroke_color = accent
+        zero_btn.text_color = accent
+        zero_btn.bind(on_release=lambda x: self.update_code(x.text))
+        pin_grid.add_widget(zero_btn)
 
-        button = CircleButton(text='UNLOCK')
-        button.stroke_color = self.pinpad_background_color
-        button.text_color = self.pinpad_button_color
-        button.font_size = '10sp'
-        button.bind(on_release=self.verify_pin)
-        pin_grid.add_widget(button)
+        # UNLOCK button — checkmark symbol
+        unlock_btn = CircleButton(text='✓', size=(dp(50), dp(50)))
+        unlock_btn.font_size = '26sp'
+        unlock_btn.custom_font = 'ArialUnicode'
+        unlock_btn.stroke_color = accent
+        unlock_btn.text_color = accent
+        unlock_btn.bind(on_release=self.verify_pin)
+        pin_grid.add_widget(unlock_btn)
+
         self.reset()
 
     def verify_pin(self, *args):
