@@ -9,6 +9,7 @@ from theme.theme import Theme
 
 from util.helpers import get_app
 from util.tools import get_semi_transparent_gaussian_blur_png_from_color
+from services.weather.weather import WEATHER
 
 Builder.load_file("./composites/Weather/weatherdetails.kv")
 
@@ -30,6 +31,15 @@ class WeatherDetails(Widget):
 
     def __init__(self, details = {}, **kwargs):
         super(WeatherDetails, self).__init__(**kwargs)
+        # Re-evaluate colors at instance creation so theme mode is current
+        t = Theme()
+        self.text_color = t.get_color(t.TEXT_PRIMARY)
+        if t.mode == 1:
+            self.card_bg_color     = [1.0, 1.0, 1.0, 0.07]
+            self.card_border_color = [1.0, 1.0, 1.0, 0.04]
+        else:
+            self.card_bg_color     = [0.0, 0.0, 0.0, 0.05]
+            self.card_border_color = [0.0, 0.0, 0.0, 0.07]
         self.details = details
         self.parseDetails()
         Clock.schedule_interval(lambda _: self.parseDetails(), 1)
@@ -58,8 +68,8 @@ class WeatherDetails(Widget):
         details = self.details
         if len(details) == 0:
             return
-        time = datetime.strptime(details["startTime"], "%Y-%m-%dT%H:%M:%SZ") + timedelta(hours=-5)
-        self.day = datetime.strftime(time, "%I:%M %p")
+        slot_dt = datetime.strptime(details["startTime"], "%Y-%m-%dT%H:%M:%SZ")
+        self.day = datetime.strftime(slot_dt + timedelta(hours=-5), "%I:%M %p")
         self.temp = "{}\u00B0F".format(round(details["values"]["temperature"]))
         self.precip = "{}%".format(round(details["values"]["precipitationProbability"]))
 
@@ -67,5 +77,6 @@ class WeatherDetails(Widget):
         if conf != None:
             host = conf["host"]
             path = conf["weather_icons"]
-            self.icon = "{}{}{}0.png".format(host, path, str(details["values"]["weatherCode"]))
+            day_code = 0 if WEATHER.is_currently_day(slot_dt) else 1
+            self.icon = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), day_code)
         

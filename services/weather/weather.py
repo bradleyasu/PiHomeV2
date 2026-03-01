@@ -103,18 +103,22 @@ class Weather:
         self.sunset_time = data["sunsetTime"]
         self.feels_like = data["temperatureApparent"]
 
-    def is_currently_day(self):
+    def is_currently_day(self, dt=None):
         """
-        Compare current time with sunrise/sunset times to determine
-        if it is currently daylight outside
+        Compare the given UTC datetime (or now if omitted) against the stored
+        sunrise/sunset strings to determine whether it is daytime.
+        Sunrise/sunset come from tomorrow.io as ISO-8601 UTC strings,
+        e.g. "2022-08-02T10:24:00Z".
         """
-        # current_time = datetime.now()
-        # Time format = 2022-08-01T10:23:00Z
-        # start_time = datetime.strptime(self.sunrise_time, "%Y-%m-%dT%H:%M:%SZ")
-        # end_time = datetime.strptime(self.sunset_time, "%Y-%m-%dT%H:%M:%SZ")
-
-        # return start_time < current_time < end_time
-        return True
+        try:
+            if dt is None:
+                dt = datetime.utcnow()
+            fmt = "%Y-%m-%dT%H:%M:%SZ"
+            sunrise = datetime.strptime(self.sunrise_time, fmt)
+            sunset  = datetime.strptime(self.sunset_time,  fmt)
+            return sunrise <= dt <= sunset
+        except Exception:
+            return True
 
 
 WEATHER = Weather()

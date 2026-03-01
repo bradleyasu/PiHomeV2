@@ -59,6 +59,9 @@ class WeatherWidget(Widget):
 
     def _apply_theme_colors(self):
         dark = Theme().mode == 1
+        # Refresh text_color so light/dark switch is respected at runtime
+        t = Theme()
+        self.text_color = t.get_color(t.TEXT_PRIMARY)
         if dark:
             self.card_color         = [0.08, 0.10, 0.14, 0.92]
             self.card_border_color  = [1.0, 1.0, 1.0, 0.10]
@@ -75,6 +78,9 @@ class WeatherWidget(Widget):
             self.pill_bg_color      = [0.98, 0.98, 0.99, 0.94]
             self.pill_border_color  = [0.0,  0.0,  0.0,  0.12]
             self.pill_divider_color = [0.0,  0.0,  0.0,  0.20]
+        # Default the pill stat to text_color so it's always readable before
+        # the first weather update populates a real value
+        self.pill_stat_color = list(self.text_color)
 
     def __init__(self, size=(dp(100), dp(50)), pos=(dp(0), dp(0)), delay = 0, **kwargs):
         super(WeatherWidget, self).__init__(**kwargs)
