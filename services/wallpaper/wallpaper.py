@@ -13,6 +13,7 @@ from util.const import TEMP_DIR
 from util.helpers import get_app, toast, url_hash
 import asyncio
 import json
+import threading
 
 from util.phlog import PIHOME_LOGGER
 
@@ -233,6 +234,20 @@ class Wallpaper:
         self.ban_url(self.source, True)
         SFX.play("trash")
 
+    def _apply_wallpaper(self, url):
+        """
+        Run resize_image on a background thread so blocking HTTP requests
+        don't stall the GPIO interrupt thread (or any other caller).
+        Once resizing is done, _reload_background is called which marshals
+        the texture update back onto the Kivy main thread via Clock.
+        """
+        def _worker():
+            self.current, self.current_color = self.resize_image(url, 1024, 1024)
+            self.source = url
+            get_app()._reload_background()
+
+        threading.Thread(target=_worker, daemon=True).start()
+
     def shuffle(self):
         url = self.get_random_from_cache()
         if url == None:
@@ -244,9 +259,7 @@ class Wallpaper:
         if url == self.source:
             self.shuffle()
             return
-        self.current, self.current_color = self.resize_image(url, 1024, 1024)
-        self.source = url
-        get_app()._reload_background()
+        self._apply_wallpaper(url)
 
     def previous(self):
         if len(self.url_cache) <= 1:
@@ -261,10 +274,7 @@ class Wallpaper:
         if url == None:
             toast("No wallpaper found in cache", "error")
             return
-        
-        self.current, self.current_color = self.resize_image(url, 1024, 1024)
-        self.source = url
-        get_app()._reload_background()
+        self._apply_wallpaper(url)
 
     def next(self):
         if len(self.url_cache) <= 1:
@@ -278,9 +288,7 @@ class Wallpaper:
         if url == None:
             toast("No wallpaper found in cache", "error")
             return
-        self.current, self.current_color = self.resize_image(url, 1024, 1024)
-        self.source = url
-        get_app()._reload_background()
+        self._apply_wallpaper(url)
 
 
         # if self.repo == "Reddit":

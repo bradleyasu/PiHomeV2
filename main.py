@@ -288,13 +288,15 @@ class PiHome(App):
     
     def _reload_background(self):
         """
-        Updates the background image, clearing the cache
+        Updates the background image, clearing the cache.
+        Schedules the actual texture update on the main Kivy thread so it's safe
+        to call from GPIO interrupt callbacks or background threads.
         """
         from kivy.loader import Loader
         current_path = WALLPAPER_SERVICE.current
         if current_path and current_path.startswith('http'):
             Loader.image(current_path).reload()
-        self._run()
+        Clock.schedule_once(lambda _: self._run(), 0)
 
     def on_start(self):
         """
