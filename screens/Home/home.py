@@ -121,10 +121,11 @@ class HomeScreen(PiHomeScreen):
                 WALLPAPER_SERVICE.next()
             elif direction == -1:
                 WALLPAPER_SERVICE.previous()
-        if direction == 1:
-            self.brightness_slider.set_value(self.brightness_slider.level + 5)
-        elif direction == -1:
-            self.brightness_slider.set_value(self.brightness_slider.level - 5)
+        else:
+            if direction == 1:
+                self.brightness_slider.set_value(self.brightness_slider.level + 5)
+            elif direction == -1:
+                self.brightness_slider.set_value(self.brightness_slider.level - 5)
 
     def toggle_controls(self):
         if self.brightness_slider is None and self.banButton is None:

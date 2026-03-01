@@ -248,17 +248,54 @@ class Wallpaper:
 
         threading.Thread(target=_worker, daemon=True).start()
 
+    def _pick_random_url_from_source(self):
+        """
+        Pick a random URL directly from the raw source batch cache (self.cache).
+        This works regardless of how many images have been previously processed,
+        making shuffle() functional from the very first press.
+        """
+        try:
+            if self.repo == "Reddit" and self.cache:
+                children = self.cache["data"]["children"]
+                url = None
+                attempts = 0
+                while attempts < 20:
+                    rand_idx = random.randint(0, len(children) - 1)
+                    url = children[rand_idx]["data"]["url"]
+                    if not url.endswith(".gif") and url not in self.ban_list:
+                        return url
+                    attempts += 1
+            elif self.repo == "Wallhaven" and self.cache:
+                data = self.cache["data"]
+                url = None
+                attempts = 0
+                while attempts < 20:
+                    rand_idx = random.randint(0, len(data) - 1)
+                    url = data[rand_idx]["path"]
+                    if not url.endswith(".gif"):
+                        return url
+                    attempts += 1
+            elif self.repo == "Custom" and self.cache:
+                return self.cache.get("img", None)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Wallpaper Service: error picking random url from source: {e}")
+        return None
+
     def shuffle(self):
-        url = self.get_random_from_cache()
-        if url == None:
-            toast("No wallpaper found in cache", "error")
-            return
-        if len(self.url_cache) <= 1:
+        # Prefer a random pick from url_cache (already-processed local images)
+        if len(self.url_cache) > 1:
+            url = self.get_random_from_cache()
+            if url and url != self.source:
+                self._apply_wallpaper(url)
+                return
+        # Fall back to picking directly from the source batch cache
+        url = self._pick_random_url_from_source()
+        if url is None:
             toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
             return
         if url == self.source:
-            self.shuffle()
-            return
+            # Try once more to get a different one
+            url = self._pick_random_url_from_source() or url
         self._apply_wallpaper(url)
 
     def previous(self):

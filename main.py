@@ -56,6 +56,7 @@ class PiHome(App):
     app_menu_open = False
     toast_open = False
     web_conf = None
+    _last_bg_path = None
 
     def __init__(self, **kwargs):
         super(PiHome, self).__init__(**kwargs)
@@ -268,20 +269,30 @@ class PiHome(App):
             wallpaper_path = WALLPAPER_SERVICE.current
             allow_stretch = bool(WALLPAPER_SERVICE.allow_stretch)
             if wallpaper_path and wallpaper_path != "":
+                # Skip if nothing changed — avoids redundant texture re-uploads
+                # and prevents Kivy canvas no-ops from the same cached Texture object
+                if wallpaper_path == self._last_bg_path:
+                    return
                 from kivy.core.image import Image as CoreImage
                 from kivy.loader import Loader
                 if wallpaper_path.startswith('http'):
                     proxyimg = Loader.image(wallpaper_path)
                     if proxyimg.loaded:
                         PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture, allow_stretch)
+                        self._last_bg_path = wallpaper_path
                     else:
                         def on_img_load(instance):
                             PIHOME_SCREEN_MANAGER.set_background_texture(instance.texture, allow_stretch)
+                            self._last_bg_path = wallpaper_path
                         proxyimg.bind(on_load=on_img_load)
                 else:
                     if os.path.exists(wallpaper_path):
-                        texture = CoreImage(wallpaper_path, keep_data=True).texture
+                        # nocache=True forces a fresh texture upload so that revisiting a
+                        # previously-seen wallpaper doesn't silently return the old cached
+                        # Texture object (which Kivy treats as a no-op on rect.texture =)
+                        texture = CoreImage(wallpaper_path, keep_data=True, nocache=True).texture
                         PIHOME_SCREEN_MANAGER.set_background_texture(texture, allow_stretch)
+                        self._last_bg_path = wallpaper_path
         except Exception as e:
             PIHOME_LOGGER.debug(f"Background update: {e}")
 
