@@ -276,14 +276,18 @@ class PiHome(App):
                 from kivy.core.image import Image as CoreImage
                 from kivy.loader import Loader
                 if wallpaper_path.startswith('http'):
+                    # Force a re-fetch from the network here on the main thread
+                    # (safe — Loader is only touched on the main thread now)
                     proxyimg = Loader.image(wallpaper_path)
+                    proxyimg.reload()
                     if proxyimg.loaded:
                         PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture, allow_stretch)
                         self._last_bg_path = wallpaper_path
                     else:
+                        captured_path = wallpaper_path
                         def on_img_load(instance):
                             PIHOME_SCREEN_MANAGER.set_background_texture(instance.texture, allow_stretch)
-                            self._last_bg_path = wallpaper_path
+                            self._last_bg_path = captured_path
                         proxyimg.bind(on_load=on_img_load)
                 else:
                     if os.path.exists(wallpaper_path):
@@ -299,14 +303,11 @@ class PiHome(App):
     
     def _reload_background(self):
         """
-        Updates the background image, clearing the cache.
-        Schedules the actual texture update on the main Kivy thread so it's safe
-        to call from GPIO interrupt callbacks or background threads.
+        Schedules a texture update on the Kivy main thread.  Safe to call from
+        GPIO interrupt callbacks, background worker threads, or POLLER callbacks.
+        Any Loader/CoreImage work is intentionally deferred into _run() so it
+        always executes on the main thread.
         """
-        from kivy.loader import Loader
-        current_path = WALLPAPER_SERVICE.current
-        if current_path and current_path.startswith('http'):
-            Loader.image(current_path).reload()
         Clock.schedule_once(lambda _: self._run(), 0)
 
     def on_start(self):

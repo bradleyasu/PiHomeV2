@@ -169,7 +169,10 @@ class Wallpaper:
         colored = "_color_{}.png".format(hash)
 
         if os.path.exists("{}/{}".format(TEMP_DIR, resized)) and os.path.exists("{}/{}".format(TEMP_DIR, colored)):
-            PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
+            PIHOME_LOGGER.info("Wallpaper Service: cache hit for wallpaper {}".format(url))
+            # Still track this URL so next()/previous() can navigate to it sequentially
+            if url not in self.url_cache:
+                self.url_cache.append(url)
             return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
         self.url_cache.append(url)
@@ -299,41 +302,44 @@ class Wallpaper:
         self._apply_wallpaper(url)
 
     def previous(self):
+        # If url_cache too small to navigate sequentially, fall back to random pick
         if len(self.url_cache) <= 1:
-            toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+            url = self._pick_random_url_from_source()
+            if url is None:
+                toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+                return
+            self._apply_wallpaper(url)
             return
         if self.shuffle_index >= len(self.url_cache) - 1:
             self.shuffle_index = 0
         else:
             self.shuffle_index += 1
-
-        url = self.cache[len(self.cache) - self.shuffle_index - 1]
-        if url == None:
+        # FIX: was self.cache (raw JSON dict) — must use self.url_cache (list of URLs)
+        url = self.url_cache[self.shuffle_index]
+        if url is None:
             toast("No wallpaper found in cache", "error")
             return
         self._apply_wallpaper(url)
 
     def next(self):
+        # If url_cache too small to navigate sequentially, fall back to random pick
         if len(self.url_cache) <= 1:
-            toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+            url = self._pick_random_url_from_source()
+            if url is None:
+                toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+                return
+            self._apply_wallpaper(url)
             return
         if self.shuffle_index <= 0:
             self.shuffle_index = len(self.url_cache) - 1
         else:
             self.shuffle_index -= 1
-        url = self.cache[len(self.cache) - self.shuffle_index - 1]
-        if url == None:
+        # FIX: was self.cache (raw JSON dict) — must use self.url_cache (list of URLs)
+        url = self.url_cache[self.shuffle_index]
+        if url is None:
             toast("No wallpaper found in cache", "error")
             return
         self._apply_wallpaper(url)
-
-
-        # if self.repo == "Reddit":
-        #     self.parse_reddit(self.cache)
-        # elif self.repo == "Wallhaven":
-        #     self.parse_wallhaven(self.cache)
-        # else:
-        #     toast("Cannot shuffle wallpaper from configured source: {}".format(self.repo), "warn")
 
     def get_random_from_cache(self):
         random_idx = random.randint(0, len(self.url_cache) - 1)
