@@ -37,22 +37,48 @@ class RedditWidget(GestureWidget):
     item = 0
     item_max = 10
     data = None
+
     def __init__(self, **kwargs):
         super(RedditWidget, self).__init__(**kwargs)
+        self._poller_key = None
+        self._clock_next = None
+        self.on_gesture = self.handle_gesture
+        self.on_click = self.handle_click
+
         source = CONFIG.get("news", "source", "Disabled News")
         if source == "Disabled News":
+            self.opacity = 0
             return
 
+        self._start_feed()
+
+    def _start_feed(self):
         subs = CONFIG.get("news", "subreddits", "politics+worldnews")
         if subs == "":
             subs = "politics"
         reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
-        POLLER.register_api(reddit_url, 60 * 10, lambda json: self.parse_reddit(json));
-        Clock.schedule_interval(lambda _: self.next(), 120)
+        self._poller_key = POLLER.register_api(reddit_url, 60 * 10, lambda json: self.parse_reddit(json))
+        self._clock_next = Clock.schedule_interval(lambda _: self.next(), 120)
         Clock.schedule_once(lambda _: self.start(), 20)
 
-        self.on_gesture = self.handle_gesture
-        self.on_click = self.handle_click
+    def _stop_feed(self):
+        if self._poller_key is not None:
+            POLLER.unregister_api(self._poller_key)
+            self._poller_key = None
+        if self._clock_next is not None:
+            self._clock_next.cancel()
+            self._clock_next = None
+        self.data = None
+
+    def on_config_update(self, config):
+        source = CONFIG.get("news", "source", "Disabled News")
+        if source == "Disabled News":
+            self._stop_feed()
+            self.opacity = 0
+        else:
+            if self._poller_key is None:
+                self._start_feed()
+            self.opacity = 1
 
             
     def start(self):

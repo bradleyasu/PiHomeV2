@@ -110,6 +110,11 @@ class HomeScreen(PiHomeScreen):
         if gesture == GESTURE_SWIPE_DOWN:
             pass
 
+    def on_config_update(self, config):
+        self.ids.weather_widget.on_config_update(config)
+        self.ids.reddit_widget.on_config_update(config)
+        super().on_config_update(config)
+
     def on_rotary_long_pressed(self):
         self.toggle_controls()
 

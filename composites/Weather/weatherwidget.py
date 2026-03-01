@@ -7,7 +7,7 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from services.weather.weather import WEATHER
 from theme.theme import Theme
-
+from util.configuration import CONFIG
 from util.helpers import get_app 
 from util.phlog import PIHOME_LOGGER
 from util.tools import get_semi_transparent_gaussian_blur_png_from_color
@@ -50,11 +50,13 @@ class WeatherWidget(Widget):
         self.size = size
         self.pos = pos
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
+        self._clock_event = None
 
-        if(WEATHER.enabled):
-            Clock.schedule_interval(lambda _: self.update(), 1)
+        if CONFIG.get_int("weather", "enabled", 0) == 1:
+            self._clock_event = Clock.schedule_interval(lambda _: self.update(), 1)
             PIHOME_LOGGER.info("Weather is enabled.  Weather update thread will be running.")
-        else: 
+        else:
+            self.opacity = 0
             PIHOME_LOGGER.warn("Weather is not enabled.  Weather update thread will not be running.")
 
 
@@ -77,6 +79,34 @@ class WeatherWidget(Widget):
     def animate_in(self):
         animation = Animation(y_offset = 0, t='out_elastic', d=2)
         animation.start(self)
+
+    def on_config_update(self, config):
+        weather_enabled = CONFIG.get_int("weather", "enabled", 0)
+        if weather_enabled == 1:
+            self.opacity = 1
+            # Re-read credentials in case they changed
+            api_key = CONFIG.get("weather", "api_key", "")
+            lat = CONFIG.get("weather", "latitude", "0")
+            lon = CONFIG.get("weather", "longitude", "0")
+            if api_key and not WEATHER.data_avail:
+                WEATHER.enabled = 1
+                WEATHER.api_key = api_key
+                WEATHER.latitude = lat
+                WEATHER.longitude = lon
+                WEATHER.register_weather_api_call(
+                    WEATHER.api_url.format(lat, lon, api_key),
+                    WEATHER.interval,
+                    WEATHER.update_weather
+                )
+            if self._clock_event is None:
+                self._clock_event = Clock.schedule_interval(lambda _: self.update(), 1)
+                PIHOME_LOGGER.info("WeatherWidget: clock started after config update")
+        else:
+            self.opacity = 0
+            if self._clock_event is not None:
+                self._clock_event.cancel()
+                self._clock_event = None
+                PIHOME_LOGGER.info("WeatherWidget: clock stopped after config update")
 
     def update(self):
         try:
