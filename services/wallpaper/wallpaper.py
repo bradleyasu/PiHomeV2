@@ -39,6 +39,7 @@ class Wallpaper:
     repo = "CDN"
     poller_key = None
     url_cache = []
+    shuffle_index = 0
     cache_size = 100
     ban_list = [] # URLs that are not allowed to be used as wallpapers
     paused = False
@@ -246,6 +247,41 @@ class Wallpaper:
         self.current, self.current_color = self.resize_image(url, 1024, 1024)
         self.source = url
         get_app()._reload_background()
+
+    def previous(self):
+        if len(self.url_cache) <= 1:
+            toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+            return
+        if self.shuffle_index >= len(self.url_cache) - 1:
+            self.shuffle_index = 0
+        else:
+            self.shuffle_index += 1
+
+        url = self.cache[len(self.cache) - self.shuffle_index - 1]
+        if url == None:
+            toast("No wallpaper found in cache", "error")
+            return
+        
+        self.current, self.current_color = self.resize_image(url, 1024, 1024)
+        self.source = url
+        get_app()._reload_background()
+
+    def next(self):
+        if len(self.url_cache) <= 1:
+            toast("No wallpapers in cache to shuffle.  Please wait until more wallpapers are downloaded", "warn")
+            return
+        if self.shuffle_index <= 0:
+            self.shuffle_index = len(self.url_cache) - 1
+        else:
+            self.shuffle_index -= 1
+        url = self.cache[len(self.cache) - self.shuffle_index - 1]
+        if url == None:
+            toast("No wallpaper found in cache", "error")
+            return
+        self.current, self.current_color = self.resize_image(url, 1024, 1024)
+        self.source = url
+        get_app()._reload_background()
+
 
         # if self.repo == "Reddit":
         #     self.parse_reddit(self.cache)

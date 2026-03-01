@@ -116,7 +116,11 @@ class HomeScreen(PiHomeScreen):
 
     def on_rotary_turn(self, direction, pressed):
         if self.brightness_slider is None:
-            return super().on_rotary_turn(direction, pressed)
+            # default mode, scroll through wallpapers
+            if direction == 1:
+                WALLPAPER_SERVICE.next()
+            elif direction == -1:
+                WALLPAPER_SERVICE.previous()
         if direction == 1:
             self.brightness_slider.set_value(self.brightness_slider.level + 5)
         elif direction == -1:
