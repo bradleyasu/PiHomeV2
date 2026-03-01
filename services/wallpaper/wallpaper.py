@@ -249,6 +249,7 @@ class Wallpaper:
             self.source = url
             get_app()._reload_background()
 
+        PIHOME_LOGGER.info("Wallpaper Service: applying wallpaper {}".format(url))
         threading.Thread(target=_worker, daemon=True).start()
 
     def _pick_random_url_from_source(self):

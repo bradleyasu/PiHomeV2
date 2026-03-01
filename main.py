@@ -276,10 +276,7 @@ class PiHome(App):
                 from kivy.core.image import Image as CoreImage
                 from kivy.loader import Loader
                 if wallpaper_path.startswith('http'):
-                    # Force a re-fetch from the network here on the main thread
-                    # (safe — Loader is only touched on the main thread now)
                     proxyimg = Loader.image(wallpaper_path)
-                    proxyimg.reload()
                     if proxyimg.loaded:
                         PIHOME_SCREEN_MANAGER.set_background_texture(proxyimg.texture, allow_stretch)
                         self._last_bg_path = wallpaper_path
