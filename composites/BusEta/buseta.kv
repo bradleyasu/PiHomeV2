@@ -1,58 +1,105 @@
 #:kivy 2.0.0
-#: import ew kivy.uix.effectwidget
 <BusEta>:
-    # size: 800, 480
     size_hint: None, None
 
     canvas.before:
         Color:
-            rgba: (1, 0, 1, 0)
-        Rectangle:
+            rgba: root.card_bg_color
+        RoundedRectangle:
             pos: self.pos
             size: self.size
+            radius: [dp(14)]
+        Color:
+            rgba: root.card_border_color
+        Line:
+            rounded_rectangle: [self.pos[0] + dp(1), self.pos[1] + dp(1), self.size[0] - dp(2), self.size[1] - dp(2), dp(14)]
+            width: 1
 
-
-    GridLayout:
-        rows: 1
-        spacing: 20
+    BoxLayout:
+        orientation: 'horizontal'
         size: root.size
-        padding: 20, 20, 20, 20
         pos: root.pos
+        padding: dp(14), dp(10), dp(14), dp(10)
+        spacing: dp(12)
 
+        # ── Route badge ───────────────────────────────────────────────────
         BoxLayout:
-            # canvas.before:
-            #     Color:
-            #         rgba: root.route_background_color
-            #     RoundedRectangle:
-            #         pos: self.pos
-            #         size: self.size
-
-            Label: 
+            size_hint: None, None
+            size: dp(52), dp(52)
+            pos_hint: {'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.route_background_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(12)]
+            Label:
                 text: root.route
-                font_size: '122sp'
+                font_size: '16sp'
                 font_name: 'Nunito'
-                color: root.route_background_color
+                bold: True
+                color: 1, 1, 1, 1
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
 
-        GridLayout:
-            cols: 1
-            spacing: 5
+        # ── Info column: stop name + destination ──────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(4)
+            padding: 0, dp(8), 0, dp(8)
 
-            Label: 
+            Label:
                 text: root.stop
-                font_size: '30sp'
+                font_size: '14sp'
                 font_name: 'Nunito'
-                color: root.route_color
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(22)
 
-            Label: 
-                text: root.eta
-                font_size: '42sp'
-                font_name: 'Nunito'
-                color: root.time_color
-                opacity: root.blinkOpacity
-            
-            Label: 
-                text: root.dest + " (" + root.dest_loc +")"
+            Label:
+                text: '\u2192  ' + root.dest_loc
                 font_size: '12sp'
                 font_name: 'Nunito'
-                color: root.route_color
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.55
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(18)
 
+        # ── ETA column ────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, None
+            size: dp(62), dp(50)
+            pos_hint: {'center_y': 0.5}
+
+            Label:
+                text: root.eta_value
+                font_size: root.eta_font_size
+                font_name: 'Nunito'
+                bold: True
+                color: root.time_color
+                halign: 'right'
+                valign: 'bottom'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(34)
+                opacity: root.blinkOpacity
+
+            Label:
+                text: root.eta_unit
+                font_size: '11sp'
+                font_name: 'Nunito'
+                color: root.time_color[0], root.time_color[1], root.time_color[2], 0.65
+                halign: 'right'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(14)
