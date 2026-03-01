@@ -16,11 +16,17 @@ Builder.load_file("./components/Empty/empty.kv")
 
 class Empty(Widget):
 
-    message = StringProperty()
-    def __init__(self, message = "Empty State", size = (800, 480), **kwargs):
+    message  = StringProperty()
+    subtitle = StringProperty()
+    icon     = StringProperty()
+    text_color = ColorProperty([0.75, 0.75, 0.75, 1.0])
+
+    def __init__(self, message="Empty State", subtitle="", icon="", size=(800, 480), **kwargs):
         super(Empty, self).__init__(**kwargs)
-        self.message = message
-        self.size = size
+        self.message  = message
+        self.subtitle = subtitle
+        self.icon     = icon
+        self.size     = size
         
 
 

@@ -146,7 +146,9 @@ class BusScreen(PiHomeScreen):
 
         # ── Empty state ───────────────────────────────────────────────
         self.empty_state = Empty(
-            message="There are no busses coming anytime soon",
+            icon="\u2298",
+            message="No buses scheduled",
+            subtitle="Check back soon or try the other direction",
             size=(dp(get_app().width), dp(get_app().height - 68)),
         )
         self.empty_state.opacity = 0
@@ -211,12 +213,11 @@ class BusScreen(PiHomeScreen):
             self.pending_updates = False
             self.grid.clear_widgets()
             self.stop_lbl.text = ""   # reset; gets filled from first prediction
-            no_data = True
+            visible_count = 0
             if "prd" in self.data:
                 arr = self.data['prd']
                 for i in arr:
                     if "prdtm" in i:
-                        no_data = False
                         r = i["rt"]
                         s = i["stpnm"]
                         d = i['rtdir']
@@ -226,22 +227,26 @@ class BusScreen(PiHomeScreen):
                         dte = dt.strptime(e, '%Y%m%d %H:%M')
                         est = math.floor((dte - dts).total_seconds() / 60.0)
 
-                        label="{} min".format(est)
-                    
+                        label = "{} min".format(est)
                         if est < 1:
                             label = "Now Arriving"
 
-                        # Update live stop name in header from first arrival
-                        if self.stop_lbl.text == "":
-                            self.stop_lbl.text = s
-
                         b = BusEta(route=r, stop=s, dest=d, dest_loc=dloc, eta=label)
                         if self.outbound and d == "OUTBOUND":
+                            # Update live stop name from first visible arrival
+                            if self.stop_lbl.text == "":
+                                self.stop_lbl.text = s
                             self.grid.add_widget(b)
+                            visible_count += 1
                         elif not self.outbound and d == "INBOUND":
+                            if self.stop_lbl.text == "":
+                                self.stop_lbl.text = s
                             self.grid.add_widget(b)
+                            visible_count += 1
 
-            if no_data == True:
+            direction = "outbound" if self.outbound else "inbound"
+            self.empty_state.message = "No {} buses right now".format(direction)
+            if visible_count == 0:
                 self.empty_state.opacity = 1
             else:
                 self.empty_state.opacity = 0
