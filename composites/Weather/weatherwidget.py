@@ -41,15 +41,47 @@ class WeatherWidget(Widget):
     overlay_y_offset = NumericProperty(10)
     overlay_active = False
 
+    pill_stat = StringProperty("")
+    pill_stat_color = ColorProperty([1.0, 1.0, 1.0, 1.0])
+
+    # Theme-aware surface colors — set at runtime from Theme().mode
+    card_color         = ColorProperty([0.08, 0.10, 0.14, 0.92])
+    card_border_color  = ColorProperty([1.0, 1.0, 1.0, 0.10])
+    chip_bg_color      = ColorProperty([1.0, 1.0, 1.0, 0.07])
+    divider_color      = ColorProperty([1.0, 1.0, 1.0, 0.12])
+    pill_bg_color      = ColorProperty([0.08, 0.10, 0.14, 0.88])
+    pill_border_color  = ColorProperty([1.0, 1.0, 1.0, 0.10])
+    pill_divider_color = ColorProperty([1.0, 1.0, 1.0, 0.22])
+
     is_loaded = False
 
     y_offset = NumericProperty(50)
+
+    def _apply_theme_colors(self):
+        dark = Theme().mode == 1
+        if dark:
+            self.card_color         = [0.08, 0.10, 0.14, 0.92]
+            self.card_border_color  = [1.0, 1.0, 1.0, 0.10]
+            self.chip_bg_color      = [1.0, 1.0, 1.0, 0.07]
+            self.divider_color      = [1.0, 1.0, 1.0, 0.12]
+            self.pill_bg_color      = [0.08, 0.10, 0.14, 0.88]
+            self.pill_border_color  = [1.0, 1.0, 1.0, 0.10]
+            self.pill_divider_color = [1.0, 1.0, 1.0, 0.22]
+        else:
+            self.card_color         = [0.98, 0.98, 0.99, 0.96]
+            self.card_border_color  = [0.0,  0.0,  0.0,  0.10]
+            self.chip_bg_color      = [0.0,  0.0,  0.0,  0.05]
+            self.divider_color      = [0.0,  0.0,  0.0,  0.10]
+            self.pill_bg_color      = [0.98, 0.98, 0.99, 0.94]
+            self.pill_border_color  = [0.0,  0.0,  0.0,  0.12]
+            self.pill_divider_color = [0.0,  0.0,  0.0,  0.20]
 
     def __init__(self, size=(dp(100), dp(50)), pos=(dp(0), dp(0)), delay = 0, **kwargs):
         super(WeatherWidget, self).__init__(**kwargs)
         self.size = size
         self.pos = pos
         self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
+        self._apply_theme_colors()
         self._clock_event = None
 
         if CONFIG.get_int("weather", "enabled", 0) == 1:
@@ -107,11 +139,26 @@ class WeatherWidget(Widget):
                 self._clock_event.cancel()
                 self._clock_event = None
                 PIHOME_LOGGER.info("WeatherWidget: clock stopped after config update")
+        self._apply_theme_colors()
 
     def update(self):
         try:
             self.temp = str(round(WEATHER.temperature))
             self.uvIndex = str(WEATHER.uv_index)
+
+            try:
+                uv_val = float(WEATHER.uv_index)
+                if uv_val > 5:
+                    self.pill_stat = "UV {}".format(int(uv_val))
+                    if uv_val > 8:
+                        self.pill_stat_color = [0.96, 0.38, 0.32, 1.0]
+                    else:
+                        self.pill_stat_color = list(self.text_color)
+                else:
+                    self.pill_stat = "{}% rain".format(WEATHER.precip_propability)
+                    self.pill_stat_color = list(self.text_color)
+            except Exception:
+                pass
             self.windSpeed = "{} MPH".format(WEATHER.wind_speed)
             self.precipPercent = "{}%".format(WEATHER.precip_propability)
             self.humidity = "{}%".format(WEATHER.humidity)

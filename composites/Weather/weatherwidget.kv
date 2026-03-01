@@ -1,164 +1,391 @@
 #:kivy 2.0.0
-#: import ew kivy.uix.effectwidget
 <WeatherWidget>:
     size_hint: None, None
     size: self.size
 
+    # ── Expanded overlay (shown on tap) ──────────────────────────────────────
     FloatLayout:
-        size_hint: 1, 1
+        size_hint: None, None
         size: root.overlay_size
         pos: dp(20), dp(20 + root.overlay_y_offset)
         opacity: root.overlay_opacity
-        canvas:
-            Color: 
-                rgba: root.background
+
+        # Solid card — respects light/dark mode via root.card_color
+        canvas.before:
+            Color:
+                rgba: root.card_color
             RoundedRectangle:
                 pos: self.pos
-                size: self.size 
-                # texture: root.blur
+                size: self.size
+                radius: [dp(24)]
+            Color:
+                rgba: root.card_border_color
+            Line:
+                rounded_rectangle: [self.pos[0] + dp(1), self.pos[1] + dp(1), self.size[0] - dp(2), self.size[1] - dp(2), dp(24)]
+                width: 1.2
 
-        
-        GridLayout:
-            cols: 1
-            spacing: dp(20)
+        BoxLayout:
+            orientation: 'vertical'
             size: root.overlay_size
             pos: dp(20), dp(20 + root.overlay_y_offset)
-            canvas:
-                Color: 
-                    rgba: (0,1,0, 0)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size 
-            
-            GridLayout:
-                cols: 2
-                spacing: dp(20)
-                GridLayout:
-                    rows: 3
-                    spacing: dp(20)
-                    size: dp(200), dp(140)
+            padding: dp(20), dp(14)
+            spacing: dp(10)
+
+            # ── Hero: icon + temp + feels like ───────────────────────────────
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(96)
+                spacing: dp(14)
+
+                NetworkImage:
+                    url: root.icon
                     size_hint: None, None
-                    NetworkImage:
-                        canvas:
-                            Color: 
-                                rgba: (1,0,0, 0.0)
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size 
-                        url: root.icon
-                        size: dp(200), dp(100)
-                        size_hint: None, None
-                        enable_stretch: True
-                    Label:
-                        text: root.temp + "\u00B0F" 
-                        color: root.text_color
-                        font_size: '24sp'
-                        font_name: 'Nunito'
-                        size: dp(200), dp(20)
-                    Label:
-                        text: "Feels Like: " +root.feelsLike + "\u00B0F" 
-                        color: root.text_color
-                        font_size: '12sp'
-                        font_name: 'Nunito'
-                        size: dp(200), dp(20)
-                GridLayout:
-                    cols: 2
-                    spacing: dp(20)
-                    FloatLayout:
-                        size_hint: None, None
-                        size: dp(50), dp(50)
-                    FloatLayout:
-                        size_hint: None, None
-                        size: dp(50), dp(50)
-                    Label:
-                        text: "UV Index: "+root.uvIndex
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                    Label:
-                        text: "Precip Chance: "+root.precipPercent
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                    Label:
-                        text: "Wind Speed: "+root.windSpeed
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                    Label:
-                        text: "Cloud Cover: "+root.cloudCover
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                    Label:
-                        text: "Humidity: "+root.humidity
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                    Label:
-                        text: "Air Quality: "+root.airQuality
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                    FloatLayout:
-                        size_hint: None, None
-                        size: dp(50), dp(50)
-                    FloatLayout:
-                        size_hint: None, None
-                        size: dp(50), dp(50)
+                    size: dp(92), dp(92)
+                    enable_stretch: True
 
+                BoxLayout:
+                    orientation: 'vertical'
+                    spacing: dp(2)
 
+                    # text_size width-only → never clips vertically
+                    Label:
+                        text: root.temp + '\u00B0F'
+                        color: root.text_color
+                        font_size: '40sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(56)
+
+                    Label:
+                        text: 'Feels like ' + root.feelsLike + '\u00B0F'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.55
+                        font_size: '13sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(20)
+
+            # Divider
+            Widget:
+                size_hint_y: None
+                height: dp(1)
+                canvas:
+                    Color:
+                        rgba: root.divider_color
+                    Line:
+                        points: [self.x, self.y, self.right, self.y]
+                        width: 1
+
+            # ── Stat chips: 3 cols × 2 rows ──────────────────────────────────
+            # Each chip row is dp(48): padding dp(8)×2 leaves dp(32) for
+            # label(dp(14)) + spacing(dp(4)) + value(dp(14)) = dp(32) exact fit
             GridLayout:
-                cols: 6
-                spacing: dp(20)
-                padding: dp(30), dp(20), dp(20), dp(20)
-                WeatherDetails:
-                    details:  root.future[0] if len(root.future) > 0 else {}
-                WeatherDetails:
-                    details:  root.future[1] if len(root.future) > 0 else {}
-                WeatherDetails:
-                    details:  root.future[2] if len(root.future) > 0 else {} 
-                WeatherDetails:
-                    details:  root.future[3] if len(root.future) > 0 else {} 
-                WeatherDetails:
-                    details:  root.future[4] if len(root.future) > 0 else {} 
-                WeatherDetails:
-                    details:  root.future[5] if len(root.future) > 0 else {} 
+                cols: 3
+                spacing: dp(6)
+                size_hint_y: None
+                height: dp(96)
 
-    GridLayout:
-        canvas:
-            Color: 
-                rgba: (0,1,0, 0.0)
-            Rectangle:
-                pos: self.pos
-                size: self.size 
-        rows: 1
-        pos: root.x, root.y + dp(root.y_offset) 
-        size: root.size
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(10), dp(8), dp(10), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    Label:
+                        text: 'UV Index'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
+                        font_size: '11sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+                    Label:
+                        text: root.uvIndex
+                        color: root.text_color
+                        font_size: '14sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(10), dp(8), dp(10), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    Label:
+                        text: 'Wind'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
+                        font_size: '11sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+                    Label:
+                        text: root.windSpeed
+                        color: root.text_color
+                        font_size: '14sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(10), dp(8), dp(10), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    Label:
+                        text: 'Precip'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
+                        font_size: '11sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+                    Label:
+                        text: root.precipPercent
+                        color: root.text_color
+                        font_size: '14sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(10), dp(8), dp(10), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    Label:
+                        text: 'Humidity'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
+                        font_size: '11sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+                    Label:
+                        text: root.humidity
+                        color: root.text_color
+                        font_size: '14sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(10), dp(8), dp(10), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    Label:
+                        text: 'Cloud Cover'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
+                        font_size: '11sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+                    Label:
+                        text: root.cloudCover
+                        color: root.text_color
+                        font_size: '14sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: dp(10), dp(8), dp(10), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    Label:
+                        text: 'Air Quality'
+                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
+                        font_size: '11sp'
+                        font_name: 'Nunito'
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+                    Label:
+                        text: root.airQuality
+                        color: root.text_color
+                        font_size: '14sp'
+                        font_name: 'Nunito'
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: dp(14)
+
+            # Divider
+            Widget:
+                size_hint_y: None
+                height: dp(1)
+                canvas:
+                    Color:
+                        rgba: root.divider_color
+                    Line:
+                        points: [self.x, self.y, self.right, self.y]
+                        width: 1
+
+            # ── Hourly forecast — centered via AnchorLayout ───────────────────
+            AnchorLayout:
+                size_hint_y: None
+                height: dp(145)
+                anchor_x: 'center'
+                anchor_y: 'center'
+                GridLayout:
+                    cols: 6
+                    spacing: dp(6)
+                    size_hint: None, None
+                    size: dp(100) * 6 + dp(6) * 5, dp(145)
+                    WeatherDetails:
+                        details: root.future[0] if len(root.future) > 0 else {}
+                    WeatherDetails:
+                        details: root.future[1] if len(root.future) > 1 else {}
+                    WeatherDetails:
+                        details: root.future[2] if len(root.future) > 2 else {}
+                    WeatherDetails:
+                        details: root.future[3] if len(root.future) > 3 else {}
+                    WeatherDetails:
+                        details: root.future[4] if len(root.future) > 4 else {}
+                    WeatherDetails:
+                        details: root.future[5] if len(root.future) > 5 else {}
+
+    # ── Compact pill (always visible) ────────────────────────────────────────
+    BoxLayout:
+        orientation: 'horizontal'
         size_hint: None, None
-        on_touch_down: root.handle_touch()
+        size: dp(178), dp(44)
+        pos: root.right - dp(178), root.y + dp(root.y_offset)
+        padding: dp(6), dp(4)
+        spacing: dp(6)
+
+        canvas.before:
+            Color:
+                rgba: root.pill_bg_color
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(22)]
+            Color:
+                rgba: root.pill_border_color
+            Line:
+                rounded_rectangle: [self.pos[0] + dp(1), self.pos[1] + dp(1), self.size[0] - dp(2), self.size[1] - dp(2), dp(22)]
+                width: 1
+
+        # Weather icon
         NetworkImage:
-            canvas:
-                Color: 
-                    rgba: (1,0,0, 0.0)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size 
             url: root.icon
-            size: dp(50), dp(50)
-            enable_stretch: True
-        GridLayout:
-            canvas:
-                Color: 
-                    rgba: (1,1,0, 0.0)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size 
-            cols: 1
             size_hint: None, None
-            size: dp(50), dp(50)
-            Label:
-                text: root.temp + "\u00B0F" 
-                color: root.text_color
-                font_size: '24sp'
-                font_name: 'Nunito'
+            size: dp(36), dp(36)
+            enable_stretch: True
+
+        # Current temperature
+        Label:
+            text: root.temp + '\u00B0'
+            color: root.text_color
+            font_size: '20sp'
+            font_name: 'Nunito'
+            bold: True
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
+            size_hint_x: None
+            width: dp(48)
+
+        # Vertical divider
+        Widget:
+            size_hint: None, None
+            size: dp(1), dp(26)
+            pos_hint: {'center_y': 0.5}
+            canvas:
+                Color:
+                    rgba: root.pill_divider_color
+                Line:
+                    points: [self.center_x, self.y, self.center_x, self.top]
+                    width: 1
+
+        # Secondary stat: UV index (if > 5) or precip chance
+        Label:
+            text: root.pill_stat
+            color: root.pill_stat_color
+            font_size: '13sp'
+            font_name: 'Nunito'
+            bold: True
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None

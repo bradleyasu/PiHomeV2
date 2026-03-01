@@ -18,6 +18,10 @@ class WeatherDetails(Widget):
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
     blur = StringProperty(get_semi_transparent_gaussian_blur_png_from_color(theme.get_color(theme.BACKGROUND_PRIMARY), True))
 
+    # Theme-aware card surfaces
+    card_bg_color     = ColorProperty([1.0, 1.0, 1.0, 0.07] if theme.mode == 1 else [0.0, 0.0, 0.0, 0.05])
+    card_border_color = ColorProperty([1.0, 1.0, 1.0, 0.04] if theme.mode == 1 else [0.0, 0.0, 0.0, 0.07])
+
     day = StringProperty("--")
     temp = StringProperty("--")
     precip = StringProperty("--")
