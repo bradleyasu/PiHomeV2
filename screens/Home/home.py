@@ -56,12 +56,14 @@ class HomeScreen(PiHomeScreen):
     is_first_run = True
     brightness_slider = None
     banButton = None
+    qr_img = None
 
-    disable_rotary_press_animation = True
 
 
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
+        self.disable_rotary_press_animation = True
+
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
         # self.icon = CDN_ASSET.format("default_home_icon.png")

@@ -287,6 +287,7 @@ class Wallpaper:
 
     def shuffle(self):
         # Prefer a random pick from url_cache (already-processed local images)
+        PIHOME_LOGGER.info("Wallpaper Service: shuffling wallpaper")
         if len(self.url_cache) > 1:
             url = self.get_random_from_cache()
             if url and url != self.source:
@@ -304,6 +305,7 @@ class Wallpaper:
 
     def previous(self):
         # If url_cache too small to navigate sequentially, fall back to random pick
+        PIHOME_LOGGER.info("Wallpaper Service: going to previous wallpaper")
         if len(self.url_cache) <= 1:
             url = self._pick_random_url_from_source()
             if url is None:
@@ -324,6 +326,7 @@ class Wallpaper:
 
     def next(self):
         # If url_cache too small to navigate sequentially, fall back to random pick
+        PIHOME_LOGGER.info("Wallpaper Service: going to next wallpaper")
         if len(self.url_cache) <= 1:
             url = self._pick_random_url_from_source()
             if url is None:
