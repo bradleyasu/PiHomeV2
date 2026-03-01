@@ -22,29 +22,35 @@ class CircleButton(ButtonBehavior, Widget):
     stroke_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     primary_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY, 0))
-    down_color = ColorProperty(theme.get_color(theme.TEXT_SECONDARY, 0.3))
+    down_color = ColorProperty(theme.get_color(theme.TEXT_SECONDARY, 0.18))
     stroke_width = NumericProperty(1.)
-    transition_duration = NumericProperty(0.5)
     zoom = NumericProperty(1)
-    def __init__(self, size = (dp(50), dp(50)), **kwargs):
+    ripple_alpha = NumericProperty(0)
+
+    def __init__(self, size=(dp(50), dp(50)), **kwargs):
         super(CircleButton, self).__init__(**kwargs)
-        self.bind(
-            state=lambda *args: self.animate_color()
-        )
         self.color = self.primary_color
         self.size = size
-        Clock.schedule_once(lambda _: self.start(), 1)
+        self.bind(state=lambda *args: self.animate_state())
+        # Entrance: pop in from scale 0
+        self.zoom = 0
+        Clock.schedule_once(lambda _: self._entrance(), 0.05)
 
-    def start(self):
-        animation = Animation(zoom=1, t='out_elastic', d=.5)
-        animation.start(self)
-    
-    def animate_color(self):
+    def _entrance(self):
+        Animation(zoom=1, t='out_back', d=0.35).start(self)
+
+    def animate_state(self):
         if self.state == 'down':
-            animation = Animation(color=self.down_color, duration=0.2)
-            # animation &= Animation(zoom=.9, t='out_quad', d=.2)
+            anim = (
+                Animation(zoom=0.92, t='out_quad', d=0.08)
+                & Animation(color=self.down_color, d=0.08)
+                & Animation(ripple_alpha=0.12, d=0.08)
+            )
         else:
-            animation = Animation(color=self.primary_color, duration=1)
-            # animation &= Animation(zoom=1, t='out_elastic', d=.5)
-        animation.start(self)
+            anim = (
+                Animation(zoom=1, t='out_back', d=0.35)
+                & Animation(color=self.primary_color, d=0.25)
+                & Animation(ripple_alpha=0, d=0.3)
+            )
+        anim.start(self)
 

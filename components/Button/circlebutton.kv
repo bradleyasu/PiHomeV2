@@ -4,23 +4,37 @@
     size_hint: None, None
 
     canvas:
+        PushMatrix:
+        # Scale entire button on press
         Scale:
             origin: self.center
-            xyz: [self.zoom, self.zoom, 1]
+            xyz: self.zoom, self.zoom, 1
+
+        # Background fill
         Color:
             rgba: self.color
         RoundedRectangle:
-            radius: dp(self.height/2),
+            radius: [dp(self.height / 2)]
             size: self.size
             pos: self.pos
+
+        # Ripple flash overlay
+        Color:
+            rgba: 1, 1, 1, root.ripple_alpha
+        Ellipse:
+            size: self.size
+            pos: self.pos
+
+        # Stroke ring
         Color:
             rgba: self.stroke_color
-        Line:
+        SmoothLine:
             width: dp(self.stroke_width)
-            circle:
-                self.center_x, self.center_y, min(self.width, self.height) / 2, 0, 360
-    
-    Label: 
+            circle: self.center_x, self.center_y, min(self.width, self.height) / 2 - dp(self.stroke_width) / 2, 0, 360
+
+        PopMatrix:
+
+    Label:
         text: root.text
         pos: root.pos
         font_size: root.font_size
