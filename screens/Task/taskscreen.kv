@@ -1,70 +1,168 @@
 #:kivy 2.0.0
+
+# Dynamic pill button — no extra Python file needed
+<TaskButton@ButtonBehavior+BoxLayout>:
+    size_hint_y: None
+    height: dp(48)
+
 <TaskScreen>:
     name: 'task'
+
+    # Solid priority-tinted background + darkening scrim
     canvas.before:
         Color:
             rgba: root.background
         Rectangle:
             size: self.size
             pos: self.pos
+        Color:
+            rgba: 0, 0, 0, 0.38
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    # Optional background image
     NetworkImage:
         url: root.background_image
-        size_hint: 1,1
+        size_hint: 1, 1
         size: root.size
         pos: root.pos
         keep_ratio: True
         auto_refresh_interval: 0
         opacity: 0 if root.background_image == '' else 1
-    BoxLayout:
-        orientation: 'vertical'
-        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-        Label:
-            text: root.title
-            font_size: '30sp'
-            font_name: 'Nunito'
-            color: root.text_color
-            pos_hint: {'center_x': 0.5, 'center_y': 0.9}
-            size_hint: 1, 0.4
-        Label:
-            text: root.description
-            font_size: '20sp'
-            font_name: 'Nunito'
-            color: root.text_color
-            pos_hint: {'center_x': 0.5, 'center_y': 0.6}
-        GridLayout:
-            cols: 3
-            size_hint: 0.5, 0.5
-            pos_hint: {'center_x': 0.565, 'center_y': 0.1}
-            spacing: dp(140)
-            CircleButton:
-                text: '✓'
-                custom_font: 'ArialUnicode'
-                font_size: '30sp'
-                stroke_width: 1.4
-                stroke_color: (0, 255, 0, 1)
-                primary_color: (0, 255, 0, 0.6)
-                color: (0, 255, 0, 0.6)
-                down_color: (0, 255, 0, 1)
-                on_press: root.confirm()
-                size: dp(75), dp(75)
-            CircleButton:
-                text: "✕"
-                font_size: '32sp'
-                custom_font: 'ArialUnicode'
-                stroke_width: 1.4
-                stroke_color: (255, 0, 0, 1)
-                primary_color: (255, 0, 0, 0.6)
-                color: (255, 0, 0, 0.6)
-                down_color: (255, 0, 0, 1)
-                on_press: root.cancel()
-                size: dp(75), dp(75)
-            # CircleButton:
-            #     text: "⌛"
-            #     font_size: '42sp'
-            #     custom_font: 'ArialUnicode'
-            #     stroke_width: 1.4
-            #     stroke_color: (255, 0, 0, 1)
-            #     color: (255, 0, 0, 0.6)
-            #     down_color: (255, 0, 0, 1)
-            #     on_press: root.cancel()
-            #     size: dp(75), dp(75)
+
+    # Centered card
+    FloatLayout:
+        size: root.size
+        pos: root.pos
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, None
+            width: dp(360)
+            height: self.minimum_height
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            spacing: 0
+
+            canvas.before:
+                # Step 1: full card in accent color — correctly curved top corners
+                Color:
+                    rgba: root.accent_color
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [dp(20)]
+                # Step 2: dark card overlay — same radius on all corners so the
+                # top rounding matches, revealing a clean accent band at the top
+                Color:
+                    rgba: root.card_color
+                RoundedRectangle:
+                    size: self.width, self.height - dp(10)
+                    pos: self.x, self.y
+                    radius: [dp(20)]
+
+            # Card content
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(28), dp(24), dp(28), dp(24)
+                spacing: dp(12)
+
+                # Priority badge
+                Label:
+                    text: root.priority_label
+                    font_size: '12sp'
+                    bold: True
+                    font_name: 'Nunito'
+                    color: root.accent_color
+                    size_hint_y: None
+                    height: dp(20)
+                    halign: 'center'
+                    text_size: self.width, None
+
+                # Title
+                Label:
+                    text: root.title
+                    font_size: '26sp'
+                    bold: True
+                    font_name: 'Nunito'
+                    color: 1, 1, 1, 1
+                    size_hint_y: None
+                    height: max(dp(38), self.texture_size[1])
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.width, None
+
+                # Description
+                Label:
+                    text: root.description
+                    font_size: '16sp'
+                    font_name: 'Nunito'
+                    color: 1, 1, 1, 0.72
+                    size_hint_y: None
+                    height: max(dp(24), self.texture_size[1])
+                    halign: 'center'
+                    valign: 'top'
+                    text_size: self.width, None
+
+                # Divider
+                Widget:
+                    size_hint_y: None
+                    height: dp(1)
+                    canvas:
+                        Color:
+                            rgba: 1, 1, 1, 0.10
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+                Widget:
+                    size_hint_y: None
+                    height: dp(4)
+
+                # Action buttons
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: dp(54)
+                    spacing: dp(10)
+
+                    # Dismiss
+                    TaskButton:
+                        on_release: root.cancel()
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 0.10
+                            RoundedRectangle:
+                                size: self.size
+                                pos: self.pos
+                                radius: [dp(12)]
+                            Color:
+                                rgba: 1, 1, 1, 0.25
+                            Line:
+                                rounded_rectangle: [self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(12)]
+                                width: dp(1)
+                        Label:
+                            text: 'Dismiss'
+                            font_size: '16sp'
+                            bold: True
+                            font_name: 'Nunito'
+                            color: 1, 1, 1, 0.85
+
+                    # Confirm
+                    TaskButton:
+                        on_release: root.confirm()
+                        canvas.before:
+                            Color:
+                                rgba: root.accent_color
+                            RoundedRectangle:
+                                size: self.size
+                                pos: self.pos
+                                radius: [dp(12)]
+                        Label:
+                            text: 'Confirm'
+                            font_size: '16sp'
+                            bold: True
+                            font_name: 'Nunito'
+                            color: 1, 1, 1, 1

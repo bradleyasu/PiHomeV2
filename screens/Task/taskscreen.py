@@ -12,16 +12,19 @@ from util.phlog import PIHOME_LOGGER
 Builder.load_file("./screens/Task/taskscreen.kv")
 
 class TaskScreen(PiHomeScreen):
-    background = ColorProperty((0,0,0,0.7))
+    background      = ColorProperty((0, 0, 0, 0.7))
     background_image = StringProperty("")
-    text_color = Theme().get_color(Theme().TEXT_PRIMARY)
-    title = StringProperty("<title>")
-    description = StringProperty("<message>")
-    start_time = NumericProperty(0)
-    on_confirm = None
-    on_cancel = None
-    sfx = None
-    
+    text_color      = ColorProperty([1, 1, 1, 1])
+    accent_color    = ColorProperty([1, 1, 1, 1])
+    card_color      = ColorProperty([0.08, 0.10, 0.14, 0.93])
+    priority_label  = StringProperty("")
+    title           = StringProperty("<title>")
+    description     = StringProperty("<message>")
+    start_time      = NumericProperty(0)
+    on_confirm      = None
+    on_cancel       = None
+    sfx             = None
+
     def __init__(self, **kwargs):
         super(TaskScreen, self).__init__(**kwargs)
 
@@ -32,24 +35,30 @@ class TaskScreen(PiHomeScreen):
         from services.taskmanager.taskmanager import TaskPriority
         self.title = task.name
         self.description = task.description
+
+        t = Theme()
         if task.priority == TaskPriority.LOW:
-            self.background = Theme().get_color(Theme().ALERT_INFO, 0.8)
-            # self.sfx = SFX.play("notify")
+            self.background    = t.get_color(t.ALERT_INFO, 0.55)
+            self.accent_color  = t.get_color(t.ALERT_INFO)
+            self.priority_label = "NOTIFICATION"
         elif task.priority == TaskPriority.MEDIUM:
-            self.background = Theme().get_color(Theme().ALERT_WARNING, 0.8)
+            self.background    = t.get_color(t.ALERT_WARNING, 0.55)
+            self.accent_color  = t.get_color(t.ALERT_WARNING)
+            self.priority_label = "ACTION REQUIRED"
             self.sfx = SFX.play("alert")
         else:
-            self.background = Theme().get_color(Theme().ALERT_DANGER, 0.8)
+            self.background    = t.get_color(t.ALERT_DANGER, 0.55)
+            self.accent_color  = t.get_color(t.ALERT_DANGER)
+            self.priority_label = "URGENT"
             self.sfx = SFX.loop("alert")
-        
+
         if task.background_image is not None:
             self.background_image = task.background_image
         else:
             self.background_image = ""
 
-        # self.start_time = task.start_time
         self.on_confirm = self.generate_event(task.on_confirm)
-        self.on_cancel = self.generate_event(task.on_cancel)
+        self.on_cancel  = self.generate_event(task.on_cancel)
     
     def on_touch_down(self, touch):
         if self.sfx is not None:
