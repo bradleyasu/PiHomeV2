@@ -10,8 +10,9 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
 from composites.HomeAssistant.hadevicecard import (  # noqa — registers kv rules
-    HACoverCard, HALightCard, HATriggerCard, HAToggleCard, make_ha_card,
-    load_ha_favorites,
+    HACoverCard, HALightCard, HATriggerCard, HAToggleCard,
+    HAClimateCard, HAMediaCard,
+    make_ha_card, load_ha_favorites,
 )
 from interface.pihomescreen import PiHomeScreen
 from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
@@ -27,6 +28,8 @@ GROUPS = [
     ("SWITCHES & DEVICES", ["switch", "input_boolean", "fan"], HAToggleCard,  dp(72)),
     ("COVERS",             ["cover"],                           HACoverCard,   dp(72)),
     ("SCENES & SCRIPTS",   ["scene", "script"],                 HATriggerCard, dp(72)),
+    ("THERMOSTATS",        ["climate"],                         HAClimateCard, dp(120)),
+    ("MEDIA PLAYERS",      ["media_player"],                    HAMediaCard,   dp(130)),
 ]
 
 

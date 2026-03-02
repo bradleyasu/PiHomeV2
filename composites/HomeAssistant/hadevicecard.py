@@ -17,9 +17,10 @@ from threading import Thread
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import (BooleanProperty, ColorProperty,
+from kivy.properties import (BooleanProperty, ColorProperty, ListProperty,
                               NumericProperty, StringProperty)
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import AsyncImage  # noqa — referenced in hadevicecard.kv
 
 from components.Slider.haslider import HASlider          # noqa — registers rule
 from components.Switch.switch import PiHomeSwitch        # noqa — registers rule
@@ -61,10 +62,24 @@ DOMAIN_ICONS = {
     "cover":         "\u2195",   # ↕  up-down arrow          (Arrows)
     "scene":         "\u2605",   # ★  black star             (Misc Symbols)
     "script":        "\u25B6",   # ▶  play triangle          (Geometric Shapes)
+    "climate":       "\u2600",   # ☀  sun / temperature      (Misc Symbols)
+    "media_player":  "\u266B",   # ♫  beamed musical notes   (Misc Symbols)
 }
 
 # ── Domains shown on screen ───────────────────────────────────────────────────
 SUPPORTED_DOMAINS = set(DOMAIN_ICONS.keys())
+
+# ── Climate HVAC action → accent colour ──────────────────────────────────────
+HVAC_ACTION_COLORS = {
+    "heating":    [1.0,  0.45, 0.15, 1.0],
+    "preheating": [1.0,  0.65, 0.30, 1.0],
+    "cooling":    [0.15, 0.65, 1.0,  1.0],
+    "drying":     [0.60, 0.85, 0.30, 1.0],
+    "fan":        [0.65, 0.65, 1.0,  1.0],
+    "idle":       [0.55, 0.55, 0.55, 1.0],
+    "off":        [0.35, 0.35, 0.35, 1.0],
+}
+_HVAC_DEFAULT_COLOR = [0.55, 0.55, 0.55, 1.0]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -295,6 +310,187 @@ class HATriggerCard(HADeviceCard):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Climate card  (thermostat / HVAC — current temp display + target temp slider)
+# ─────────────────────────────────────────────────────────────────────────────
+class HAClimateCard(HADeviceCard):
+    current_temp      = NumericProperty(0.0)
+    target_temp       = NumericProperty(70.0)
+    min_temp          = NumericProperty(50.0)
+    max_temp          = NumericProperty(90.0)
+    hvac_mode         = StringProperty("off")
+    hvac_action       = StringProperty("off")
+    hvac_action_color = ColorProperty([0.55, 0.55, 0.55, 1.0])
+    temp_unit         = StringProperty("\u00b0F")   # °F
+    available_modes   = ListProperty([])
+    _debounce_event   = None
+    _temp_locked_until = 0.0
+
+    def _lock_temp(self, duration: float = 2.0):
+        self._temp_locked_until = time.monotonic() + duration
+
+    def _set_state_props(self, state_str, attributes):
+        # For climate entities, state IS the hvac_mode (heat/cool/off/auto…)
+        self.hvac_mode = state_str
+        self.state     = state_str
+        self.is_on     = state_str != "off"
+        action = attributes.get("hvac_action", state_str)
+        self.hvac_action       = action
+        self.hvac_action_color = list(HVAC_ACTION_COLORS.get(action, _HVAC_DEFAULT_COLOR))
+        raw_cur = attributes.get("current_temperature")
+        if raw_cur is not None:
+            self.current_temp = float(raw_cur)
+        self.available_modes = list(attributes.get("hvac_modes", []))
+        self.min_temp = float(attributes.get("min_temp", 50.0))
+        self.max_temp = float(attributes.get("max_temp", 90.0))
+        unit = attributes.get("temperature_unit", "\u00b0F")
+        self.temp_unit = unit if unit else "\u00b0F"
+        if time.monotonic() >= self._temp_locked_until:
+            raw_tgt = attributes.get("temperature")
+            if raw_tgt is not None:
+                self.target_temp = float(raw_tgt)
+                if "temp_slider" in self.ids:
+                    span = max(0.1, self.max_temp - self.min_temp)
+                    pct  = (self.target_temp - self.min_temp) / span * 100.0
+                    self.ids.temp_slider.value = max(0.0, min(100.0, pct))
+
+    def _on_temp_slider_change(self, value):
+        if self._programmatic:
+            return
+        self._lock_temp(2.0)
+        span = max(0.1, self.max_temp - self.min_temp)
+        self.target_temp = self.min_temp + value / 100.0 * span
+        if self._debounce_event:
+            self._debounce_event.cancel()
+        tgt = self.target_temp
+        self._debounce_event = Clock.schedule_once(
+            lambda dt: self._send_service("set_temperature", {"temperature": round(tgt, 1)}), 0.4
+        )
+
+    def adjust_brightness(self, delta: float):
+        """Rotary encoder: nudge target temperature ±0.5° per notch."""
+        step = 0.5 if delta > 0 else -0.5
+        self._lock_temp(2.0)
+        new_temp = max(self.min_temp, min(self.max_temp, self.target_temp + step))
+        self.target_temp = new_temp
+        if "temp_slider" in self.ids:
+            span = max(0.1, self.max_temp - self.min_temp)
+            pct  = (new_temp - self.min_temp) / span * 100.0
+            self._programmatic = True
+            self.ids.temp_slider.value = max(0.0, min(100.0, pct))
+            self._programmatic = False
+        if self._debounce_event:
+            self._debounce_event.cancel()
+        self._debounce_event = Clock.schedule_once(
+            lambda dt: self._send_service("set_temperature", {"temperature": round(new_temp, 1)}), 0.4
+        )
+
+    def do_toggle(self):
+        """Rotary press: cycle to the next HVAC mode."""
+        modes = [m for m in self.available_modes if m]
+        if not modes:
+            return
+        try:
+            idx       = modes.index(self.hvac_mode)
+            next_mode = modes[(idx + 1) % len(modes)]
+        except ValueError:
+            next_mode = modes[0]
+        self.hvac_mode = next_mode
+        self.is_on     = next_mode != "off"
+        self._send_service("set_hvac_mode", {"hvac_mode": next_mode})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Media player card  (now-playing info + thumbnail + transport controls)
+# ─────────────────────────────────────────────────────────────────────────────
+class HAMediaCard(HADeviceCard):
+    media_title   = StringProperty("")
+    media_artist  = StringProperty("")
+    media_state   = StringProperty("off")
+    volume_pct    = NumericProperty(0.0)     # 0–100
+    media_img_url = StringProperty("")
+    is_playing    = BooleanProperty(False)
+
+    _debounce_event      = None
+    _volume_locked_until = 0.0
+
+    def _lock_volume(self, duration: float = 2.0):
+        self._volume_locked_until = time.monotonic() + duration
+
+    def _set_state_props(self, state_str, attributes):
+        self.state       = state_str
+        self.media_state = state_str
+        self.is_on       = state_str not in ("off", "unavailable", "unknown")
+        self.is_playing  = state_str == "playing"
+        self.media_title  = attributes.get("media_title", "")
+        self.media_artist = (
+            attributes.get("media_artist", "")
+            or attributes.get("media_album_name", "")
+            or attributes.get("app_name", "")
+        )
+        # Thumbnail — entity_picture is a relative /api/... path served by HA
+        ep = attributes.get("entity_picture", "")
+        if ep:
+            base = HOME_ASSISTANT.HA_URL
+            if base.endswith("/api"):
+                base = base[:-4]
+            self.media_img_url = base + ep
+        else:
+            self.media_img_url = ""
+        # Volume (suppress WS echo while user is adjusting)
+        if time.monotonic() >= self._volume_locked_until:
+            vol_raw = attributes.get("volume_level")
+            if vol_raw is not None:
+                self.volume_pct = round(float(vol_raw) * 100.0)
+                if "volume_slider" in self.ids:
+                    self._programmatic = True
+                    self.ids.volume_slider.value = self.volume_pct
+                    self._programmatic = False
+
+    def _play_pause(self):
+        self._send_service("media_pause" if self.is_playing else "media_play")
+
+    def _prev_track(self):
+        self._send_service("media_previous_track")
+
+    def _next_track(self):
+        self._send_service("media_next_track")
+
+    def _on_volume_change(self, value):
+        if self._programmatic:
+            return
+        self._lock_volume(2.0)
+        self.volume_pct = value
+        if self._debounce_event:
+            self._debounce_event.cancel()
+        self._debounce_event = Clock.schedule_once(
+            lambda dt: self._send_service(
+                "volume_set", {"volume_level": round(value / 100.0, 2)}
+            ), 0.4
+        )
+
+    def adjust_brightness(self, delta: float):
+        """Rotary encoder: adjust volume ±5% per notch."""
+        self._lock_volume(2.0)
+        new_vol = max(0.0, min(100.0, self.volume_pct + delta))
+        self.volume_pct = new_vol
+        if "volume_slider" in self.ids:
+            self._programmatic = True
+            self.ids.volume_slider.value = new_vol
+            self._programmatic = False
+        if self._debounce_event:
+            self._debounce_event.cancel()
+        self._debounce_event = Clock.schedule_once(
+            lambda dt: self._send_service(
+                "volume_set", {"volume_level": round(new_vol / 100.0, 2)}
+            ), 0.4
+        )
+
+    def do_toggle(self):
+        """Rotary press: play / pause."""
+        self._play_pause()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Factory
 # ─────────────────────────────────────────────────────────────────────────────
 def make_ha_card(entity_id, state_dict):
@@ -311,6 +507,10 @@ def make_ha_card(entity_id, state_dict):
         card = HACoverCard()
     elif domain in ("scene", "script"):
         card = HATriggerCard()
+    elif domain == "climate":
+        card = HAClimateCard()
+    elif domain == "media_player":
+        card = HAMediaCard()
     else:
         return None
 
