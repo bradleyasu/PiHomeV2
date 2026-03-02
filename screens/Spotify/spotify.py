@@ -778,6 +778,8 @@ class SpotifyScreen(PiHomeScreen):
             halign="center", valign="middle",
         )
         vol_lo.bind(size=lambda w, s: setattr(w, "text_size", s))
+
+        vol_slider = SpotifySlider(
             min_val=0, max_val=100, value=self.volume,
             size_hint_x=None, width=dp(200),
             track_height=dp(3), thumb_r=dp(6),
