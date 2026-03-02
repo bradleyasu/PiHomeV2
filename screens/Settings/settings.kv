@@ -344,7 +344,6 @@
                 size_hint: None, None
                 size: dp(36), dp(36)
                 pos_hint: {'center_y': 0.5}
-                padding: dp(4)
                 canvas.before:
                     Color:
                         rgba: 1, 1, 1, 0.07
@@ -361,7 +360,8 @@
                     color: root.text_color
                     halign: 'center'
                     valign: 'middle'
-                    text_size: self.size
+                    pos_hint: {'center_y': 0.6}
+                    text_size: self.parent.size if self.parent else self.size
 
             Label:
                 text: 'Settings'

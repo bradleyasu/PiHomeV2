@@ -5,7 +5,7 @@
     "label": "Pi Hole",
     "settingsLabel": "Pi-Hole",
     "description": "",
-    "hidden": false,
+    "hidden": true,
     "icon": "screens/PiHole/icon.png",
     "requires_pin": false,
     "settings": [
