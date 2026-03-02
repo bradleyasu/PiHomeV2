@@ -1,6 +1,7 @@
 import json
 from kivy.lang import Builder
 from components.Image.networkimage import BLANK_IMAGE, LOGO_IMAGE
+from composites.Reddit.redditpost import RedditPostOverlay
 from interface.gesturewidget import GestureWidget
 from networking.poller import POLLER
 from services.qr.qr import QR
@@ -8,6 +9,7 @@ from theme.theme import Theme
 from kivy.properties import ColorProperty, NumericProperty, StringProperty, BooleanProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
+from kivy.metrics import dp
 from util.configuration import CONFIG
 from util.const import GESTURE_SWIPE_DOWN
 from util.phlog import PIHOME_LOGGER
@@ -44,11 +46,13 @@ class RedditWidget(GestureWidget):
     item = 0
     data = None
     _started = False
+    _current_post = None
 
     def __init__(self, **kwargs):
         super(RedditWidget, self).__init__(**kwargs)
         self._poller_key = None
         self._clock_next = None
+        self._touch_start = None
         self.on_gesture = self.handle_gesture
         self.on_click = self.handle_click
 
@@ -57,10 +61,11 @@ class RedditWidget(GestureWidget):
             self.opacity = 0
             return
 
+        self._active_subs = CONFIG.get("news", "subreddits", "politics+worldnews")
         self.opacity = 0
         self._start_feed()
 
-    def _start_feed(self):
+    def _start_feed(self, start_delay=20):
         subs = CONFIG.get("news", "subreddits", "politics+worldnews")
         if subs == "":
             subs = "politics"
@@ -69,9 +74,9 @@ class RedditWidget(GestureWidget):
         PIHOME_LOGGER.info("RedditWidget: starting feed from {}".format(reddit_url))
         self._poller_key = POLLER.register_api(reddit_url, 60 * 10, lambda data: self.parse_reddit(data))
         self._clock_next = Clock.schedule_interval(lambda _: self.next(), 120)
-        Clock.schedule_once(lambda _: self.start(), 20)
-        # Safety net: if still blank after 30s, force a display attempt
-        Clock.schedule_once(lambda _: self._force_show_if_blank(), 30)
+        Clock.schedule_once(lambda _: self.start(), start_delay)
+        # Safety net: if still blank after start_delay+10s, force a display attempt
+        Clock.schedule_once(lambda _: self._force_show_if_blank(), start_delay + 10)
 
     def _stop_feed(self):
         if self._poller_key is not None:
@@ -81,15 +86,28 @@ class RedditWidget(GestureWidget):
             self._clock_next.cancel()
             self._clock_next = None
         self.data = None
+        self.item = 0
+        self._started = False
 
     def on_config_update(self, config):
         source = CONFIG.get("news", "source", "Disabled News")
         if source == "Disabled News":
             self._stop_feed()
             self.opacity = 0
-        else:
-            if self._poller_key is None:
-                self._start_feed()
+            return
+
+        new_subs = CONFIG.get("news", "subreddits", "politics+worldnews")
+        if self._poller_key is None:
+            # Feed wasn't running — start fresh
+            self._active_subs = new_subs
+            self._start_feed(start_delay=2)
+        elif new_subs != self._active_subs:
+            # Subreddits changed — tear down old feed and reload
+            PIHOME_LOGGER.info("RedditWidget: subreddits changed to '{}', restarting feed".format(new_subs))
+            self._active_subs = new_subs
+            self._stop_feed()
+            self.content_opacity = 0
+            self._start_feed(start_delay=2)
 
             
     def start(self):
@@ -178,6 +196,7 @@ class RedditWidget(GestureWidget):
         self.fade_in()
 
     def _populate(self, post):
+        self._current_post = post
         self.title = post.get("title", "")
         self.guilded = post.get("total_awards_received", 0) > 0
         self.source = post.get("domain", "")
@@ -203,9 +222,25 @@ class RedditWidget(GestureWidget):
             self.background_image = ""
             self.background_image_opacity = 0
 
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            self._touch_start = (touch.x, touch.y)
+        return super().on_touch_down(touch)
+
+    def on_touch_up(self, touch):
+        if self.collide_point(*touch.pos) and self._touch_start is not None:
+            dx = abs(touch.x - self._touch_start[0])
+            dy = abs(touch.y - self._touch_start[1])
+            # Only treat as a tap if the finger/cursor barely moved
+            if dx < dp(20) and dy < dp(20):
+                self.handle_click()
+        self._touch_start = None
+        return super().on_touch_up(touch)
+
     def handle_gesture(self, gesture):
         if gesture == GESTURE_SWIPE_DOWN:
             self.next()
     
     def handle_click(self):
-        self.clicked = not self.clicked
+        if self._current_post is not None:
+            RedditPostOverlay.open(self._current_post)

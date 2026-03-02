@@ -1,0 +1,386 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ────────────────────────────────────────────────────────────────────────────
+# RedditCommentCard — single threaded comment row
+# ────────────────────────────────────────────────────────────────────────────
+<RedditCommentCard>:
+    canvas.before:
+        # Row background (alternates per depth)
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        # Depth accent bar on left edge
+        Color:
+            rgba: root.accent_color
+        Rectangle:
+            pos: self.x, self.y
+            size: dp(3), self.height
+
+    # ── Header: author · flair · age · score ─────────────────────────────
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(26)
+        spacing: dp(8)
+
+        Label:
+            text: root.author
+            color: root.accent_color
+            font_size: '13sp'
+            font_name: 'Nunito'
+            bold: True
+            size_hint: None, 1
+            width: self.texture_size[0]
+
+        Label:
+            text: root.author_flair
+            color: 1, 1, 1, 0.40
+            font_size: '11sp'
+            font_name: 'Nunito'
+            size_hint: None, 1
+            width: self.texture_size[0] if root.author_flair else 0
+            opacity: 1 if root.author_flair else 0
+
+        Widget:
+
+        Label:
+            text: root.time_label
+            color: 1, 1, 1, 0.36
+            font_size: '11sp'
+            font_name: 'Nunito'
+            size_hint: None, 1
+            width: self.texture_size[0]
+
+        Label:
+            text: "\u2191 " + root.score_label
+            color: 0.55, 0.90, 0.55, 0.9
+            font_size: '12sp'
+            font_name: 'ArialUnicode'
+            size_hint: None, 1
+            width: self.texture_size[0]
+
+    # ── Body text ─────────────────────────────────────────────────────────
+    Label:
+        id: body_label
+        text: root.body
+        color: root.text_color
+        font_size: '14sp'
+        font_name: 'Nunito'
+        text_size: self.width, None
+        size_hint_y: None
+        height: self.texture_size[1]
+        halign: 'left'
+        valign: 'top'
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# RedditPostOverlay — full-screen detail + threaded comments
+# ────────────────────────────────────────────────────────────────────────────
+<RedditPostOverlay>:
+    # Dark scrim behind the card
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 0.80
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    # ── Card ─────────────────────────────────────────────────────────────────
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: None, None
+        size: dp(764), dp(452)
+        pos: dp(18), dp(14)
+        spacing: 0
+
+        canvas.before:
+            Color:
+                rgba: root.card_color
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(16)]
+
+        # ── Header bar ───────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(48)
+            padding: [dp(16), dp(6), dp(8), dp(6)]
+            spacing: dp(6)
+
+            # Subreddit + author
+            BoxLayout:
+                orientation: 'vertical'
+                spacing: dp(1)
+                Label:
+                    text: root.subreddit_label.upper()
+                    color: root.accent_color
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                    bold: True
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                Label:
+                    text: root.author
+                    color: 1, 1, 1, 0.42
+                    font_size: '10sp'
+                    font_name: 'Nunito'
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+
+            Widget:
+
+            # ── QR button ────────────────────────────────────────────────────
+            BoxLayout:
+                size_hint: None, None
+                size: dp(36), dp(36)
+                pos_hint: {'center_y': 0.5}
+                padding: dp(4)
+                canvas.before:
+                    Color:
+                        rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(9)]
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.toggle_qr()
+                Label:
+                    text: 'QR'
+                    color: root.accent_color
+                    font_size: '10sp'
+                    font_name: 'Nunito'
+                    bold: True
+
+            Widget:
+                size_hint: None, None
+                size: dp(6), dp(1)
+
+            # ── Refresh button ───────────────────────────────────────────────
+            BoxLayout:
+                size_hint: None, None
+                size: dp(36), dp(36)
+                pos_hint: {'center_y': 0.5}
+                padding: dp(4)
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 0.08
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(9)]
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.fetch_comments()
+                Label:
+                    text: '\u21bb'
+                    color: 1, 1, 1, 0.72
+                    font_size: '20sp'
+                    font_name: 'ArialUnicode'
+
+            Widget:
+                size_hint: None, None
+                size: dp(6), dp(1)
+
+            # ── Close button ─────────────────────────────────────────────────
+            BoxLayout:
+                size_hint: None, None
+                size: dp(36), dp(36)
+                pos_hint: {'center_y': 0.5}
+                padding: dp(4)
+                canvas.before:
+                    Color:
+                        rgba: 0.85, 0.25, 0.25, 0.90
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(9)]
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.close()
+                Label:
+                    text: '\u2715'
+                    color: 1, 1, 1, 0.95
+                    font_size: '14sp'
+                    font_name: 'ArialUnicode'
+
+        # ── Divider ──────────────────────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: root.divider_color
+                Line:
+                    points: [self.x, self.y, self.right, self.y]
+                    width: 1
+
+        # ── Post title + meta ─────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(56)
+            padding: [dp(16), dp(6), dp(16), dp(2)]
+            spacing: dp(3)
+
+            Label:
+                text: root.title
+                color: root.text_color
+                font_size: '14sp'
+                font_name: 'Nunito'
+                bold: True
+                text_size: self.width, None
+                size_hint_y: 1
+                halign: 'left'
+                valign: 'top'
+
+            Label:
+                text: root.score_label + " pts  \u00b7  " + root.num_comments
+                color: 1, 1, 1, 0.42
+                font_size: '10sp'
+                font_name: 'Nunito'
+                size_hint_y: None
+                height: dp(14)
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+
+        # ── Divider ──────────────────────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: root.divider_color
+                Line:
+                    points: [self.x, self.y, self.right, self.y]
+                    width: 1
+
+        # ── POST / COMMENTS toggle row ────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(40)
+            padding: [dp(16), dp(6), dp(16), dp(6)]
+            spacing: dp(10)
+
+            # Loading indicator (left-aligned)
+            Label:
+                text: 'Loading\u2026' if root.loading else ''
+                color: root.accent_color
+                font_size: '10sp'
+                font_name: 'Nunito'
+                size_hint: None, 1
+                width: self.texture_size[0]
+
+            # Spacer pushes POST/COMMENTS to the right
+            Widget:
+
+            Label:
+                text: 'POST'
+                color: root.text_color if not root.show_comments else (1, 1, 1, 0.35)
+                font_size: '12sp'
+                font_name: 'Nunito'
+                bold: True
+                size_hint: None, 1
+                width: self.texture_size[0]
+
+            PiHomeSwitch:
+                size_hint: None, None
+                size: dp(46), dp(26)
+                pos_hint: {'center_y': 0.5}
+                on_enabled: root.show_comments = self.enabled
+
+            Label:
+                text: 'COMMENTS'
+                color: root.accent_color if root.show_comments else (1, 1, 1, 0.35)
+                font_size: '12sp'
+                font_name: 'Nunito'
+                bold: True
+                size_hint: None, 1
+                width: self.texture_size[0]
+
+            # Comment count badge
+            Label:
+                text: str(root.comment_count) if root.comment_count else ''
+                color: 1, 1, 1, 0.35
+                font_size: '10sp'
+                font_name: 'Nunito'
+                size_hint: None, 1
+                width: self.texture_size[0]
+
+        # ── Divider ──────────────────────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: root.divider_color
+                Line:
+                    points: [self.x, self.y, self.right, self.y]
+                    width: 1
+
+        # ── Content region — POST panel and COMMENTS panel share this space ───
+        FloatLayout:
+            size_hint_y: None
+            height: dp(305)
+            canvas.before:
+                StencilPush
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                StencilUse
+            canvas.after:
+                StencilUnUse
+                StencilPop
+
+            # ── Post body panel (image or text) ──────────────────────────────
+            BoxLayout:
+                id: post_body_area
+                orientation: 'vertical'
+                size_hint: 1, 1
+                pos_hint: {'x': 0, 'y': 0}
+                padding: [dp(20), dp(10), dp(20), dp(10)]
+                opacity: 0 if root.show_comments else 1
+
+            # ── Threaded comments panel ───────────────────────────────────────
+            ScrollView:
+                size_hint: 1, 1
+                pos_hint: {'x': 0, 'y': 0}
+                bar_width: dp(3)
+                bar_color: root.accent_color
+                bar_inactive_color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.30
+                scroll_type: ['bars', 'content']
+                do_scroll_x: False
+                opacity: 1 if root.show_comments else 0
+
+                BoxLayout:
+                    id: comments_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(1)
+                    padding: [dp(16), dp(4), dp(12), dp(8)]
+
+    # ── QR overlay (floated above the card, centred) ─────────────────────────
+    BoxLayout:
+        size_hint: None, None
+        size: dp(220), dp(220)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        opacity: 1 if root.show_qr else 0
+        padding: dp(10)
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(14)]
+        NetworkImage:
+            url: root.qr_url
+            size_hint: 1, 1
+            enable_stretch: True

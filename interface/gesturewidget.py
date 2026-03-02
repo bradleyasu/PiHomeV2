@@ -32,6 +32,9 @@ class GestureWidget(Widget):
     def touch_up(self, touch):
         if not self.collide_point(*touch.pos):
             return
+        if 'line' not in touch.ud:
+            # touch_down was consumed by an overlapping widget before reaching us
+            return
         g = simplegesture('', list(zip(touch.ud['line'].points[::2], touch.ud['line'].points[1::2])))
         g2 = GESTURE_DATABASE.find(g, minscore=0.70)
         # print(GESTURE_DATABASE.gesture_to_str(g))

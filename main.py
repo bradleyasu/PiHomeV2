@@ -194,6 +194,8 @@ class PiHome(App):
         return False 
 
     def on_touch_up(self, touch):
+        if 'line' not in touch.ud:
+            return
         g = simplegesture('', list(zip(touch.ud['line'].points[::2], touch.ud['line'].points[1::2])))
 
         # User Input Gesture
