@@ -47,6 +47,7 @@ class Theme():
         self.mode = Configuration(CONF_FILE).get_int('theme', 'dark_mode', 0)
         LabelBase.register(name='Nunito', fn_regular='./theme/fonts/Nunito-Regular.ttf')
         LabelBase.register(name='ArialUnicode', fn_regular='./theme/fonts/arial-unicode-ms.ttf')
+        LabelBase.register(name='MaterialIcons', fn_regular='./theme/fonts/MaterialIcons-Regular.ttf')
 
     def get_color(self, color, opacity = 1):
         if (self.mode == 0):

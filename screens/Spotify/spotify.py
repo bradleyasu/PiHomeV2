@@ -32,7 +32,7 @@ from kivy.properties import (
 )
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.image import AsyncImage, Image
+from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
@@ -348,8 +348,14 @@ class SpotifyScreen(PiHomeScreen):
             self.elapsed_text = _fmt_ms(prog_ms)
 
         device = data.get("device") or {}
-        self.device_name = device.get("name", "")
-        vol = device.get("volume_percent")
+        self.device_name  = device.get("name", "")
+        vol               = device.get("volume_percent")
+        supports_vol      = device.get("supports_volume", True)
+        PIHOME_LOGGER.info(
+            f"Spotify poll: device='{self.device_name}' vol={vol} "
+            f"supports_volume={supports_vol} "
+            f"suppressed={time.time() < self._suppress_vol_until}"
+        )
         # Only update volume if the user isn't currently dragging the slider
         if vol is not None and time.time() >= self._suppress_vol_until:
             self._vol_from_api = True
@@ -408,7 +414,9 @@ class SpotifyScreen(PiHomeScreen):
         self._cmd("put", "repeat", params={"state": mapping[self.repeat_state]})
 
     def set_volume(self, vol: int):
-        self._cmd("put", "volume", params={"volume_percent": max(0, min(100, vol))})
+        clamped = max(0, min(100, vol))
+        PIHOME_LOGGER.info(f"Spotify: set_volume({clamped})")
+        self._cmd("put", "volume", params={"volume_percent": clamped})
 
     def seek_track(self, frac: float):
         """Seek to a fractional position (0.0–1.0) in the current track."""
@@ -747,12 +755,14 @@ class SpotifyScreen(PiHomeScreen):
             size_hint_y=None, height=dp(44),
             padding=[0, dp(8), 0, dp(8)],
         )
-        vol_lo = Image(
-            source="assets/icons/audio_mute.png",
-            size_hint=(None, None),
-            size=(dp(20), dp(20)),
-            allow_stretch=True, keep_ratio=True,
+        vol_lo = Label(
+            text="\ue04d",        # Material Icons: volume_down
+            font_name="MaterialIcons", font_size="18sp",
+            color=[1, 1, 1, 0.45],
+            size_hint=(None, None), size=(dp(28), dp(28)),
+            halign="center", valign="middle",
         )
+        vol_lo.bind(size=lambda w, s: setattr(w, "text_size", s))
 
         vol_slider = SpotifySlider(
             min_val=0, max_val=100, value=self.volume,
@@ -774,12 +784,14 @@ class SpotifyScreen(PiHomeScreen):
         vol_slider.bind(value=_on_vol_change)
         self.bind(volume=lambda i, v: setattr(vol_slider, "value", v))
 
-        vol_hi = Image(
-            source="assets/icons/audio_volume.png",
-            size_hint=(None, None),
-            size=(dp(20), dp(20)),
-            allow_stretch=True, keep_ratio=True,
+        vol_hi = Label(
+            text="\ue050",        # Material Icons: volume_up
+            font_name="MaterialIcons", font_size="18sp",
+            color=[1, 1, 1, 0.45],
+            size_hint=(None, None), size=(dp(28), dp(28)),
+            halign="center", valign="middle",
         )
+        vol_hi.bind(size=lambda w, s: setattr(w, "text_size", s))
 
         vol_row.add_widget(Widget())   # left spacer — centers the group
         vol_row.add_widget(vol_lo)
