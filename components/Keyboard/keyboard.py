@@ -55,10 +55,7 @@ _ROW_NUM = [
 
 _SPECIAL = {'⇧', '⌫', '123', 'abc', '↵', '_SPACE_'}
 
-KB_ROW_H = dp(52)
-KB_ROWS  = 4
-KB_PAD   = dp(8)
-KB_HEIGHT = KB_ROW_H * KB_ROWS + KB_PAD * 2 + dp(4) * (KB_ROWS - 1)
+KB_ROWS = 4
 
 
 # ── _Key widget ───────────────────────────────────────────────────────────────
@@ -151,12 +148,19 @@ class PiHomeKeyboard(BoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Compute dp-based sizes here, not at module load time,
+        # so the Pi display metrics are fully initialised first.
+        kb_row_h  = dp(52)
+        kb_pad    = dp(8)
+        kb_height = kb_row_h * KB_ROWS + kb_pad * 2 + dp(4) * (KB_ROWS - 1)
+
         self.orientation = 'vertical'
         self.size_hint   = (1, None)
-        self.height      = KB_HEIGHT
-        self.y           = -KB_HEIGHT   # start off-screen below
+        self.height      = kb_height
+        self._kb_height  = kb_height
+        self.y           = -kb_height   # start off-screen below
         self.opacity     = 0
-        self.padding     = [dp(10), KB_PAD, dp(10), KB_PAD]
+        self.padding     = [dp(10), kb_pad, dp(10), kb_pad]
         self.spacing     = dp(4)
 
         th = Theme()
@@ -209,13 +213,17 @@ class PiHomeKeyboard(BoxLayout):
 
     def show(self, target):
         self.target = target
+        # Re-add to Window each time so we are always the topmost widget
+        if self.parent:
+            self.parent.remove_widget(self)
+        Window.add_widget(self)
         self.opacity = 1
         Animation.cancel_all(self, 'y')
         Animation(y=0, d=0.2, t='out_cubic').start(self)
 
     def hide(self):
         Animation.cancel_all(self, 'y')
-        anim = Animation(y=-self.height, d=0.18, t='in_cubic')
+        anim = Animation(y=-self._kb_height, d=0.18, t='in_cubic')
         anim.bind(on_complete=lambda *_: setattr(self, 'opacity', 0))
         anim.start(self)
         self.target = None
@@ -315,13 +323,15 @@ def _get_keyboard() -> PiHomeKeyboard:
     global _keyboard_instance
     if _keyboard_instance is None:
         _keyboard_instance = PiHomeKeyboard()
-        Window.add_widget(_keyboard_instance)
+        # Defer adding to Window until after the current frame so that
+        # build() has returned its root widget first (z-order matters).
+        Clock.schedule_once(lambda dt: Window.add_widget(_keyboard_instance), 0)
     return _keyboard_instance
 
 
 def ensure_keyboard_attached():
     """
-    Call once at app startup (e.g. in PiHome.build()) to pre-create the
-    keyboard so the first appearance has no delay.
+    No-op kept for API compatibility — lazy creation on first show() is
+    sufficient and avoids z-order / dp-metric issues at startup.
     """
-    _get_keyboard()
+    pass

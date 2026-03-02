@@ -93,7 +93,6 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
-        ensure_keyboard_attached()   # pre-create on-screen keyboard overlay
         self.layout.size = (self.width, self.height)
         self.layout.size_hint = (1,1)
         self.layout.pos = (0,0)
