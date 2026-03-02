@@ -223,7 +223,7 @@
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Options cycle row — tap to advance to the next choice
+# Options popup row — tap the pill to open a dropdown
 # ─────────────────────────────────────────────────────────────────────────────
 <SettingsOptionsRow>:
     orientation: 'horizontal'
@@ -262,32 +262,26 @@
             valign: 'middle'
             text_size: self.size
 
-    # Pill button showing current value + chevron
+    # Pill button — shows current value, opens dropdown on tap
     BoxLayout:
         size_hint: None, None
-        size: dp(170), dp(38)
+        size: dp(180), dp(38)
         pos_hint: {'center_y': 0.5}
-        padding: [dp(12), 0, dp(8), 0]
+        padding: [dp(14), 0, dp(10), 0]
         spacing: 0
-        on_touch_down: self.collide_point(*args[1].pos) and root.cycle_next()
+        on_touch_down: self.collide_point(*args[1].pos) and root.open_dropdown()
 
         canvas.before:
-            # Subtle fill
-            Color:
-                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.12
-            RoundedRectangle:
-                pos:  self.pos
-                size: self.size
-                radius: [dp(9)]
-            # 1px stroke simulation — draw a slightly-larger rect behind the fill
+            # Border ring
             Color:
                 rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.38
             RoundedRectangle:
                 pos:  self.pos[0] - dp(1), self.pos[1] - dp(1)
                 size: self.width + dp(2), self.height + dp(2)
                 radius: [dp(10)]
+            # Fill
             Color:
-                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.12
+                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.11
             RoundedRectangle:
                 pos:  self.pos
                 size: self.size
@@ -305,16 +299,15 @@
             size_hint_x: 1
 
         Label:
-            text: '\u203a'
+            text: '\u2304'
             font_name: 'ArialUnicode'
-            font_size: '20sp'
-            color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.6
+            font_size: '16sp'
+            color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.65
             size_hint: None, 1
             width: dp(18)
             halign: 'center'
             valign: 'middle'
             text_size: self.size
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Root screen

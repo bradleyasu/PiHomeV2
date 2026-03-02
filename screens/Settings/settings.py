@@ -11,6 +11,9 @@ from kivy.properties import (
     ObjectProperty, StringProperty,
 )
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.label import Label
+from kivy.uix.modalview import ModalView
 from kivy.uix.widget import Widget
 
 from components.Switch.switch import PiHomeSwitch  # noqa — registers kv rules
@@ -101,7 +104,151 @@ class SettingsBoolRow(SettingsRowBase):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Options (cycle) row
+# Options dropdown popup
+# ─────────────────────────────────────────────────────────────────────────────
+class OptionsDropdown(ModalView):
+    """Full-screen scrim with a centred card listing all choices."""
+    title        = StringProperty('')
+    options      = ListProperty([])
+    text_color   = ColorProperty([1, 1, 1, 1])
+    muted_color  = ColorProperty([0.5, 0.5, 0.5, 1])
+    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    card_color   = ColorProperty([0.12, 0.12, 0.14, 1])
+    on_pick      = ObjectProperty(lambda val: None)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.background_color = [0, 0, 0, 0.55]
+        self.background       = ''
+        self.auto_dismiss     = True
+        Clock.schedule_once(self._build, 0)
+
+    def _build(self, dt):
+        self.clear_widgets()
+
+        row_h  = dp(48)
+        hdr_h  = dp(52)
+        pad    = dp(16)
+        card_w = dp(340)
+        card_h = hdr_h + len(self.options) * row_h + pad
+
+        from kivy.graphics import Color as KColor, RoundedRectangle as RR
+
+        card = BoxLayout(
+            orientation='vertical',
+            size_hint=(None, None),
+            size=(card_w, card_h),
+            pos_hint={'center_x': 0.5, 'center_y': 0.5},
+        )
+
+        with card.canvas.before:
+            KColor(rgba=self.card_color)
+            self._card_bg = RR(pos=card.pos, size=card.size, radius=[dp(18)])
+        card.bind(pos=lambda *_: setattr(self._card_bg, 'pos', card.pos),
+                  size=lambda *_: setattr(self._card_bg, 'size', card.size))
+
+        # Header
+        hdr = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=None, height=hdr_h,
+            padding=[dp(20), 0, dp(14), 0],
+        )
+        hdr_lbl = Label(
+            text=self.title,
+            font_name='Nunito', font_size='14sp', bold=True,
+            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.6),
+            halign='left', valign='middle',
+            size_hint_x=1,
+        )
+        hdr_lbl.bind(size=lambda inst, val: setattr(inst, 'text_size', val))
+        hdr.add_widget(hdr_lbl)
+
+        # Close X
+        close_box = BoxLayout(size_hint=(None, None), size=(dp(32), dp(32)),
+                              pos_hint={'center_y': 0.5})
+        close_lbl = Label(text='✕', font_name='ArialUnicode', font_size='14sp',
+                          color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.45))
+        close_box.add_widget(close_lbl)
+        close_box.bind(on_touch_down=lambda inst, touch:
+                       inst.collide_point(*touch.pos) and self.dismiss())
+        hdr.add_widget(close_box)
+        card.add_widget(hdr)
+
+        # Option rows
+        for opt in self.options:
+            row = self._make_option_row(opt, row_h, card_w)
+            card.add_widget(row)
+
+        # Bottom padding spacer
+        card.add_widget(Widget(size_hint_y=None, height=pad))
+
+        self.add_widget(card)
+
+    def _make_option_row(self, opt, row_h, card_w):
+        from kivy.graphics import (
+            Color as KColor, RoundedRectangle as RR, Rectangle as Rect
+        )
+
+        row = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=None, height=row_h,
+            padding=[dp(20), dp(4), dp(16), dp(4)],
+            spacing=dp(10),
+        )
+
+        # Subtle divider at top
+        with row.canvas.before:
+            KColor(rgba=(1, 1, 1, 0.05))
+            Rect(pos=row.pos, size=(card_w, dp(1)))
+
+        lbl = Label(
+            text=opt,
+            font_name='Nunito', font_size='15sp',
+            color=self.text_color,
+            halign='left', valign='middle',
+            size_hint_x=1,
+        )
+        lbl.bind(size=lambda inst, val: setattr(inst, 'text_size', val))
+        row.add_widget(lbl)
+
+        check = Label(
+            text='✓',
+            font_name='ArialUnicode', font_size='16sp',
+            color=(self.accent_color[0], self.accent_color[1], self.accent_color[2], 0),
+            size_hint=(None, 1), width=dp(24),
+        )
+        row.add_widget(check)
+
+        # Highlight the row on touch
+        def _on_touch(inst, touch):
+            if inst.collide_point(*touch.pos):
+                self.on_pick(opt)
+                self.dismiss()
+                return True
+        row.bind(on_touch_down=_on_touch)
+        row._check = check
+        return row
+
+    def set_current(self, current_value):
+        """Highlight the currently-selected option after build."""
+        if not self.children:
+            return
+        card = self.children[0]   # BoxLayout card added directly
+        for child in card.children:
+            check = getattr(child, '_check', None)
+            if check is None:
+                continue
+            lbl = child.children[-1]           # first Label in row
+            is_sel = (lbl.text == current_value)
+            check.color = (
+                self.accent_color[0], self.accent_color[1],
+                self.accent_color[2], 1.0 if is_sel else 0
+            )
+            lbl.bold = is_sel
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Options row
 # ─────────────────────────────────────────────────────────────────────────────
 class SettingsOptionsRow(SettingsRowBase):
     options = ListProperty([])
@@ -111,11 +258,23 @@ class SettingsOptionsRow(SettingsRowBase):
         super().__init__(**kwargs)
         self.config = config
 
-    def cycle_next(self):
-        if not self.options:
-            return
-        idx = self.options.index(self.value) if self.value in self.options else -1
-        self.value = self.options[(idx + 1) % len(self.options)]
+    def open_dropdown(self):
+        # Derive an opaque card colour from the row's background
+        c = self.bg_color
+        card_c = (c[0] * 0.80, c[1] * 0.80, c[2] * 0.80, 1.0)
+        dropdown = OptionsDropdown(
+            title=self.title,
+            options=self.options,
+            text_color=self.text_color,
+            muted_color=self.muted_color,
+            accent_color=self.accent_color,
+            card_color=card_c,
+        )
+        def _pick(val):
+            self.value = val
+        dropdown.on_pick = _pick
+        dropdown.open()
+        Clock.schedule_once(lambda dt: dropdown.set_current(self.value), 0.05)
 
     def on_value(self, instance, val):
         if self.section and self.key:
