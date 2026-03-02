@@ -19,6 +19,7 @@ OAuth2 Authorization Code Flow
 """
 
 import base64
+import time
 import urllib.parse
 from threading import Thread
 
@@ -120,6 +121,13 @@ class SpotifyScreen(PiHomeScreen):
 
         # Volume feedback-loop guard
         self._vol_from_api = False
+
+        # Suppress poll-based overwrite for a moment after user interaction
+        self._suppress_vol_until  = 0.0
+        self._suppress_prog_until = 0.0
+
+        # Duration of the current track in ms (needed for seek calculation)
+        self._dur_ms = 0
 
         # Widget refs for reactive updates (populated in _build_player_panel)
         self._play_btn    = None
@@ -331,14 +339,19 @@ class SpotifyScreen(PiHomeScreen):
         self.is_playing    = data.get("is_playing", False)
         self.shuffle_state = data.get("shuffle_state", False)
         self.repeat_state  = data.get("repeat_state", "off")
-        self.progress      = (prog_ms / dur_ms) if dur_ms else 0.0
-        self.elapsed_text  = _fmt_ms(prog_ms)
+        self._dur_ms       = dur_ms
         self.duration_text = _fmt_ms(dur_ms)
+
+        # Only update progress/elapsed if the user isn't currently seeking
+        if time.time() >= self._suppress_prog_until:
+            self.progress     = (prog_ms / dur_ms) if dur_ms else 0.0
+            self.elapsed_text = _fmt_ms(prog_ms)
 
         device = data.get("device") or {}
         self.device_name = device.get("name", "")
         vol = device.get("volume_percent")
-        if vol is not None:
+        # Only update volume if the user isn't currently dragging the slider
+        if vol is not None and time.time() >= self._suppress_vol_until:
             self._vol_from_api = True
             self.volume = int(vol)
             self._vol_from_api = False
@@ -391,6 +404,13 @@ class SpotifyScreen(PiHomeScreen):
 
     def set_volume(self, vol: int):
         self._cmd("put", "volume", params={"volume_percent": max(0, min(100, vol))})
+
+    def seek_track(self, frac: float):
+        """Seek to a fractional position (0.0–1.0) in the current track."""
+        if not self._dur_ms:
+            return
+        pos_ms = int(max(0.0, min(1.0, frac)) * self._dur_ms)
+        self._cmd("put", "seek", params={"position_ms": pos_ms})
 
     # ── UI panels ─────────────────────────────────────────────────────────────
 
@@ -525,7 +545,7 @@ class SpotifyScreen(PiHomeScreen):
             text=("\u25B6  " + self.device_name) if self.device_name else "",
             font_name="Nunito", font_size="11sp",
             color=list(_GREEN[:3]) + [0.65],
-            halign="left", valign="middle",
+            halign="right", valign="middle",
         )
         dev_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
         self.bind(
@@ -533,8 +553,8 @@ class SpotifyScreen(PiHomeScreen):
                 dev_lbl, "text", ("\u25B6  " + v) if v else ""
             )
         )
-        device_bar.add_widget(dev_lbl)
         device_bar.add_widget(Widget())
+        device_bar.add_widget(dev_lbl)
         root.add_widget(device_bar)
 
         # ── 2. Album art with radial green glow ──────────────────────────────
@@ -616,6 +636,15 @@ class SpotifyScreen(PiHomeScreen):
             size_hint_y=None, height=dp(24),
         )
         self.bind(progress=lambda i, v: setattr(prog_slider, "value", v))
+
+        # Seek on drag — debounced 0.4 s so we don't spam on every pixel
+        _seek_ev = [None]
+        def _on_seek_change(inst, frac):
+            self._suppress_prog_until = time.time() + 3.0
+            if _seek_ev[0]:
+                _seek_ev[0].cancel()
+            _seek_ev[0] = Clock.schedule_once(lambda dt: self.seek_track(frac), 0.4)
+        prog_slider.bind(value=_on_seek_change)
 
         time_row = BoxLayout(
             orientation="horizontal",
@@ -730,6 +759,8 @@ class SpotifyScreen(PiHomeScreen):
 
         def _on_vol_change(inst, v):
             if not self._vol_from_api:
+                # Suppress poll overwrite for 3 s so the API has time to settle
+                self._suppress_vol_until = time.time() + 3.0
                 self.set_volume(int(v))
 
         vol_slider.bind(value=_on_vol_change)
