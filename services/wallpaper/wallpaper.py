@@ -44,7 +44,12 @@ class Wallpaper:
     cache_size = 100
     ban_list = [] # URLs that are not allowed to be used as wallpapers
     paused = False
-
+    # Snapshotted at _start() time; compared in restart() to detect real source changes
+    _active_source = None
+    _active_subs   = None
+    _active_top    = None
+    _active_wh     = None
+    _active_custom = None
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
@@ -75,16 +80,53 @@ class Wallpaper:
 
     
     def restart(self):
-        if self.poller_key != None:
+        """Restart the wallpaper service.  The cache is only cleared when the
+        source or its relevant sub-settings actually changed — so saving unrelated
+        settings (theme, pi-hole, etc.) won't flush already-downloaded images.
+
+        NOTE: CONFIG.reload() has already run before this is called, so the
+        CONFIG object already holds new values.  We compare against the
+        _active_* attributes that were snapshotted when _start() last ran.
+        """
+        new_source  = CONFIG.get("wallpaper", "source", "PiHome CDN")
+        new_stretch = CONFIG.get_int("wallpaper", "allow_stretch", 1)
+        new_subs    = CONFIG.get("wallpaper", "subreddits", "wallpaper")
+        new_top     = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
+        new_wh      = CONFIG.get("wallpaper", "whsearch", "landscape")
+        new_custom  = CONFIG.get("wallpaper", "custom_url", self.default)
+
+        # Compare against values that were active when _start() last ran
+        source_changed = (
+            new_source != self._active_source
+            or new_subs    != self._active_subs
+            or new_top     != self._active_top
+            or new_wh      != self._active_wh
+            or new_custom  != self._active_custom
+        )
+
+        # allow_stretch can be applied immediately without invalidating the cache
+        self.allow_stretch = new_stretch
+
+        if not source_changed:
+            PIHOME_LOGGER.info("Wallpaper Service: source unchanged, skipping restart.")
+            return
+
+        if self.poller_key is not None:
             PIHOME_LOGGER.info("Wallpaper Service is restarting.  {} will be replaced with new thread".format(self.poller_key))
             POLLER.unregister_api(self.poller_key)
-            self._start();
+        self._start()
 
     def _start(self):
         self._cleanup()
         repo = CONFIG.get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = CONFIG.get_int("wallpaper", "allow_stretch", 1)
-        self.repo = repo 
+        self.repo = repo
+        # Snapshot the active sub-settings so restart() can detect real changes
+        self._active_source = repo
+        self._active_subs   = CONFIG.get("wallpaper", "subreddits", "wallpaper")
+        self._active_top    = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
+        self._active_wh     = CONFIG.get("wallpaper", "whsearch", "landscape")
+        self._active_custom = CONFIG.get("wallpaper", "custom_url", self.default) 
         PIHOME_LOGGER.info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
         if repo == "Reddit":
             subs = CONFIG.get("wallpaper", "subreddits", "wallpaper")
