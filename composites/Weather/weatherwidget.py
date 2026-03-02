@@ -1,6 +1,6 @@
 from composites.Weather.weatherdetails import WeatherDetails
 from kivy.lang import Builder
-from kivy.properties import Property, ColorProperty, StringProperty, NumericProperty, DictProperty, ListProperty, ObjectProperty, ReferenceListProperty
+from kivy.properties import Property, BooleanProperty, ColorProperty, StringProperty, NumericProperty, DictProperty, ListProperty, ObjectProperty, ReferenceListProperty
 from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.animation import Animation
@@ -55,6 +55,8 @@ class WeatherWidget(Widget):
     pill_divider_color = ColorProperty([1.0, 1.0, 1.0, 0.22])
 
     is_loaded = False
+    show_hourly = BooleanProperty(True)
+    future_daily = ListProperty([])
 
     y_offset = NumericProperty(50)
 
@@ -112,7 +114,9 @@ class WeatherWidget(Widget):
             else:
                 self.overlay_animate(opacity = 1, offset = 0)
             self.overlay_active = not self.overlay_active
-        return False
+            return True
+        # Allow touches through to child widgets (e.g. Hourly/Daily toggle)
+        return super(WeatherWidget, self).on_touch_down(touch)
     
     def overlay_animate(self, opacity = 1, offset = 0):
         animation = Animation(overlay_opacity = opacity, t='linear', d=0.5)
@@ -183,6 +187,7 @@ class WeatherWidget(Widget):
             self.feelsLike = "{}".format(WEATHER.feels_like)
             self.cloudCover = "{}%".format(WEATHER.cloud_cover)
             self.future = WEATHER.future
+            self.future_daily = WEATHER.future_daily
             self.day = WEATHER.future[1]
 
 

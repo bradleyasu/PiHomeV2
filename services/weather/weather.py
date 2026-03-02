@@ -50,6 +50,7 @@ class Weather:
     epa_air_lookup = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"]
 
     future = []
+    future_daily = []
 
     def __init__(self, **kwargs):
         super(Weather, self).__init__(**kwargs)
@@ -74,6 +75,7 @@ class Weather:
         for value in data:
             if value["timestep"] == '1d':
                 self.proc_forcast(value)
+                self.future_daily = value["intervals"]
             if value["timestep"] == '1h':
                 self.future = value["intervals"]
             if value["timestep"] == 'current':

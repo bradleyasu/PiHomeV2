@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from kivy.lang import Builder
-from kivy.properties import ColorProperty, StringProperty, DictProperty
+from kivy.properties import BooleanProperty, ColorProperty, StringProperty, DictProperty
 from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.animation import Animation
@@ -29,6 +29,7 @@ class WeatherDetails(Widget):
     icon = StringProperty("")
     icon_fallback = StringProperty("")  # always the daytime variant; used when night icon is missing
     details = DictProperty()
+    is_daily = BooleanProperty(False)
 
     def __init__(self, details = {}, **kwargs):
         super(WeatherDetails, self).__init__(**kwargs)
@@ -80,7 +81,11 @@ class WeatherDetails(Widget):
         if len(details) == 0:
             return
         slot_dt = datetime.strptime(details["startTime"], "%Y-%m-%dT%H:%M:%SZ")
-        self.day = datetime.strftime(slot_dt + timedelta(hours=-5), "%I:%M %p")
+        local_dt = slot_dt + timedelta(hours=-5)
+        if self.is_daily:
+            self.day = datetime.strftime(local_dt, "%a")
+        else:
+            self.day = datetime.strftime(local_dt, "%I:%M %p")
         self.temp = "{}\u00B0F".format(round(details["values"]["temperature"]))
         self.precip = "{}%".format(round(details["values"]["precipitationProbability"]))
 
