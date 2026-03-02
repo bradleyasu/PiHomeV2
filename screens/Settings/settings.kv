@@ -1,6 +1,20 @@
 #:kivy 2.0.0
 #:import dp kivy.metrics.dp
 #:import PiHomeSwitch components.Switch.switch.PiHomeSwitch
+#:import PiTextInput components.Keyboard.keyboard.PiTextInput
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PiTextInput global style — rounded, no default background chrome
+# ─────────────────────────────────────────────────────────────────────────────
+<PiTextInput>:
+    background_normal: ''
+    background_active: ''
+    cursor_color: 0.36, 0.67, 1.0, 1
+    foreground_color: 1, 1, 1, 1
+    font_name: 'Nunito'
+    font_size: '13sp'
+    padding: [dp(10), dp(9)]
+    multiline: False
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Sidebar category pill
@@ -99,7 +113,7 @@
             valign: 'middle'
             text_size: self.size
 
-    TextInput:
+    PiTextInput:
         text: root.value
         size_hint: None, None
         size: dp(210), dp(38)
@@ -107,12 +121,8 @@
         font_name: 'Nunito'
         font_size: '13sp'
         foreground_color: root.text_color
-        background_normal: ''
-        background_active: ''
         background_color: root.muted_color[0]*0.15, root.muted_color[1]*0.15, root.muted_color[2]*0.15, 1
         cursor_color: root.accent_color
-        padding: [dp(10), dp(9)]
-        multiline: False
         on_text: root.value = self.text
 
 
@@ -156,7 +166,7 @@
             valign: 'middle'
             text_size: self.size
 
-    TextInput:
+    PiTextInput:
         text: root.value
         size_hint: None, None
         size: dp(110), dp(38)
@@ -164,13 +174,9 @@
         font_name: 'Nunito'
         font_size: '13sp'
         foreground_color: root.text_color
-        background_normal: ''
-        background_active: ''
         background_color: root.muted_color[0]*0.15, root.muted_color[1]*0.15, root.muted_color[2]*0.15, 1
         cursor_color: root.accent_color
-        padding: [dp(10), dp(9)]
         input_filter: 'float'
-        multiline: False
         on_text: root.value = self.text
 
 

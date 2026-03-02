@@ -34,6 +34,7 @@ from components.Image.networkimage import NetworkImage
 from kivy.graphics import Line
 
 from components.Toast.toast import Toast
+from components.Keyboard.keyboard import ensure_keyboard_attached
 
 from kivy.core.window import Window
 from util.helpers import get_app, simplegesture
@@ -92,6 +93,7 @@ class PiHome(App):
     # the root widget
     def build(self):
         self.setup()
+        ensure_keyboard_attached()   # pre-create on-screen keyboard overlay
         self.layout.size = (self.width, self.height)
         self.layout.size_hint = (1,1)
         self.layout.pos = (0,0)

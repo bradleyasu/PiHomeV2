@@ -17,6 +17,7 @@ from kivy.uix.modalview import ModalView
 from kivy.uix.widget import Widget
 
 from components.Switch.switch import PiHomeSwitch  # noqa — registers kv rules
+from components.Keyboard.keyboard import PiTextInput  # noqa — registers kv class
 from interface.pihomescreen import PiHomeScreen
 from theme import theme as t
 from util.const import CONF_FILE

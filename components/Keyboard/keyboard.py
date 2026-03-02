@@ -1,0 +1,327 @@
+"""
+components/Keyboard/keyboard.py
+
+Sleek custom on-screen keyboard for PiHome touchscreen.
+
+Usage:
+    from components.Keyboard.keyboard import PiTextInput
+
+    Replace any TextInput in .kv with PiTextInput — the keyboard appears
+    automatically when the field is tapped.
+
+    Call ensure_keyboard_attached() once at app start (e.g. in main.py build())
+    to add the keyboard widget to the root Window.
+"""
+
+from kivy.core.window import Window
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
+from kivy.graphics import Color, RoundedRectangle, Rectangle
+from kivy.properties import ObjectProperty, BooleanProperty
+from kivy.animation import Animation
+from kivy.metrics import dp
+from kivy.clock import Clock
+from theme.theme import Theme
+import platform
+
+_IS_PI = platform.system() != 'Darwin'
+
+
+# ── Key layout definitions ────────────────────────────────────────────────────
+# Each key is (display_label, size_hint_x_weight)
+
+_ROW_LOWER = [
+    [('q',1),('w',1),('e',1),('r',1),('t',1),('y',1),('u',1),('i',1),('o',1),('p',1)],
+    [('a',1),('s',1),('d',1),('f',1),('g',1),('h',1),('j',1),('k',1),('l',1)],
+    [('⇧',1.5),('z',1),('x',1),('c',1),('v',1),('b',1),('n',1),('m',1),('⌫',1.5)],
+    [('123',2),(',',1),('_SPACE_',4.5),('.',1),('↵',2)],
+]
+
+_ROW_UPPER = [
+    [('Q',1),('W',1),('E',1),('R',1),('T',1),('Y',1),('U',1),('I',1),('O',1),('P',1)],
+    [('A',1),('S',1),('D',1),('F',1),('G',1),('H',1),('J',1),('K',1),('L',1)],
+    [('⇧',1.5),('Z',1),('X',1),('C',1),('V',1),('B',1),('N',1),('M',1),('⌫',1.5)],
+    [('123',2),(',',1),('_SPACE_',4.5),('.',1),('↵',2)],
+]
+
+_ROW_NUM = [
+    [('1',1),('2',1),('3',1),('4',1),('5',1),('6',1),('7',1),('8',1),('9',1),('0',1)],
+    [('-',1),('/',1),(':',1),(';',1),('(',1),(')',1),('$',1),('&',1),('@',1),('"',1)],
+    [('#',1.5),('.',1),(',',1),('?',1),('!',1),("'",1),('%',1),('=',1),('⌫',1.5)],
+    [('abc',2),('_SPACE_',5.5),('↵',2)],
+]
+
+_SPECIAL = {'⇧', '⌫', '123', 'abc', '↵', '_SPACE_'}
+
+KB_ROW_H = dp(52)
+KB_ROWS  = 4
+KB_PAD   = dp(8)
+KB_HEIGHT = KB_ROW_H * KB_ROWS + KB_PAD * 2 + dp(4) * (KB_ROWS - 1)
+
+
+# ── _Key widget ───────────────────────────────────────────────────────────────
+
+class _Key(BoxLayout):
+    """A single pressable keyboard key drawn with canvas instructions."""
+
+    def __init__(self, key: str, weight: float, on_press, theme: dict, **kwargs):
+        super().__init__(**kwargs)
+        self._key      = key
+        self._on_press = on_press
+        self.size_hint = (weight, 1)
+        self.padding   = [dp(3), dp(3), dp(3), dp(3)]
+
+        is_action  = (key == '↵')
+        is_special = (key in _SPECIAL) and (key != '_SPACE_')
+
+        if is_action:
+            bg = theme['action']
+        elif is_special:
+            bg = theme['key_special']
+        else:
+            bg = theme['key_normal']
+
+        with self.canvas.before:
+            self._c    = Color(rgba=bg)
+            self._rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[dp(9)])
+        self.bind(pos=self._refresh, size=self._refresh)
+
+        # Label / icon
+        if key == '_SPACE_':
+            child = Widget()          # blank — track bar is drawn separately
+        elif key in ('⇧', '⌫'):
+            child = Label(
+                text=key,
+                font_name='ArialUnicode', font_size='20sp',
+                color=theme['fg_special'],
+                halign='center', valign='middle',
+            )
+            child.bind(size=lambda i, v: setattr(i, 'text_size', v))
+        elif key == '↵':
+            child = Label(
+                text='done',
+                font_name='Nunito', font_size='12sp', bold=True,
+                color=theme['fg_action'],
+                halign='center', valign='middle',
+            )
+            child.bind(size=lambda i, v: setattr(i, 'text_size', v))
+        elif key in ('123', 'abc'):
+            child = Label(
+                text=key,
+                font_name='Nunito', font_size='13sp', bold=True,
+                color=theme['fg_special'],
+                halign='center', valign='middle',
+            )
+            child.bind(size=lambda i, v: setattr(i, 'text_size', v))
+        else:
+            child = Label(
+                text=key,
+                font_name='Nunito', font_size='16sp', bold=True,
+                color=theme['fg_normal'],
+                halign='center', valign='middle',
+            )
+            child.bind(size=lambda i, v: setattr(i, 'text_size', v))
+
+        self.add_widget(child)
+
+    def _refresh(self, *_):
+        self._rect.pos  = self.pos
+        self._rect.size = self.size
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            self._on_press(self._key)
+            return True
+        return False
+
+
+# ── PiHomeKeyboard ────────────────────────────────────────────────────────────
+
+class PiHomeKeyboard(BoxLayout):
+    """
+    Slide-up on-screen keyboard.  Added once to the Window as a permanent
+    overlay; call show(target_input) / hide() to control visibility.
+    """
+
+    target  = ObjectProperty(None, allownone=True)
+    shifted = BooleanProperty(False)
+    nums    = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.size_hint   = (1, None)
+        self.height      = KB_HEIGHT
+        self.y           = -KB_HEIGHT   # start off-screen below
+        self.opacity     = 0
+        self.padding     = [dp(10), KB_PAD, dp(10), KB_PAD]
+        self.spacing     = dp(4)
+
+        th = Theme()
+        bg  = th.get_color(th.BACKGROUND_SECONDARY)
+
+        def _lift(c, factor):
+            return tuple(min(c[i] * factor, 1.0) for i in range(3)) + (1.0,)
+
+        self._theme = {
+            'bg':          bg,
+            'key_normal':  _lift(bg, 2.2),
+            'key_special': _lift(bg, 3.0),
+            'action':      th.get_color(th.ALERT_INFO),
+            'fg_normal':   (1.0, 1.0, 1.0, 0.92),
+            'fg_special':  (1.0, 1.0, 1.0, 0.65),
+            'fg_action':   (1.0, 1.0, 1.0, 1.0),
+        }
+
+        with self.canvas.before:
+            Color(rgba=bg)
+            self._bg = Rectangle(pos=self.pos, size=self.size)
+            # thin top separator line
+            Color(rgba=(1, 1, 1, 0.07))
+            self._line = Rectangle(pos=(self.x, self.top - dp(1)),
+                                   size=(self.width, dp(1)))
+        self.bind(pos=self._upd_bg, size=self._upd_bg)
+
+        self._build_rows()
+
+    # ── private ───────────────────────────────────────────────────────────────
+
+    def _upd_bg(self, *_):
+        self._bg.pos   = self.pos
+        self._bg.size  = self.size
+        self._line.pos = (self.x, self.top - dp(1))
+        self._line.size = (self.width, dp(1))
+
+    def _build_rows(self):
+        self.clear_widgets()
+        rows = _ROW_UPPER if self.shifted else (_ROW_NUM if self.nums else _ROW_LOWER)
+        for row in rows:
+            total_w = sum(w for _, w in row)
+            row_box = BoxLayout(orientation='horizontal', size_hint_y=1, spacing=dp(4))
+            for lbl, w in row:
+                key = _Key(lbl, w / total_w, self._press, self._theme)
+                row_box.add_widget(key)
+            self.add_widget(row_box)
+
+    # ── public ────────────────────────────────────────────────────────────────
+
+    def show(self, target):
+        self.target = target
+        self.opacity = 1
+        Animation.cancel_all(self, 'y')
+        Animation(y=0, d=0.2, t='out_cubic').start(self)
+
+    def hide(self):
+        Animation.cancel_all(self, 'y')
+        anim = Animation(y=-self.height, d=0.18, t='in_cubic')
+        anim.bind(on_complete=lambda *_: setattr(self, 'opacity', 0))
+        anim.start(self)
+        self.target = None
+
+    # ── kivy property observers ───────────────────────────────────────────────
+
+    def on_shifted(self, *_):
+        self._build_rows()
+
+    def on_nums(self, *_):
+        self._build_rows()
+
+    # ── key press handler ─────────────────────────────────────────────────────
+
+    def _press(self, key):
+        widget = self.target
+
+        if key == '⌫':
+            if widget:
+                if widget.selection_text:
+                    widget.delete_selection()
+                else:
+                    widget.do_backspace()
+
+        elif key == '_SPACE_':
+            if widget:
+                widget.insert_text(' ')
+
+        elif key == '⇧':
+            self.shifted = not self.shifted
+            self.nums    = False
+
+        elif key == '123':
+            self.nums    = True
+            self.shifted = False
+
+        elif key == 'abc':
+            self.nums    = False
+            self.shifted = False
+
+        elif key == '↵':
+            self.nums    = False
+            self.shifted = False
+            self.hide()
+            if widget:
+                widget.focus = False
+
+        else:
+            if widget:
+                widget.insert_text(key)
+            # auto-lower after one capital
+            if self.shifted:
+                self.shifted = False
+
+
+# ── PiTextInput ───────────────────────────────────────────────────────────────
+
+class PiTextInput(TextInput):
+    """
+    Drop-in replacement for TextInput that shows PiHomeKeyboard on focus
+    on the Pi touchscreen.  On macOS the native/system keyboard is used
+    normally so physical-keyboard debugging is unaffected.
+    """
+
+    def _bind_keyboard(self):
+        if _IS_PI:
+            return   # suppress Kivy's keyboard on Pi
+        super()._bind_keyboard()
+
+    def _unbind_keyboard(self):
+        if _IS_PI:
+            return
+        super()._unbind_keyboard()
+
+    def on_focus(self, instance, value):
+        # Do NOT call super().on_focus — TextInput handles focus internally
+        # via the property system; calling it directly raises AttributeError.
+        if not _IS_PI:
+            return   # let macOS handle keyboard normally
+        if value:
+            Clock.schedule_once(lambda dt: _get_keyboard().show(self), 0)
+        else:
+            Clock.schedule_once(self._maybe_hide, 0.06)
+
+    def _maybe_hide(self, dt):
+        kb = _get_keyboard()
+        if kb.target is self:
+            kb.hide()
+
+
+# ── Singleton management ──────────────────────────────────────────────────────
+
+_keyboard_instance: PiHomeKeyboard = None
+
+
+def _get_keyboard() -> PiHomeKeyboard:
+    global _keyboard_instance
+    if _keyboard_instance is None:
+        _keyboard_instance = PiHomeKeyboard()
+        Window.add_widget(_keyboard_instance)
+    return _keyboard_instance
+
+
+def ensure_keyboard_attached():
+    """
+    Call once at app startup (e.g. in PiHome.build()) to pre-create the
+    keyboard so the first appearance has no delay.
+    """
+    _get_keyboard()
