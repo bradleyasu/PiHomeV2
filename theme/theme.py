@@ -2,8 +2,11 @@ from theme.color import Color
 from util.configuration import Configuration
 from util.const import CONF_FILE, THEME_FILE
 from util.tools import hex
+import os as _os
 from kivy.clock import Clock
 from kivy.core.text import LabelBase
+
+_FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
 
 class Theme():
     ''' ENUM VALUES, KEY, DEFAULT_LIGHT, SECTION'''
@@ -45,9 +48,9 @@ class Theme():
     def load(self):
         self.theme  = Configuration(THEME_FILE)
         self.mode = Configuration(CONF_FILE).get_int('theme', 'dark_mode', 0)
-        LabelBase.register(name='Nunito', fn_regular='./theme/fonts/Nunito-Regular.ttf')
-        LabelBase.register(name='ArialUnicode', fn_regular='./theme/fonts/arial-unicode-ms.ttf')
-        LabelBase.register(name='MaterialIcons', fn_regular='./theme/fonts/MaterialIcons-Regular.ttf')
+        LabelBase.register(name='Nunito',        fn_regular=_os.path.join(_FONT_DIR, 'Nunito-Regular.ttf'))
+        LabelBase.register(name='ArialUnicode',   fn_regular=_os.path.join(_FONT_DIR, 'arial-unicode-ms.ttf'))
+        LabelBase.register(name='MaterialIcons',  fn_regular=_os.path.join(_FONT_DIR, 'MaterialIcons-Regular.ttf'))
 
     def get_color(self, color, opacity = 1):
         if (self.mode == 0):

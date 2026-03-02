@@ -32,7 +32,7 @@ from kivy.properties import (
 )
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.image import AsyncImage
+from kivy.uix.image import AsyncImage, Image
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
@@ -96,7 +96,8 @@ class SpotifyScreen(PiHomeScreen):
     progress      = NumericProperty(0.0)    # 0..1
     elapsed_text  = StringProperty("0:00")
     duration_text = StringProperty("0:00")
-    volume        = NumericProperty(50)
+    volume          = NumericProperty(50)
+    supports_volume = BooleanProperty(True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -348,12 +349,12 @@ class SpotifyScreen(PiHomeScreen):
             self.elapsed_text = _fmt_ms(prog_ms)
 
         device = data.get("device") or {}
-        self.device_name  = device.get("name", "")
-        vol               = device.get("volume_percent")
-        supports_vol      = device.get("supports_volume", True)
+        self.device_name    = device.get("name", "")
+        vol                 = device.get("volume_percent")
+        self.supports_volume = bool(device.get("supports_volume", True))
         PIHOME_LOGGER.info(
             f"Spotify poll: device='{self.device_name}' vol={vol} "
-            f"supports_volume={supports_vol} "
+            f"supports_volume={self.supports_volume} "
             f"suppressed={time.time() < self._suppress_vol_until}"
         )
         # Only update volume if the user isn't currently dragging the slider
@@ -553,20 +554,34 @@ class SpotifyScreen(PiHomeScreen):
             orientation="horizontal",
             size_hint_y=None, height=dp(26),
             padding=[dp(18), dp(4), dp(18), 0],
+            spacing=dp(4),
         )
+        dev_icon = Label(
+            text="\ue307",   # Material Icons: cast
+            font_name="MaterialIcons", font_size="14sp",
+            color=list(_GREEN[:3]) + [0.65],
+            size_hint=(None, None), size=(dp(18), dp(18)),
+            halign="center", valign="middle",
+        )
+        dev_icon.bind(size=lambda w, s: setattr(w, "text_size", s))
         dev_lbl = Label(
-            text=(u"› " + self.device_name) if self.device_name else "",
+            text=self.device_name,
             font_name="Nunito", font_size="11sp",
             color=list(_GREEN[:3]) + [0.65],
-            halign="right", valign="middle",
+            halign="left", valign="middle",
+            size_hint_x=None,
         )
-        dev_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
-        self.bind(
-            device_name=lambda i, v: setattr(
-                dev_lbl, "text", (u"› " + v) if v else ""
-            )
-        )
+        dev_lbl.bind(texture_size=lambda w, ts: setattr(w, "width", ts[0]))
+        dev_lbl.bind(size=lambda w, s: setattr(w, "text_size", (None, s[1])))
+
+        def _update_dev(v):
+            dev_lbl.text = v
+            dev_icon.opacity = 1 if v else 0
+        self.bind(device_name=lambda i, v: _update_dev(v))
+        _update_dev(self.device_name)
+
         device_bar.add_widget(Widget())
+        device_bar.add_widget(dev_icon)
         device_bar.add_widget(dev_lbl)
         root.add_widget(device_bar)
 
@@ -757,9 +772,9 @@ class SpotifyScreen(PiHomeScreen):
         )
         vol_lo = Label(
             text="\ue04d",        # Material Icons: volume_down
-            font_name="MaterialIcons", font_size="18sp",
+            font_name="MaterialIcons", font_size="20sp",
             color=[1, 1, 1, 0.45],
-            size_hint=(None, None), size=(dp(28), dp(28)),
+            size_hint_x=None, width=dp(32),
             halign="center", valign="middle",
         )
         vol_lo.bind(size=lambda w, s: setattr(w, "text_size", s))
@@ -773,7 +788,6 @@ class SpotifyScreen(PiHomeScreen):
         _vol_ev = [None]
         def _on_vol_change(inst, v):
             if not self._vol_from_api:
-                # Suppress poll overwrite for 3 s so the API has time to settle
                 self._suppress_vol_until = time.time() + 3.0
                 if _vol_ev[0]:
                     _vol_ev[0].cancel()
@@ -786,18 +800,26 @@ class SpotifyScreen(PiHomeScreen):
 
         vol_hi = Label(
             text="\ue050",        # Material Icons: volume_up
-            font_name="MaterialIcons", font_size="18sp",
+            font_name="MaterialIcons", font_size="20sp",
             color=[1, 1, 1, 0.45],
-            size_hint=(None, None), size=(dp(28), dp(28)),
+            size_hint_x=None, width=dp(32),
             halign="center", valign="middle",
         )
         vol_hi.bind(size=lambda w, s: setattr(w, "text_size", s))
 
-        vol_row.add_widget(Widget())   # left spacer — centers the group
+        vol_row.add_widget(Widget())
         vol_row.add_widget(vol_lo)
         vol_row.add_widget(vol_slider)
         vol_row.add_widget(vol_hi)
-        vol_row.add_widget(Widget())   # right spacer
+        vol_row.add_widget(Widget())
+
+        # Hide the entire row if the active device doesn't allow volume control
+        def _on_supports_vol(inst, supported):
+            vol_row.height   = dp(44) if supported else 0
+            vol_row.opacity  = 1 if supported else 0
+        self.bind(supports_volume=_on_supports_vol)
+        _on_supports_vol(None, self.supports_volume)
+
         root.add_widget(vol_row)
         return root
 
