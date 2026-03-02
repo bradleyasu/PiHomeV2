@@ -27,6 +27,7 @@ class WeatherDetails(Widget):
     temp = StringProperty("--")
     precip = StringProperty("--")
     icon = StringProperty("")
+    icon_fallback = StringProperty("")  # always the daytime variant; used when night icon is missing
     details = DictProperty()
 
     def __init__(self, details = {}, **kwargs):
@@ -89,4 +90,5 @@ class WeatherDetails(Widget):
             path = conf["weather_icons"]
             day_code = 0 if WEATHER.is_currently_day(slot_dt) else 1
             self.icon = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), day_code)
+            self.icon_fallback = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), 0)
         

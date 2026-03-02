@@ -23,6 +23,7 @@ class NetworkImage(Widget):
 
     color = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
     url = StringProperty()
+    fallback_url = StringProperty("")   # shown if primary URL fails to load
     prev_image = ""
     stretch = BooleanProperty(False)
     k_ratio = BooleanProperty(True)
@@ -66,7 +67,10 @@ class NetworkImage(Widget):
             self.ids["network_image_async_source"].reload()
 
     def on_error(self, a = None, b = None):
-        if self.error is not None and self.url != self.error:
+        # Try the explicit error attr first (legacy), then fallback_url property
+        if self.fallback_url and self.url != self.fallback_url:
+            self.url = self.fallback_url
+        elif self.error is not None and self.url != self.error:
             self.url = self.error
     
     def on_load(self):

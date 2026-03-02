@@ -40,6 +40,7 @@
 
                 NetworkImage:
                     url: root.icon
+                    fallback_url: root.icon_fallback
                     size_hint: None, None
                     size: dp(92), dp(92)
                     enable_stretch: True
@@ -350,6 +351,7 @@
         # Weather icon
         NetworkImage:
             url: root.icon
+            fallback_url: root.icon_fallback
             size_hint: None, None
             size: dp(36), dp(36)
             enable_stretch: True

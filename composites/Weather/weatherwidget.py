@@ -43,6 +43,7 @@ class WeatherWidget(Widget):
 
     pill_stat = StringProperty("")
     pill_stat_color = ColorProperty([1.0, 1.0, 1.0, 1.0])
+    icon_fallback = StringProperty("")  # always the daytime variant; used when night icon is missing
 
     # Theme-aware surface colors — set at runtime from Theme().mode
     card_color         = ColorProperty([0.08, 0.10, 0.14, 1.0])
@@ -189,6 +190,7 @@ class WeatherWidget(Widget):
                 if WEATHER.is_currently_day() == False:
                     day_code = 1
                 self.icon = "{}{}{}{}.png".format(host, path, str(WEATHER.weather_code), str(day_code))
+                self.icon_fallback = "{}{}{}{}.png".format(host, path, str(WEATHER.weather_code), 0)
                 self.dayIcon = "{}{}{}.png".format(host, path, str(WEATHER.weather_code_day))
                 self.nightIcon = "{}{}{}.png".format(host, path, str(WEATHER.weather_code_night))
 

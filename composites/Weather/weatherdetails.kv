@@ -37,6 +37,7 @@
         # Icon fills whatever space is left after the fixed-height labels
         NetworkImage:
             url: root.icon
+            fallback_url: root.icon_fallback
             size_hint: None, 1
             width: root.width - dp(12)
             pos_hint: {'center_x': 0.5}
