@@ -45,11 +45,11 @@ class WeatherWidget(Widget):
     pill_stat_color = ColorProperty([1.0, 1.0, 1.0, 1.0])
 
     # Theme-aware surface colors — set at runtime from Theme().mode
-    card_color         = ColorProperty([0.08, 0.10, 0.14, 0.92])
+    card_color         = ColorProperty([0.08, 0.10, 0.14, 1.0])
     card_border_color  = ColorProperty([1.0, 1.0, 1.0, 0.10])
     chip_bg_color      = ColorProperty([1.0, 1.0, 1.0, 0.07])
     divider_color      = ColorProperty([1.0, 1.0, 1.0, 0.12])
-    pill_bg_color      = ColorProperty([0.08, 0.10, 0.14, 0.88])
+    pill_bg_color      = ColorProperty([0.08, 0.10, 0.14, 1.0])
     pill_border_color  = ColorProperty([1.0, 1.0, 1.0, 0.10])
     pill_divider_color = ColorProperty([1.0, 1.0, 1.0, 0.22])
 
@@ -63,19 +63,19 @@ class WeatherWidget(Widget):
         t = Theme()
         self.text_color = t.get_color(t.TEXT_PRIMARY)
         if dark:
-            self.card_color         = [0.08, 0.10, 0.14, 0.92]
+            self.card_color         = [0.08, 0.10, 0.14, 1.0]
             self.card_border_color  = [1.0, 1.0, 1.0, 0.10]
             self.chip_bg_color      = [1.0, 1.0, 1.0, 0.07]
             self.divider_color      = [1.0, 1.0, 1.0, 0.12]
-            self.pill_bg_color      = [0.08, 0.10, 0.14, 0.88]
+            self.pill_bg_color      = [0.08, 0.10, 0.14, 1.0]
             self.pill_border_color  = [1.0, 1.0, 1.0, 0.10]
             self.pill_divider_color = [1.0, 1.0, 1.0, 0.22]
         else:
-            self.card_color         = [0.98, 0.98, 0.99, 0.96]
+            self.card_color         = [0.98, 0.98, 0.99, 1.0]
             self.card_border_color  = [0.0,  0.0,  0.0,  0.10]
             self.chip_bg_color      = [0.0,  0.0,  0.0,  0.05]
             self.divider_color      = [0.0,  0.0,  0.0,  0.10]
-            self.pill_bg_color      = [0.98, 0.98, 0.99, 0.94]
+            self.pill_bg_color      = [0.98, 0.98, 0.99, 1.0]
             self.pill_border_color  = [0.0,  0.0,  0.0,  0.12]
             self.pill_divider_color = [0.0,  0.0,  0.0,  0.20]
         # Default the pill stat to text_color so it's always readable before

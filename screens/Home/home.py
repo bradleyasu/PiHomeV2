@@ -1,4 +1,3 @@
-from email.mime import audio
 import subprocess
 from components.Image.networkimage import NetworkImage
 from components.Slider.slidecontrol import SlideControl
@@ -50,6 +49,7 @@ class HomeScreen(PiHomeScreen):
 
     date_time_y_offset = NumericProperty(-100)
     date_time_opacity = NumericProperty(0)
+    weather_opacity = NumericProperty(0)
 
     weather_code = StringProperty("--")
 
@@ -95,6 +95,7 @@ class HomeScreen(PiHomeScreen):
         animation = Animation(logo_opacity = 0, t='linear', d=1)
         animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
+        animation &= Animation(weather_opacity = 1, t='linear', d=1)
         animation.start(self)
         # AUDIO_PLAYER.stop()
         # AUDIO_PLAYER.clear_playlist()

@@ -6,77 +6,68 @@
         Rectangle:
             pos: self.pos
             size: self.size
-    
+
     FloatLayout:
         size_hint: 1, 1
         pos: root.pos
         size: root.size
 
-        canvas:
-            Color: 
-                rgba: (0,0,1, 0.0)
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
+        # ── Startup logo — centered, fades out ────────────────────────────────
         Label:
             id: home_pihome_logo
             color: root.text_color
             text: "PiHome"
-            # pos_hint: 0.5, 0.5
+            pos_hint: {'center_x': .5, 'center_y': .5}
             font_size: '72sp'
             font_name: 'Nunito'
+            bold: True
             opacity: root.logo_opacity
-        
-        GridLayout:
-            canvas:
-                Color: 
-                    rgba: (0,0,1, 0.0)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            cols: 1
+
+        # ── Date / Time — lower-left, slides up on startup ────────────────────
+        BoxLayout:
+            orientation: 'vertical'
             size_hint: None, None
-            pos: dp(40), dp(20 + root.date_time_y_offset)
-            size: dp(300), dp(100)
+            size: dp(400), dp(130)
+            pos: dp(36), dp(20) + root.date_time_y_offset
             opacity: root.date_time_opacity
+            spacing: dp(0)
+
             Label:
-                color: root.text_color
                 id: home_date
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.6
                 text: root.date
-                font_size: '24sp'
+                font_size: '18sp'
                 font_name: 'Nunito'
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(28)
+
             Label:
                 id: home_time
                 color: root.text_color
                 text: root.time
-                font_size: '72sp'
+                font_size: '80sp'
                 font_name: 'Nunito'
+                bold: True
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(98)
 
+        # ── Reddit news card — lower-right corner ─────────────────────────
         RedditWidget:
             id: reddit_widget
             size_hint: None, None
-            # Center the widget
-            pos_hint: {'center_x': .5, 'center_y': .5}
+            pos: root.width - dp(326), dp(16)
 
-        GridLayout:
-            canvas:
-                Color: 
-                    rgba: (0,0,1, 0.0)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size 
-            cols: 1
+        # ── Weather pill — top-right, hidden until splash finishes ────────────
+        WeatherWidget:
+            id: weather_widget
             size_hint: None, None
-            pos: root.width - dp(120), root.height - dp(50)
-            size: dp(100), dp(50)
-            # Label:
-            #     id: weather
-            #     color: root.text_color
-            #     text: root.weather_code
-            #     font_size: '72sp'
-            #     font_name: 'Nunito'
-            WeatherWidget:
-                id: weather_widget
-                # size: dp(100), dp(50)
-                
+            size: root.width - dp(16), dp(52)
+            pos: 0, root.height - dp(52)
+            opacity: root.weather_opacity
+
