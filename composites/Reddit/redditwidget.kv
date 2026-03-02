@@ -1,56 +1,149 @@
 #:kivy 2.0.0
-#: import ew kivy.uix.effectwidget
 <RedditWidget>:
-    # size: 800, 480
-    size: dp(400), dp(200)
-    pos: self.pos
-    opacity: self.opacity
+    size: dp(440), dp(180)
     canvas.before:
+        # ── Card background (semi-transparent, glassmorphic) ──────────────
         Color:
-            rgba: self.background_color if root.background_image_opacity == 0 else (0,0,0,0)
-        # Create rounded rectangle
+            rgba: root.card_bg_color
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [dp(10),]
-    
+            radius: [dp(14),]
+        # ── Left accent strip (stencil-clipped to card boundary) ──────────
+        StencilPush:
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14),]
+        StencilUse:
+        Color:
+            rgba: root.accent_color
+        Rectangle:
+            pos: self.x, self.y
+            size: dp(5), self.height
+        StencilUnUse:
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14),]
+        StencilPop:
+
+    # Background preview image (full-bleed, behind content)
     NetworkImage:
-        url: root.background_image if root.clicked == False else root.qr
+        url: root.background_image
         size: root.size
         pos: root.pos
         opacity: root.background_image_opacity
 
-    GridLayout:
-        rows: 1
-        spacing: dp(20)
-        size_hint: None, None
+    # Dark scrim sits between bg image and content — keeps text legible
+    Widget:
         size: root.size
         pos: root.pos
-        opacity: root.content_opacity if root.background_image_opacity == 0 else 0
+        canvas:
+            Color:
+                rgba: 0, 0, 0, 0.62 * root.background_image_opacity
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(14),]
+
+    # QR code overlay on tap
+    NetworkImage:
+        url: root.qr
+        size: root.size
+        pos: root.pos
+        opacity: 1 if root.clicked else 0
+
+    # Main content — fades in/out with content_opacity
+    BoxLayout:
+        orientation: 'horizontal'
+        size: root.size
+        pos: root.pos
+        padding: [dp(18), dp(14), dp(14), dp(14)]
+        spacing: dp(14)
+        opacity: root.content_opacity if not root.clicked else 0
+
+        # Thumbnail
         NetworkImage:
-            url: root.thumbnail if root.clicked == False else root.qr
-            size: dp(140), dp(140)
-            enable_stretch: True
-        
-        GridLayout:
-            cols: 1
+            url: root.thumbnail
             size_hint: None, None
-            width: root.width - dp(180)
-            height: root.height - dp(40)
+            size: dp(110), dp(110)
+            pos_hint: {'center_y': 0.5}
+            enable_stretch: True
+
+        # Info column
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(4)
+
+            # Row 1: subreddit + flair + gilded star
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(24)
+                spacing: dp(8)
+                Label:
+                    text: root.subreddit_label.upper()
+                    color: root.accent_color
+                    font_size: '14sp'
+                    font_name: 'Nunito'
+                    bold: True
+                    size_hint: None, 1
+                    width: self.texture_size[0]
+                Label:
+                    text: root.flair_text_label
+                    color: (1, 1, 1, 0.45)
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                    size_hint: None, 1
+                    width: self.texture_size[0]
+                Widget:
+                Label:
+                    text: "\u2605"
+                    color: (1.0, 0.82, 0.18, 1)
+                    font_size: '14sp'
+                    font_name: 'ArialUnicode'
+                    size_hint: None, 1
+                    width: dp(20) if root.guilded else 0
+                    opacity: 1 if root.guilded else 0
+
+            # Row 2: post title
             Label:
                 text: root.title
-                color: root.text_color
-                font_size: '14sp'
+                color: (1, 1, 1, 0.95)
+                font_size: '16sp'
                 font_name: 'Nunito'
-                size_hint_y: None
+                bold: True
                 text_size: self.width, None
-                # height: self.texture_size[1]
-                height: root.height - dp(20)
-            Label:
-                text: "source: " + root.source
-                color: root.text_color_secondary
-                font_size: '10sp'
-                font_name: 'Nunito'
+                size_hint_y: 1
+                valign: 'top'
+                halign: 'left'
+
+            # Row 3: upvotes · comments · domain
+            BoxLayout:
+                orientation: 'horizontal'
                 size_hint_y: None
-                text_size: self.width, None
-                height: self.texture_size[1]
+                height: dp(20)
+                spacing: dp(10)
+                Label:
+                    text: "\u2191 " + root.upvotes_label
+                    color: (0.55, 0.90, 0.55, 0.9)
+                    font_size: '13sp'
+                    font_name: 'ArialUnicode'
+                    size_hint: None, 1
+                    width: self.texture_size[0]
+                Label:
+                    text: "\u00b7 " + root.comment_count_label
+                    color: (1, 1, 1, 0.50)
+                    font_size: '13sp'
+                    font_name: 'ArialUnicode'
+                    size_hint: None, 1
+                    width: self.texture_size[0]
+                Widget:
+                Label:
+                    text: root.source
+                    color: (1, 1, 1, 0.35)
+                    font_size: '12sp'
+                    font_name: 'Nunito'
+                    size_hint: None, 1
+                    width: self.texture_size[0]
