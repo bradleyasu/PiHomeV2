@@ -5,7 +5,7 @@
     "label": "Pi Hole",
     "settingsLabel": "Pi-Hole",
     "description": "",
-    "hidden": true,
+    "hidden": false,
     "icon": "screens/PiHole/icon.png",
     "requires_pin": false,
     "settings": [
@@ -15,8 +15,8 @@
         },
         {
             "type": "string",
-            "title": "API Key",
-            "desc": "API Key from pi-hole admin settings panel",
+            "title": "Password",
+            "desc": "Pi-hole web interface password (v6+). Leave blank if no password is set.",
             "section": "pihole",
             "key": "api_key"
         },

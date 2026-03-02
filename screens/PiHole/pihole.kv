@@ -1,117 +1,264 @@
 #:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import PiHomeSwitch components.Switch.switch.PiHomeSwitch
+
 <PiHoleScreen>:
     canvas.before:
         Color:
-            rgba:  root.background_color_secondary
+            rgba: root.bg_color
         Rectangle:
-            pos: self.pos
+            pos:  self.pos
             size: self.size
 
     BoxLayout:
-        size_hint: 1, 1
         orientation: 'vertical'
-        padding: 10
-        spacing: 10
+        size_hint: 1, 1
 
-        GridLayout:
-            size_hint: 1, 1
-            cols: 1
-            rows: 2
-            spacing: 10
+        # ── Header ────────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(52)
+            padding: [dp(68), dp(8), dp(16), dp(8)]
+            spacing: dp(10)
 
-            GridLayout:
-                size_hint: 0.5, 0.5
-                cols: 4
-                rows: 1
-                spacing: 10
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos:  self.pos
+                    size: self.size
 
-                GridLayout:
-                    cols: 1
-                    rows: 2
-                    spacing: 0
-                    Label:
-                        text: 'Blocked Domains '
-                        font_size: dp(20)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
+            Label:
+                text: 'Pi-hole'
+                font_name: 'Nunito'
+                font_size: '18sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
 
-                    Label:
-                        text: root.domains_being_blocked
-                        font_size: dp(42)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-
-                GridLayout:
-                    cols: 1
-                    rows: 2
-                    spacing: 0
-                    Label:
-                        text: 'Blocked Ads'
-                        font_size: dp(20)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-
-                    Label:
-                        text: root.ads_blocked_today
-                        font_size: dp(42)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-
-                GridLayout:
-                    cols: 1
-                    rows: 2
-                    spacing: 0
-                    Label:
-                        text: 'Unique Clients'
-                        font_size: dp(20)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-                    Label:
-                        text: root.unique_clients
-                        font_size: dp(42)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-
-                GridLayout:
-                    cols: 1
-                    rows: 2
-                    spacing: 0
-                    Label:
-                        text: 'Current Status'
-                        font_size: dp(20)
-                        color: root.text_color
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-                    Label:
-                        text: root.status
-                        font_size: dp(42)
-                        color: root.text_color
-                        bold: True
-                        halign: 'center'
-                        valign: 'middle'
-
-            FloatLayout:
-                size_hint: 0.5, 0.5
-                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
-                PiHomeSwitch:
-                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    enabled: root.status == 'enabled'
-                    on_enabled: root.toggle_pihole(self.enabled)
+            # Status pill in header
+            BoxLayout:
+                size_hint: None, None
+                size: dp(90), dp(28)
+                pos_hint: {'center_y': 0.5}
+                padding: [dp(10), 0]
+                canvas.before:
+                    Color:
+                        rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.18
+                    RoundedRectangle:
+                        pos:  self.pos
+                        size: self.size
+                        radius: [dp(14)]
+                    Color:
+                        rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.45
+                    RoundedRectangle:
+                        pos:  self.pos[0] - dp(1), self.pos[1] - dp(1)
+                        size: self.width + dp(2), self.height + dp(2)
+                        radius: [dp(15)]
+                    Color:
+                        rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.18
+                    RoundedRectangle:
+                        pos:  self.pos
+                        size: self.size
+                        radius: [dp(14)]
+                Label:
+                    text: root.status_text
+                    font_name: 'Nunito'
+                    font_size: '11sp'
+                    bold: True
+                    color: root.status_color
                     halign: 'center'
                     valign: 'middle'
-                        
+                    text_size: self.size
+
+        # ── Body ──────────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, 1
+            padding: [dp(20), dp(24), dp(20), dp(20)]
+            spacing: dp(20)
+
+            # ── Stat cards row ────────────────────────────────────────────────
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(130)
+                spacing: dp(12)
+
+                # Blocked Domains card
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_x: 1
+                    padding: [dp(16), dp(14), dp(16), dp(14)]
+                    spacing: dp(6)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            pos:  self.pos
+                            size: self.size
+                            radius: [dp(14)]
+                        # Accent top bar
+                        Color:
+                            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.6
+                        RoundedRectangle:
+                            pos:  self.pos[0] + dp(16), self.pos[1] + self.height - dp(3)
+                            size: self.width - dp(32), dp(3)
+                            radius: [dp(2)]
+                    Label:
+                        text: 'BLOCKED DOMAINS'
+                        font_name: 'Nunito'
+                        font_size: '9sp'
+                        bold: True
+                        color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.7
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        size_hint_y: None
+                        height: dp(20)
+                    Label:
+                        text: root.domains_being_blocked
+                        font_name: 'Nunito'
+                        font_size: '28sp'
+                        bold: True
+                        color: root.text_color
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        size_hint_y: 1
+
+                # Ads Blocked card
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_x: 1
+                    padding: [dp(16), dp(14), dp(16), dp(14)]
+                    spacing: dp(6)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            pos:  self.pos
+                            size: self.size
+                            radius: [dp(14)]
+                        Color:
+                            rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.6
+                        RoundedRectangle:
+                            pos:  self.pos[0] + dp(16), self.pos[1] + self.height - dp(3)
+                            size: self.width - dp(32), dp(3)
+                            radius: [dp(2)]
+                    Label:
+                        text: 'ADS BLOCKED TODAY'
+                        font_name: 'Nunito'
+                        font_size: '9sp'
+                        bold: True
+                        color: root.status_color[0], root.status_color[1], root.status_color[2], 0.7
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        size_hint_y: None
+                        height: dp(20)
+                    Label:
+                        text: root.ads_blocked_today
+                        font_name: 'Nunito'
+                        font_size: '28sp'
+                        bold: True
+                        color: root.text_color
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        size_hint_y: 1
+
+                # Unique Clients card
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_x: 1
+                    padding: [dp(16), dp(14), dp(16), dp(14)]
+                    spacing: dp(6)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            pos:  self.pos
+                            size: self.size
+                            radius: [dp(14)]
+                        Color:
+                            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.4
+                        RoundedRectangle:
+                            pos:  self.pos[0] + dp(16), self.pos[1] + self.height - dp(3)
+                            size: self.width - dp(32), dp(3)
+                            radius: [dp(2)]
+                    Label:
+                        text: 'UNIQUE CLIENTS'
+                        font_name: 'Nunito'
+                        font_size: '9sp'
+                        bold: True
+                        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.7
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        size_hint_y: None
+                        height: dp(20)
+                    Label:
+                        text: root.unique_clients
+                        font_name: 'Nunito'
+                        font_size: '28sp'
+                        bold: True
+                        color: root.text_color
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        size_hint_y: 1
+
+            # ── Toggle area ───────────────────────────────────────────────────
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: 1, 1
+                canvas.before:
+                    Color:
+                        rgba: root.card_color
+                    RoundedRectangle:
+                        pos:  self.pos
+                        size: self.size
+                        radius: [dp(18)]
+
+                # Centred content
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: None, None
+                    size: dp(240), dp(140)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    spacing: dp(14)
+
+                    Label:
+                        text: 'Pi-hole Blocking'
+                        font_name: 'Nunito'
+                        font_size: '16sp'
+                        bold: True
+                        color: root.text_color
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        size_hint_y: None
+                        height: dp(28)
+
+                    PiHomeSwitch:
+                        id: pihole_switch
+                        size_hint: None, None
+                        size: dp(80), dp(44)
+                        pos_hint: {'center_x': 0.5}
+                        on_enabled: root.toggle_pihole(self.enabled)
+
+                    Label:
+                        text: 'When disabled, will re-enable after 5 minutes'
+                        font_name: 'Nunito'
+                        font_size: '11sp'
+                        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.65
+                        halign: 'center'
+                        valign: 'top'
+                        text_size: self.size
+                        size_hint_y: None
+                        height: dp(36)
