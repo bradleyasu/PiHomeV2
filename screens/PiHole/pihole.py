@@ -53,9 +53,9 @@ class PiHoleScreen(PiHomeScreen):
             # Reconfigure based on settings
             self.HOST = CONFIG.get('pihole', 'host', "http://pi.hole")
             self.API_KEY = CONFIG.get('pihole', 'api_key', "")
-            POLLER.register_api(self.get_pihole_uri(), self.UPDATE_FREQUENCY, lambda json: self.update(json))
-
-            PIHOME_LOGGER.info("Registered PiHole API: {}".format(self.get_pihole_uri()))
+            if not self.is_hidden:
+                POLLER.register_api(self.get_pihole_uri(), self.UPDATE_FREQUENCY, lambda json: self.update(json))
+                PIHOME_LOGGER.info("Registered PiHole API: {}".format(self.get_pihole_uri()))
 
     def get_pihole_uri(self):
         return "{}{}{}&auth={}".format(self.HOST, self.ROUTE, self.PARAMS, self.API_KEY)
