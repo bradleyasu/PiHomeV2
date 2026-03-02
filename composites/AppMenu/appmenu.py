@@ -70,8 +70,14 @@ class AppMenu(FloatLayout):
     def open_app(self, key):
         if self.disabled:
             return
-        get_app().set_app_menu_open(False)
-        PIHOME_SCREEN_MANAGER.goto(key)
+        # Start the dismiss animation immediately so the menu is visibly
+        # closing, then navigate after a short delay. This ensures slow-loading
+        # screens show their loading state rather than appearing frozen behind
+        # the still-open menu.
+        self.dismiss()
+        get_app().menu_button.is_open = False
+        get_app().app_menu_open = False
+        Clock.schedule_once(lambda _: PIHOME_SCREEN_MANAGER.goto(key), 0.18)
 
 
     def hide(self):
