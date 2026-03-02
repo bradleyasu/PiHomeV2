@@ -180,7 +180,7 @@ class PiHome(App):
         else:
             # self.appmenu.reset()
             # self.layout.remove_widget(self.appmenu)
-            PIHOME_SCREEN_MANAGER.app_menu.hide()
+            PIHOME_SCREEN_MANAGER.app_menu.dismiss()
             self.menu_button.is_open = False
 
     def toggle_app_menu(self):

@@ -17,6 +17,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
+from kivy.core.window import Window
 from util.helpers import get_app
 from util.tools import hex
 from kivy.uix.widget import Widget
@@ -39,8 +40,26 @@ class AppMenu(FloatLayout):
 
 
     def build(self):
+        pad_x   = dp(14)
+        spacing = dp(16)
+        # How many columns fit if each icon is at least dp(100) wide?
+        cols = max(3, int((Window.width - pad_x * 2 + spacing) / (dp(100) + spacing)))
+        icon_w = (Window.width - pad_x * 2 - spacing * (cols - 1)) / cols
+        icon_h = round(icon_w * 1.20)
+        self.icon_w = icon_w
+        self.icon_h = icon_h
+
         view = ScrollView(size_hint=(1, 1), pos_hint={'center_x': 0.5, 'center_y': 0.5}, do_scroll_x=False, do_scroll_y=True, bar_width=0)
-        self.grid = GridLayout(cols=4, padding=(dp(80), dp(80), dp(80), dp(80)), spacing=(dp(80)), size_hint_y=None)
+        self.grid = GridLayout(
+            cols=cols,
+            padding=(pad_x, dp(60), pad_x, dp(20)),
+            spacing=spacing,
+            size_hint=(1, None),
+            col_default_width=icon_w,
+            col_force_default=True,
+            row_default_height=icon_h,
+            row_force_default=True,
+        )
         self.grid.bind(minimum_height=self.grid.setter('height'))
 
         view.add_widget(self.grid)
@@ -57,31 +76,37 @@ class AppMenu(FloatLayout):
 
     def hide(self):
         self.opacity = 0
-        # disable touch events
         self.disabled = True
-        # even though the menu is hidden, touch events are still being registered
-        # so we need to move the position of everything off screen
         self.pos = (0, 1000)
         self.grid.pos = (0, 1000)
         self.view.pos = (0, 1000)
+        # Reset all icons so they're ready for the next open
+        for icon in self.grid.children:
+            icon.reset_anim()
+
+    def dismiss(self):
+        """Animated close — icons slide up and fade, then snap offscreen."""
+        self.disabled = True
+        icons = list(self.grid.children)  # reversed insertion order = bottom-right first
+        total = len(icons)
+        for i, icon in enumerate(icons):
+            on_done = self.hide if i == total - 1 else None
+            icon.animate_out(delay=i * 0.04, on_complete=on_done)
+        # Fade the background out slightly behind the icons
+        Animation(opacity=0, t='linear', d=0.15 + total * 0.04).start(self)
 
     def show(self):
-        
-        # self.opacity = 1
-        # enable touch events
         self.disabled = False
-        # move everything back to the original position
         self.pos = (0, 0)
         self.view.pos = (0, 0)
         self.grid.pos = (0, 0)
-        #bounce animate the grid back in
-        anim = Animation(pos=(0, 0), t='in_expo', d=0.5)
-        # anim.start(self)
-        # # anim.start(self.grid)
-        # # # anim.start(self.view)
-        # fade in opacity
-        anim = Animation(opacity=1, t='in_expo', d=0.1)
-        anim.start(self)
+        # Fade in background instantly
+        Animation.cancel_all(self, 'opacity')
+        self.opacity = 1
+        # Stagger each icon in (grid.children is reversed, so reverse again for top-left first)
+        icons = list(reversed(self.grid.children))
+        for i, icon in enumerate(icons):
+            icon.animate_in(delay=i * 0.06)
 
 
 
@@ -94,5 +119,5 @@ class AppMenu(FloatLayout):
             if not self.screens[i].is_hidden:
                 icon = self.screens[i].icon
                 label = self.screens[i].label
-                self.grid.add_widget(AppIcon(delay=count*0.100, icon=icon, label = label, app_key = i, on_select=(lambda key: self.open_app(key))))
+                self.grid.add_widget(AppIcon(icon=icon, label=label, app_key=i, on_select=(lambda key: self.open_app(key)), size=(self.icon_w, self.icon_h)))
                 count += 1
