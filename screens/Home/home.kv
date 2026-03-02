@@ -24,38 +24,28 @@
             opacity: root.logo_opacity
 
         # ── Date / Time — lower-left, slides up on startup ────────────────────
-        BoxLayout:
-            orientation: 'vertical'
+        Label:
+            id: home_date
+            color: root.text_color[0], root.text_color[1], root.text_color[2], 0.6
+            text: root.date
+            font_size: '18sp'
+            font_name: 'Nunito'
             size_hint: None, None
-            size: dp(400), dp(130)
-            pos: dp(36), dp(20) + root.date_time_y_offset
+            size: self.texture_size
+            pos: dp(16), dp(122) + root.date_time_y_offset
             opacity: root.date_time_opacity
-            spacing: dp(0)
 
-            Label:
-                id: home_date
-                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.6
-                text: root.date
-                font_size: '18sp'
-                font_name: 'Nunito'
-                halign: 'left'
-                valign: 'middle'
-                text_size: self.width, None
-                size_hint_y: None
-                height: dp(28)
-
-            Label:
-                id: home_time
-                color: root.text_color
-                text: root.time
-                font_size: '80sp'
-                font_name: 'Nunito'
-                bold: True
-                halign: 'left'
-                valign: 'top'
-                text_size: self.width, None
-                size_hint_y: None
-                height: dp(98)
+        Label:
+            id: home_time
+            color: root.text_color
+            text: root.time
+            font_size: '80sp'
+            font_name: 'Nunito'
+            bold: True
+            size_hint: None, None
+            size: self.texture_size
+            pos: dp(16), dp(16) + root.date_time_y_offset
+            opacity: root.date_time_opacity
 
         # ── Reddit news card — lower-right corner ─────────────────────────
         RedditWidget:

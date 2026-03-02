@@ -102,7 +102,7 @@ class HomeScreen(PiHomeScreen):
 
     def run(self):
         time.ctime()
-        self.time = time.strftime("%l:%M%p")
+        self.time = time.strftime("%-I:%M%p")
         self.date = time.strftime("%A %B %d, %Y")
 
         self.weather_code = str(WEATHER.weather_code)
