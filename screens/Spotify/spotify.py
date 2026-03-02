@@ -560,7 +560,7 @@ class SpotifyScreen(PiHomeScreen):
             text="\ue307",   # Material Icons: cast
             font_name="MaterialIcons", font_size="14sp",
             color=list(_GREEN[:3]) + [0.65],
-            size_hint=(None, None), size=(dp(18), dp(18)),
+            size_hint_x=None, width=dp(20),
             halign="center", valign="middle",
         )
         dev_icon.bind(size=lambda w, s: setattr(w, "text_size", s))
@@ -778,8 +778,6 @@ class SpotifyScreen(PiHomeScreen):
             halign="center", valign="middle",
         )
         vol_lo.bind(size=lambda w, s: setattr(w, "text_size", s))
-
-        vol_slider = SpotifySlider(
             min_val=0, max_val=100, value=self.volume,
             size_hint_x=None, width=dp(200),
             track_height=dp(3), thumb_r=dp(6),
@@ -806,8 +804,6 @@ class SpotifyScreen(PiHomeScreen):
             halign="center", valign="middle",
         )
         vol_hi.bind(size=lambda w, s: setattr(w, "text_size", s))
-
-        vol_row.add_widget(Widget())
         vol_row.add_widget(vol_lo)
         vol_row.add_widget(vol_slider)
         vol_row.add_widget(vol_hi)
@@ -821,6 +817,9 @@ class SpotifyScreen(PiHomeScreen):
         _on_supports_vol(None, self.supports_volume)
 
         root.add_widget(vol_row)
+
+        # Bottom breathing room — always present regardless of vol_row visibility
+        root.add_widget(Widget(size_hint_y=None, height=dp(18)))
         return root
 
     # ── Rotary encoder ────────────────────────────────────────────────────────
