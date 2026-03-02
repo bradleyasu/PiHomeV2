@@ -11,6 +11,7 @@ from kivy.uix.widget import Widget
 
 from composites.HomeAssistant.hadevicecard import (  # noqa — registers kv rules
     HACoverCard, HALightCard, HATriggerCard, HAToggleCard, make_ha_card,
+    load_ha_favorites,
 )
 from interface.pihomescreen import PiHomeScreen
 from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
@@ -91,6 +92,17 @@ class HomeAssistantScreen(PiHomeScreen):
         lbl.bind(size=lambda w, s: setattr(w, 'text_size', (s[0], None)))
         return lbl
 
+    def _make_grid(self, row_h: float) -> GridLayout:
+        grid = GridLayout(
+            cols=2,
+            row_force_default=True,
+            row_default_height=row_h,
+            size_hint_y=None,
+            spacing=dp(6),
+        )
+        grid.bind(minimum_height=grid.setter('height'))
+        return grid
+
     def _build_entity_list(self, states: dict):
         """Populate scroll_content with section headers and 2-column device grids."""
         scroll_content = self.ids.get('scroll_content')
@@ -100,33 +112,44 @@ class HomeAssistantScreen(PiHomeScreen):
         scroll_content.clear_widgets()
         self._card_registry.clear()
 
+        def _add_card(entity_id, state_dict, grid):
+            card = make_ha_card(entity_id, state_dict)
+            if card is None:
+                return
+            card.size_hint = (1, 1)
+            card.bind(is_favorite=self._on_favorite_changed)
+            card._focus_callback = self._set_focus_card
+            grid.add_widget(card)
+            self._card_registry[entity_id] = card
+
+        # ── Favorites section ──────────────────────────────────────────────────────
+        fav_ids = [eid for eid in sorted(load_ha_favorites()) if eid in states]
+        if fav_ids:
+            scroll_content.add_widget(self._section_label("FAVORITES"))
+            grid = self._make_grid(dp(108))   # dp(108) fits light cards with sliders
+            for eid in fav_ids:
+                _add_card(eid, states[eid], grid)
+            if len(fav_ids) % 2 == 1:
+                grid.add_widget(Widget())
+            scroll_content.add_widget(grid)
+            scroll_content.add_widget(Widget(size_hint_y=None, height=dp(8)))
+
+        # ── Domain groups (skip already-shown favorites) ───────────────────────────
         for section_title, domains, card_cls, row_h in GROUPS:
             entities = [
                 (eid, sdict)
                 for eid, sdict in states.items()
                 if any(eid.startswith(d + '.') for d in domains)
+                and eid not in self._card_registry   # skip favorited
             ]
             if not entities:
                 continue
 
             scroll_content.add_widget(self._section_label(section_title))
-
-            grid = GridLayout(
-                cols=2,
-                row_force_default=True,
-                row_default_height=row_h,
-                size_hint_y=None,
-                spacing=dp(6),
-            )
-            grid.bind(minimum_height=grid.setter('height'))
+            grid = self._make_grid(row_h)
 
             for entity_id, state_dict in entities:
-                card = make_ha_card(entity_id, state_dict)
-                if card is None:
-                    continue
-                card.size_hint = (1, 1)
-                grid.add_widget(card)
-                self._card_registry[entity_id] = card
+                _add_card(entity_id, state_dict, grid)
 
             # Pad odd column with invisible spacer
             if len(entities) % 2 == 1:
@@ -148,6 +171,13 @@ class HomeAssistantScreen(PiHomeScreen):
             attributes = state_dict.get("attributes", {}) if isinstance(state_dict, dict) else {}
             Clock.schedule_once(lambda dt: card.update_state(state_str, attributes), 0)
 
+    def _on_favorite_changed(self, card, value):
+        """Re-build the list whenever a card is starred or un-starred."""
+        if HOME_ASSISTANT.current_states:
+            Clock.schedule_once(
+                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0
+            )
+
     # ── Rotary encoder ────────────────────────────────────────────────────────
 
     def _set_focus(self, idx: int):
@@ -159,6 +189,13 @@ class HomeAssistantScreen(PiHomeScreen):
             self._focusable_cards[self._focus_idx].focused = False
         self._focus_idx = idx
         self._focusable_cards[idx].focused = True
+
+    def _set_focus_card(self, card):
+        """Move focus to a specific card instance (called on touch)."""
+        try:
+            self._set_focus(self._focusable_cards.index(card))
+        except ValueError:
+            pass
 
     def on_rotary_turn(self, direction: int, button_pressed: bool):
         """Rotary turn handler.

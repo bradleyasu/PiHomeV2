@@ -9,6 +9,8 @@ HADeviceCard      — base class (shared fields + API call helper)
 
 make_ha_card(entity_id, state_dict) → correct subclass instance | None
 """
+import json
+import os
 from threading import Thread
 
 from kivy.clock import Clock
@@ -26,15 +28,38 @@ from util.phlog import PIHOME_LOGGER
 
 Builder.load_file("./composites/HomeAssistant/hadevicecard.kv")
 
+# ── Favorites persistence ─────────────────────────────────────────────────────
+_FAVORITES_FILE = "./cache/ha_favorites.json"
+
+
+def load_ha_favorites() -> set:
+    """Return the set of favorited entity_ids from disk."""
+    try:
+        with open(_FAVORITES_FILE, "r") as f:
+            return set(json.load(f))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return set()
+
+
+def save_ha_favorites(favs: set):
+    """Persist the favorites set to disk."""
+    os.makedirs(os.path.dirname(_FAVORITES_FILE), exist_ok=True)
+    try:
+        with open(_FAVORITES_FILE, "w") as f:
+            json.dump(sorted(favs), f)
+    except Exception as e:
+        PIHOME_LOGGER.error(f"Could not save HA favorites: {e}")
+
+
 # ── Domain → Unicode icon symbol (ArialUnicode) ───────────────────────────────
 DOMAIN_ICONS = {
-    "light":         "\u2726",   # ✦  four-pointed star
-    "switch":        "\u26A1",   # ⚡  lightning bolt
-    "input_boolean": "\u25C9",   # ◉  fisheye circle
-    "fan":           "\u2300",   # ⌀  diameter / fan
-    "cover":         "\u2195",   # ↕  up-down arrow
-    "scene":         "\u2606",   # ☆  star (outline)
-    "script":        "\u25B6",   # ▶  play triangle
+    "light":         "\u2726",   # ✦  four-pointed star      (Dingbats)
+    "switch":        "\u25CF",   # ●  black circle            (Geometric Shapes)
+    "input_boolean": "\u25A3",   # ▣  white sq w/ black sq   (Geometric Shapes)
+    "fan":           "\u2299",   # ⊙  circled dot operator   (Math Operators)
+    "cover":         "\u2195",   # ↕  up-down arrow          (Arrows)
+    "scene":         "\u2605",   # ★  black star             (Misc Symbols)
+    "script":        "\u25B6",   # ▶  play triangle          (Geometric Shapes)
 }
 
 # ── Domains shown on screen ───────────────────────────────────────────────────
@@ -54,13 +79,15 @@ class HADeviceCard(BoxLayout):
     domain_icon = StringProperty("")
     state       = StringProperty("off")
     is_on       = BooleanProperty(False)
-    focused     = BooleanProperty(False)  # True when the rotary encoder targets this card
+    focused     = BooleanProperty(False)    # True when the rotary encoder targets this card
+    is_favorite = BooleanProperty(False)    # True when starred by the user
 
     card_color   = ColorProperty([0.10, 0.13, 0.19, 1.0])
     text_color   = ColorProperty([1.0, 1.0, 1.0, 0.90])
     accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
 
     _programmatic = False   # True while we're updating ids ourselves
+    _focus_callback = None  # Assigned by the screen to propagate touch-focus
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -80,9 +107,25 @@ class HADeviceCard(BoxLayout):
         self.domain      = entity_id.split(".")[0] if "." in entity_id else ""
         self.domain_icon = DOMAIN_ICONS.get(self.domain, "?")
         self.entity_name = attributes.get("friendly_name", entity_id)
+        self.is_favorite = entity_id in load_ha_favorites()
         self._programmatic = True
         self._set_state_props(state_str, attributes)
         self._programmatic = False
+
+    def toggle_favorite(self):
+        """Flip the favorite state and persist."""
+        favs = load_ha_favorites()
+        if self.is_favorite:
+            favs.discard(self.entity_id)
+        else:
+            favs.add(self.entity_id)
+        save_ha_favorites(favs)
+        self.is_favorite = not self.is_favorite
+
+    def _on_self_touched(self):
+        """Called when the card surface is touched — notifies the screen to move focus here."""
+        if self._focus_callback is not None:
+            self._focus_callback(self)
 
     def update_state(self, state_str, attributes):
         """Called from the HA listener — always on the main Kivy thread via Clock."""

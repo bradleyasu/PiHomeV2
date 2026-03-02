@@ -6,6 +6,7 @@
 # Draws a focus ring when root.focused == True
 # ─────────────────────────────────────────────────────────────────────────────
 <HADeviceCard>:
+    on_touch_down: if self.collide_point(*args[1].pos): root._on_self_touched()
     canvas.after:
         Color:
             rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.85 if root.focused else 0)
@@ -61,6 +62,17 @@
             text_size: self.width, None
             size_hint: 1, 1
 
+        # Favorite star
+        Label:
+            text: '\u2605' if root.is_favorite else '\u2606'
+            font_name: 'ArialUnicode'
+            font_size: '19sp'
+            color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            size_hint: None, 1
+            width: dp(26)
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root.toggle_favorite()
+
         # On / off switch
         PiHomeSwitch:
             id: main_switch
@@ -68,8 +80,6 @@
             size: dp(46), dp(26)
             pos_hint: {'center_y': 0.5}
             on_enabled: root._on_switch_touch(self.enabled)
-
-    # ── Brightness row (hidden for non-dimmable lights) ───────────────────────
     BoxLayout:
         orientation: 'horizontal'
         size_hint_y: None
@@ -146,6 +156,17 @@
             text_size: self.width, None
             size_hint: 1, 1
 
+        # Favorite star
+        Label:
+            text: '\u2605' if root.is_favorite else '\u2606'
+            font_name: 'ArialUnicode'
+            font_size: '19sp'
+            color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            size_hint: None, 1
+            width: dp(26)
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root.toggle_favorite()
+
         PiHomeSwitch:
             id: main_switch
             size_hint: None, None
@@ -209,6 +230,17 @@
                 text_size: self.width, None
                 size_hint: 1, None
                 height: dp(14)
+
+        # Favorite star
+        Label:
+            text: '\u2605' if root.is_favorite else '\u2606'
+            font_name: 'ArialUnicode'
+            font_size: '19sp'
+            color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            size_hint: None, 1
+            width: dp(26)
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root.toggle_favorite()
 
         # Open ↑ button
         BoxLayout:
@@ -297,6 +329,17 @@
             text_size: self.width, None
             size_hint: 1, 1
 
+        # Favorite star
+        Label:
+            text: '\u2605' if root.is_favorite else '\u2606'
+            font_name: 'ArialUnicode'
+            font_size: '19sp'
+            color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            size_hint: None, 1
+            width: dp(26)
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root.toggle_favorite()
+
         # Run button
         BoxLayout:
             size_hint: None, None
@@ -313,7 +356,7 @@
             on_touch_down:
                 if self.collide_point(*args[1].pos): root._trigger_run()
             Label:
-                text: '\u25b6  Run'
+                text: 'Run'
                 color: root.accent_color
                 font_name: 'Nunito'
                 font_size: '12sp'
