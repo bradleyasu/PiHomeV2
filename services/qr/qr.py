@@ -8,8 +8,8 @@ class QR:
         super(QR, self).__init__(**kwargs)
 
     
-    def from_url(self, url):
-        out = "{}/url_qr.png".format(TEMP_DIR)
+    def from_url(self, url, filename="url_qr.png"):
+        out = "{}/{}".format(TEMP_DIR, filename)
         img = qrcode.make(url)
         type(img)
         img.save(out)

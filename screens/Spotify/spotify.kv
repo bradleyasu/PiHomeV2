@@ -1,0 +1,15 @@
+#:kivy 2.0.0
+
+<SpotifyScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        id: content_area
+        orientation: "vertical"
+        size_hint: 1, 1
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}

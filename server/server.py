@@ -25,8 +25,46 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
             self._get_index()
         else:
-            self.path = "./web" + self.path
-            super().do_GET()
+            if not self._dispatch_callback(self.path):
+                self.path = "./web" + self.path
+                super().do_GET()
+
+    def _dispatch_callback(self, path: str) -> bool:
+        """Check the generic callback registry and invoke a matching handler.
+
+        Returns True if a handler was found and executed, False otherwise.
+        The handler is called on the HTTP server thread; it should return an
+        HTML string (or None) to send back to the browser.
+        """
+        from urllib.parse import urlparse, parse_qs
+        from server.callbacks import _REGISTRY
+
+        for prefix, handler in list(_REGISTRY.items()):
+            if path.startswith(prefix):
+                params = parse_qs(urlparse(path).query)
+                try:
+                    result = handler(params)
+                except Exception as e:
+                    PIHOME_LOGGER.error(
+                        f"Server: callback handler '{prefix}' raised: {e}"
+                    )
+                    self._send_html_response(500, "<h2>Internal error</h2>")
+                    return True
+                html = result if isinstance(result, str) and result else (
+                    "<p style='font-family:sans-serif'>"
+                    "Request received. You can close this tab.</p>"
+                )
+                self._send_html_response(200, html)
+                return True
+        return False
+
+    def _send_html_response(self, code: int, html: str):
+        body = html.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def _get_status(self, service = ""):
         PIHOME_LOGGER.info("Server: Getting current status from multiple services")
@@ -104,6 +142,32 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         
 
  
+# Suppress harmless low-level socket errors that Python's built-in HTTP server
+# surfaces when a client (e.g. a mobile browser) drops a connection or sends
+# TLS handshake data to a plain-HTTP socket before the request line is read.
+_IGNORED_SOCKET_ERRNOS = {
+    9,   # EBADF  — bad file descriptor (connection dropped mid-read)
+    32,  # EPIPE  — broken pipe
+    54,  # ECONNRESET (macOS)
+    104, # ECONNRESET (Linux)
+}
+
+class PiHomeTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
+    def handle_error(self, request, client_address):
+        import sys
+        exc = sys.exc_info()[1]
+        if isinstance(exc, (ConnectionResetError, BrokenPipeError)):
+            return
+        if isinstance(exc, OSError) and exc.errno in _IGNORED_SOCKET_ERRNOS:
+            return
+        # All other errors go to the normal logger instead of stderr
+        PIHOME_LOGGER.error(
+            f"Server: unhandled error from {client_address}: {exc!r}"
+        )
+
+
 class PiHomeServer():
     PORT = SERVER_PORT
     SOCKET_PORT = 9090
@@ -165,9 +229,16 @@ class PiHomeServer():
     def _run(self):
         Handler = MyHttpRequestHandler
         try:
-            with socketserver.TCPServer(("", self.PORT), Handler) as h:
+            from server.ssl_cert import make_ssl_context
+            ssl_ctx = make_ssl_context()
+            with PiHomeTCPServer(("", self.PORT), Handler) as h:
+                if ssl_ctx:
+                    h.socket = ssl_ctx.wrap_socket(h.socket, server_side=True)
+                    PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTPS)".format(self.PORT))
+                else:
+                    PIHOME_LOGGER.warning("Server: SSL setup failed — falling back to HTTP")
+                    PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTP)".format(self.PORT))
                 self.httpd = h
-                PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {}".format(self.PORT))
                 while not self.shutting_down:
                     h.serve_forever()
         except Exception as e:
