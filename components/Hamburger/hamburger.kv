@@ -1,39 +1,38 @@
 #:kivy 2.0.0
 <Hamburger>:
     size_hint: None, None
-    size: dp(40), dp(100)
+    size: dp(40), dp(44)
     canvas:
-
-        #Bar borders
+        # ── Top bar — rotates +45° and slides to centre to form top arm of ✕
+        PushMatrix
+        Rotate:
+            angle: root.top_angle
+            origin: (self.x + dp(20), self.y + dp(36.5) + root.top_y_offset, 0)
         Color:
-            rgba: (0,0,0,0.1)
+            rgba: 1, 1, 1, 1
         RoundedRectangle:
-            pos: self.x - dp(1), self.y + dp(60) + root.top_offset - dp(1)
-            size: self.width + dp(2), dp(5) + dp(2)
-            radius: [2,]
-        RoundedRectangle:
-            pos: self.x - dp(1), self.y + dp(50) - dp(1)
-            size: self.width + dp(2), dp(5) + dp(2)
-            radius: [2,]
-        RoundedRectangle:
-            pos: self.x - dp(1), self.y + dp(40) + root.bottom_offset - dp(1)
-            size: self.width + dp(2), dp(5) + dp(2)
-            radius: [2,]
+            pos: self.x + dp(6), self.y + dp(35) + root.top_y_offset
+            size: dp(28), dp(3)
+            radius: [dp(1.5)]
+        PopMatrix
 
-        # Actual Bars
+        # ── Middle bar — fades out when open
         Color:
-            rgba: (1,1,1,1)
+            rgba: 1, 1, 1, root.mid_opacity
         RoundedRectangle:
-            pos: self.x, self.y + dp(60) + root.top_offset
-            size: self.width, dp(5)
-            radius: [2,]
+            pos: self.x + dp(6), self.y + dp(24)
+            size: dp(28), dp(3)
+            radius: [dp(1.5)]
 
+        # ── Bottom bar — rotates -45° and slides to centre to form bottom arm of ✕
+        PushMatrix
+        Rotate:
+            angle: root.bottom_angle
+            origin: (self.x + dp(20), self.y + dp(14.5) + root.bottom_y_offset, 0)
+        Color:
+            rgba: 1, 1, 1, 1
         RoundedRectangle:
-            pos: self.x, self.y + dp(50)
-            size: self.width, dp(5)
-            radius: [2,]
-        RoundedRectangle:
-            pos: self.x, self.y + dp(40) + root.bottom_offset
-            size: self.width, dp(5)
-            radius: [2,]
-
+            pos: self.x + dp(6), self.y + dp(13) + root.bottom_y_offset
+            size: dp(28), dp(3)
+            radius: [dp(1.5)]
+        PopMatrix

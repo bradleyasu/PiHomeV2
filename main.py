@@ -102,7 +102,7 @@ class PiHome(App):
         self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
 
 
-        self.menu_button.pos = (dp(10), dp(400))
+        self.menu_button.pos = (dp(10), dp(426))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
         
