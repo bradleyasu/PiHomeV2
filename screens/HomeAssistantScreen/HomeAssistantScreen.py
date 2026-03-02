@@ -58,10 +58,14 @@ class HomeAssistantScreen(PiHomeScreen):
     # ── Screen lifecycle ──────────────────────────────────────────────────────
 
     def on_pre_enter(self, *args):
+        # Show the screen instantly with a loading message, then build on the next frame.
+        self._show_loading()
         if HOME_ASSISTANT.current_states:
-            self._build_entity_list(HOME_ASSISTANT.current_states)
+            Clock.schedule_once(
+                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0
+            )
         else:
-            self.refresh()
+            Clock.schedule_once(lambda dt: self.refresh(), 0)
         return super().on_pre_enter(*args)
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -76,7 +80,24 @@ class HomeAssistantScreen(PiHomeScreen):
         Thread(target=_fetch, daemon=True).start()
 
     # ── Internal helpers ──────────────────────────────────────────────────────
-
+    def _show_loading(self):
+        """Replace scroll_content with a single centred loading label."""
+        scroll_content = self.ids.get('scroll_content')
+        if scroll_content is None:
+            return
+        scroll_content.clear_widgets()
+        lbl = Label(
+            text='Loading...',
+            font_name='Nunito',
+            font_size='16sp',
+            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.45),
+            size_hint_y=None,
+            height=dp(60),
+            halign='center',
+            valign='middle',
+        )
+        lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+        scroll_content.add_widget(lbl)
     def _section_label(self, text: str) -> Label:
         lbl = Label(
             text=text,

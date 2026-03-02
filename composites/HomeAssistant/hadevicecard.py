@@ -11,6 +11,7 @@ make_ha_card(entity_id, state_dict) → correct subclass instance | None
 """
 import json
 import os
+import time
 from threading import Thread
 
 from kivy.clock import Clock
@@ -170,27 +171,53 @@ class HADeviceCard(BoxLayout):
 class HALightCard(HADeviceCard):
     brightness_pct      = NumericProperty(0.0)
     supports_brightness = BooleanProperty(True)
-    _debounce_event     = None
+    _debounce_event          = None
+    _brightness_locked_until = 0.0   # monotonic deadline: ignore HA echoes until this time
+
+    def _lock_brightness(self, duration: float = 2.0):
+        """Block incoming WS brightness/slider updates for *duration* seconds."""
+        self._brightness_locked_until = time.monotonic() + duration
 
     def _set_state_props(self, state_str, attributes):
         super()._set_state_props(state_str, attributes)
         raw = attributes.get("brightness")
-        self.supports_brightness = raw is not None
-        self.brightness_pct = round(raw / 255.0 * 100.0) if raw is not None else 0.0
-        # Sync child widgets without triggering API callbacks
+        # When the light is ON we know for sure whether it's dimmable.
+        # When it's OFF, HA omits brightness regardless — preserve the last known value.
+        if raw is not None:
+            self.supports_brightness = True
+        elif state_str == "on":
+            self.supports_brightness = False
+        # Always sync the on/off switch
         if "main_switch" in self.ids:
             self.ids.main_switch.enabled = self.is_on
-        if "brightness_slider" in self.ids:
-            self.ids.brightness_slider.value = self.brightness_pct
+        # Only overwrite brightness while the user is NOT actively adjusting
+        if time.monotonic() >= self._brightness_locked_until:
+            self.brightness_pct = round(raw / 255.0 * 100.0) if raw is not None else 0.0
+            if "brightness_slider" in self.ids:
+                self.ids.brightness_slider.value = self.brightness_pct
 
     def _on_switch_touch(self, value):
         if self._programmatic:
             return
-        self._send_service("turn_on" if value else "turn_off")
+        if value:
+            # If slider is at zero, turn on at 1% so HA doesn't jump to 100%
+            if self.brightness_pct == 0.0:
+                self._lock_brightness(2.0)
+                self._programmatic = True
+                self.brightness_pct = 1.0
+                if "brightness_slider" in self.ids:
+                    self.ids.brightness_slider.value = 1.0
+                self._programmatic = False
+                self._send_service("turn_on", {"brightness": 1})
+            else:
+                self._send_service("turn_on")
+        else:
+            self._send_service("turn_off")
 
     def _on_slider_change(self, value):
         if self._programmatic:
             return
+        self._lock_brightness(2.0)   # suppress HA echo for 2 s
         self.brightness_pct = value
         # Debounce: wait 400 ms after the user stops dragging
         if self._debounce_event:
@@ -207,7 +234,20 @@ class HALightCard(HADeviceCard):
         """Nudge brightness by *delta* (positive = brighter) — called from rotary encoder."""
         if not self.supports_brightness:
             return
-        new_val = max(0.0, min(100.0, self.brightness_pct + delta))
+        # Rotating down on an already-off light does nothing
+        if not self.is_on and delta <= 0:
+            return
+        self._lock_brightness(2.0)   # suppress HA echo for 2 s
+        # When light is off, start from 0 so delta itself becomes the initial brightness
+        base = self.brightness_pct if self.is_on else 0.0
+        new_val = max(0.0, min(100.0, base + delta))
+        # Optimistically flip the light on in the UI if it was off
+        if not self.is_on:
+            self._programmatic = True
+            self.is_on = True
+            if "main_switch" in self.ids:
+                self.ids.main_switch.enabled = True
+            self._programmatic = False
         self._programmatic = True
         self.brightness_pct = new_val
         if "brightness_slider" in self.ids:
