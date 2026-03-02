@@ -1,0 +1,320 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Base rule — applies to all HADeviceCard subclasses via kv inheritance
+# Draws a focus ring when root.focused == True
+# ─────────────────────────────────────────────────────────────────────────────
+<HADeviceCard>:
+    canvas.after:
+        Color:
+            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.85 if root.focused else 0)
+        Line:
+            rounded_rectangle: (self.x + dp(2), self.y + dp(2), self.width - dp(4), self.height - dp(4), dp(12))
+            width: dp(2)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared card canvas macro — rounded dark/light card surface
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HALightCard  —  on/off switch + optional brightness slider
+# ─────────────────────────────────────────────────────────────────────────────
+<HALightCard>:
+    orientation: 'vertical'
+    size_hint: 1, 1
+    spacing: 0
+
+    canvas.before:
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+
+    # ── Name row ──────────────────────────────────────────────────────────────
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, 1
+        padding: [dp(14), dp(12), dp(14), dp(4)]
+        spacing: dp(10)
+
+        # Domain icon (lit up when on, dim when off)
+        Label:
+            text: root.domain_icon
+            font_name: 'ArialUnicode'
+            font_size: '20sp'
+            color: root.accent_color if root.is_on else (root.text_color[0], root.text_color[1], root.text_color[2], 0.30)
+            size_hint: None, 1
+            width: dp(26)
+
+        # Friendly name
+        Label:
+            text: root.entity_name
+            font_name: 'Nunito'
+            font_size: '13sp'
+            bold: True
+            color: root.text_color
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
+            size_hint: 1, 1
+
+        # On / off switch
+        PiHomeSwitch:
+            id: main_switch
+            size_hint: None, None
+            size: dp(46), dp(26)
+            pos_hint: {'center_y': 0.5}
+            on_enabled: root._on_switch_touch(self.enabled)
+
+    # ── Brightness row (hidden for non-dimmable lights) ───────────────────────
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(36)
+        padding: [dp(14), dp(0), dp(14), dp(10)]
+        spacing: dp(8)
+        opacity: 1 if root.supports_brightness else 0
+
+        # Sun icon
+        Label:
+            text: '\u2600'
+            font_name: 'ArialUnicode'
+            font_size: '14sp'
+            color: root.text_color[0], root.text_color[1], root.text_color[2], 0.40
+            size_hint: None, 1
+            width: dp(16)
+
+        # Brightness slider
+        HASlider:
+            id: brightness_slider
+            fill_color: root.accent_color
+            on_value: root._on_slider_change(self.value)
+
+        # Percentage label
+        Label:
+            text: str(int(root.brightness_pct)) + '%'
+            font_name: 'Nunito'
+            font_size: '11sp'
+            color: root.text_color[0], root.text_color[1], root.text_color[2], 0.45
+            size_hint: None, 1
+            width: dp(32)
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HAToggleCard  —  single on/off switch  (switch, input_boolean, fan)
+# ─────────────────────────────────────────────────────────────────────────────
+<HAToggleCard>:
+    orientation: 'vertical'
+    size_hint: 1, 1
+
+    canvas.before:
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, 1
+        padding: [dp(14), dp(14), dp(14), dp(14)]
+        spacing: dp(10)
+
+        Label:
+            text: root.domain_icon
+            font_name: 'ArialUnicode'
+            font_size: '20sp'
+            color: root.accent_color if root.is_on else (root.text_color[0], root.text_color[1], root.text_color[2], 0.30)
+            size_hint: None, 1
+            width: dp(26)
+
+        Label:
+            text: root.entity_name
+            font_name: 'Nunito'
+            font_size: '13sp'
+            bold: True
+            color: root.text_color
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
+            size_hint: 1, 1
+
+        PiHomeSwitch:
+            id: main_switch
+            size_hint: None, None
+            size: dp(46), dp(26)
+            pos_hint: {'center_y': 0.5}
+            on_enabled: root._on_switch_touch(self.enabled)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HACoverCard  —  open / close buttons  (cover, blind, garage door)
+# ─────────────────────────────────────────────────────────────────────────────
+<HACoverCard>:
+    orientation: 'vertical'
+    size_hint: 1, 1
+
+    canvas.before:
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, 1
+        padding: [dp(14), dp(14), dp(14), dp(14)]
+        spacing: dp(10)
+
+        Label:
+            text: root.domain_icon
+            font_name: 'ArialUnicode'
+            font_size: '20sp'
+            color: root.accent_color
+            size_hint: None, 1
+            width: dp(26)
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, 1
+            spacing: dp(2)
+
+            Label:
+                text: root.entity_name
+                font_name: 'Nunito'
+                font_size: '13sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'bottom'
+                text_size: self.width, None
+                size_hint: 1, 1
+
+            Label:
+                text: root.state.upper()
+                font_name: 'Nunito'
+                font_size: '10sp'
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.38
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint: 1, None
+                height: dp(14)
+
+        # Open ↑ button
+        BoxLayout:
+            size_hint: None, None
+            size: dp(34), dp(34)
+            pos_hint: {'center_y': 0.5}
+            padding: dp(3)
+            canvas.before:
+                Color:
+                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.20
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(9)]
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root._cover_open()
+            Label:
+                text: '\u2191'
+                color: root.accent_color
+                font_name: 'ArialUnicode'
+                font_size: '20sp'
+
+        Widget:
+            size_hint: None, 1
+            width: dp(6)
+
+        # Close ↓ button
+        BoxLayout:
+            size_hint: None, None
+            size: dp(34), dp(34)
+            pos_hint: {'center_y': 0.5}
+            padding: dp(3)
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 0.08
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(9)]
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root._cover_close()
+            Label:
+                text: '\u2193'
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
+                font_name: 'ArialUnicode'
+                font_size: '20sp'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HATriggerCard  —  single "Run" button  (scene / script)
+# ─────────────────────────────────────────────────────────────────────────────
+<HATriggerCard>:
+    orientation: 'vertical'
+    size_hint: 1, 1
+
+    canvas.before:
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, 1
+        padding: [dp(14), dp(14), dp(14), dp(14)]
+        spacing: dp(10)
+
+        Label:
+            text: root.domain_icon
+            font_name: 'ArialUnicode'
+            font_size: '20sp'
+            color: root.accent_color
+            size_hint: None, 1
+            width: dp(26)
+
+        Label:
+            text: root.entity_name
+            font_name: 'Nunito'
+            font_size: '13sp'
+            bold: True
+            color: root.text_color
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
+            size_hint: 1, 1
+
+        # Run button
+        BoxLayout:
+            size_hint: None, None
+            size: dp(60), dp(32)
+            pos_hint: {'center_y': 0.5}
+            padding: [dp(6), dp(4), dp(6), dp(4)]
+            canvas.before:
+                Color:
+                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
+            on_touch_down:
+                if self.collide_point(*args[1].pos): root._trigger_run()
+            Label:
+                text: '\u25b6  Run'
+                color: root.accent_color
+                font_name: 'Nunito'
+                font_size: '12sp'
+                bold: True

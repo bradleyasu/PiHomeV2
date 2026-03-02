@@ -1,26 +1,83 @@
 #:kivy 2.0.0
-#:import Knob kivy.garden.knob.Knob
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HomeAssistantScreen — device control dashboard
+# ─────────────────────────────────────────────────────────────────────────────
 <HomeAssistantScreen>:
-    # canvas.before:
-        # Color:
-            # rgba: 0, 0, 0, 1
-        # Rectangle:
-            # size: self.size
-            # pos: self.pos
-
-    # BoxLayout:
-    #     orientation: 'vertical'
-    #     size: root.size
-    #     pos: root.pos
-    #     size_hint: 1, 1
-    #     id: home_assistant_screen_root
-    #     padding: dp(40)
-
-<ShaderWidget>:
     canvas.before:
         Color:
-            rgb: 1, 0, 0
+            rgba: root.bg_color[0], root.bg_color[1], root.bg_color[2], 0.72
         Rectangle:
-            pos: self.pos
+            pos:  self.pos
             size: self.size
-    
+
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: 1, 1
+        spacing: 0
+
+        # ── Header bar ───────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(52)
+            padding: [dp(54), dp(8), dp(14), dp(8)]
+            spacing: dp(10)
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos:  self.pos
+                    size: self.size
+
+            Label:
+                text: 'Home Assistant'
+                font_name: 'Nunito'
+                font_size: '18sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_x: 1
+
+            # Refresh button
+            BoxLayout:
+                size_hint: None, None
+                size: dp(36), dp(36)
+                pos_hint: {'center_y': 0.5}
+                padding: dp(4)
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 0.07
+                    RoundedRectangle:
+                        pos:  self.pos
+                        size: self.size
+                        radius: [dp(9)]
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.refresh()
+                Label:
+                    text: '\u21bb'
+                    color: root.text_color
+                    font_name: 'ArialUnicode'
+                    font_size: '20sp'
+
+        # ── Scrollable device grid ────────────────────────────────────────────
+        ScrollView:
+            id: scroll_view
+            size_hint: 1, 1
+            do_scroll_x: False
+            bar_width: dp(3)
+            bar_color: root.accent_color
+            bar_inactive_color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.25
+            scroll_type: ['bars', 'content']
+
+            BoxLayout:
+                id: scroll_content
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: [dp(16), dp(8), dp(16), dp(16)]
+                spacing: dp(4)

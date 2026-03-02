@@ -1,0 +1,41 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HASlider — horizontal pill slider consistent with PiHomeSwitch visual style
+# ─────────────────────────────────────────────────────────────────────────────
+<HASlider>:
+    size_hint_x: 1
+    size_hint_y: None
+    height: dp(28)
+
+    canvas:
+        # ── Track background ──────────────────────────────────────────────────
+        Color:
+            rgba: root.track_color
+        RoundedRectangle:
+            pos:  self.x, self.center_y - dp(3)
+            size: self.width, dp(6)
+            radius: [dp(3)]
+
+        # ── Filled portion (left → thumb) ─────────────────────────────────────
+        Color:
+            rgba: root.fill_color
+        RoundedRectangle:
+            pos:  self.x, self.center_y - dp(3)
+            size: max(dp(3), root.value / 100.0 * self.width), dp(6)
+            radius: [dp(3)]
+
+        # ── Thumb shadow ──────────────────────────────────────────────────────
+        Color:
+            rgba: 0, 0, 0, 0.18
+        Ellipse:
+            pos:  self.x + root.value / 100.0 * (self.width - dp(22)) + dp(1), self.center_y - dp(10)
+            size: dp(20), dp(20)
+
+        # ── Thumb ─────────────────────────────────────────────────────────────
+        Color:
+            rgba: root.thumb_color
+        Ellipse:
+            pos:  self.x + root.value / 100.0 * (self.width - dp(22)), self.center_y - dp(11)
+            size: dp(22), dp(22)

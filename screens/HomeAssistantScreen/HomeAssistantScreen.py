@@ -1,167 +1,187 @@
-from kivy.lang import Builder
+from threading import Thread
 
 from kivy.clock import Clock
-from kivy.core.window import Window
-from kivy.graphics import RenderContext, Fbo, ClearBuffers, ClearColor
-from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.uix.floatlayout import FloatLayout
+from kivy.lang import Builder
+from kivy.metrics import dp
+from kivy.properties import ColorProperty, ListProperty
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import StringProperty
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
 
+from composites.HomeAssistant.hadevicecard import (  # noqa — registers kv rules
+    HACoverCard, HALightCard, HATriggerCard, HAToggleCard, make_ha_card,
+)
 from interface.pihomescreen import PiHomeScreen
-from screens.HomeAssistantScreen.HomeAssistantMediaPlayer import HomeAssistantMediaPlayer
 from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
-
-# Plasma shader
-plasma_shader = '''
-$HEADER$
-
-// Kivy-compatible shader (GLSL ES 2.0)
-#ifdef GL_ES
-precision mediump float;
-#endif
-
-#define S(a,b,t) smoothstep(a,b,t)
-
-uniform float time;  // equivalent to iTime
-uniform vec2 resolution;  // equivalent to iResolution
-
-mat2 Rot(float a)
-{
-    float s = sin(a);
-    float c = cos(a);
-    return mat2(c, -s, s, c);
-}
-
-vec2 hash(vec2 p)
-{
-    p = vec2(dot(p, vec2(2127.1, 81.17)), dot(p, vec2(1269.5, 283.37)));
-    return fract(sin(p) * 43758.5453);
-}
-
-float noise(in vec2 p)
-{
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    
-    vec2 u = f * f * (3.0 - 2.0 * f);
-
-    float n = mix(
-        mix(dot(-1.0 + 2.0 * hash(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
-            dot(-1.0 + 2.0 * hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
-        mix(dot(-1.0 + 2.0 * hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
-            dot(-1.0 + 2.0 * hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
-    return 0.5 + 0.5 * n;
-}
-
-void main(void)
-{
-    vec2 uv = gl_FragCoord.xy / resolution.xy;
-    float ratio = resolution.x / resolution.y;
-
-    vec2 tuv = uv;
-    tuv -= 0.5;
-
-    // rotate with Noise
-    float degree = noise(vec2(time * 0.1, tuv.x * tuv.y));
-
-    tuv.y *= 1.0 / ratio;
-    tuv *= Rot(radians((degree - 0.5) * 720.0 + 180.0));
-    tuv.y *= ratio;
-
-    // Wave warp with sin
-    float frequency = 5.0;
-    float amplitude = 30.0;
-    float speed = time * 2.0;
-    tuv.x += sin(tuv.y * frequency + speed) / amplitude;
-    tuv.y += sin(tuv.x * frequency * 1.5 + speed) / (amplitude * 0.5);
-
-    // draw the image
-    vec3 colorYellow = vec3(0.957, 0.804, 0.623);
-    vec3 colorDeepBlue = vec3(0.192, 0.384, 0.933);
-    vec3 layer1 = mix(colorYellow, colorDeepBlue, S(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x));
-
-    vec3 colorRed = vec3(0.910, 0.510, 0.8);
-    vec3 colorBlue = vec3(0.350, 0.71, 0.953);
-    vec3 layer2 = mix(colorRed, colorBlue, S(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x));
-
-    vec3 finalComp = mix(layer1, layer2, S(0.5, -0.3, tuv.y));
-
-    vec3 col = finalComp;
-
-    gl_FragColor = vec4(col, 1.0);
-}
-
-'''
+from theme import theme as t
 
 Builder.load_file("./screens/HomeAssistantScreen/HomeAssistantScreen.kv")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Domain groups: (section_label, [domains], card_class, row_height)
+# ─────────────────────────────────────────────────────────────────────────────
+GROUPS = [
+    ("LIGHTS",             ["light"],                           HALightCard,   dp(108)),
+    ("SWITCHES & DEVICES", ["switch", "input_boolean", "fan"], HAToggleCard,  dp(72)),
+    ("COVERS",             ["cover"],                           HACoverCard,   dp(72)),
+    ("SCENES & SCRIPTS",   ["scene", "script"],                 HATriggerCard, dp(72)),
+]
+
+
 class HomeAssistantScreen(PiHomeScreen):
 
-    media_player_widget = HomeAssistantMediaPlayer("media_player.unknown")
+    bg_color     = ColorProperty([0, 0, 0, 1])
+    header_color = ColorProperty([0, 0, 0, 1])
+    text_color   = ColorProperty([1, 1, 1, 1])
+    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
 
     def __init__(self, **kwargs):
-        super(HomeAssistantScreen, self).__init__(**kwargs)
-        self.listener = HomeAssistantListener(self.on_state_change)
-        HOME_ASSISTANT.add_listener(self.listener)
+        super().__init__(**kwargs)
 
-        # screen_root = self.ids["home_assistant_screen_root"]
+        # Theme colours
+        theme = t.Theme()
+        self.bg_color     = theme.get_color(t.Theme.BACKGROUND_PRIMARY)
+        self.header_color = theme.get_color(t.Theme.BACKGROUND_SECONDARY)
+        self.text_color   = theme.get_color(t.Theme.TEXT_PRIMARY)
+        self.accent_color = theme.get_color(t.Theme.ALERT_INFO)
 
-        # add a HomeAssistantMediaPlayer 
-        shader_widget = ShaderWidget(size_hint=(1, 1))
-        layout = FloatLayout()
-        layout.add_widget(shader_widget)
-        layout.add_widget(self.media_player_widget)
-        self.add_widget(layout)
-        # screen_root.add_widget(shader_widget)
-        # screen_root.add_widget(self.media_player_widget)
+        self._card_registry: dict = {}
+        self._focusable_cards: list = []   # ordered flat list for rotary navigation
+        self._focus_idx: int = -1
+
+        # Register HA state listener
+        self._listener = HomeAssistantListener(self._on_state_change)
+        HOME_ASSISTANT.add_listener(self._listener)
+
+    # ── Screen lifecycle ──────────────────────────────────────────────────────
 
     def on_pre_enter(self, *args):
-        for state in HOME_ASSISTANT.current_states:
-            # if state is a media player, add a HomeAssistantMediaPlayer
-            if "media_player" in state:
-                # self.ids["home_assistant_screen_root"].add_widget(widget)
-                pass
+        if HOME_ASSISTANT.current_states:
+            self._build_entity_list(HOME_ASSISTANT.current_states)
+        else:
+            self.refresh()
         return super().on_pre_enter(*args)
 
+    # ── Public API ────────────────────────────────────────────────────────────
 
-    def on_rotary_down(self):
-        self.media_player_widget.media_player_play_pause()
+    def refresh(self):
+        """Fetch all HA states in a background thread, then rebuild the UI."""
+        def _fetch():
+            states = HOME_ASSISTANT.get_all_states()
+            if states is not None:
+                Clock.schedule_once(lambda dt: self._build_entity_list(states), 0)
 
-    def on_rotary_turn(self, direction, button_pressed):
-        if direction == -1:
-            self.media_player_widget.decrease_volume()
-        elif direction == 1:
-            self.media_player_widget.increase_volume()
+        Thread(target=_fetch, daemon=True).start()
 
+    # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def on_state_change(self, id, state, data):
-        if "media_player" in id and "spotify_" not in id:
-            self.media_player_widget.entity_id = id
-            self.media_player_widget.on_state_change(id, state, data)
+    def _section_label(self, text: str) -> Label:
+        lbl = Label(
+            text=text,
+            font_name='Nunito',
+            font_size='11sp',
+            bold=True,
+            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.45),
+            halign='left',
+            valign='middle',
+            size_hint_y=None,
+            height=dp(28),
+        )
+        lbl.bind(size=lambda w, s: setattr(w, 'text_size', (s[0], None)))
+        return lbl
 
+    def _build_entity_list(self, states: dict):
+        """Populate scroll_content with section headers and 2-column device grids."""
+        scroll_content = self.ids.get('scroll_content')
+        if scroll_content is None:
+            return
 
-class ShaderWidget(Widget):
-    def __init__(self, **kwargs):
-        self.canvas = RenderContext()  # Create a RenderContext for the shader
-        super(ShaderWidget, self).__init__(**kwargs)
-        self.canvas.shader.fs = plasma_shader  # Set the fragment shader code
-        self.time = 0  # Initialize time uniform
-        
-        self.pos_hint = {"center_x": 0, "center_y": 0}
-        with self.canvas:
-            self.fbo = Fbo(size=self.size)
-            self.fbo.shader.fs = plasma_shader
-        
-        # Schedule updates
-        Clock.schedule_interval(self.update_shader, 1 / 60.)
-        
-    def update_shader(self, dt):
-        # Update time and pass the resolution and time to the shader
-        self.time += dt
-        self.canvas['time'] = self.time
-        self.canvas['resolution'] = list(map(float, self.size))  # Send resolution as uniform
+        scroll_content.clear_widgets()
+        self._card_registry.clear()
 
-    def on_size(self, *args):
-        # Ensure the FBO size matches the widget size
-        self.fbo.size = self.size
+        for section_title, domains, card_cls, row_h in GROUPS:
+            entities = [
+                (eid, sdict)
+                for eid, sdict in states.items()
+                if any(eid.startswith(d + '.') for d in domains)
+            ]
+            if not entities:
+                continue
+
+            scroll_content.add_widget(self._section_label(section_title))
+
+            grid = GridLayout(
+                cols=2,
+                row_force_default=True,
+                row_default_height=row_h,
+                size_hint_y=None,
+                spacing=dp(6),
+            )
+            grid.bind(minimum_height=grid.setter('height'))
+
+            for entity_id, state_dict in entities:
+                card = make_ha_card(entity_id, state_dict)
+                if card is None:
+                    continue
+                card.size_hint = (1, 1)
+                grid.add_widget(card)
+                self._card_registry[entity_id] = card
+
+            # Pad odd column with invisible spacer
+            if len(entities) % 2 == 1:
+                grid.add_widget(Widget())
+
+            scroll_content.add_widget(grid)
+            scroll_content.add_widget(Widget(size_hint_y=None, height=dp(8)))
+
+        # Build focusable list in GROUPS order and select first card
+        self._focusable_cards = list(self._card_registry.values())
+        self._focus_idx = -1
+        if self._focusable_cards:
+            self._set_focus(0)
+
+    def _on_state_change(self, entity_id: str, state_str: str, state_dict: dict):
+        """Called by HA WebSocket listener (possibly on a background thread)."""
+        card = self._card_registry.get(entity_id)
+        if card is not None:
+            attributes = state_dict.get("attributes", {}) if isinstance(state_dict, dict) else {}
+            Clock.schedule_once(lambda dt: card.update_state(state_str, attributes), 0)
+
+    # ── Rotary encoder ────────────────────────────────────────────────────────
+
+    def _set_focus(self, idx: int):
+        """Move the rotary focus highlight to the card at *idx*."""
+        if not self._focusable_cards:
+            return
+        idx = idx % len(self._focusable_cards)
+        if self._focus_idx >= 0:
+            self._focusable_cards[self._focus_idx].focused = False
+        self._focus_idx = idx
+        self._focusable_cards[idx].focused = True
+
+    def on_rotary_turn(self, direction: int, button_pressed: bool):
+        """Rotary turn handler.
+
+        - Hold + turn  (button_pressed=True)  → cycle focus among cards.
+        - Turn alone   (button_pressed=False) → adjust the focused card's brightness.
+        """
+        if not self._focusable_cards:
+            return False
+
+        if button_pressed:
+            # Cycle focus: clockwise = next, counter-clockwise = previous
+            self._set_focus(self._focus_idx + direction)
+        else:
+            # Adjust brightness of focused card (lights only)
+            if 0 <= self._focus_idx < len(self._focusable_cards):
+                card = self._focusable_cards[self._focus_idx]
+                if hasattr(card, 'adjust_brightness'):
+                    card.adjust_brightness(direction * 5.0)
+        return False
+
+    def on_rotary_pressed(self):
+        """Rotary press — toggle the focused card's switch."""
+        if 0 <= self._focus_idx < len(self._focusable_cards):
+            self._focusable_cards[self._focus_idx].do_toggle()
+        return False
