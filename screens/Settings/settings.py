@@ -322,7 +322,11 @@ class SettingsScreen(PiHomeScreen):
         self._panels = []         # [(label, settings_data)]
         self._sidebar_items = []
 
-        for manifest_path in sorted(glob.glob('./screens/*/manifest.json')):
+        # Collect all manifests that have settings, then sort by settingsIndex.
+        # Manifests without settingsIndex fall back to 9999 and appear after
+        # all explicitly-indexed panels.
+        _raw_panels = []
+        for manifest_path in glob.glob('./screens/*/manifest.json'):
             with open(manifest_path, 'r') as f:
                 manifest = json.load(f)
             if manifest.get('hidden', False):
@@ -334,10 +338,15 @@ class SettingsScreen(PiHomeScreen):
                 'settingsLabel',
                 manifest.get('label', os.path.basename(os.path.dirname(manifest_path)))
             )
+            sort_key = manifest.get('settingsIndex', 9999)
             for c in settings_data:
                 if 'section' in c and 'key' in c:
                     config.adddefaultsection(c['section'])
                     config.setdefault(c['section'], c['key'], '')
+            _raw_panels.append((sort_key, label, settings_data))
+
+        _raw_panels.sort(key=lambda t: t[0])
+        for _, label, settings_data in _raw_panels:
             self._panels.append((label, settings_data))
 
         Clock.schedule_once(self._build_ui, 0)

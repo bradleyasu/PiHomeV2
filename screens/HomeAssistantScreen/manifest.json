@@ -8,6 +8,7 @@
     "hidden": false,
     "requires_pin": false,
     "index": 10,
+    "settingsIndex": 1,
     "settings": [
         {
             "type": "title",

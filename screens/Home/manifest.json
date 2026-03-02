@@ -1,5 +1,6 @@
 {
     "index": 0,
+    "settingsIndex": 0,
     "module": "Home.home",
     "name": "HomeScreen",
     "id": "_home",

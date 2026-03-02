@@ -1,5 +1,6 @@
 {
     "module": "Bus.bus",
+    "settingsIndex": 3,
     "name": "BusScreen",
     "id": "bus",
     "label": "Bus Dynamic",

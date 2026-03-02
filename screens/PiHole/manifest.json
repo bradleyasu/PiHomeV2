@@ -1,5 +1,6 @@
 {
     "module": "PiHole.pihole",
+    "settingsIndex": 2,
     "name": "PiHoleScreen",
     "id": "pihole",
     "label": "Pi Hole",
