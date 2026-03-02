@@ -29,10 +29,10 @@ from kivy.metrics import dp
 from kivy.properties import (
     BooleanProperty, ColorProperty, NumericProperty, StringProperty,
 )
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import AsyncImage, Image
 from kivy.uix.label import Label
-from kivy.uix.slider import Slider
 from kivy.uix.widget import Widget
 
 try:
@@ -40,7 +40,6 @@ try:
 except ImportError:
     _requests = None
 
-from components.Button.circlebutton import CircleButton
 from components.Empty.empty import Empty
 from interface.pihomescreen import PiHomeScreen
 from services.qr.qr import QR
@@ -101,9 +100,10 @@ class SpotifyScreen(PiHomeScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        # Rich dark indigo background — intentionally off-theme for Spotify branding
+        self.bg_color   = [0.05, 0.04, 0.09, 1]
+        self.card_color = [0.10, 0.09, 0.15, 1]
         theme = t.Theme()
-        self.bg_color   = theme.get_color(t.Theme.BACKGROUND_PRIMARY)
-        self.card_color = theme.get_color(t.Theme.BACKGROUND_SECONDARY)
         self.text_color = theme.get_color(t.Theme.TEXT_PRIMARY)
         self.sub_color  = theme.get_color(t.Theme.TEXT_SECONDARY)
 
@@ -507,22 +507,25 @@ class SpotifyScreen(PiHomeScreen):
         return panel
 
     def _build_player_panel(self) -> BoxLayout:
-        root = BoxLayout(orientation="vertical", spacing=0)
-        root._spotify_player = True   # marker for _on_token_ready check
+        from screens.Spotify.sp_widgets import (
+            SpotifyIconButton, SpotifySlider, SpotifyTextButton,
+        )
+        from kivy.graphics import Color as KC, Ellipse as KE
 
-        # ── Device bar ────────────────────────────────────────────────────────
+        root = BoxLayout(orientation="vertical", spacing=0, padding=0)
+        root._spotify_player = True
+
+        # ── 1. Device bar ─────────────────────────────────────────────────────
         device_bar = BoxLayout(
             orientation="horizontal",
-            size_hint_y=None, height=dp(30),
-            padding=[dp(16), 0, dp(16), 0],
+            size_hint_y=None, height=dp(26),
+            padding=[dp(18), dp(4), dp(18), 0],
         )
         dev_lbl = Label(
             text=("\u25B6  " + self.device_name) if self.device_name else "",
-            font_name="Nunito",
-            font_size="11sp",
-            color=list(_GREEN[:3]) + [0.75],
-            halign="left",
-            valign="middle",
+            font_name="Nunito", font_size="11sp",
+            color=list(_GREEN[:3]) + [0.65],
+            halign="left", valign="middle",
         )
         dev_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
         self.bind(
@@ -534,57 +537,64 @@ class SpotifyScreen(PiHomeScreen):
         device_bar.add_widget(Widget())
         root.add_widget(device_bar)
 
-        # ── Album art ─────────────────────────────────────────────────────────
-        art_row = BoxLayout(
-            orientation="horizontal",
-            size_hint_y=None, height=dp(200),
-            padding=[0, dp(4), 0, dp(4)],
-        )
+        # ── 2. Album art with radial green glow ──────────────────────────────
+        art_container = AnchorLayout(anchor_x="center", anchor_y="center")
+
+        def _draw_glow(w, *_):
+            w.canvas.before.clear()
+            cx, cy = w.center
+            r1, r2, r3 = dp(95), dp(125), dp(158)
+            with w.canvas.before:
+                KC(rgba=[0.11, 0.73, 0.33, 0.22])
+                KE(pos=(cx - r1, cy - r1), size=(r1 * 2, r1 * 2))
+                KC(rgba=[0.11, 0.73, 0.33, 0.11])
+                KE(pos=(cx - r2, cy - r2), size=(r2 * 2, r2 * 2))
+                KC(rgba=[0.11, 0.73, 0.33, 0.04])
+                KE(pos=(cx - r3, cy - r3), size=(r3 * 2, r3 * 2))
+
+        art_container.bind(pos=_draw_glow, size=_draw_glow)
+
         self._art = AsyncImage(
             source=self.album_art_url or "assets/images/audio_vinyl.png",
-            allow_stretch=True,
-            keep_ratio=True,
-            size_hint=(None, None),
-            size=(dp(188), dp(188)),
+            allow_stretch=True, keep_ratio=True,
+            size_hint=(None, None), size=(dp(210), dp(210)),
         )
         self.bind(
             album_art_url=lambda i, v: setattr(
                 self._art, "source", v or "assets/images/audio_vinyl.png"
             )
         )
-        art_row.add_widget(Widget())
-        art_row.add_widget(self._art)
-        art_row.add_widget(Widget())
-        root.add_widget(art_row)
+        art_container.add_widget(self._art)
+        root.add_widget(art_container)
 
-        # ── Track info ────────────────────────────────────────────────────────
+        # ── 3. Track / artist / album ─────────────────────────────────────────
         info = BoxLayout(
             orientation="vertical",
-            size_hint_y=None, height=dp(70),
-            padding=[dp(24), dp(4), dp(24), dp(4)],
-            spacing=dp(2),
+            size_hint_y=None, height=dp(86),
+            padding=[dp(28), dp(8), dp(28), dp(4)],
+            spacing=dp(3),
         )
 
         track_lbl = Label(
-            text=self.track_name, font_name="Nunito", font_size="17sp", bold=True,
-            color=self.text_color, halign="center", valign="middle",
-            size_hint_y=None, height=dp(28),
+            text=self.track_name, font_name="Nunito", font_size="23sp", bold=True,
+            color=self.text_color, halign="left", valign="middle",
+            size_hint_y=None, height=dp(34),
         )
         track_lbl.bind(size=lambda w, s: setattr(w, "text_size", (s[0], None)))
         self.bind(track_name=lambda i, v: setattr(track_lbl, "text", v))
 
         artist_lbl = Label(
-            text=self.artist_name, font_name="Nunito", font_size="13sp",
-            color=self.sub_color, halign="center", valign="middle",
-            size_hint_y=None, height=dp(22),
+            text=self.artist_name, font_name="Nunito", font_size="16sp",
+            color=list(_GREEN[:3]) + [1.0], halign="left", valign="middle",
+            size_hint_y=None, height=dp(26),
         )
         artist_lbl.bind(size=lambda w, s: setattr(w, "text_size", (s[0], None)))
         self.bind(artist_name=lambda i, v: setattr(artist_lbl, "text", v))
 
         album_lbl = Label(
-            text=self.album_name, font_name="Nunito", font_size="11sp",
-            color=list(self.sub_color[:3]) + [0.4], halign="center", valign="middle",
-            size_hint_y=None, height=dp(16),
+            text=self.album_name, font_name="Nunito", font_size="12sp",
+            color=[1, 1, 1, 0.32], halign="left", valign="middle",
+            size_hint_y=None, height=dp(18),
         )
         album_lbl.bind(size=lambda w, s: setattr(w, "text_size", (s[0], None)))
         self.bind(album_name=lambda i, v: setattr(album_lbl, "text", v))
@@ -594,177 +604,177 @@ class SpotifyScreen(PiHomeScreen):
         info.add_widget(album_lbl)
         root.add_widget(info)
 
-        # ── Progress bar ──────────────────────────────────────────────────────
-        prog_col = BoxLayout(
+        # ── 4. Progress bar ───────────────────────────────────────────────────
+        prog_section = BoxLayout(
             orientation="vertical",
-            size_hint_y=None, height=dp(34),
-            padding=[dp(20), 0, dp(20), 0],
-            spacing=dp(2),
+            size_hint_y=None, height=dp(44),
+            padding=[dp(24), 0, dp(24), 0],
+            spacing=dp(4),
         )
-        prog_slider = Slider(
-            min=0, max=1, value=self.progress,
-            size_hint_y=None, height=dp(18),
-            cursor_size=(0, 0),
+        prog_slider = SpotifySlider(
+            min_val=0.0, max_val=1.0, value=self.progress,
+            size_hint_y=None, height=dp(24),
         )
         self.bind(progress=lambda i, v: setattr(prog_slider, "value", v))
 
-        time_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(14))
+        time_row = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None, height=dp(16),
+        )
         elapsed_lbl = Label(
-            text=self.elapsed_text, font_name="Nunito", font_size="9sp",
-            color=self.sub_color, halign="left", valign="middle",
+            text=self.elapsed_text, font_name="Nunito", font_size="11sp",
+            color=[1, 1, 1, 0.40], halign="left", valign="middle",
         )
         elapsed_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
         self.bind(elapsed_text=lambda i, v: setattr(elapsed_lbl, "text", v))
 
         dur_lbl = Label(
-            text=self.duration_text, font_name="Nunito", font_size="9sp",
-            color=self.sub_color, halign="right", valign="middle",
+            text=self.duration_text, font_name="Nunito", font_size="11sp",
+            color=[1, 1, 1, 0.40], halign="right", valign="middle",
         )
         dur_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
         self.bind(duration_text=lambda i, v: setattr(dur_lbl, "text", v))
 
         time_row.add_widget(elapsed_lbl)
         time_row.add_widget(dur_lbl)
-        prog_col.add_widget(prog_slider)
-        prog_col.add_widget(time_row)
-        root.add_widget(prog_col)
+        prog_section.add_widget(prog_slider)
+        prog_section.add_widget(time_row)
+        root.add_widget(prog_section)
 
-        # ── Playback controls ─────────────────────────────────────────────────
+        # ── 5. Controls ───────────────────────────────────────────────────────
         ctrl_row = BoxLayout(
             orientation="horizontal",
-            size_hint_y=None, height=dp(76),
-            padding=[dp(12), dp(8), dp(12), dp(8)],
-            spacing=dp(4),
+            size_hint_y=None, height=dp(74),
+            padding=[dp(14), dp(6), dp(14), dp(6)],
+            spacing=0,
         )
 
-        # Shuffle
-        shuf_c = list(_GREEN) if self.shuffle_state else [1, 1, 1, 0.55]
-        self._shuffle_btn = CircleButton(
+        # Shuffle toggle
+        self._shuffle_btn = SpotifyTextButton(
             text="\u21C4",
-            custom_font="arial-unicode-ms",
-            font_size="17sp",
-            size=(dp(44), dp(44)),
+            font_size="24sp",
+            active=self.shuffle_state,
+            size_hint_x=None, width=dp(44),
         )
-        self._shuffle_btn.stroke_color = shuf_c
-        self._shuffle_btn.text_color   = shuf_c
         self._shuffle_btn.bind(on_press=lambda *_: self.toggle_shuffle())
         self.bind(shuffle_state=self._update_shuffle_color)
 
         # Previous
-        prev_btn = CircleButton(
-            text="\u23EE",
-            custom_font="arial-unicode-ms",
-            font_size="19sp",
-            size=(dp(50), dp(50)),
+        prev_btn = SpotifyIconButton(
+            source="assets/icons/audio_last.png",
+            size=(dp(46), dp(46)),
         )
         prev_btn.bind(on_press=lambda *_: self.skip_prev())
 
-        # Play / Pause
-        self._play_btn = CircleButton(
-            text="\u23F8" if self.is_playing else "\u25B6",
-            custom_font="arial-unicode-ms",
-            font_size="22sp",
-            size=(dp(60), dp(60)),
+        # Play / Pause — larger, green-tinted
+        self._play_btn = SpotifyIconButton(
+            source="assets/icons/audio_pause.png" if self.is_playing
+                   else "assets/icons/audio_play.png",
+            size=(dp(62), dp(62)),
+            color=list(_GREEN),
         )
-        self._play_btn.stroke_color = list(_GREEN)
-        self._play_btn.text_color   = list(_GREEN)
         self._play_btn.bind(on_press=lambda *_: self.toggle_play_pause())
         self.bind(is_playing=self._update_play_icon)
 
         # Next
-        next_btn = CircleButton(
-            text="\u23ED",
-            custom_font="arial-unicode-ms",
-            font_size="19sp",
-            size=(dp(50), dp(50)),
+        next_btn = SpotifyIconButton(
+            source="assets/icons/audio_next.png",
+            size=(dp(46), dp(46)),
         )
         next_btn.bind(on_press=lambda *_: self.skip_next())
 
-        # Repeat
-        rep_c    = list(_GREEN) if self.repeat_state != "off" else [1, 1, 1, 0.55]
+        # Repeat toggle
         rep_text = "\u21BA" if self.repeat_state == "track" else "\u21BB"
-        self._repeat_btn = CircleButton(
+        self._repeat_btn = SpotifyTextButton(
             text=rep_text,
-            custom_font="arial-unicode-ms",
-            font_size="17sp",
-            size=(dp(44), dp(44)),
+            font_size="24sp",
+            active=self.repeat_state != "off",
+            size_hint_x=None, width=dp(44),
         )
-        self._repeat_btn.stroke_color = rep_c
-        self._repeat_btn.text_color   = rep_c
         self._repeat_btn.bind(on_press=lambda *_: self.cycle_repeat())
         self.bind(repeat_state=self._update_repeat_color)
 
         ctrl_row.add_widget(Widget())
         ctrl_row.add_widget(self._shuffle_btn)
+        ctrl_row.add_widget(Widget())
         ctrl_row.add_widget(prev_btn)
+        ctrl_row.add_widget(Widget())
         ctrl_row.add_widget(self._play_btn)
+        ctrl_row.add_widget(Widget())
         ctrl_row.add_widget(next_btn)
+        ctrl_row.add_widget(Widget())
         ctrl_row.add_widget(self._repeat_btn)
         ctrl_row.add_widget(Widget())
         root.add_widget(ctrl_row)
 
-        # ── Volume slider ─────────────────────────────────────────────────────
+        # ── 6. Volume ─────────────────────────────────────────────────────────
         vol_row = BoxLayout(
             orientation="horizontal",
-            size_hint_y=None, height=dp(44),
+            size_hint_y=None, height=dp(40),
             padding=[dp(24), dp(8), dp(24), dp(8)],
-            spacing=dp(8),
+            spacing=dp(10),
         )
-        vol_low = Label(
-            text="\u2212",
-            font_name="Nunito",
-            font_size="16sp",
-            color=self.sub_color,
-            size_hint_x=None,
-            width=dp(20),
+        vol_lo = Label(
+            text="\U0001F509",
+            font_name="ArialUnicode", font_size="14sp",
+            color=[1, 1, 1, 0.40],
+            size_hint_x=None, width=dp(22),
+            halign="center", valign="middle",
         )
-        vol_slider = Slider(min=0, max=100, value=self.volume, size_hint_y=None, height=dp(28))
+        vol_lo.bind(size=lambda w, s: setattr(w, "text_size", s))
 
-        # Only send API command when user moves the slider (not when API updates it)
+        vol_slider = SpotifySlider(
+            min_val=0, max_val=100, value=self.volume,
+            track_height=dp(3), thumb_r=dp(6),
+        )
+
         def _on_vol_change(inst, v):
             if not self._vol_from_api:
                 self.set_volume(int(v))
 
         vol_slider.bind(value=_on_vol_change)
-        self.bind(
-            volume=lambda i, v: setattr(vol_slider, "value", v)
+        self.bind(volume=lambda i, v: setattr(vol_slider, "value", v))
+
+        vol_hi = Label(
+            text="\U0001F50A",
+            font_name="ArialUnicode", font_size="14sp",
+            color=[1, 1, 1, 0.40],
+            size_hint_x=None, width=dp(22),
+            halign="center", valign="middle",
         )
-        vol_high = Label(
-            text="\u002B",
-            font_name="Nunito",
-            font_size="16sp",
-            color=self.sub_color,
-            size_hint_x=None,
-            width=dp(20),
-        )
-        vol_row.add_widget(vol_low)
+        vol_hi.bind(size=lambda w, s: setattr(w, "text_size", s))
+
+        vol_row.add_widget(vol_lo)
         vol_row.add_widget(vol_slider)
-        vol_row.add_widget(vol_high)
+        vol_row.add_widget(vol_hi)
         root.add_widget(vol_row)
 
-        root.add_widget(Widget())  # flexible bottom spacer
+        root.add_widget(Widget())
         return root
 
     # ── Reactive callbacks ────────────────────────────────────────────────────
 
     def _update_play_icon(self, inst, is_playing):
         if self._play_btn:
-            self._play_btn.text = "\u23F8" if is_playing else "\u25B6"
-            Animation(zoom=1.15, t="out_quad", d=0.1).start(self._play_btn)
+            self._play_btn.source = (
+                "assets/icons/audio_pause.png" if is_playing
+                else "assets/icons/audio_play.png"
+            )
+            bw = self._play_btn._bw or dp(62)
+            bh = self._play_btn._bh or dp(62)
+            (
+                Animation(size=(bw * 1.12, bh * 1.12), d=0.08, t="out_quad")
+                + Animation(size=(bw, bh), d=0.20, t="out_back")
+            ).start(self._play_btn)
 
     def _update_shuffle_color(self, inst, on):
         if self._shuffle_btn:
-            c = list(_GREEN) if on else [1, 1, 1, 0.55]
-            self._shuffle_btn.stroke_color = c
-            self._shuffle_btn.text_color   = c
+            self._shuffle_btn.active = on
 
     def _update_repeat_color(self, inst, state):
         if self._repeat_btn:
-            c    = list(_GREEN) if state != "off" else [1, 1, 1, 0.55]
-            text = "\u21BA" if state == "track" else "\u21BB"
-            self._repeat_btn.stroke_color = c
-            self._repeat_btn.text_color   = c
-            self._repeat_btn.text = text
+            self._repeat_btn.active = state != "off"
+            self._repeat_btn.text = "\u21BA" if state == "track" else "\u21BB"
 
     # ── OAuth callback (called on server thread) ──────────────────────────────
 

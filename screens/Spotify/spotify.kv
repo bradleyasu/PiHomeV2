@@ -7,6 +7,12 @@
         Rectangle:
             size: self.size
             pos: self.pos
+        # Subtle top-center accent blob
+        Color:
+            rgba: 0.11, 0.73, 0.33, 0.03
+        Ellipse:
+            pos: self.center_x - self.width * 0.7, self.height * 0.45
+            size: self.width * 1.4, self.height * 0.9
 
     BoxLayout:
         id: content_area
