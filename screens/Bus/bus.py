@@ -38,6 +38,7 @@ class BusScreen(PiHomeScreen):
     pending_updates = False
     data = None
     scroller = None
+    _poller_key = None
 
     PRT_API = "https://realtime.portauthority.org/bustime/api/v3/getpredictions?rtpidatafeed=Port Authority Bus&key={}&format=json&rt={}&stpid={}"
 
@@ -50,8 +51,8 @@ class BusScreen(PiHomeScreen):
         
         self.api = self.PRT_API.format(self.api_key, self.routes, self.stops)
         
-        # Register API to be polled every 200 seconds
-        POLLER.register_api(self.api, 60, lambda json: self.update(json))
+        # Register API to be polled every 60 seconds
+        self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
         Clock.schedule_interval(self._update, 1)
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.8)
@@ -250,3 +251,22 @@ class BusScreen(PiHomeScreen):
                 self.empty_state.opacity = 1
             else:
                 self.empty_state.opacity = 0
+
+    def on_config_update(self, config):
+        """Reload bus API credentials and re-register poller when settings change."""
+        new_key    = config.get('prt', 'api_key', '')
+        new_routes = config.get('prt', 'routes', '')
+        new_stops  = config.get('prt', 'stops', '')
+
+        if new_key != self.api_key or new_routes != self.routes or new_stops != self.stops:
+            if self._poller_key is not None:
+                POLLER.unregister_api(self._poller_key)
+                self._poller_key = None
+
+            self.api_key = new_key
+            self.routes  = new_routes
+            self.stops   = new_stops
+            self.api = self.PRT_API.format(new_key, new_routes, new_stops)
+            self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
+
+        super().on_config_update(config)

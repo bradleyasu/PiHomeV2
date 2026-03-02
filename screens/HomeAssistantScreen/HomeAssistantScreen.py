@@ -82,6 +82,21 @@ class HomeAssistantScreen(PiHomeScreen):
 
         Thread(target=_fetch, daemon=True).start()
 
+    def on_config_update(self, config):
+        """Reconnect Home Assistant service if URL or token changed."""
+        old_url   = getattr(HOME_ASSISTANT, 'HA_URL',   '')
+        old_token = getattr(HOME_ASSISTANT, 'HA_TOKEN', '')
+
+        HOME_ASSISTANT.configure_connection()
+
+        if HOME_ASSISTANT.HA_URL != old_url or HOME_ASSISTANT.HA_TOKEN != old_token:
+            HOME_ASSISTANT.is_shutting_down = False
+            HOME_ASSISTANT.shutdown()
+            HOME_ASSISTANT.is_shutting_down = False
+            HOME_ASSISTANT.connect()
+
+        super().on_config_update(config)
+
     # ── Internal helpers ──────────────────────────────────────────────────────
     def _show_loading(self):
         """Replace scroll_content with a single centred loading label."""

@@ -79,6 +79,7 @@ class SettingsStringRow(SettingsRowBase):
         if self.section and self.key:
             self.config.adddefaultsection(self.section)
             self.config.set(self.section, self.key, val)
+            self.config.write()
 
 
 class SettingsNumericRow(SettingsStringRow):
@@ -102,6 +103,7 @@ class SettingsBoolRow(SettingsRowBase):
         if self.section and self.key:
             self.config.adddefaultsection(self.section)
             self.config.set(self.section, self.key, '1' if val else '0')
+            self.config.write()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -281,6 +283,7 @@ class SettingsOptionsRow(SettingsRowBase):
         if self.section and self.key:
             self.config.adddefaultsection(self.section)
             self.config.set(self.section, self.key, val)
+            self.config.write()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -428,17 +431,18 @@ class SettingsScreen(PiHomeScreen):
     # ── Persistence ───────────────────────────────────────────────────────────
 
     def _save_and_close(self):
-        self.go_back()
+        """Persist config, close settings, then do a live reload.
+        reload_configuration() handles: CONFIG.reload(), wallpaper restart,
+        and on_config_update() on every screen (which re-applies theme colors).
+        Do NOT call restart() — that calls self.stop() which kills the process on Pi.
+        """
         self.config.write()
+        self.go_back()
         from util.helpers import get_app
         get_app().reload_configuration()
 
     def updated(self, section, key, value):
-        self.config.write()
-        if self.callback is not None:
-            self.callback()
+        pass  # writes happen immediately in each row's on_value
 
     def closed(self, settings):
-        self.config.write()
-        if self.callback is not None:
-            self.callback()
+        pass  # kept for compatibility

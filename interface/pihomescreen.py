@@ -86,6 +86,39 @@ class PiHomeScreen(Screen):
             AUDIO_PLAYER.volume_down()
         return False
 
-    def on_config_update(self, payload):
-        # default behavior is simply to reload the screen
+    def on_config_update(self, config):
+        """Called by reload_all() after any settings change.
+        Re-applies standard theme colors to this screen so dark/light mode
+        and accent changes are reflected without a full app restart.
+        """
+        try:
+            from theme.theme import Theme
+            th = Theme()
+            _standard = [
+                ('bg_color',     th.BACKGROUND_PRIMARY),
+                ('header_color', th.BACKGROUND_SECONDARY),
+                ('text_color',   th.TEXT_PRIMARY),
+                ('muted_color',  th.TEXT_SECONDARY),
+                ('accent_color', th.ALERT_INFO),
+                ('status_color', th.TEXT_SECONDARY),
+            ]
+            for prop, token in _standard:
+                if hasattr(self, prop):
+                    setattr(self, prop, th.get_color(token))
+            # card_color is conventionally derived from header_color
+            if hasattr(self, 'card_color') and hasattr(self, 'header_color'):
+                hc = self.header_color
+                self.card_color = (hc[0], hc[1], hc[2], 0.85)
+            # sidebar / divider variants used in Settings screen
+            if hasattr(self, 'sidebar_color') and hasattr(self, 'header_color'):
+                hc = self.header_color
+                self.sidebar_color = (hc[0] * 0.80, hc[1] * 0.80, hc[2] * 0.80, 1.0)
+            if hasattr(self, 'divider_color') and hasattr(self, 'header_color'):
+                hc = self.header_color
+                self.divider_color = (hc[0] * 0.60, hc[1] * 0.60, hc[2] * 0.60, 1.0)
+            if hasattr(self, 'row_bg_color') and hasattr(self, 'header_color'):
+                hc = self.header_color
+                self.row_bg_color = (hc[0], hc[1], hc[2], 0.7)
+        except Exception as e:
+            pass
         self._trigger_layout()

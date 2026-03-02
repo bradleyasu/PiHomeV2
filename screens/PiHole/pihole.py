@@ -210,6 +210,29 @@ class PiHoleScreen(PiHomeScreen):
         self._stop_polling()
         return super().on_exit(*args)
 
+    def on_config_update(self, config):
+        """Reload PiHole credentials and restart the poller when settings change."""
+        enabled  = config.get('pihole', 'enabled', False)
+        new_host = config.get('pihole', 'host', 'http://pi.hole')
+        new_key  = config.get('pihole', 'api_key', '')
+
+        credentials_changed = (new_host != self.HOST or new_key != self.API_KEY)
+        self.HOST    = new_host
+        self.API_KEY = new_key
+
+        if not enabled:
+            self._stop_polling()
+        elif credentials_changed:
+            self.API_SID = None   # force re-auth with new credentials
+            self._stop_polling()
+            if self.is_visible:
+                if new_key:
+                    self._authenticate()
+                else:
+                    self._start_polling()
+
+        super().on_config_update(config)
+
     def update(self, data):
         if not self.is_visible:
             return
