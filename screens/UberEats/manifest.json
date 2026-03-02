@@ -3,8 +3,56 @@
     "name": "UberEatsScreen",
     "id": "ubereats",
     "label": "Uber Eats",
-    "description": "",
+    "settingsLabel": "Uber Eats",
+    "settingsIndex": 5,
+    "description": "Live Uber Eats order tracking",
     "hidden": false,
     "requires_pin": false,
-    "icon": "./screens/UberEats/icon.png"
+    "icon": "./screens/UberEats/icon.png",
+    "settings": [
+        {
+            "type": "title",
+            "title": "Uber Eats Order Tracking"
+        },
+        {
+            "type": "string",
+            "title": "Session Cookie",
+            "desc": "Open ubereats.com → DevTools → Network → find 'getActiveOrdersV1' → Request Headers → copy the full 'cookie' value here",
+            "section": "ubereats",
+            "key": "cookie"
+        },
+        {
+            "type": "string",
+            "title": "CSRF Token",
+            "desc": "From the same request headers, copy the 'x-csrf-token' value here",
+            "section": "ubereats",
+            "key": "csrf_token"
+        },
+        {
+            "type": "options",
+            "title": "Locale",
+            "desc": "Your Uber Eats region locale code",
+            "section": "ubereats",
+            "key": "locale",
+            "options": ["en-US", "en-CA", "en-GB", "en-AU"]
+        },
+        {
+            "type": "title",
+            "title": "Polling Schedule"
+        },
+        {
+            "type": "numeric",
+            "title": "Start Polling Hour (24h)",
+            "desc": "Begin checking for active orders at this hour. e.g. 17 = 5:00 PM",
+            "section": "ubereats",
+            "key": "poll_start_hour"
+        },
+        {
+            "type": "numeric",
+            "title": "Stop Polling Hour (24h)",
+            "desc": "Stop background polling after this hour. e.g. 23 = 11:00 PM",
+            "section": "ubereats",
+            "key": "poll_end_hour"
+        }
+    ]
 }

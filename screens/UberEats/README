@@ -1,11 +1,38 @@
+## Uber Eats Order Tracker
 
-This screen requares an `orders.sh` script.  The script should be placed in the `screens/UberEats` directory.
+Displays live Uber Eats order status — restaurant name, order phase, 5-step
+progress bar, ETA badge, and a map showing the courier, restaurant, and
+delivery address.  When an order is detected for the first time, PiHome
+navigates to this screen and plays a notification chime.
 
-The script should be a bash script that runs a curl command
+### Why it uses session cookies
 
-```bash
-#!/bin/bash
-curl -s <URL_DATA>
-```
+Uber Eats has no official consumer-facing API.  The screen accesses the same
+internal `getActiveOrdersV1` endpoint that ubereats.com uses in your browser,
+which is authenticated with your browser session cookies.
 
-The `<URL_DATA>` is your uber eats active orders url with all headers.  The easiest way to get this is to log into uber eats in your browser, open the network tab in dev tools, and look for the request called `active_orders`.  Right click on it, and copy the curl command.  Paste that into the script.  **IMPORTANT** Make sure you set the curl command to run in silent mode with the `-s` flag.  This will prevent the script from outputting the data to the screen.  See the example above.  When you copy from your browser, it will not have the `-s` flag - you will need to manually add it. The script should be executable.
+### Setup
+
+1. Open https://www.ubereats.com in a desktop browser and log in.
+2. Open DevTools (F12) → Network tab.
+3. Either place an active order or refresh the page while one is in progress.
+4. In the Network tab, look for a request named **getActiveOrdersV1**.
+5. Click it → Request Headers panel.
+6. Copy the full value of the **cookie** header (it will be a long string).
+7. Copy the value of the **x-csrf-token** header.
+8. In PiHome → Settings → Uber Eats, paste both values into the respective fields.
+
+PiHome will immediately start polling and will display any active orders.
+
+### Token expiry
+
+Browser session cookies expire over time (typically days to weeks).  When the
+screen stops showing your orders, repeat the steps above to grab fresh values.
+No restart of PiHome is required — pasting new values in Settings takes effect
+immediately.
+
+### Polling schedule
+
+By default the screen polls every 60 seconds between 5 PM and 11 PM.  It also
+polls immediately whenever you navigate to the screen.  The hours can be
+adjusted in Settings (24-hour format).

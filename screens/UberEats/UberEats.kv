@@ -1,176 +1,90 @@
 #:kivy 2.0.0
-#:import MapView kivy.garden.mapview.MapView
-#:import MapSource kivy.garden.mapview.MapSource
-#:import MapMarker kivy.garden.mapview.MapMarker
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Uber Eats screen
+# The header is declared here in KV.  The content area below it is built and
+# rebuilt entirely in Python (UberEats.py) depending on whether an order is
+# active.  MapView, progress bar, and hero image are all constructed there.
+# ─────────────────────────────────────────────────────────────────────────────
+
 <UberEatsScreen>:
-    canvas:
+
+    canvas.before:
         Color:
-            rgba: 0, 0, 0, 1
+            rgba: root.bg_color
         Rectangle:
+            pos:  self.pos
             size: self.size
-            pos: self.pos
 
-    FloatLayout:
+    BoxLayout:
+        orientation: 'vertical'
         size_hint: 1, 1
-        padding: 10
-        spacing: 10
 
-        MapView:
-            id: mapview
-            size_hint: 1, 1
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            lat: 40.440624
-            lon: -79.995888
-            zoom: 15
-            map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_dark', min_zoom=13, max_zoom=16)
-            # map_source: MapSource(url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', attribution='', cache_key='cartodb_map_light', min_zoom=13, max_zoom=16)
-            MapMarker:
-                lat: root.marker_latitude
-                lon: root.marker_longitude
-                source: 'screens/UberEats/resized_marker.png' if root.order_count > 0 else ''
-            MapMarker:
-                lat: root.store_latitude
-                lon: root.store_longitude
-                source: 'screens/UberEats/restaurant.png' if root.order_count > 0 else ''
-            MapMarker:
-                lat: root.home_latitude
-                lon: root.home_longitude
-                source: 'screens/UberEats/home.png' if root.order_count > 0 else ''
-
-        Widget:
-            canvas:
-                Color:
-                    rgba: 0, 0, 0, 1
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            size_hint: 1, 0.3
-            pos_hint: {'center_x': 0.5, 'center_y': 1}
-
-        Label:
-            id: title
-            text: root.title
-            font_size: '32sp'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.9}
-
+        # ── Header ────────────────────────────────────────────────────────────
         BoxLayout:
-            canvas:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(64)
+            padding: [dp(68), dp(10), dp(16), dp(10)]
+            spacing: dp(10)
+
+            canvas.before:
                 Color:
-                    rgba: 1, 1, 1, 1
-                BoxShadow:
-                    pos: self.pos
+                    rgba: root.header_color
+                Rectangle:
+                    pos:  self.pos
                     size: self.size
-                    offset: 0, -10
-                    spread_radius: -40, -40
-                    border_radius: 20, 20, 20, 20
-                    blur_radius: 80
+                # Bottom hairline divider
                 Color:
-                    rgba: 1, 1, 1, 1
-                RoundedRectangle:
-                    size: self.size
-                    pos: self.pos
-                    radius: [20,]
+                    rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.12
+                Rectangle:
+                    pos:  self.x, self.y
+                    size: self.width, dp(1)
+
+            # Restaurant name / "Uber Eats" when idle
+            Label:
+                text: root.restaurant_name
+                font_name: 'Nunito'
+                font_size: '18sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
+
+            # ETA badge — fades out when no active order
+            BoxLayout:
+                size_hint: None, None
+                size: dp(104), dp(34)
+                pos_hint: {'center_y': 0.5}
+                opacity: 1 if root.eta_text else 0
+                padding: [dp(10), 0, dp(10), 0]
+
+                canvas.before:
+                    Color:
+                        rgba: root.brand_color[0], root.brand_color[1], root.brand_color[2], 0.18
+                    RoundedRectangle:
+                        pos:    self.pos
+                        size:   self.size
+                        radius: [dp(17)]
+
+                Label:
+                    text: root.eta_text
+                    font_name: 'Nunito'
+                    font_size: '12sp'
+                    bold: True
+                    color: root.brand_color
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+        # ── Dynamic content area ──────────────────────────────────────────────
+        # Cleared and rebuilt by _rebuild_content() in Python whenever
+        # order_active changes.  Shows either the empty-state panel or
+        # the active-order panel (hero image + status card + map).
+        BoxLayout:
+            id: content_area
             orientation: 'vertical'
-            size_hint: 0.8, 0.15
-            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
-            padding: dp(10)
-            spacing: dp(20)
+            size_hint: 1, 1
 
-            Label:
-                text: root.current_status
-                font_size: '20sp'
-                size_hint: 1, 0.2
-                color: 0, 0, 0, 1
-                font_name: 'Nunito'
-                halign: 'center'
-                valign: 'middle'
-
-            GridLayout:
-                cols: 5
-                size_hint: 1, 0.05
-                spacing: dp(10)
-
-                Widget:
-                    canvas:
-                        Color:
-                            rgba: root.tick_color_disabled if root.ticker_count < 1 else root.tick_color
-                        RoundedRectangle:
-                            size: self.size
-                            pos: self.pos
-                            radius: [5,]
-
-                Widget:
-                    canvas:
-                        Color:
-                            rgba: root.tick_color_disabled if root.ticker_count < 2 else root.tick_color
-                        RoundedRectangle:
-                            size: self.size
-                            pos: self.pos
-                            radius: [5,]
-
-                Widget:
-                    canvas:
-                        Color:
-                            rgba: root.tick_color_disabled if root.ticker_count < 3 else root.tick_color
-                        RoundedRectangle:
-                            size: self.size
-                            pos: self.pos
-                            radius: [5,]
-
-                Widget:
-                    canvas:
-                        Color:
-                            rgba: root.tick_color_disabled if root.ticker_count < 4 else root.tick_color
-                        RoundedRectangle:
-                            size: self.size
-                            pos: self.pos
-                            radius: [5,]
-
-                Widget:
-                    canvas:
-                        Color:
-                            rgba: root.tick_color_disabled if root.ticker_count < 5 else root.tick_color
-                        RoundedRectangle:
-                            size: self.size
-                            pos: self.pos
-                            radius: [5,]
-        BoxLayout:
-            canvas:
-                Color:
-                    rgba: 1, 0, 0, 0 if root.red_text == '' else 1
-                RoundedRectangle:
-                    size: self.size
-                    pos: self.pos
-                    radius: [20,]
-            orientation: 'horizontal'
-            size_hint: 0.15, 0.1
-            pos_hint: {'center_x': 0.85, 'center_y': 0.18}
-            padding: dp(10)
-            Label:
-                id: time_remaining
-                text: root.red_text
-                color: 1, 1, 1, 1
-                font_size: '14sp'
-                font_name: 'Nunito'
-                valign: 'middle'
-                halign: 'center'
-
-        BoxLayout:
-            canvas:
-                Color:
-                    rgba: 0, 0, 0, 1
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            orientation: 'horizontal'
-            # set size_hint to 1, 1 if root.error is not an empty string
-            size_hint: root.error_size_hint
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            Label:
-                text: root.error_message
-                color: 1, 0, 0, 1
-                font_size: '24sp'
-                font_name: 'Nunito'
-                halign: 'center'
-                valign: 'middle'
-    
