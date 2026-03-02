@@ -1,4 +1,5 @@
 import json
+import glob
 import os
 from kivy.clock import Clock
 from kivy.app import App
@@ -19,29 +20,34 @@ class SettingsScreen(PiHomeScreen):
         super(SettingsScreen, self).__init__(**kwargs)
         config = ConfigParser()
         config.read(CONF_FILE)
-        # config.add_callback(self.updated)
         self.config = config
         s = SettingsWithSidebar()
         s.bind(on_close=self.closed)
         self.callback = callback
-        # s.register_type("pin", PinPad)
 
-        # Read all of the json configuations and add them to the screen
-        dir = './screens/Settings/json/' 
+        # Scan all screen manifests for embedded settings panels
+        for manifest_path in sorted(glob.glob('./screens/*/manifest.json')):
+            with open(manifest_path, 'r') as f:
+                manifest = json.load(f)
 
-        # Set defaults
-        for file in sorted(os.listdir(dir)):
-            if file.endswith(".json"):
-                with open(dir+file, 'r') as f:
-                    conf = json.load(f)
-                    for c in conf:
-                        if "section" in c and "key" in c:
-                            config.adddefaultsection(c['section'])
-                            config.setdefault(c['section'], c['key'], '')
+            # Skip hidden screens and those with no settings defined
+            if manifest.get('hidden', False):
+                continue
+            if 'settings' not in manifest:
+                continue
 
-                # Add configuration panel to UI
-                s.add_json_panel(file.replace("_", " ").replace(".json", "").capitalize(), config, dir+file)
-        
+            settings_data = manifest['settings']
+            label = manifest.get('settingsLabel', manifest.get('label', os.path.basename(os.path.dirname(manifest_path))))
+
+            # Register config defaults
+            for c in settings_data:
+                if 'section' in c and 'key' in c:
+                    config.adddefaultsection(c['section'])
+                    config.setdefault(c['section'], c['key'], '')
+
+            # Add configuration panel to UI (Kivy accepts a JSON string via data=)
+            s.add_json_panel(label, config, data=json.dumps(settings_data))
+
         # Override on_close event to return to the previous screen
         def on_close():
             self.go_back()
@@ -52,6 +58,16 @@ class SettingsScreen(PiHomeScreen):
 
         s.on_close = on_close
         self.add_widget(s)
+
+    def updated(self, section, key, value):
+        self.config.write()
+        if self.callback is not None:
+            self.callback()
+
+    def closed(self, settings):
+        self.config.write()
+        if self.callback is not None:
+            self.callback()
     
     def updated(self, section, key, value):
         # toast(label="PiHome needs to be restarted for new settings to take effect")

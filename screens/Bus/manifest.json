@@ -3,8 +3,43 @@
     "name": "BusScreen",
     "id": "bus",
     "label": "Bus Dynamic",
+    "settingsLabel": "Transportation",
     "description": "Bus",
     "hidden": false,
     "icon": "screens/Bus/icon.png",
-    "requires_pin": false
+    "requires_pin": false,
+    "settings": [
+        {
+            "type": "title",
+            "title": "Pittsburgh Regional Transit"
+        },
+        {
+            "type": "string",
+            "title": "PRT API Key",
+            "desc": "API Key",
+            "section": "prt",
+            "key": "api_key"
+        },
+        {
+            "type": "string",
+            "title": "Route",
+            "desc": "Comma delimited bus numbers to monitor",
+            "section": "prt",
+            "key": "routes"
+        },
+        {
+            "type": "string",
+            "title": "Stops",
+            "desc": "Comma delimited bus stop numbers",
+            "section": "prt",
+            "key": "stops"
+        },
+        {
+            "type": "string",
+            "title": "Service Logo",
+            "desc": "URL to Bus/Transportation services logo",
+            "section": "prt",
+            "key": "logo"
+        }
+    ]
 }

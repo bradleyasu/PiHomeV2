@@ -3,8 +3,29 @@
     "name": "HomeAssistantScreen",
     "id": "_home_assistant_screen",
     "label": "Home Assistant",
+    "settingsLabel": "Home Assistant",
     "description": "Home Assistant Interface",
     "hidden": false,
     "requires_pin": false,
-    "index": 10
+    "index": 10,
+    "settings": [
+        {
+            "type": "title",
+            "title": "Home Assistant"
+        },
+        {
+            "type": "string",
+            "title": "Host URL",
+            "desc": "Where is home assistant running?  Typically http://homeassistant:8123",
+            "section": "homeassistant",
+            "key": "host"
+        },
+        {
+            "type": "string",
+            "title": "Long Lived Access Token",
+            "desc": "You can typically get this in your Profile on Home Assistant.",
+            "section": "homeassistant",
+            "key": "token"
+        }
+    ]
 }

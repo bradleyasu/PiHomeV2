@@ -4,7 +4,176 @@
     "name": "HomeScreen",
     "id": "_home",
     "label": "PiHome",
+    "settingsLabel": "General",
     "description": "PiHome Home Screen",
     "hidden": false,
-    "requires_pin": false
+    "requires_pin": false,
+    "settings": [
+        {
+            "type": "title",
+            "title": "General"
+        },
+        {
+            "type": "string",
+            "title": "Require PIN to unlock",
+            "desc": "If resuming from the lock screen, a PIN will be required if configured",
+            "section": "security",
+            "key": "pin"
+        },
+        {
+            "type": "bool",
+            "title": "Dark Mode",
+            "desc": "Bugs are attracted to the light, use dark mode just to be safe.  Restarting PiHome is required for this setting to be fully applied",
+            "section": "theme",
+            "key": "dark_mode"
+        },
+        {
+            "type": "title",
+            "title": "Weather"
+        },
+        {
+            "type": "bool",
+            "title": "Enable Weather via tomorrow.io",
+            "desc": "If enabled, weather data will be fetched from tomorrow.io and displayed",
+            "section": "weather",
+            "key": "enabled"
+        },
+        {
+            "type": "string",
+            "title": "tomorrow.io API Key",
+            "desc": "Weather data is pulled from tomorrow.io and an API key is required",
+            "section": "weather",
+            "key": "api_key"
+        },
+        {
+            "type": "string",
+            "title": "Latitude Coordinate",
+            "desc": "Your current location's latitude coordinate",
+            "section": "weather",
+            "key": "latitude"
+        },
+        {
+            "type": "string",
+            "title": "Longitude Coordinate",
+            "desc": "Your current location's Longitude coordinate",
+            "section": "weather",
+            "key": "longitude"
+        },
+        {
+            "type": "title",
+            "title": "Wallpaper"
+        },
+        {
+            "type": "options",
+            "title": "Wallpaper Source",
+            "desc": "Set your preferred wallpaper source",
+            "section": "wallpaper",
+            "key": "source",
+            "options": ["PiHome CDN", "Reddit", "Wallhaven", "Custom"]
+        },
+        {
+            "type": "bool",
+            "title": "Use Top of All Time?",
+            "desc": "For reddit wallpaper only, if enabled a random wallpaper will be selected from the top of all time.  Disabled will be a random wallpaper from the hot section",
+            "section": "wallpaper",
+            "key": "top_of_all_time"
+        },
+        {
+            "type": "string",
+            "title": "Subreddits",
+            "desc": "Use + to combine multiple subreddits",
+            "section": "wallpaper",
+            "key": "subreddits"
+        },
+        {
+            "type": "string",
+            "title": "Wallhaven Search",
+            "desc": "Search phrase to pass to wallhaven.  A random wallpaper will be selected from the results.  (default: landscape)",
+            "section": "wallpaper",
+            "key": "whsearch"
+        },
+        {
+            "type": "string",
+            "title": "Custom URL",
+            "desc": "Enter a custom URL to set your background",
+            "section": "wallpaper",
+            "key": "custom_url"
+        },
+        {
+            "type": "bool",
+            "title": "Allow Stretch",
+            "desc": "Default True.  If enabled, wallpaper will fit the screen.  If False, wallpaper will be scaled, but there may be a black border",
+            "section": "wallpaper",
+            "key": "allow_stretch"
+        },
+        {
+            "type": "title",
+            "title": "News/Feed"
+        },
+        {
+            "type": "options",
+            "title": "News Source",
+            "desc": "Set the source you would like to use for your news feed",
+            "section": "news",
+            "key": "source",
+            "options": ["Reddit", "Disabled News"]
+        },
+        {
+            "type": "string",
+            "title": "Subreddits",
+            "desc": "Use + to combine multiple subreddits",
+            "section": "news",
+            "key": "subreddits"
+        },
+        {
+            "type": "title",
+            "title": "Music"
+        },
+        {
+            "type": "string",
+            "title": "Album Art Source",
+            "desc": "Set your Discogs API Token",
+            "section": "music",
+            "key": "album_art_source"
+        },
+        {
+            "type": "title",
+            "title": "MQTT"
+        },
+        {
+            "type": "string",
+            "title": "Host",
+            "desc": "MQTT Service Host",
+            "section": "mqtt",
+            "key": "host"
+        },
+        {
+            "type": "numeric",
+            "title": "Port Number",
+            "desc": "MQTT service port number.  Typically 1883 or 8883",
+            "section": "mqtt",
+            "key": "port"
+        },
+        {
+            "type": "string",
+            "title": "User ID/Username",
+            "desc": "MQTT Service user id",
+            "section": "mqtt",
+            "key": "user_id"
+        },
+        {
+            "type": "string",
+            "title": "User Password/Key",
+            "desc": "MQTT Service user password/key",
+            "section": "mqtt",
+            "key": "password"
+        },
+        {
+            "type": "string",
+            "title": "Feed",
+            "desc": "MQTT Service where PiHome payloads can be subscribed and published",
+            "section": "mqtt",
+            "key": "feed"
+        }
+    ]
 }
