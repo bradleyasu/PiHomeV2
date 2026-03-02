@@ -378,7 +378,12 @@ class SpotifyScreen(PiHomeScreen):
                     kw["json"] = json_body
                 if params:
                     kw["params"] = params
-                fn(url, **kw)
+                resp = fn(url, **kw)
+                if resp.status_code not in (200, 202, 204):
+                    PIHOME_LOGGER.error(
+                        f"Spotify {method.upper()} /{path} "
+                        f"→ {resp.status_code}: {resp.text[:200]}"
+                    )
                 Clock.schedule_once(lambda dt: self._fetch_state(), 0.5)
             except Exception as e:
                 PIHOME_LOGGER.error(f"Spotify cmd error: {e}")
@@ -542,7 +547,7 @@ class SpotifyScreen(PiHomeScreen):
             padding=[dp(18), dp(4), dp(18), 0],
         )
         dev_lbl = Label(
-            text=("\u25B6  " + self.device_name) if self.device_name else "",
+            text=(u"› " + self.device_name) if self.device_name else "",
             font_name="Nunito", font_size="11sp",
             color=list(_GREEN[:3]) + [0.65],
             halign="right", valign="middle",
@@ -550,7 +555,7 @@ class SpotifyScreen(PiHomeScreen):
         dev_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
         self.bind(
             device_name=lambda i, v: setattr(
-                dev_lbl, "text", ("\u25B6  " + v) if v else ""
+                dev_lbl, "text", (u"› " + v) if v else ""
             )
         )
         device_bar.add_widget(Widget())
@@ -739,45 +744,48 @@ class SpotifyScreen(PiHomeScreen):
         # ── 6. Volume ─────────────────────────────────────────────────────────
         vol_row = BoxLayout(
             orientation="horizontal",
-            size_hint_y=None, height=dp(40),
-            padding=[dp(24), dp(8), dp(24), dp(8)],
-            spacing=dp(10),
+            size_hint_y=None, height=dp(44),
+            padding=[0, dp(8), 0, dp(8)],
         )
-        vol_lo = Label(
-            text="\U0001F509",
-            font_name="ArialUnicode", font_size="14sp",
-            color=[1, 1, 1, 0.40],
-            size_hint_x=None, width=dp(22),
-            halign="center", valign="middle",
+        vol_lo = Image(
+            source="assets/icons/audio_mute.png",
+            size_hint=(None, None),
+            size=(dp(20), dp(20)),
+            allow_stretch=True, keep_ratio=True,
         )
-        vol_lo.bind(size=lambda w, s: setattr(w, "text_size", s))
 
         vol_slider = SpotifySlider(
             min_val=0, max_val=100, value=self.volume,
+            size_hint_x=None, width=dp(200),
             track_height=dp(3), thumb_r=dp(6),
         )
 
+        _vol_ev = [None]
         def _on_vol_change(inst, v):
             if not self._vol_from_api:
                 # Suppress poll overwrite for 3 s so the API has time to settle
                 self._suppress_vol_until = time.time() + 3.0
-                self.set_volume(int(v))
+                if _vol_ev[0]:
+                    _vol_ev[0].cancel()
+                _vol_ev[0] = Clock.schedule_once(
+                    lambda dt: self.set_volume(int(vol_slider.value)), 0.3
+                )
 
         vol_slider.bind(value=_on_vol_change)
         self.bind(volume=lambda i, v: setattr(vol_slider, "value", v))
 
-        vol_hi = Label(
-            text="\U0001F50A",
-            font_name="ArialUnicode", font_size="14sp",
-            color=[1, 1, 1, 0.40],
-            size_hint_x=None, width=dp(22),
-            halign="center", valign="middle",
+        vol_hi = Image(
+            source="assets/icons/audio_volume.png",
+            size_hint=(None, None),
+            size=(dp(20), dp(20)),
+            allow_stretch=True, keep_ratio=True,
         )
-        vol_hi.bind(size=lambda w, s: setattr(w, "text_size", s))
 
+        vol_row.add_widget(Widget())   # left spacer — centers the group
         vol_row.add_widget(vol_lo)
         vol_row.add_widget(vol_slider)
         vol_row.add_widget(vol_hi)
+        vol_row.add_widget(Widget())   # right spacer
         root.add_widget(vol_row)
         return root
 
