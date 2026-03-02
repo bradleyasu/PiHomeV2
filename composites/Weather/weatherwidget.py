@@ -102,13 +102,17 @@ class WeatherWidget(Widget):
     def on_touch_down(self, touch):
         if self.is_loaded == False:
             return False
-        if self.collide_point(*touch.pos):
+        # Only respond to touches that land on the visible pill, not the full-width widget
+        pill_x = self.right - dp(178)
+        pill_y = self.y + dp(self.y_offset)
+        if (pill_x <= touch.x <= pill_x + dp(178) and
+                pill_y <= touch.y <= pill_y + dp(44)):
             if self.overlay_active == True:
                 self.overlay_animate(opacity = 0, offset = 10)
-            else: 
+            else:
                 self.overlay_animate(opacity = 1, offset = 0)
             self.overlay_active = not self.overlay_active
-            return False
+        return False
     
     def overlay_animate(self, opacity = 1, offset = 0):
         animation = Animation(overlay_opacity = opacity, t='linear', d=0.5)
@@ -165,7 +169,7 @@ class WeatherWidget(Widget):
                     else:
                         self.pill_stat_color = list(self.text_color)
                 else:
-                    self.pill_stat = "{}% rain".format(WEATHER.precip_propability)
+                    self.pill_stat = "{}% Precip".format(WEATHER.precip_propability)
                     self.pill_stat_color = list(self.text_color)
             except Exception:
                 pass
