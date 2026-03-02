@@ -445,6 +445,10 @@ class SettingsScreen(PiHomeScreen):
         and on_config_update() on every screen (which re-applies theme colors).
         Do NOT call restart() — that calls self.stop() which kills the process on Pi.
         """
+        # Re-read the latest file before writing so that any values written
+        # programmatically at runtime (e.g. OAuth refresh tokens) are preserved
+        # and not overwritten with the stale in-memory defaults.
+        self.config.read(CONF_FILE)
         self.config.write()
         self.go_back()
         from util.helpers import get_app

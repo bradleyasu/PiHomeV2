@@ -748,9 +748,26 @@ class SpotifyScreen(PiHomeScreen):
         vol_row.add_widget(vol_slider)
         vol_row.add_widget(vol_hi)
         root.add_widget(vol_row)
-
-        root.add_widget(Widget())
         return root
+
+    # ── Rotary encoder ────────────────────────────────────────────────────────
+
+    def on_rotary_turn(self, direction, button_pressed):
+        """Spin the encoder to adjust Spotify volume by ±5."""
+        step = 5 * direction
+        new_vol = max(0, min(100, int(self.volume) + step))
+        self.volume = new_vol
+        self.set_volume(new_vol)
+        return True
+
+    def on_rotary_pressed(self):
+        """Press the encoder to toggle play/pause."""
+        self.toggle_play_pause()
+        return True
+
+    def on_rotary_long_pressed(self):
+        """Long-press has no action on Spotify screen."""
+        return True
 
     # ── Reactive callbacks ────────────────────────────────────────────────────
 
