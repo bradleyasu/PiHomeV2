@@ -54,22 +54,31 @@
         size: root.size
         pos: root.pos
 
-        # Title + scrollable message, centred vertically with generous padding
+        # Centered content card — dark semi-transparent surface keeps text
+        # legible regardless of what the background image contains.
         BoxLayout:
             orientation: 'vertical'
             spacing: dp(14)
-            padding: dp(48), dp(48), dp(48), dp(72)
+            padding: dp(28), dp(28), dp(28), dp(28)
             size_hint: None, None
-            width: root.width
-            height: root.height
-            pos: root.pos
+            width: min(root.width - dp(64), dp(520))
+            height: root.height - dp(100)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 0.62
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(18)]
 
             # ── Title ─────────────────────────────────────────────────────────
             Label:
                 text: root.title
                 font_name: 'Nunito'
                 bold: True
-                font_size: '28sp'
+                font_size: '26sp'
                 color: 1, 1, 1, 1
                 size_hint_y: None
                 height: self.texture_size[1]
@@ -85,8 +94,8 @@
                     Color:
                         rgba: 1, 1, 1, 0.15
                     Rectangle:
-                        pos: self.x + dp(32), self.y
-                        size: self.width - dp(64), dp(1)
+                        pos: self.x + dp(16), self.y
+                        size: self.width - dp(32), dp(1)
 
             # ── Scrollable message ────────────────────────────────────────────
             ScrollView:
@@ -100,8 +109,8 @@
                 Label:
                     text: root.message
                     font_name: 'Nunito'
-                    font_size: '16sp'
-                    color: 1, 1, 1, 0.82
+                    font_size: '15sp'
+                    color: 1, 1, 1, 0.88
                     size_hint_y: None
                     height: max(self.texture_size[1], scroll_area.height)
                     text_size: self.width, None
