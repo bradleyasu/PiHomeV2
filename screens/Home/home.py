@@ -3,8 +3,8 @@ from components.Image.networkimage import NetworkImage
 from components.Slider.slidecontrol import SlideControl
 
 from composites.Reddit.redditwidget import RedditWidget
-from composites.HomeAssistant.hadevicecard import HAMediaCard  # noqa — also loads hadevicecard.kv
-from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
+from composites.HomeAssistant.hadevicecard import make_ha_card, load_ha_favorites  # noqa — also loads hadevicecard.kv
+from services.homeassistant.homeassistant import HOME_ASSISTANT
 import requests
 import time
 from kivy.app import App
@@ -35,7 +35,11 @@ from util.helpers import appmenu_open, get_app
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
-from util.const import _SETTINGS_SCREEN, CDN_ASSET, GESTURE_SWIPE_DOWN, GESTURE_SWIPE_UP
+from util.const import (
+    _SETTINGS_SCREEN, CDN_ASSET,
+    GESTURE_SWIPE_DOWN, GESTURE_SWIPE_UP,
+    GESTURE_SWIPE_LEFT_TO_RIGHT, GESTURE_SWIPE_RIGHT_TO_LEFT,
+)
 
 Builder.load_file("./screens/Home/home.kv")
 
@@ -59,11 +63,11 @@ class HomeScreen(PiHomeScreen):
     brightness_slider = None
     banButton = None
     qr_img = None
-    _media_card = None
-    _splash_done = False
-    _media_card_dismissed = False  # True when user has swiped the card away
-    _last_touch_start = None         # (x, y) of the most recent touch_down
 
+    # ── HA favorites panel state ──────────────────────────────────────────────
+    _ha_card      = None   # currently displayed HADeviceCard widget, or None
+    _ha_favorites = []     # ordered list of favorited entity_ids
+    _ha_idx       = -1     # index into _ha_favorites of the displayed card (-1 = none shown)
 
 
     def __init__(self, **kwargs):
@@ -72,22 +76,14 @@ class HomeScreen(PiHomeScreen):
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
-        # self.icon = CDN_ASSET.format("default_home_icon.png")
-        # Clock.schedule_once(lambda _: self.startup_animation(), 10)
         Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
-
-        # Listen for HA media player state changes
-        self._ha_media_listener = HomeAssistantListener(self._on_ha_state_change)
-        HOME_ASSISTANT.add_listener(self._ha_media_listener)
-        # No initial check here — we wait until after the splash animation
 
 
     def on_enter(self, *args):
         if self.is_first_run is True:
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False
-            #SFX.play("notify")
 
         return super().on_enter(*args)
 
@@ -95,7 +91,6 @@ class HomeScreen(PiHomeScreen):
         set_brightness(value)
 
     def open_settings(self):
-        # self.manager.current = 'settings'
         PIHOME_SCREEN_MANAGER.goto(_SETTINGS_SCREEN)
 
     def open_pin(self):
@@ -108,14 +103,6 @@ class HomeScreen(PiHomeScreen):
         animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
         animation &= Animation(weather_opacity = 1, t='linear', d=1)
         animation.start(self)
-        # After the animation completes (~1.5s), allow media card to appear
-        Clock.schedule_once(lambda dt: self._after_splash(), 2)
-        # AUDIO_PLAYER.stop()
-        # AUDIO_PLAYER.clear_playlist()
-
-    def _after_splash(self):
-        self._splash_done = True
-        self._check_active_media()
 
     def run(self):
         time.ctime()
@@ -124,122 +111,193 @@ class HomeScreen(PiHomeScreen):
 
         self.weather_code = str(WEATHER.weather_code)
 
+    # ── Gestures ──────────────────────────────────────────────────────────────
+
     def handle_gesture(self, gesture):
-        if gesture == GESTURE_SWIPE_UP:
-            # If the swipe started over the media card, dismiss it for 15 minutes
-            if (self._media_card is not None
-                    and self._last_touch_start is not None
-                    and self._media_card.collide_point(*self._last_touch_start)):
-                self._media_card_dismissed = True
-                self._dismiss_media_card_animated()
-                return
         if gesture == GESTURE_SWIPE_DOWN:
-            # Re-show if the card was manually dismissed and a player is still active
-            if self._media_card is None and self._media_card_dismissed:
-                active = self._find_active_player()
-                if active:
-                    self._media_card_dismissed = False
-                    eid, state_dict = active
-                    self._show_media_card_animated(eid, state_dict)
+            self._handle_swipe_down()
+        elif gesture == GESTURE_SWIPE_UP:
+            self._handle_swipe_up()
+        elif gesture == GESTURE_SWIPE_LEFT_TO_RIGHT:
+            self._ha_step(-1)   # swipe right → previous favorite
+        elif gesture == GESTURE_SWIPE_RIGHT_TO_LEFT:
+            self._ha_step(+1)   # swipe left  → next favorite
 
-    def on_touch_down(self, touch):
-        self._last_touch_start = (touch.x, touch.y)
-        return super().on_touch_down(touch)
+    def _handle_swipe_down(self):
+        """Swipe down: show the first HA favorite (or nothing if none)."""
+        if self._ha_card is not None:
+            return  # card already visible — ignore
+        favs = sorted(load_ha_favorites())
+        if not favs:
+            return
+        self._ha_favorites = favs
+        self._show_ha_card(0)
 
-    def _dismiss_media_card_animated(self):
-        """Slide the media card upward and fade it out, then remove it."""
-        card = self._media_card
+    def _handle_swipe_up(self):
+        """Swipe up: dismiss the current HA card."""
+        if self._ha_card is not None:
+            self._dismiss_ha_card_animated()
+
+    def _ha_step(self, delta):
+        """Cycle through favorites by *delta* (+1 = next, -1 = previous)."""
+        favs = sorted(load_ha_favorites())
+        if not favs:
+            return
+        self._ha_favorites = favs
+        if self._ha_card is None:
+            # No card visible — slide down from above
+            idx = 0 if delta > 0 else len(favs) - 1
+            self._show_ha_card(idx)
+        else:
+            new_idx = (self._ha_idx + delta) % len(favs)
+            # Slide current card out in the swipe direction, new card in from the opposite edge
+            self._slide_ha_card_out(delta, then=lambda: self._slide_ha_card_in(new_idx, delta))
+
+    # ── HA card animation ─────────────────────────────────────────────────────
+
+    def _show_ha_card(self, idx):
+        """Create the HA device card for favorites[idx] and slide it down into view."""
+        if not self._ha_favorites or idx < 0 or idx >= len(self._ha_favorites):
+            return
+
+        eid = self._ha_favorites[idx]
+        state_dict = HOME_ASSISTANT.current_states.get(eid)
+        if state_dict is None:
+            return
+
+        card = make_ha_card(eid, state_dict)
         if card is None:
             return
-        self._media_card = None  # detach immediately so rotary reverts
-        # Switch from pos_hint to absolute pos so Animation can move it
+
+        card.size_hint = (None, None)
+        card.width  = min(dp(360), self.width - dp(32))
+        card.height = dp(150)
+
+        target_x = (self.width  - card.width)  / 2.0
+        target_y = self.height * 0.72 - card.height / 2.0
+
+        card.opacity = 0
+        card.pos = (target_x, target_y + dp(60))
+
+        self._ha_card = card
+        self._ha_idx  = idx
+        self.add_widget(card)
+
+        Animation(y=target_y, opacity=1, t='out_quad', d=0.35).start(card)
+
+    def _dismiss_ha_card_animated(self, then=None):
+        """Slide the HA card upward and fade it out, then optionally call *then*."""
+        card = self._ha_card
+        if card is None:
+            if then:
+                then()
+            return
+
+        self._ha_card = None  # detach immediately so rotary reverts
+        self._ha_idx  = -1
         card.pos_hint = {}
-        card.pos = card.pos  # lock current position
+        card.pos = card.pos  # lock absolute position
+
         anim = Animation(y=card.y + dp(80), opacity=0, t='out_quad', d=0.35)
+
         def _on_complete(anim, widget):
             if widget.parent:
                 self.remove_widget(widget)
+            if then:
+                then()
+
         anim.bind(on_complete=_on_complete)
         anim.start(card)
 
-    def _show_media_card_animated(self, eid, state_dict):
-        """Create media card and animate it sliding down into place."""
-        state_str  = state_dict.get("state", "off")
-        attributes = state_dict.get("attributes", {})
-        card = HAMediaCard()
-        card.size_hint = (None, None)
-        card.size = (dp(340), dp(130))
-        target_x = (self.width - dp(340)) / 2.0
-        target_y = self.height * 0.75 - dp(65)
-        card.opacity = 0
-        card.pos = (target_x, target_y + dp(60))
-        card.load(eid, state_str, attributes)
-        self._media_card = card
-        self.add_widget(card)
-        anim = Animation(y=target_y, opacity=1, t='out_quad', d=0.35)
+    def _slide_ha_card_out(self, direction, then=None):
+        """Slide the current HA card out horizontally.
+        direction=+1 (next): exits to the left.
+        direction=-1 (prev): exits to the right.
+        """
+        card = self._ha_card
+        if card is None:
+            if then:
+                then()
+            return
+
+        self._ha_card = None
+        self._ha_idx  = -1
+        card.pos_hint = {}
+        card.pos = card.pos  # lock absolute position
+
+        exit_x = (card.x - card.width - dp(32)
+                  if direction > 0
+                  else card.x + card.width + dp(32))
+        anim = Animation(x=exit_x, opacity=0, t='out_quad', d=0.28)
+
+        def _on_complete(anim, widget):
+            if widget.parent:
+                self.remove_widget(widget)
+            if then:
+                then()
+
+        anim.bind(on_complete=_on_complete)
         anim.start(card)
 
-    # ── Home Assistant media player overlay ───────────────────────────────────
-
-    def _on_ha_state_change(self, entity_id, state_str, state_dict):
-        """Called from HA listener (background thread) — reschedule on main thread."""
-        if entity_id.startswith("media_player."):
-            Clock.schedule_once(lambda dt: self._check_active_media(), 0)
-
-    def _find_active_player(self):
-        """Return (eid, state_dict) for the first active non-Spotify media player, or None."""
-        for priority_state in ("playing", "paused", "buffering"):
-            for eid, state_dict in HOME_ASSISTANT.current_states.items():
-                if not eid.startswith("media_player."):
-                    continue
-                if state_dict.get("state") != priority_state:
-                    continue
-                friendly = state_dict.get("attributes", {}).get("friendly_name", "")
-                if "spotify" in eid.lower() or "spotify" in friendly.lower():
-                    continue
-                return (eid, state_dict)
-        return None
-
-    def _check_active_media(self):
-        """Show/hide the media card depending on whether any player is active."""
-        if not self._splash_done:
-            return
-        # Don't re-show if the user has manually dismissed the card
-        if self._media_card_dismissed:
+    def _slide_ha_card_in(self, idx, from_direction):
+        """Create the HA card for favorites[idx] and slide it in horizontally.
+        from_direction=+1 (next): enters from the right.
+        from_direction=-1 (prev): enters from the left.
+        """
+        if not self._ha_favorites or idx < 0 or idx >= len(self._ha_favorites):
             return
 
-        active = self._find_active_player()
+        eid = self._ha_favorites[idx]
+        state_dict = HOME_ASSISTANT.current_states.get(eid)
+        if state_dict is None:
+            return
 
-        if active:
-            eid, state_dict = active
-            state_str  = state_dict.get("state", "off")
-            attributes = state_dict.get("attributes", {})
-            if self._media_card is None:
-                self._show_media_card_animated(eid, state_dict)
-            else:
-                self._media_card.update_state(state_str, attributes)
-        else:
-            if self._media_card is not None:
-                self.remove_widget(self._media_card)
-                self._media_card = None
+        card = make_ha_card(eid, state_dict)
+        if card is None:
+            return
+
+        card.size_hint = (None, None)
+        card.width  = min(dp(360), self.width - dp(32))
+        card.height = dp(150)
+
+        target_x = (self.width - card.width) / 2.0
+        target_y  = self.height * 0.72 - card.height / 2.0
+
+        # Start off-screen on the opposite edge to the swipe direction
+        start_x = (target_x + card.width + dp(32)
+                   if from_direction > 0
+                   else target_x - card.width - dp(32))
+
+        card.opacity = 0
+        card.pos = (start_x, target_y)
+
+        self._ha_card = card
+        self._ha_idx  = idx
+        self.add_widget(card)
+
+        Animation(x=target_x, opacity=1, t='out_quad', d=0.28).start(card)
+
+    # ── Config / lifecycle ────────────────────────────────────────────────────
 
     def on_config_update(self, config):
         self.ids.weather_widget.on_config_update(config)
         self.ids.reddit_widget.on_config_update(config)
         super().on_config_update(config)
 
+    # ── Rotary encoder ────────────────────────────────────────────────────────
+
     def on_rotary_long_pressed(self):
         self.toggle_controls()
 
     def on_rotary_pressed(self):
-        if self._media_card is not None:
-            self._media_card.do_toggle()   # play / pause
+        if self._ha_card is not None:
+            self._ha_card.do_toggle()
             return
         WALLPAPER_SERVICE.shuffle()
 
     def on_rotary_turn(self, direction, pressed):
-        if self._media_card is not None:
-            self._media_card.adjust_brightness(direction * 5.0)   # volume ±5%
+        if self._ha_card is not None:
+            self._ha_card.adjust_brightness(direction * 5.0)
             return
         if self.brightness_slider is None:
             # default mode, scroll through wallpapers
@@ -252,6 +310,8 @@ class HomeScreen(PiHomeScreen):
                 self.brightness_slider.set_value(self.brightness_slider.level + 5)
             elif direction == -1:
                 self.brightness_slider.set_value(self.brightness_slider.level - 5)
+
+    # ── Controls panel ────────────────────────────────────────────────────────
 
     def toggle_controls(self):
         if self.brightness_slider is None and self.banButton is None:
