@@ -90,8 +90,8 @@ class TimerDrawer(BoxLayout):
         self._ensure_width()
         tw = PiHomeTimer(timer=timer)
         self.timer_widgets.append(tw)
-        # if 'tray' in self.ids:
-        #     self.ids.tray.add_widget(tw)
+        if 'tray' in self.ids:
+            self.ids.tray.add_widget(tw)
         # timer.add_listener(
         #     lambda _: Clock.schedule_once(lambda dt: self._on_timer_done(tw), 0)
         # )
