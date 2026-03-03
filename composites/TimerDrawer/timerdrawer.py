@@ -87,8 +87,7 @@ class TimerDrawer(BoxLayout):
     # ── timer management ──────────────────────────────────────────────────────
 
     def add_timer(self, timer):
-        pass
-        # self._ensure_width()
+        self._ensure_width()
         # tw = PiHomeTimer(timer=timer)
         # self.timer_widgets.append(tw)
         # if 'tray' in self.ids:
