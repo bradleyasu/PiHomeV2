@@ -51,7 +51,7 @@ class TimerDrawer(BoxLayout):
         # Start well below the visible screen; y is updated in _show_drawer
         self.pos         = (0, -dp(600))
         self.in_position = False
-        self._tick_event = Clock.schedule_interval(self._tick, 1 / 10)
+        self._tick_event = Clock.schedule_interval(self._tick, 1.0)
         # Re-centre horizontally whenever the window is resized
         Window.bind(size=self._on_window_size)
 
