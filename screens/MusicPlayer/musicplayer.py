@@ -1,318 +1,361 @@
-from interface.pihomescreen import PiHomeScreen
-from kivy.uix.boxlayout import BoxLayout
-from kivy.lang import Builder
-from kivy.graphics import RenderContext
-from kivy.clock import Clock
-from kivy.properties import StringProperty, ObjectProperty, NumericProperty, ListProperty, BooleanProperty, ColorProperty
-from kivy.graphics.texture import Texture
-import numpy as np
-from kivy.uix.behaviors import ButtonBehavior
-from services.audio.audioplayernew import AUDIO_PLAYER, AudioState
-from kivy.uix.floatlayout import FloatLayout
-from screens.MusicPlayer.shaders import sVINYL
-from kivy.graphics import BindTexture
-from kivy.uix.slider import Slider
+"""
+screens/MusicPlayer/musicplayer.py
+
+Redesigned MusicPlayer screen.
+
+Layout
+------
+Left panel (42 %): large album art centred over an ambient vinyl shader.
+Right panel (58 %): song title, status badge, volume bar and action buttons.
+Bottom drawer: saved radio-station carousel that slides up on demand.
+
+Rotary encoder
+--------------
+  Turn (drawer closed) : volume up/down
+  Turn (drawer open)   : navigate stations
+  Press                : toggle drawer  (if drawer open + station loaded → play)
+  Long-press           : stop audio  /  close drawer without playing
+"""
+
+import time as _time
 from datetime import datetime
-from kivy.uix.gridlayout import GridLayout
-from components.Button.circlebutton import CircleButton
-from components.Button.simplebutton import SimpleButton
+
+import numpy as np
+
 from kivy.animation import Animation
-from theme.theme import THEME
+from kivy.clock import Clock
+from kivy.graphics import BindTexture, RenderContext
+from kivy.graphics.texture import Texture
+from kivy.lang import Builder
+from kivy.metrics import dp
+from kivy.properties import (
+    BooleanProperty, ColorProperty, ListProperty,
+    NumericProperty, ObjectProperty, StringProperty,
+)
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+
+from components.Image.networkimage import NetworkImage  # noqa – registers kv rule
+from interface.pihomescreen import PiHomeScreen
+from screens.MusicPlayer.musicvolumebar import MusicVolumeBar  # noqa – registers kv rule
+from screens.MusicPlayer.shaders import sVINYL
+from services.audio.audioplayernew import AUDIO_PLAYER, AudioState
+from theme.theme import Theme
 
 Builder.load_file("./screens/MusicPlayer/musicplayer.kv")
+
+# ── Fixed dark palette for the immersive player experience ───────────────────
+_BG_DARK   = (0.05, 0.06, 0.09, 1.0)
+_BG_PANEL  = (0.09, 0.10, 0.15, 1.0)
+_BG_CARD   = (0.13, 0.15, 0.22, 1.0)
+_TEXT      = (1.0,  1.0,  1.0,  0.95)
+_MUTED     = (1.0,  1.0,  1.0,  0.42)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 class MusicPlayerContainer(PiHomeScreen):
-    sound = None
-    current_time = StringProperty("00:00 PM")
+    """Root screen widget — manages layout, clock, and rotary encoder."""
+
+    current_time = StringProperty("--:-- --")
+    bg_color     = ColorProperty(_BG_DARK)
+
     def __init__(self, **kwargs):
-        super(MusicPlayerContainer, self).__init__(**kwargs)
-        self.add_widget(MusicPlayerCard(self.on_radio))
-        self.drawer = RadioDrawer()
-        self.add_widget(self.drawer)
+        super().__init__(**kwargs)
         self.disable_rotary_press_animation = True
 
-        Clock.schedule_interval(lambda _: self.update_current_time(), 1)
+        self.player = Player(radio_cb=self._toggle_drawer)
+        self.drawer = RadioDrawer()
 
-    def on_enter(self, *args):
-        return super().on_enter(*args)
+        self.add_widget(self.player)
+        self.add_widget(self.drawer)
 
-    def on_leave(self, *args):
-        if self.sound:
-            self.sound.stop()
-            self.sound.unload()
-        return super().on_leave(*args)
-    
-    def update_current_time(self):
-        now = datetime.now()
-        self.current_time = now.strftime("%I:%M %p")
+        Clock.schedule_interval(lambda _: self._tick(), 1)
 
-    def on_radio(self, *args):
+    # ── clock ──────────────────────────────────────────────────────────────────
+
+    def _tick(self):
+        now = datetime.now().strftime("%I:%M %p")
+        self.current_time = now
+        self.player.current_time = now
+
+    # ── drawer helpers ────────────────────────────────────────────────────────
+
+    def _toggle_drawer(self):
         self.drawer.is_open = not self.drawer.is_open
 
-    def on_rotary_down(self):
-        if self.drawer.is_open:
-            self.drawer.play_current()
-        self.on_radio()
+    # ── rotary ────────────────────────────────────────────────────────────────
 
     def on_rotary_turn(self, direction, button_pressed):
         if self.drawer.is_open:
-            if direction == -1:
-                self.drawer.carousel_swipe_left()
-            elif direction == 1:
-                self.drawer.carousel_swipe_right()
+            if direction == 1:
+                self.drawer.next_station()
+            else:
+                self.drawer.prev_station()
         else:
+            # Default: volume up / down
             return super().on_rotary_turn(direction, button_pressed)
 
-class RadioItem(ButtonBehavior, BoxLayout):
-    text = StringProperty("")
-    thumbnail = StringProperty("")
-    url = StringProperty("")
-    def __init__(self, text, url, thumbnail=None, **kwargs):
-        super(RadioItem, self).__init__(**kwargs)
-        # trim text to 12 characters
-        if len(text) > 12:  
-            text = text[:12] + "..."
-        self.text = text
-        self.url = url
-        if thumbnail is not None and thumbnail != "":
-            self.thumbnail = thumbnail
+    def on_rotary_pressed(self):
+        if self.drawer.is_open:
+            # Press while drawer is open → play selection & dismiss
+            self.drawer.play_current()
         else:
-            self.thumbnail = "assets/images/audio_vinyl.png"
+            # Press while drawer is closed → open the drawer
+            self.drawer.is_open = True
+        return None
 
-class RadioDrawer(BoxLayout):
-    is_open = BooleanProperty(False)
-    content = ListProperty([])
-
-    def __init__(self, **kwargs):
-        super(RadioDrawer, self).__init__(**kwargs)
-        self.refresh()
-
-
-    def on_is_open(self, *args):
-        if self.is_open:
-            self.content = AUDIO_PLAYER.saved_urls
-            self.size_hint = (1, 0.4)
+    def on_rotary_long_pressed(self):
+        if self.drawer.is_open:
+            self.drawer.is_open = False
         else:
-            self.size_hint = (1.0, 0.0)
-
-    def on_content(self, *args):
-        self.refresh()
-
-    def refresh(self):
-        carousel = self.ids["radio_carousel"]
-        carousel.clear_widgets()
-        for item in self.content:
-            cover = RadioItem(text=item["text"], url=item["url"], thumbnail=item["thumbnail"], on_press=self.create_callback(item["url"]))
-            cover.size_hint = (0.5, 0.5)
-            cover.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
-            carousel.add_widget(cover)
-
-    def create_callback(self, url):
-        return lambda *args: self.play_item(url)
-
-    def play_item(self, url, *args):
-        AUDIO_PLAYER.play(url)
-        self.is_open = False
-
-    def on_touch_down(self, touch):
-        if self.is_open:
-            if self.collide_point(*touch.pos):
-                super().on_touch_down(touch)
-                return True
-            else:
-                self.is_open = False
-                return True
-        return super().on_touch_down(touch)
-
-    def play_current(self):
-        # current widget in carousel
-        selected = self.ids["radio_carousel"].current_slide
-        self.play_item(selected.url)
-
-    def carousel_swipe_left(self):
-        self.ids["radio_carousel"].load_previous()
-
-    def carousel_swipe_right(self):
-        self.ids["radio_carousel"].load_next()
-    
-
-class MusicPlayerCard(BoxLayout):
-    def __init__(self, on_radio, **kwargs):
-        super(MusicPlayerCard, self).__init__(**kwargs)
-        self.add_widget(Player(on_radio))
-
-class Player(FloatLayout):
-    now_playing = StringProperty("Media Player Stopped")
-    is_playing = BooleanProperty(False)
-    album_art = StringProperty("")
-    album_art_offset = NumericProperty(0)
-    vinyl_offset = NumericProperty(0)
-    def __init__(self, on_radio, **kwargs):
-        super(Player, self).__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.on_radio = on_radio
-        self.ids.vinyl_widget.fs = sVINYL
-        AUDIO_PLAYER.add_volume_listener(lambda v: self.set_vol_slider_value(v))
-        AUDIO_PLAYER.add_state_listener(lambda state: self.on_state_changed(state))
-        AUDIO_PLAYER.add_saves_listener(lambda changes: self.on_saves_changed(changes))
+            self.player.stop()
+        return None
 
 
-    def open_vinyl_animation(self):
-        animation = Animation(vinyl_offset=0.25, duration=1)
-        animation &= Animation(album_art_offset=-0.15, duration=1)
-        animation.start(self)
+# ─────────────────────────────────────────────────────────────────────────────
+class Player(BoxLayout):
+    """
+    Main player layout (horizontal):
+      left 42 %  — VinylWidget backdrop + album art
+      right 58 % — title, status, volume, controls
+    """
 
-    def close_vinyl_animation(self):
-        animation = Animation(vinyl_offset=0, duration=1)
-        animation &= Animation(album_art_offset=0, duration=1)
-        animation.start(self)
+    now_playing   = StringProperty("Nothing Playing")
+    album_art    = StringProperty("")
+    status_text  = StringProperty("")       # "PLAYING" | "BUFFERING" | etc.
+    is_playing   = BooleanProperty(False)
+    current_time = StringProperty("--:-- --")
 
-    def save_song(self):
-        AUDIO_PLAYER.save_current()
+    def __init__(self, radio_cb=None, **kwargs):
+        super().__init__(**kwargs)
+        self._radio_cb = radio_cb
+        # KV rules are applied before __init__ body after super() — ids are live
+        Clock.schedule_once(self._post_init, 0)
 
-    def stop(self):
-        AUDIO_PLAYER.stop(clear_playlist=True)
+    def _post_init(self, _dt):
+        """Deferred init: set up shader and register audio listeners."""
+        if hasattr(self.ids, 'vinyl_widget'):
+            self.ids.vinyl_widget.fs = sVINYL
+        AUDIO_PLAYER.add_volume_listener(self._on_volume)
+        AUDIO_PLAYER.add_state_listener(self._on_state)
+        AUDIO_PLAYER.add_saves_listener(self._on_saves)
+        # Sync initial volume
+        self._on_volume(AUDIO_PLAYER.volume)
+
+    # ── public interface ──────────────────────────────────────────────────────
 
     def set_volume(self, v):
         AUDIO_PLAYER.set_volume(v)
 
-    def set_vol_slider_value(self, v):
-        self.ids.volume_slider.value = v
-        
-    def on_state_changed(self, state):
+    def stop(self):
+        AUDIO_PLAYER.stop(clear_playlist=True)
+
+    def save_song(self):
+        AUDIO_PLAYER.save_current()
+
+    def open_stations(self):
+        if self._radio_cb:
+            self._radio_cb()
+
+    # ── private listeners ─────────────────────────────────────────────────────
+
+    def _on_volume(self, v):
+        vb = self.ids.get("volume_bar")
+        if vb:
+            vb.value = max(0.0, min(1.0, float(v)))
+
+    def _on_state(self, state):
         self.is_playing = False
+
         if state == AudioState.PLAYING:
-            # Update favorite heart icon if needed
-            self.on_saves_changed()
-            title = AUDIO_PLAYER.title
-            # trim title to 20 characters
-            if len(title) > 20:
-                title = title[:20] + "..."
-            self.now_playing = title
-            self.album_art = AUDIO_PLAYER.album_art if AUDIO_PLAYER.album_art is not None else ""
-            self.is_playing = True
-            self.open_vinyl_animation()
+            self._on_saves()
+            title = AUDIO_PLAYER.title or "Unknown"
+            self.now_playing = (title[:30] + "…") if len(title) > 30 else title
+            self.album_art   = AUDIO_PLAYER.album_art or ""
+            self.is_playing  = True
+            self.status_text = "PLAYING"
 
         elif state == AudioState.STOPPED:
-            self.album_art = ""
-            self.now_playing = "Media Player Stopped"
-            self.close_vinyl_animation()
-            self.ids.save_button.text_color = (0.8, 0.8, 0.8, 1)
-        
+            self.album_art   = ""
+            self.now_playing = "Nothing Playing"
+            self.status_text = ""
+            # Reset the heart icon
+            fb = self.ids.get("fav_button")
+            if fb:
+                fb.text = '\ue87e'
+
         elif state == AudioState.FETCHING:
-            self.now_playing = "Fetching..."
-        
+            self.now_playing = "Fetching…"
+            self.status_text = "FETCHING"
+
         elif state == AudioState.BUFFERING:
-            self.now_playing = "Buffering..."
-    
-    def on_saves_changed(self, *args):
-        save_button = self.ids.save_button
-        if AUDIO_PLAYER.current_source is None:
+            self.now_playing = "Buffering…"
+            self.status_text = "BUFFERING"
+
+    def _on_saves(self, *_):
+        fb = self.ids.get("fav_button")
+        if fb is None or AUDIO_PLAYER.current_source is None:
             return
-        if not save_button:
-            return
-        if AUDIO_PLAYER.save_exists(AUDIO_PLAYER.current_source):
-            save_button.text_color = THEME.hextorgb("#f20236")
-        else:
-            save_button.text_color = (0.8, 0.8, 0.8, 1)
-        
-class PlayerQueue(BoxLayout):
+        saved = AUDIO_PLAYER.save_exists(AUDIO_PLAYER.current_source)
+        # \ue87d = favorite (filled heart)   \ue87e = favorite_border (outline)
+        fb.text = '\ue87d' if saved else '\ue87e'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+class RadioDrawer(BoxLayout):
+    """
+    Bottom-anchored slide-up panel for saved radio stations.
+
+    Closed: y = -DRAWER_H  (off-screen below)
+    Open  : y = 0           (bottom of the screen)
+    """
+
+    is_open  = BooleanProperty(False)
+    content  = ListProperty([])
+
+    _DRAWER_H = None   # set lazily on first use to avoid premature dp calls
+
     def __init__(self, **kwargs):
-        super(PlayerQueue, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+        self._DRAWER_H = dp(168)
+        self.size_hint = (1, None)
+        self.height    = self._DRAWER_H
+        self.x         = 0
+        self.y         = -self._DRAWER_H   # start hidden below screen
+        self.refresh()
+
+    # ── open / close ──────────────────────────────────────────────────────────
+
+    def on_is_open(self, _instance, value):
+        if value:
+            self.content = list(AUDIO_PLAYER.saved_urls)
+            Animation(y=0, d=0.30, t='out_cubic').start(self)
+        else:
+            Animation(y=-self._DRAWER_H, d=0.24, t='in_cubic').start(self)
+
+    # ── carousel control ──────────────────────────────────────────────────────
+
+    def next_station(self):
+        c = self.ids.get("radio_carousel")
+        if c:
+            c.load_next()
+
+    def prev_station(self):
+        c = self.ids.get("radio_carousel")
+        if c:
+            c.load_previous()
+
+    def play_current(self):
+        c = self.ids.get("radio_carousel")
+        if c and c.current_slide:
+            self._play(c.current_slide.url)
+
+    def _play(self, url):
+        AUDIO_PLAYER.play(url)
+        self.is_open = False
+
+    # ── content ───────────────────────────────────────────────────────────────
+
+    def on_content(self, *_):
+        self.refresh()
+
+    def refresh(self):
+        c = self.ids.get("radio_carousel")
+        if c is None:
+            return
+        c.clear_widgets()
+        for item in self.content:
+            card = RadioCard(
+                station_name=item.get("text", ""),
+                url=item.get("url", ""),
+                thumbnail=item.get("thumbnail") or "",
+                on_press=self._make_cb(item.get("url", "")),
+            )
+            c.add_widget(card)
+
+    def _make_cb(self, url):
+        return lambda *_: self._play(url)
+
+    # ── touch: dismiss on tap-outside ─────────────────────────────────────────
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            super().on_touch_down(touch)
+            return True
+        if self.is_open:
+            self.is_open = False
+            return True
+        return False
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+class RadioCard(ButtonBehavior, BoxLayout):
+    """Individual station card shown in the RadioDrawer carousel."""
+
+    station_name = StringProperty("")
+    thumbnail    = StringProperty("")
+    url          = StringProperty("")
+
+    def __init__(self, station_name="", url="", thumbnail="", **kwargs):
+        super().__init__(**kwargs)
+        text = station_name
+        self.station_name = (text[:14] + "…") if len(text) > 14 else text
+        self.url          = url
+        self.thumbnail    = thumbnail or "screens/MusicPlayer/default_album_art.png"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VinylWidget — audio-reactive OpenGL vinyl record visualizer (unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
 class VinylWidget(FloatLayout):
-    fs = StringProperty(None)
-    sound = None
+    fs           = StringProperty(None, allownone=True)
     audio_texture = ObjectProperty(None)
-    xOffset = NumericProperty(0) 
-    yOffset = NumericProperty(0)
-    last_data = None
-    bar_count = 12
+    xOffset      = NumericProperty(0)
+    yOffset      = NumericProperty(0)
+    bar_count    = 12
 
     def __init__(self, **kwargs):
         self.canvas = RenderContext(
             use_parent_projection=True,
             use_parent_modelview=True,
-            use_parent_frag_modelview=False
+            use_parent_frag_modelview=False,
         )
-        super(VinylWidget, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_glsl, 1 / 60.)
-        self.audio_texture = Texture.create(size=(self.bar_count, 2), colorfmt='luminance')
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_glsl, 1 / 60.0)
+        self.audio_texture = Texture.create(
+            size=(self.bar_count, 2), colorfmt='luminance'
+        )
         with self.canvas:
-            # Bind the custom texture at index 1, which will be texture1 in the shader
-            # texture0 seems to be special for kivy, so we use texture1
             BindTexture(texture=self.audio_texture, index=1)
 
-    def on_fs(self, instance, value):
+    def on_fs(self, _instance, value):
         shader = self.canvas.shader
-        old_value = shader.fs
+        old = shader.fs
         shader.fs = value
         if not shader.success:
-            shader.fs = old_value
-            raise Exception('Shader compilation failed')
+            shader.fs = old
+            raise Exception('VinylWidget: shader compilation failed')
 
-    def update_glsl(self, *largs):
-        self.canvas['time'] = Clock.get_boottime()
+    def update_glsl(self, *_):
+        self.canvas['time']       = Clock.get_boottime()
         self.canvas['resolution'] = list(map(float, self.size))
-        # self.canvas['offsetX'] = 1.7 # Left side 
-        # self.canvas['offsetX'] = 2.2
-        # self.canvas['offsetY'] = 0.25
-        self.canvas['offsetX'] = self.xOffset
-        self.canvas['offsetY'] = self.yOffset
-        self.canvas['volume'] = AUDIO_PLAYER.volume
+        self.canvas['offsetX']    = self.xOffset
+        self.canvas['offsetY']    = self.yOffset
+        self.canvas['volume']     = AUDIO_PLAYER.volume
 
         if AUDIO_PLAYER.data and AUDIO_PLAYER.current_state == AudioState.PLAYING:
-            # Update the audio texture with new data
-            audio_data = AUDIO_PLAYER.data
-            audio_array = np.frombuffer(audio_data, dtype=np.float32)
-            # audio_array = self.data_to_fft(audio_data)
-            # audio_array = audio_array / 2
-            audio_bytes = audio_array.tobytes()
-            self.audio_texture.blit_buffer(audio_bytes, colorfmt='luminance', bufferfmt='float')
+            arr = np.frombuffer(AUDIO_PLAYER.data, dtype=np.float32)
+            self.audio_texture.blit_buffer(arr.tobytes(), colorfmt='luminance', bufferfmt='float')
         else:
-            audio_data = np.zeros(AUDIO_PLAYER.buffersize, dtype=np.float32).tobytes()
-            self.audio_texture.blit_buffer(audio_data, colorfmt='luminance', bufferfmt='float')
-        
-        self.set_channel()
-        
+            self.audio_texture.blit_buffer(
+                np.zeros(AUDIO_PLAYER.buffersize, dtype=np.float32).tobytes(),
+                colorfmt='luminance', bufferfmt='float',
+            )
+        self._bind_channel()
 
-    def normalize_data(self, data):
-        min_val = np.min(data)
-        max_val = np.max(data)
-        if max_val == min_val:
-            return data
-        return (data - min_val) / (max_val - min_val)
-
-    
-    def data_to_fft(self, data):
-        # Convert raw data to numpy array
-        data = np.frombuffer(data, dtype=np.int16) / 2
-
-        # scale data to be between 0 and 1.  Do this here instead of calling normalize data
-        # because we want to keep the data as an int16 for the fft
-        data = (data - np.min(data)) / (np.max(data) - np.min(data))
-
-
-        fft = np.fft.rfft(data, n=AUDIO_PLAYER.buffersize)
-        indices = np.linspace(0, len(fft), self.bar_count + 1).astype(int)
-
-        bars = np.array([np.mean(np.abs(fft[indices[i]:indices[i+1]])) for i in range(self.bar_count)])
-
-
-        return bars
-
-
-
-    def create_texture(self, size):
-        return np.zeros(size)
-
-    def set_channel(self):
+    def _bind_channel(self):
         self.audio_texture.bind()
-        self.canvas['texture1'] = 1 # Set to texture unit 0
+        self.canvas['texture1'] = 1
         self.canvas.ask_update()
 
-    def set_center_x(self, value):
-        return super().set_center_x(value)
-
-    def set_sound(self, sound):
-        self.sound = sound

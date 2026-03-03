@@ -1,208 +1,471 @@
 #:kivy 2.0.0
-#:import Knob kivy.garden.knob.Knob
+#:import dp kivy.metrics.dp
+#:import NetworkImage components.Image.networkimage.NetworkImage
+#:import MusicVolumeBar screens.MusicPlayer.musicvolumebar.MusicVolumeBar
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MusicPlayerContainer — full-screen dark background; children added in Python
+# ─────────────────────────────────────────────────────────────────────────────
 <MusicPlayerContainer>:
-    size_hint: 1, 1
-    pos_hint: {"center_x": .5, "center_y": .5}
-
-    canvas: 
+    canvas.before:
         Color:
-            rgba: 0, 0, 0, 0.2
+            rgba: root.bg_color
         Rectangle:
-            size: self.size
             pos: self.pos
+            size: self.size
 
-    Label:
-        text: root.current_time
-        font_size: '60sp'
-        size_hint: 0.1, 0.1
-        pos_hint: {"center_x": .21, "center_y": .5}
-        color: 1, 1, 1, 1
-        font_name: "Nunito"
-        
 
-<MusicPlayerCard>:
-    size_hint: 0.5, 0.8
-    pos_hint: {"center_x": .7, "center_y": .5}
+# ─────────────────────────────────────────────────────────────────────────────
+# Player — horizontal split: left = art/vinyl  right = controls
+# ─────────────────────────────────────────────────────────────────────────────
+<Player>:
+    orientation: 'horizontal'
+    size_hint: 1, 1
+
+    # ── Left panel (42 %) ─────────────────────────────────────────────────────
+    FloatLayout:
+        size_hint_x: 0.42
+
+        # Subtle concentric glow circle that frames the vinyl zone
+        canvas.before:
+            Color:
+                rgba: 0.11, 0.13, 0.19, 1.0
+            Ellipse:
+                pos: self.center_x - dp(148), self.center_y - dp(148)
+                size: dp(296), dp(296)
+            Color:
+                rgba: 0.14, 0.17, 0.25, 1.0
+            Ellipse:
+                pos: self.center_x - dp(106), self.center_y - dp(106)
+                size: dp(212), dp(212)
+
+        # Audio-reactive vinyl shader (rendered on the lighter circle)
+        VinylWidget:
+            id: vinyl_widget
+            size_hint: None, None
+            size: dp(280), dp(280)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            xOffset: 0
+            yOffset: 0
+
+        # Album art — floats above the vinyl ring, offset upward
+        NetworkImage:
+            url: root.album_art if root.album_art else "screens/MusicPlayer/default_album_art.png"
+            size: dp(178), dp(178)
+            size_hint: None, None
+            pos_hint: {'center_x': 0.5, 'center_y': 0.56}
+            k_ratio: False
+            stretch: True
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 0.55
+                BoxShadow:
+                    pos: self.pos
+                    size: self.size
+                    offset: 0, -8
+                    spread_radius: -12, -12
+                    border_radius: 14, 14, 14, 14
+                    blur_radius: 40
+
+    # ── Vertical divider ──────────────────────────────────────────────────────
+    Widget:
+        size_hint_x: None
+        width: dp(1)
+        canvas:
+            Color:
+                rgba: 1, 1, 1, 0.06
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+    # ── Right panel (58 %) ────────────────────────────────────────────────────
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 0.58
+        padding: [dp(20), dp(18), dp(24), dp(14)]
+        spacing: dp(6)
+
+        # ── 1. Header: context + clock ────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(20)
+
+            Label:
+                text: 'NOW PLAYING'
+                font_name: 'Nunito'
+                font_size: '9sp'
+                bold: True
+                color: 1, 1, 1, 0.30
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
+
+            Label:
+                text: root.current_time
+                font_name: 'Nunito'
+                font_size: '11sp'
+                color: 1, 1, 1, 0.36
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: None
+                width: dp(72)
+
+        # ── 2. Song title ─────────────────────────────────────────────────────
+        Label:
+            text: root.now_playing
+            font_name: 'Nunito'
+            font_size: '21sp'
+            bold: True
+            color: 1, 1, 1, 0.92
+            halign: 'left'
+            valign: 'top'
+            text_size: self.width, None
+            size_hint_y: None
+            height: dp(56)
+
+        # ── 3. Status badge (visible only when status_text is set) ────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(22)
+            opacity: 1 if root.status_text else 0
+
+            BoxLayout:
+                size_hint: None, None
+                size: dp(84), dp(20)
+                padding: [dp(8), 0]
+                canvas.before:
+                    Color:
+                        rgba: 0.36, 0.67, 1.0, 0.14
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(10)]
+                    Color:
+                        rgba: 0.36, 0.67, 1.0, 0.40
+                    Line:
+                        rounded_rectangle: [self.pos[0]+dp(1), self.pos[1]+dp(1), self.size[0]-dp(2), self.size[1]-dp(2), dp(10)]
+                        width: dp(1)
+                Label:
+                    text: root.status_text
+                    font_name: 'Nunito'
+                    font_size: '9sp'
+                    bold: True
+                    color: 0.36, 0.67, 1.0, 0.90
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            Widget:
+                size_hint_x: 1
+
+        # ── 4. Flex spacer — pushes volume/controls to the bottom ─────────────
+        Widget:
+            size_hint_y: 1
+
+        # ── 5. Volume label row ───────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(16)
+
+            Label:
+                text: 'VOLUME'
+                font_name: 'Nunito'
+                font_size: '9sp'
+                bold: True
+                color: 1, 1, 1, 0.28
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
+
+        # ── 6. Volume slider row ──────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(32)
+            spacing: dp(8)
+
+            # Volume-down icon
+            Label:
+                text: '\ue04d'
+                font_name: 'MaterialIcons'
+                font_size: '18sp'
+                color: 1, 1, 1, 0.38
+                size_hint: None, 1
+                width: dp(22)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            MusicVolumeBar:
+                id: volume_bar
+                size_hint_x: 1
+                value: 1.0
+                on_value: root.set_volume(self.value)
+
+            # Volume-up icon
+            Label:
+                text: '\ue050'
+                font_name: 'MaterialIcons'
+                font_size: '18sp'
+                color: 1, 1, 1, 0.38
+                size_hint: None, 1
+                width: dp(22)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # ── 7. Spacer before controls ─────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(10)
+
+        # ── 8. Action buttons ─────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(52)
+            spacing: dp(12)
+
+            # – Favorite / save button –
+            BoxLayout:
+                size_hint: None, None
+                size: dp(52), dp(52)
+                on_touch_down: if self.collide_point(*args[1].pos): root.save_song()
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 0.07
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+                Label:
+                    id: fav_button
+                    text: '\ue87e'
+                    font_name: 'MaterialIcons'
+                    font_size: '22sp'
+                    color: 1, 1, 1, 0.72
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            # – Stop / clear button –
+            BoxLayout:
+                size_hint: None, None
+                size: dp(52), dp(52)
+                on_touch_down: if self.collide_point(*args[1].pos): root.stop()
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 0.07
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+                Label:
+                    text: '\ue047'
+                    font_name: 'MaterialIcons'
+                    font_size: '22sp'
+                    color: 1, 1, 1, (0.85 if root.is_playing else 0.28)
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            # – Radio stations button – (accented, always reachable)
+            BoxLayout:
+                size_hint: None, None
+                size: dp(52), dp(52)
+                on_touch_down: if self.collide_point(*args[1].pos): root.open_stations()
+                canvas.before:
+                    Color:
+                        rgba: 0.36, 0.67, 1.0, 0.14
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+                    Color:
+                        rgba: 0.36, 0.67, 1.0, 0.40
+                    Line:
+                        rounded_rectangle: [self.pos[0]+dp(1), self.pos[1]+dp(1), self.size[0]-dp(2), self.size[1]-dp(2), dp(13)]
+                        width: dp(1)
+                Label:
+                    text: '♫'
+                    font_name: 'ArialUnicode'
+                    font_size: '22sp'
+                    color: 0.36, 0.67, 1.0, 0.90
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            Widget:
+                size_hint_x: 1
+
+        Widget:
+            size_hint_y: None
+            height: dp(6)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RadioDrawer — slides up from the bottom of the screen
+# ─────────────────────────────────────────────────────────────────────────────
+<RadioDrawer>:
+    orientation: 'vertical'
 
     canvas.before:
         Color:
-            rgba: 0, 0, 0, 0.85
-        BoxShadow:
-            pos: self.pos
-            size: self.size
-            offset: 0, -10
-            spread_radius: -20, -20
-            border_radius: 10, 10, 10, 10
-            blur_radius: 80
-    canvas:
-        Color:
-            rgba: 1, 1, 1, 1
+            rgba: 0.06, 0.07, 0.12, 0.97
         RoundedRectangle:
-            size: self.size
             pos: self.pos
-            radius: [20, 20, 20, 20]
-
-
-<Player>:
-    canvas:
+            size: self.size
+            radius: [dp(18), dp(18), 0, 0]
+        # Top accent border line
         Color:
-            rgba: 1, 1, 1, 0
-        RoundedRectangle:
-            size: self.size
-            pos: self.pos
-            radius: [10, 10, 10, 10]
+            rgba: 0.36, 0.67, 1.0, 0.25
+        Line:
+            points: [self.x + dp(24), self.top - dp(1), self.right - dp(24), self.top - dp(1)]
+            width: dp(1.5)
 
+    # ── Drawer header ─────────────────────────────────────────────────────────
     BoxLayout:
-        
-        orientation: "vertical"
-        size_hint: 1, 1
-        pos_hint: {"center_x": .5, "center_y": .5}
-        padding: dp(10)
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(44)
+        padding: [dp(20), 0, dp(12), 0]
+        spacing: dp(8)
 
-        FloatLayout:
-            size_hint: 1, 1
-            pos_hint: {"center_x": .5, "center_y": .5}
+        # Music note icon
+        Label:
+            text: '♫'
+            font_name: 'ArialUnicode'
+            font_size: '18sp'
+            color: 0.36, 0.67, 1.0, 0.75
+            size_hint: None, 1
+            width: dp(22)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
 
-            VinylWidget:
-                id: vinyl_widget
-                xOffset: 2.35 + root.vinyl_offset
-                yOffset: 0.81 
-                size_hint: 1, 1
-                pos_hint: {"center_x": .5, "center_y": .5}
+        Label:
+            text: 'SAVED STATIONS'
+            font_name: 'Nunito'
+            font_size: '11sp'
+            bold: True
+            color: 1, 1, 1, 0.55
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_x: 1
 
-            NetworkImage:
-                canvas.before:
-                    Color:
-                        rgba: 0, 0, 0, 0.85
-                    BoxShadow:
-                        pos: self.pos
-                        size: self.size
-                        offset: 0, -5
-                        spread_radius: -10, -10
-                        border_radius: 10, 10, 10, 10
-                        blur_radius: 20
-                id: album_art
-                url: root.album_art if root.album_art else "screens/MusicPlayer/default_album_art.png"
-                pos_hint: {"center_x": (.5 + root.album_art_offset), "center_y": .5}
-                size: dp(190), dp(190)
-                k_ratio: False
-                stretch: True
+        # Hint: swipe left/right
+        Label:
+            text: '‹  ›'
+            font_name: 'Nunito'
+            font_size: '14sp'
+            color: 1, 1, 1, 0.22
+            size_hint: None, 1
+            width: dp(36)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
 
-        GridLayout:
-            rows: 2
-            size_hint: 1, 1
-            pos_hint: {"center_x": .5, "center_y": .5}
-            padding: dp(10)
-            spacing: dp(10)
-
+        # Close button
+        BoxLayout:
+            size_hint: None, None
+            size: dp(32), dp(32)
+            pos_hint: {'center_y': 0.5}
+            on_touch_down: if self.collide_point(*args[1].pos): setattr(root, 'is_open', False)
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 0.08
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(9)]
             Label:
-                id: song_title
-                text: root.now_playing
-                font_size: '24sp'
-                color: 0, 0, 0, 1
-                font_name: "Nunito"
-                size_hint: 1, 1
-                pos_hint: {"center_x": .5, "center_y": .5}
+                text: '✕'
+                font_name: 'ArialUnicode'
+                font_size: '14sp'
+                color: 1, 1, 1, 0.60
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
 
-            BoxLayout:
-                orientation: "horizontal"
-                size_hint: 1, 1
-                spacing: dp(55)
-                padding: dp(20)
-                
-                CircleButton:
-                    text: "♪"
-                    on_press: root.on_radio()
-                    stroke_color: 0, 0, 0, 0
-                    text_color: 0, 0, 0, 1
-                    font_size: '42sp'
-                    pos_hint: {"center_x": .5, "center_y": .5}
-                    custom_font: 'ArialUnicode'
-
-
-                Knob:
-                    id: volume_slider
-                    pos_hint: {"center_x": .5, "center_y": .5}
-                    value: 100
-                    min: 0
-                    max:  1
-                    step: 0.01
-                    on_value: root.set_volume(self.value)
-                    knobimg_source: 'libs/garden/garden.knob/img/knob_metal.png'
-                    knobimg_bgcolor: 1, 1, 1, 1
-                    markeroff_color: 0, 0, 0, 0
-                    marker_color: 0.5, 0.8, 0.5, 1
-                
-                CircleButton:
-                    text: "■"
-                    on_press: root.stop()
-                    stroke_color: 0, 0, 0, 0
-                    text_color: 0, 0, 0, 1 if root.is_playing else 0.3
-                    font_size: '42sp'
-                    pos_hint: {"center_x": .5, "center_y": .5}
-                    custom_font: 'ArialUnicode'
-
-
-
-    CircleButton:
-        id: save_button
-        text: "❤️"
-        stroke_color: 0, 0, 0, 0
-        text_color: 0.8, 0.8, 0.8, 1
-        font_size: '28sp'
-        pos_hint: {"center_x": .95, "center_y": .95}
-        custom_font: 'ArialUnicode'
-        on_press: root.save_song()
-
-
-<VinylWidget>:
-    size_hint: 0.4, 0.5
-    pos_hint: {"center_x": .22, "center_y": .5}
-    canvas:
-        Color:
-            rgb: 0, 0, 0
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-<RadioDrawer>:
-    size_hint: 1.0, 0.0
-    pos_hint: {"center_x": .5, "center_y": 0.2} 
-    canvas:
-        Color:
-            rgba: 0, 0, 0, 0.9
-        Rectangle:
-            size: self.size
-            pos: self.pos
-        
+    # ── Station carousel ──────────────────────────────────────────────────────
     Carousel:
-        # canvas:
-            # Color:
-                # rgba: 0, 255, 0, 0.9
-            # Rectangle:
-                # size: self.size
-                # pos: self.pos
-        size_hint: 1, 1
-        pos_hint: {"center_x": .5, "center_y": .5}
         id: radio_carousel
-        direction: "right"
+        size_hint_y: 1
+        direction: 'right'
         loop: True
 
-<RadioItem>:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RadioCard — individual station card (fills one Carousel slide)
+# ─────────────────────────────────────────────────────────────────────────────
+<RadioCard>:
+    orientation: 'vertical'
+
+    # Center a compact card inside the full-width slide
+    FloatLayout:
+        size_hint: 1, 1
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, None
+            size: dp(108), dp(112)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            spacing: dp(6)
+
+            # Artwork square
+            FloatLayout:
+                size_hint_y: None
+                height: dp(76)
+                canvas.before:
+                    Color:
+                        rgba: 0.13, 0.15, 0.23, 1.0
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+                    Color:
+                        rgba: 1, 1, 1, 0.07
+                    Line:
+                        rounded_rectangle: [self.pos[0]+dp(1), self.pos[1]+dp(1), self.size[0]-dp(2), self.size[1]-dp(2), dp(13)]
+                        width: dp(1)
+
+                NetworkImage:
+                    url: root.thumbnail
+                    size: dp(62), dp(62)
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    k_ratio: False
+                    stretch: True
+
+            # Station name
+            Label:
+                text: root.station_name
+                font_name: 'Nunito'
+                font_size: '11sp'
+                bold: True
+                color: 1, 1, 1, 0.80
+                size_hint_y: None
+                height: dp(18)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VinylWidget — audio-reactive OpenGL shader; canvas is a RenderContext
+# ─────────────────────────────────────────────────────────────────────────────
+<VinylWidget>:
     canvas:
         Color:
-            rgba: 0, 0, 0, 0
+            rgb: 0.14, 0.17, 0.25
         Rectangle:
-            size: self.size
             pos: self.pos
+            size: self.size
 
-    NetworkImage:
-        url: root.thumbnail
-        size_hint: 0.5, 1.0
-        pos_hint: {"center_x": .5, "center_y": .5}
-    
-    Label:
-        text: root.text
-        font_size: '28sp'
-        color: 1, 1, 1, 1
-        font_name: "Nunito"
