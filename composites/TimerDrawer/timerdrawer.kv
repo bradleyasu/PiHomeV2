@@ -1,10 +1,119 @@
 #:kivy 2.0.0
 <TimerDrawer>:
+    orientation: 'vertical'
 
+    # ── Background ─────────────────────────────────────────────────────────────
     canvas.before:
         Color:
-            rgba: 1, 0, 0, 1
+            rgba: root.bg_color
         RoundedRectangle:
-            size: self.size
             pos: self.pos
-            radius: [0, 0, 10, 10]
+            size: self.size
+            radius: [0, 0, dp(16), dp(16)]
+
+    # ── Depleting progress bar + pill/tray separator (drawn on top) ───────────
+    canvas.after:
+        # progress track
+        Color:
+            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.18
+        Rectangle:
+            pos: self.x + dp(16), self.y + self.height - dp(64)
+            size: self.width - dp(32), dp(2)
+        # progress fill
+        Color:
+            rgba: root.accent_color
+        Rectangle:
+            pos: self.x + dp(16), self.y + self.height - dp(64)
+            size: (self.width - dp(32)) * root.primary_progress, dp(2)
+        # pill / tray separator (only visible when tray is open)
+        Color:
+            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.14
+        Rectangle:
+            pos: self.x + dp(12), self.y + self.height - dp(65)
+            size: self.width - dp(24), dp(1)
+
+    # ── Pill header ────────────────────────────────────────────────────────────
+    BoxLayout:
+        id: pill
+        size_hint_y: None
+        height: dp(64)
+        orientation: 'horizontal'
+        padding: dp(14), 0, dp(10), 0
+        spacing: dp(8)
+
+        # timer icon (MaterialIcons U+E425)
+        Label:
+            text: '\ue425'
+            font_name: 'MaterialIcons'
+            size_hint: None, 1
+            width: dp(28)
+            font_size: '22sp'
+            color: root.accent_color
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+        # label + countdown stacked
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(1)
+            padding: 0, dp(10), 0, dp(10)
+            Label:
+                text: root.primary_label
+                color: root.text_color
+                font_size: '13sp'
+                font_name: 'Nunito'
+                bold: True
+                halign: 'left'
+                valign: 'bottom'
+                text_size: self.width, None
+            Label:
+                text: root.primary_time
+                color: root.accent_color
+                font_size: '20sp'
+                font_name: 'Nunito'
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+
+        # +N badge (only when extra timers exist)
+        Label:
+            size_hint: None, 1
+            width: dp(28) if root.extra_count > 0 else 0
+            opacity: 1 if root.extra_count > 0 else 0
+            text: '+' + str(root.extra_count) if root.extra_count > 0 else ''
+            color: root.accent_color
+            font_size: '12sp'
+            font_name: 'Nunito'
+            bold: True
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+        # Action button: ✕ cancel (1 timer) or expand/collapse chevron (multiple)
+        Button:
+            size_hint: None, None
+            size: dp(36), dp(36)
+            pos_hint: {'center_y': 0.5}
+            text: '\ue5cd' if root.extra_count == 0 else ('\ue5ce' if root.expanded else '\ue5cf')
+            font_name: 'MaterialIcons'
+            color: root.muted_color
+            font_size: '20sp'
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            on_release: root._pill_right_action()
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 0.07
+                Ellipse:
+                    pos: self.x + dp(1), self.y + dp(1)
+                    size: self.width - dp(2), self.height - dp(2)
+
+    # ── Expandable timer rows tray ─────────────────────────────────────────────
+    BoxLayout:
+        id: tray
+        orientation: 'vertical'
+        size_hint_y: None
+        height: 0
+        opacity: 0
+        spacing: dp(1)
