@@ -37,7 +37,7 @@ class PiHomeTimer(BoxLayout):
     # ── lifecycle ──────────────────────────────────────────────────────────────
 
     def start(self):
-        Clock.schedule_interval(self.update, 1 / 10)
+        Clock.schedule_interval(self.update, 1.0)  # 1 Hz — HH:MM:SS only needs per-second precision
         self.timer.add_listener(self.destroy)
         self.timer.start()
 

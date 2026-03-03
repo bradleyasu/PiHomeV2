@@ -11,8 +11,20 @@
             size: self.size
             radius: [0, 0, dp(16), dp(16)]
 
-    # ── Pill/tray separator (drawn on top) ───────────────────────────────────
+    # ── Depleting progress bar + pill/tray separator (drawn on top) ─────────
     canvas.after:
+        # progress track
+        Color:
+            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.18
+        Rectangle:
+            pos: self.x + dp(16), self.y + self.height - dp(64)
+            size: self.width - dp(32), dp(2)
+        # progress fill
+        Color:
+            rgba: root.accent_color
+        Rectangle:
+            pos: self.x + dp(16), self.y + self.height - dp(64)
+            size: (self.width - dp(32)) * root.primary_progress, dp(2)
         # pill / tray separator (only visible when tray is open)
         Color:
             rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.14
