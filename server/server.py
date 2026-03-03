@@ -258,7 +258,18 @@ class PiHomeServer():
             print("WebSocket connection closed")
 
     async def start_socket_server(self):
-        self.SOCKET_SERVER = await websockets.serve(self.websocket_server, "0.0.0.0", 8765)
+        try:
+            from server.ssl_cert import make_ssl_context
+            ssl_ctx = make_ssl_context()
+        except Exception:
+            ssl_ctx = None
+        self.SOCKET_SERVER = await websockets.serve(
+            self.websocket_server, "0.0.0.0", 8765, ssl=ssl_ctx
+        )
+        if ssl_ctx:
+            PIHOME_LOGGER.info("Server: WebSocket Listening on port: 8765 (WSS)")
+        else:
+            PIHOME_LOGGER.warning("Server: WebSocket Listening on port: 8765 (WS — SSL unavailable)")
         await asyncio.Future()  # Wait indefinitely
             
 
