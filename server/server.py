@@ -1,6 +1,7 @@
 from cmath import inf
 import http.server
 import json
+import os
 import socketserver
 import time
 from events.pihomeevent import PihomeEventFactory
@@ -22,6 +23,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         PIHOME_LOGGER.info("Server: GET Request Initiated")
         if self.path.startswith("/status"):
             self._get_status(self.path.replace("/status", "").replace("/", ""))
+        elif self.path.startswith("/wallpaper/"):
+            self._get_wallpaper(self.path[len("/wallpaper/"):])
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
             self._get_index()
         else:
@@ -57,6 +60,40 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_html_response(200, html)
                 return True
         return False
+
+    def _get_wallpaper(self, encoded_path: str):
+        """Serve a wallpaper image from the Pi's filesystem.
+
+        *encoded_path* is the URL-encoded file path after ``/wallpaper/``.
+        Example: ``.%2F.temp%2Fimage.png`` → ``./.temp/image.png``
+        """
+        import mimetypes
+        from urllib.parse import unquote
+
+        file_path = unquote(encoded_path)
+        if not os.path.isfile(file_path):
+            PIHOME_LOGGER.warning(f"Server: wallpaper not found: {file_path!r}")
+            self.send_error(404, "Wallpaper not found")
+            return
+
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not (mime_type and mime_type.startswith("image/")):
+            PIHOME_LOGGER.warning(f"Server: wallpaper rejected non-image type '{mime_type}' for {file_path!r}")
+            self.send_error(415, "Not an image file")
+            return
+
+        try:
+            with open(file_path, "rb") as f:
+                data = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", mime_type)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Server: failed to serve wallpaper {file_path!r}: {e}")
+            self.send_error(500, "Failed to read image")
 
     def _send_html_response(self, code: int, html: str):
         body = html.encode("utf-8")
