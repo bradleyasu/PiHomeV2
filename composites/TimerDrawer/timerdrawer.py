@@ -90,9 +90,11 @@ class TimerDrawer(BoxLayout):
         self._ensure_width()
         tw = PiHomeTimer(timer=timer)
         self.timer_widgets.append(tw)
-        if 'tray' in self.ids:
-            pass
-            # self.ids.tray.add_widget(tw)
+        # Do NOT add to the tray here.  PiHomeTimer's canvas.before uses an
+        # explicit Color(alpha=1) instruction that bypasses the tray's
+        # opacity:0 on Pi's OpenGL ES 2.0 driver, painting a dark rectangle
+        # over the screen even while the tray is collapsed.  Widgets are added
+        # to the tray only when it becomes visible (on_expanded → True).
         timer.add_listener(
             lambda _: Clock.schedule_once(lambda dt: self._on_timer_done(tw), 0)
         )
@@ -106,7 +108,8 @@ class TimerDrawer(BoxLayout):
     def _on_timer_done(self, tw):
         if tw in self.timer_widgets:
             self.timer_widgets.remove(tw)
-        if 'tray' in self.ids and tw.parent:
+        # Only remove from tray if it was actually added (i.e. tray was expanded)
+        if 'tray' in self.ids and tw.parent is self.ids.tray:
             self.ids.tray.remove_widget(tw)
         SFX.play("success")
         self._refresh()
@@ -133,6 +136,16 @@ class TimerDrawer(BoxLayout):
         self.width = min(dp(380), app_w - dp(32))
         self.x     = (app_w - self.width) / 2.0
 
+    def _clear_tray(self):
+        """Remove all PiHomeTimer widgets from the tray's render tree.
+
+        Called after the collapse animation completes so the widgets' explicit
+        canvas.before Color instructions can no longer paint to the framebuffer
+        while the tray is hidden (opacity:0, height:0).
+        """
+        if 'tray' in self.ids:
+            self.ids.tray.clear_widgets()
+
     def _ensure_width(self):
         self._recenter_x()
 
@@ -148,13 +161,30 @@ class TimerDrawer(BoxLayout):
         self._show_drawer()
 
     def on_expanded(self, instance, value):
-        """Animate the tray open or closed, keeping the pill header stationary."""
+        """Animate the tray open or closed, keeping the pill header stationary.
+
+        Widgets are added to / removed from the tray here so they are only
+        in the render tree while the tray is actually visible.
+        """
         if not self.in_position:
             return
+        if value:
+            # Populate the tray before animating open
+            if 'tray' in self.ids:
+                self.ids.tray.clear_widgets()
+                for tw in self.timer_widgets:
+                    self.ids.tray.add_widget(tw)
+        else:
+            # Clear the tray after animating closed (via on_complete)
+            pass
         n          = len(self.timer_widgets)
         new_height = _PILL_H + (_ROW_H * n if value else 0)
         target_y   = Window.height - new_height
-        Animation(height=new_height, y=target_y, t='out_quad', d=0.28).start(self)
+        anim = Animation(height=new_height, y=target_y, t='out_quad', d=0.28)
+        if not value:
+            # Remove widgets from the tray once the close animation finishes
+            anim.bind(on_complete=lambda *_: self._clear_tray())
+        anim.start(self)
 
     def on_height(self, instance, value):
         """Keep ids.tray.height in sync with the drawer height during animation."""
