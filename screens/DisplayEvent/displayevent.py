@@ -2,6 +2,7 @@ from kivy.lang import Builder
 from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from services.audio.sfx import SFX
+from util.const import _HOME_SCREEN
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.properties import ColorProperty, StringProperty
@@ -23,8 +24,10 @@ class DisplayEvent(PiHomeScreen):
     def set_background(self, background):
         self.background = hex(background, 1)
   
-    def set_timeout(self, seconds, screen):
+    def set_timeout(self, seconds, screen = None):
         # Only go_back to previous screen if the current screen is the screen that was displayed
+        if screen is None:
+            screen = _HOME_SCREEN
         if PIHOME_SCREEN_MANAGER.current_screen == screen:
             Clock.schedule_once(lambda _: self.go_back(), int(seconds))
 
