@@ -11,19 +11,36 @@
             pos: self.pos
             size: self.size
 
-    # ── Full-bleed background image ───────────────────────────────────────────
+    # ── Inset background image with rounded corners ───────────────────────────
+    # Sits inside a padded area so the solid background color shows as a border.
     AsyncImage:
         source: root.image
         allow_stretch: True
         keep_ratio: False
-        size: root.size
-        pos: root.pos
+        size_hint: None, None
+        size: root.width - dp(32), root.height - dp(32)
+        pos: root.x + dp(16), root.y + dp(16)
         opacity: 1 if root.image else 0
+        canvas.before:
+            StencilPush
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(16)]
+            StencilUse
+        canvas.after:
+            StencilUnUse
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(16)]
+            StencilPop
 
     # ── Dark scrim over the background image (softens contrast) ───────────────
     Widget:
-        size: root.size
-        pos: root.pos
+        size_hint: None, None
+        size: root.width - dp(32), root.height - dp(32)
+        pos: root.x + dp(16), root.y + dp(16)
         opacity: 0.45 if root.image else 0
         canvas:
             Color:
