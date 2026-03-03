@@ -9,6 +9,7 @@
     "requires_pin": false,
     "index": 10,
     "settingsIndex": 1,
+    "icon": "./screens/HomeAssistantScreen/icon.png",
     "settings": [
         {
             "type": "title",
