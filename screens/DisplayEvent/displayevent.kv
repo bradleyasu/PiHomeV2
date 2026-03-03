@@ -3,7 +3,7 @@
 
 <DisplayEvent>:
 
-    # ── Solid color background (fallback / tint when no image) ────────────────
+    # ── Solid background color ─────────────────────────────────────────────────
     canvas.before:
         Color:
             rgba: root.background
@@ -11,154 +11,174 @@
             pos: self.pos
             size: self.size
 
-    # ── Inset background image with rounded corners ───────────────────────────
-    # Sits inside a padded area so the solid background color shows as a border.
-    AsyncImage:
-        source: root.image
-        allow_stretch: True
-        keep_ratio: True
+    # ── Floating card ──────────────────────────────────────────────────────────
+    # Orientation switches based on image aspect ratio:
+    #   portrait image  → horizontal (image LEFT, text RIGHT)
+    #   landscape image → vertical   (image TOP,  text BOTTOM)
+    #   no image        → vertical   (just the text pane)
+    BoxLayout:
+        id: card
+        orientation: 'horizontal' if (root.image and not root._img_landscape) else 'vertical'
         size_hint: None, None
-        size: root.width - dp(32), root.height - dp(32)
-        pos: root.x + dp(16), root.y + dp(16)
-        opacity: 1 if root.image else 0
+        width: root.width * 0.88
+        height: root.height * 0.84
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
         canvas.before:
+            # ── Soft multi-layer drop shadow ──────────────────────────────────
+            Color:
+                rgba: 0, 0, 0, 0.22
+            RoundedRectangle:
+                pos: self.x + dp(2), self.y - dp(7)
+                size: self.width + dp(2), self.height + dp(2)
+                radius: [dp(20)]
+            Color:
+                rgba: 0, 0, 0, 0.10
+            RoundedRectangle:
+                pos: self.x + dp(5), self.y - dp(13)
+                size: self.width + dp(4), self.height + dp(4)
+                radius: [dp(20)]
+            # ── Stencil clip — rounds all children including the image ─────────
             StencilPush
             RoundedRectangle:
                 pos: self.pos
                 size: self.size
-                radius: [dp(16)]
+                radius: [dp(20)]
             StencilUse
+            # ── White card surface ────────────────────────────────────────────
+            Color:
+                rgba: 1, 1, 1, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(20)]
         canvas.after:
             StencilUnUse
             RoundedRectangle:
                 pos: self.pos
                 size: self.size
-                radius: [dp(16)]
+                radius: [dp(20)]
             StencilPop
 
-    # ── Dark scrim over the background image (softens contrast) ───────────────
-    Widget:
-        size_hint: None, None
-        size: root.width - dp(32), root.height - dp(32)
-        pos: root.x + dp(16), root.y + dp(16)
-        opacity: 0.45 if root.image else 0
-        canvas:
-            Color:
-                rgba: 0, 0, 0, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
-    # ── Content layer ─────────────────────────────────────────────────────────
-    FloatLayout:
-        size: root.size
-        pos: root.pos
-
-        # Centered content card — dark semi-transparent surface keeps text
-        # legible regardless of what the background image contains.
-        BoxLayout:
-            orientation: 'vertical'
-            spacing: dp(14)
-            padding: dp(28), dp(28), dp(28), dp(28)
-            size_hint: None, None
-            width: min(root.width - dp(64), dp(520))
-            height: root.height - dp(100)
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
+        # ── Image pane ─────────────────────────────────────────────────────────
+        # Takes 42 % of the width (portrait) or 42 % of the height (landscape).
+        # Collapses to zero when no image is set.
+        AsyncImage:
+            id: card_image
+            source: root.image
+            allow_stretch: True
+            keep_ratio: True
+            # size_hint along main axis / cross axis per orientation
+            size_hint_x: 0.42 if (root.image and not root._img_landscape) else 1
+            size_hint_y: 1   if (root.image and not root._img_landscape) else (0.42 if root.image else 0)
+            opacity: 1 if root.image else 0
+            on_texture: root._on_img_texture(self, self.texture)
             canvas.before:
+                # Subtle image placeholder tone
                 Color:
-                    rgba: 0, 0, 0, 0.62
-                RoundedRectangle:
+                    rgba: 0.93, 0.93, 0.93, 1
+                Rectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [dp(18)]
 
-            # ── Title ─────────────────────────────────────────────────────────
+        # ── Content pane ───────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            padding: dp(24), dp(20), dp(24), dp(14)
+            spacing: dp(10)
+            size_hint_x: 0.58 if (root.image and not root._img_landscape) else 1
+            size_hint_y: 1   if (root.image and not root._img_landscape) else (0.58 if root.image else 1)
+
+            # ── Title ──────────────────────────────────────────────────────────
             Label:
                 text: root.title
                 font_name: 'Nunito'
                 bold: True
-                font_size: '26sp'
-                color: 1, 1, 1, 1
+                font_size: '20sp'
+                color: 0.08, 0.08, 0.08, 1
                 size_hint_y: None
                 height: self.texture_size[1]
                 text_size: self.width, None
-                halign: 'center'
+                halign: 'left'
                 valign: 'top'
 
-            # ── Divider ───────────────────────────────────────────────────────
+            # ── Divider ────────────────────────────────────────────────────────
             Widget:
                 size_hint_y: None
                 height: dp(1)
                 canvas:
                     Color:
-                        rgba: 1, 1, 1, 0.15
+                        rgba: 0.88, 0.88, 0.88, 1
                     Rectangle:
-                        pos: self.x + dp(16), self.y
-                        size: self.width - dp(32), dp(1)
+                        pos: self.pos
+                        size: self.size
 
-            # ── Scrollable message ────────────────────────────────────────────
+            # ── Scrollable message ─────────────────────────────────────────────
             ScrollView:
                 id: scroll_area
                 size_hint_y: 1
                 do_scroll_x: False
-                bar_color: 1, 1, 1, 0.25
-                bar_inactive_color: 1, 1, 1, 0.08
+                bar_color: 0.65, 0.65, 0.65, 0.6
+                bar_inactive_color: 0.65, 0.65, 0.65, 0.2
                 bar_width: dp(3)
 
                 Label:
                     text: root.message
                     font_name: 'Nunito'
-                    font_size: '15sp'
-                    color: 1, 1, 1, 0.88
+                    font_size: '14sp'
+                    color: 0.28, 0.28, 0.28, 1
                     size_hint_y: None
                     height: max(self.texture_size[1], scroll_area.height)
                     text_size: self.width, None
-                    halign: 'center'
+                    halign: 'left'
                     valign: 'top'
 
-        # ── "Tap to dismiss" hint at the bottom ───────────────────────────────
-        Label:
-            text: 'Tap anywhere to dismiss'
-            font_name: 'Nunito'
-            font_size: '11sp'
-            color: 1, 1, 1, 0.28
-            size_hint: None, None
-            size: root.width, dp(28)
-            pos: root.x, root.y + dp(14)
-            halign: 'center'
-            text_size: self.size
+            # ── Footer: dismiss hint + countdown ring ──────────────────────────
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
 
-        # ── Countdown ring (bottom-right, hidden when no timeout) ─────────────
-        Widget:
-            id: countdown_ring
-            opacity: 1 if root.timeout_seconds > 0 else 0
-            size_hint: None, None
-            size: dp(60), dp(60)
-            pos: root.right - dp(76), root.y + dp(10)
+                Label:
+                    text: 'Tap anywhere to dismiss'
+                    font_name: 'Nunito'
+                    font_size: '11sp'
+                    color: 0.65, 0.65, 0.65, 1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
 
-            canvas.before:
-                # Track ring
-                Color:
-                    rgba: 1, 1, 1, 0.12
-                Line:
-                    circle: self.center_x, self.center_y, dp(22), 0, 360
-                    width: dp(2.5)
-                # Depleting arc — starts full at top, shrinks counter-clockwise
-                Color:
-                    rgba: 1, 1, 1, 0.8
-                Line:
-                    circle: self.center_x, self.center_y, dp(22), 90, 90 + root._arc_angle
-                    width: dp(2.5)
+                # Countdown ring — hidden when no timeout is set
+                Widget:
+                    id: countdown_ring
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    pos_hint: {'center_y': 0.5}
+                    opacity: 1 if root.timeout_seconds > 0 else 0
 
-            Label:
-                text: str(int(root._remaining))
-                pos: countdown_ring.pos
-                size: countdown_ring.size
-                font_name: 'Nunito'
-                font_size: '14sp'
-                bold: True
-                color: 1, 1, 1, 0.9
-                halign: 'center'
-                valign: 'middle'
-                text_size: self.size
+                    canvas.before:
+                        # Track
+                        Color:
+                            rgba: 0.86, 0.86, 0.86, 1
+                        Line:
+                            circle: self.center_x, self.center_y, dp(14), 0, 360
+                            width: dp(2)
+                        # Depleting filled arc
+                        Color:
+                            rgba: 0.2, 0.2, 0.2, 1
+                        Line:
+                            circle: self.center_x, self.center_y, dp(14), 90, 90 + root._arc_angle
+                            width: dp(2)
+
+                    Label:
+                        text: str(int(root._remaining)) if root._remaining > 0 else ''
+                        pos: countdown_ring.pos
+                        size: countdown_ring.size
+                        font_name: 'Nunito'
+                        font_size: '11sp'
+                        bold: True
+                        color: 0.15, 0.15, 0.15, 1
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size

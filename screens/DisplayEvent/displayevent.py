@@ -5,23 +5,25 @@ from services.audio.sfx import SFX
 from util.const import _HOME_SCREEN
 from util.tools import hex
 from kivy.clock import Clock
-from kivy.properties import ColorProperty, StringProperty, NumericProperty
+from kivy.properties import BooleanProperty, ColorProperty, StringProperty, NumericProperty
 
 Builder.load_file("./screens/DisplayEvent/displayevent.kv")
 
 class DisplayEvent(PiHomeScreen):
     """
     Informational display screen launched by external display events.
-    Shows a full-screen message with optional background image and
-    an optional auto-dismiss countdown.
+    Shows a floating card with optional image pane and auto-dismiss countdown.
     """
     background      = ColorProperty((0, 0, 0, 0.92))
     title           = StringProperty("")
     message         = StringProperty("")
-    image           = StringProperty("")   # URL — rendered as full-screen background
+    image           = StringProperty("")          # URL for the card image pane
 
-    # ── Timeout state ──────────────────────────────────────────────────────────
-    timeout_seconds = NumericProperty(0)   # 0 = no auto-dismiss
+    # ── Image orientation (detected when texture loads) ────────────────────────
+    _img_landscape  = BooleanProperty(False)      # True → image on top, False → image on left
+
+    # ── Timeout state ─────────────────────────────────────────────────────────
+    timeout_seconds = NumericProperty(0)          # 0 = no auto-dismiss
     _target_screen  = StringProperty("")
     _remaining      = NumericProperty(0)
     _arc_angle      = NumericProperty(360)
@@ -43,6 +45,18 @@ class DisplayEvent(PiHomeScreen):
         except (TypeError, ValueError):
             self.timeout_seconds = 0
         self._target_screen = screen or _HOME_SCREEN
+
+    # ── Image orientation detection ────────────────────────────────────────────
+
+    def on_image(self, instance, value):
+        """Reset orientation flag whenever the image URL changes."""
+        self._img_landscape = False
+
+    def _on_img_texture(self, widget, texture):
+        """Called when the AsyncImage finishes loading — detect orientation."""
+        if texture is None:
+            return
+        self._img_landscape = texture.width >= texture.height
 
     # ── Countdown machinery ────────────────────────────────────────────────────
 
