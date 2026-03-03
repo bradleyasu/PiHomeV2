@@ -552,18 +552,18 @@ class SpotifyScreen(PiHomeScreen):
         # ── 1. Device bar ─────────────────────────────────────────────────────
         device_bar = BoxLayout(
             orientation="horizontal",
-            size_hint_y=None, height=dp(26),
-            padding=[dp(18), dp(4), dp(18), 0],
+            size_hint_y=None, height=dp(32),
+            padding=[dp(18), 0, dp(18), 0],
             spacing=dp(4),
         )
         dev_icon = Label(
             text="\ue307",   # Material Icons: cast
-            font_name="MaterialIcons", font_size="14sp",
-            color=list(_GREEN[:3]) + [0.65],
-            size_hint_x=None, width=dp(20),
+            font_name="MaterialIcons", font_size="18sp",
+            color=list(_GREEN[:3]) + [0.75],
+            size_hint=(None, None), size=(dp(22), dp(32)),
             halign="center", valign="middle",
+            text_size=(dp(22), dp(32)),
         )
-        dev_icon.bind(size=lambda w, s: setattr(w, "text_size", s))
         dev_lbl = Label(
             text=self.device_name,
             font_name="Nunito", font_size="11sp",
@@ -711,7 +711,8 @@ class SpotifyScreen(PiHomeScreen):
             text="\u21C4",
             font_size="24sp",
             active=self.shuffle_state,
-            size_hint_x=None, width=dp(44),
+            size_hint=(None, None), size=(dp(44), dp(44)),
+            pos_hint={"center_y": 0.5},
         )
         self._shuffle_btn.bind(on_press=lambda *_: self.toggle_shuffle())
         self.bind(shuffle_state=self._update_shuffle_color)
@@ -720,6 +721,7 @@ class SpotifyScreen(PiHomeScreen):
         prev_btn = SpotifyIconButton(
             source="assets/icons/audio_last.png",
             size=(dp(46), dp(46)),
+            pos_hint={"center_y": 0.5},
         )
         prev_btn.bind(on_press=lambda *_: self.skip_prev())
 
@@ -729,6 +731,7 @@ class SpotifyScreen(PiHomeScreen):
                    else "assets/icons/audio_play.png",
             size=(dp(62), dp(62)),
             color=list(_GREEN),
+            pos_hint={"center_y": 0.5},
         )
         self._play_btn.bind(on_press=lambda *_: self.toggle_play_pause())
         self.bind(is_playing=self._update_play_icon)
@@ -737,6 +740,7 @@ class SpotifyScreen(PiHomeScreen):
         next_btn = SpotifyIconButton(
             source="assets/icons/audio_next.png",
             size=(dp(46), dp(46)),
+            pos_hint={"center_y": 0.5},
         )
         next_btn.bind(on_press=lambda *_: self.skip_next())
 
@@ -746,7 +750,8 @@ class SpotifyScreen(PiHomeScreen):
             text=rep_text,
             font_size="24sp",
             active=self.repeat_state != "off",
-            size_hint_x=None, width=dp(44),
+            size_hint=(None, None), size=(dp(44), dp(44)),
+            pos_hint={"center_y": 0.5},
         )
         self._repeat_btn.bind(on_press=lambda *_: self.cycle_repeat())
         self.bind(repeat_state=self._update_repeat_color)

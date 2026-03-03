@@ -172,7 +172,11 @@ class SpotifyTextButton(ButtonBehavior, Label):
         kwargs.setdefault("halign", "center")
         kwargs.setdefault("valign", "middle")
         super().__init__(**kwargs)
-        self.bind(active=self._sync_color, _opacity_anim=self._apply_opacity)
+        self.bind(
+            active=self._sync_color,
+            _opacity_anim=self._apply_opacity,
+            size=lambda w, s: setattr(w, "text_size", s),
+        )
         self._sync_color()
 
     def _sync_color(self, *_):
