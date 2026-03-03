@@ -5,13 +5,10 @@
     height: dp(54)
     padding: dp(14), dp(9), dp(8), dp(9)
     spacing: dp(10)
-
-    canvas.before:
-        Color:
-            rgba: root.bg_color
-        Rectangle:
-            pos: self.pos
-            size: self.size
+    # No canvas.before background here — TimerDrawer already paints the full
+    # drawer background in its own canvas.before.  A second explicit Color
+    # instruction with alpha=1 inside a child leaks GL color state on Pi's
+    # OpenGL ES 2.0 driver, causing everything rendered afterwards to go black.
 
     # ── Arc progress ring ──────────────────────────────────────────────────────
     Widget:
