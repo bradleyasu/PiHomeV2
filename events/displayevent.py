@@ -49,6 +49,6 @@ class DisplayEvent(PihomeEvent):
             "title": self.type_def("string"),
             "message": self.type_def("string"),
             "image": self.type_def("string"),
-            "background": self.type_def("string", False),
+            "background": self.type_def("color", False, "Kivy expects background colors as RGBA lists, but hex strings can be used here for convenience"),
             "timeout": self.type_def("integer", False)
         }
