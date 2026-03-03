@@ -96,10 +96,13 @@ class AppMenu(FloatLayout):
         icons = list(self.grid.children)  # reversed insertion order = bottom-right first
         total = len(icons)
         for i, icon in enumerate(icons):
-            on_done = self.hide if i == total - 1 else None
-            icon.animate_out(delay=i * 0.04, on_complete=on_done)
-        # Fade the background out slightly behind the icons
-        Animation(opacity=0, t='linear', d=0.15 + total * 0.04).start(self)
+            icon.animate_out(delay=i * 0.04, on_complete=None)
+        # Fade the background.  hide() is bound to THIS animation's on_complete so it
+        # is always called — even on Pi where icon animation callbacks can be delayed
+        # by frame-rate drops or SFX/audio initialisation on the main thread.
+        fade = Animation(opacity=0, t='linear', d=0.15 + total * 0.04)
+        fade.bind(on_complete=lambda *_: self.hide())
+        fade.start(self)
 
     def show(self):
         self.disabled = False
