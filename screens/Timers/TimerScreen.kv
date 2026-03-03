@@ -1,18 +1,297 @@
 #:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import PiTextInput components.Keyboard.keyboard.PiTextInput
+#:import TimerDigitControl screens.Timers.timerdigitcontrol.TimerDigitControl
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TimerScreen — sleek timer creation interface
+# ─────────────────────────────────────────────────────────────────────────────
 <TimerScreen>:
     canvas.before:
         Color:
-            rgba: 0, 0, 0, 1
+            rgba: root.bg_color
         Rectangle:
-            size: self.size
             pos: self.pos
+            size: self.size
+
     BoxLayout:
-        orientation: "vertical"
-        Label:
-            text: root.title
-            font_size: 50
-        Label:
-            id: timer
-            text: root.timerLabel
-            font_size: 100
-       
+        orientation: 'vertical'
+        size_hint: 1, 1
+        spacing: 0
+
+        # ── Header bar ────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(52)
+            padding: [dp(68), dp(8), dp(16), dp(8)]
+            spacing: dp(10)
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                # Bottom separator line
+                Color:
+                    rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
+                Rectangle:
+                    pos: self.pos[0], self.pos[1]
+                    size: self.size[0], dp(1)
+
+            # Alarm / timer icon
+            Label:
+                text: '\ue855'
+                font_name: 'MaterialIcons'
+                font_size: '22sp'
+                color: root.accent_color
+                size_hint: None, 1
+                width: dp(26)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            # Screen title
+            Label:
+                text: 'New Timer'
+                font_name: 'Nunito'
+                font_size: '18sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
+
+            # Rotary hint pill (shows which segment the encoder controls)
+            BoxLayout:
+                size_hint: None, None
+                size: dp(56), dp(26)
+                pos_hint: {'center_y': 0.5}
+                padding: [dp(8), 0]
+                canvas.before:
+                    Color:
+                        rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.12
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(13)]
+                    Color:
+                        rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.35
+                    Line:
+                        rounded_rectangle: [self.pos[0]+dp(1), self.pos[1]+dp(1), self.size[0]-dp(2), self.size[1]-dp(2), dp(12)]
+                        width: dp(1)
+                Label:
+                    text: root.focused_label
+                    font_name: 'Nunito'
+                    font_size: '10sp'
+                    bold: True
+                    color: root.accent_color
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+        # ── Quick-start strip ─────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(76)
+            padding: [dp(16), dp(6), dp(16), dp(4)]
+            spacing: dp(6)
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # "QUICK START" section label
+            Label:
+                text: 'QUICK START'
+                font_name: 'Nunito'
+                font_size: '10sp'
+                bold: True
+                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.55
+                size_hint_y: None
+                height: dp(16)
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            # Chip buttons — populated programmatically in Python
+            BoxLayout:
+                id: quick_timer_row
+                orientation: 'horizontal'
+                spacing: dp(6)
+                size_hint_y: None
+                height: dp(36)
+
+        # ── Divider ───────────────────────────────────────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        # ── Timer name input ──────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(54)
+            padding: [dp(16), dp(8), dp(16), dp(8)]
+            spacing: dp(10)
+
+            # Label icon
+            Label:
+                text: '\ue892'
+                font_name: 'MaterialIcons'
+                font_size: '18sp'
+                color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.7
+                size_hint: None, 1
+                width: dp(24)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            # Styled text input container
+            BoxLayout:
+                size_hint: 1, 1
+                padding: [dp(12), dp(2), dp(12), dp(2)]
+                canvas.before:
+                    Color:
+                        rgba: root.card_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(12)]
+                    Color:
+                        rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.20
+                    Line:
+                        rounded_rectangle: [self.pos[0]+dp(1), self.pos[1]+dp(1), self.size[0]-dp(2), self.size[1]-dp(2), dp(12)]
+                        width: dp(1)
+
+                PiTextInput:
+                    id: timer_name_input
+                    hint_text: 'Timer name (optional)'
+                    hint_text_color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.45
+                    font_name: 'Nunito'
+                    font_size: '14sp'
+                    foreground_color: root.text_color
+                    background_color: 0, 0, 0, 0
+                    cursor_color: root.accent_color
+                    padding: [0, dp(8)]
+                    multiline: False
+                    size_hint: 1, 1
+
+        # ── Digit spinners ────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 1
+            padding: [dp(16), dp(10), dp(16), dp(10)]
+            spacing: dp(8)
+
+            # Hours
+            TimerDigitControl:
+                id: hours_ctrl
+                unit_label: 'HRS'
+                max_value: 23
+                focused: root.focused_segment == 0
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.set_focus(0)
+
+            # Colon separator
+            Label:
+                text: ':'
+                font_name: 'Nunito'
+                font_size: '42sp'
+                bold: True
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.22
+                size_hint_x: None
+                width: dp(18)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            # Minutes
+            TimerDigitControl:
+                id: minutes_ctrl
+                unit_label: 'MIN'
+                max_value: 59
+                focused: root.focused_segment == 1
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.set_focus(1)
+
+            # Colon separator
+            Label:
+                text: ':'
+                font_name: 'Nunito'
+                font_size: '42sp'
+                bold: True
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.22
+                size_hint_x: None
+                width: dp(18)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            # Seconds
+            TimerDigitControl:
+                id: seconds_ctrl
+                unit_label: 'SEC'
+                max_value: 59
+                focused: root.focused_segment == 2
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.set_focus(2)
+
+        # ── Start button ──────────────────────────────────────────────────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(68)
+            padding: [dp(20), dp(8), dp(20), dp(10)]
+
+            # Button surface
+            BoxLayout:
+                size_hint: 1, 1
+                on_touch_down:
+                    if self.collide_point(*args[1].pos) and root.total_seconds > 0: root.start_timer()
+
+                canvas.before:
+                    Color:
+                        rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.88 if root.total_seconds > 0 else 0.18)
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+
+                # Contents: spacer | icon | text | spacer
+                Widget:
+                    size_hint_x: 1
+                Label:
+                    text: '\ue037'
+                    font_name: 'MaterialIcons'
+                    font_size: '22sp'
+                    color: 1, 1, 1, (0.95 if root.total_seconds > 0 else 0.35)
+                    size_hint: None, 1
+                    width: dp(28)
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+                Label:
+                    text: 'START TIMER'
+                    font_name: 'Nunito'
+                    font_size: '14sp'
+                    bold: True
+                    color: 1, 1, 1, (0.95 if root.total_seconds > 0 else 0.35)
+                    size_hint: None, 1
+                    width: dp(118)
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                Widget:
+                    size_hint_x: 1

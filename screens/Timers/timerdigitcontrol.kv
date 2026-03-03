@@ -1,0 +1,97 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TimerDigitControl — scrollable digit segment for hours / minutes / seconds.
+#
+# Visually: rounded card that highlights in the accent colour when focused.
+# Interaction: tap the top arrow to increment, bottom arrow to decrement.
+#   Tapping anywhere also selects this segment for rotary-encoder control.
+# ─────────────────────────────────────────────────────────────────────────────
+<TimerDigitControl>:
+    orientation: 'vertical'
+    spacing: dp(3)
+    padding: [dp(6), dp(8), dp(6), dp(8)]
+
+    # ── card background ───────────────────────────────────────────────────────
+    canvas.before:
+        # Filled rounded card surface
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16)]
+        # Accent border — brighter when focused
+        Color:
+            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.75 if root.focused else 0.14)
+        Line:
+            rounded_rectangle: [self.pos[0]+dp(1), self.pos[1]+dp(1), self.size[0]-dp(2), self.size[1]-dp(2), dp(15)]
+            width: dp(1.5)
+
+    # ── ▲  up button ──────────────────────────────────────────────────────────
+    BoxLayout:
+        size_hint_y: None
+        height: dp(36)
+        on_touch_down: if self.collide_point(*args[1].pos): root.increment()
+        canvas.before:
+            Color:
+                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.22 if root.focused else 0.08)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(10)]
+        Label:
+            text: '\ue5c7'
+            font_name: 'MaterialIcons'
+            font_size: '20sp'
+            color: root.accent_color if root.focused else (root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.32)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+    # ── numeric value ─────────────────────────────────────────────────────────
+    Label:
+        text: '{:02d}'.format(int(root.value))
+        font_name: 'Nunito'
+        font_size: '54sp'
+        bold: True
+        color: root.accent_color if root.focused else root.text_color
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+        size_hint_y: 1
+
+    # ── unit label ────────────────────────────────────────────────────────────
+    Label:
+        text: root.unit_label
+        font_name: 'Nunito'
+        font_size: '10sp'
+        bold: True
+        color: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.75) if root.focused else (root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.40)
+        size_hint_y: None
+        height: dp(18)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    # ── ▼  down button ────────────────────────────────────────────────────────
+    BoxLayout:
+        size_hint_y: None
+        height: dp(36)
+        on_touch_down: if self.collide_point(*args[1].pos): root.decrement()
+        canvas.before:
+            Color:
+                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.22 if root.focused else 0.08)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(10)]
+        Label:
+            text: '\ue5c5'
+            font_name: 'MaterialIcons'
+            font_size: '20sp'
+            color: root.accent_color if root.focused else (root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.32)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
