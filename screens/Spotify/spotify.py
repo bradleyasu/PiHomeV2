@@ -577,6 +577,7 @@ class SpotifyScreen(PiHomeScreen):
         def _update_dev(v):
             dev_lbl.text = v
             dev_icon.opacity = 1 if v else 0
+            dev_lbl.opacity  = 1 if v else 0
         self.bind(device_name=lambda i, v: _update_dev(v))
         _update_dev(self.device_name)
 
@@ -811,10 +812,11 @@ class SpotifyScreen(PiHomeScreen):
             halign="center", valign="middle",
         )
         vol_hi.bind(size=lambda w, s: setattr(w, "text_size", s))
+        vol_row.add_widget(Widget())   # left spacer — centers the group
         vol_row.add_widget(vol_lo)
         vol_row.add_widget(vol_slider)
         vol_row.add_widget(vol_hi)
-        vol_row.add_widget(Widget())
+        vol_row.add_widget(Widget())   # right spacer
 
         # Hide the entire row if the active device doesn't allow volume control
         def _on_supports_vol(inst, supported):
