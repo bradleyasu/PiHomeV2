@@ -130,6 +130,11 @@ class SpotifyScreen(PiHomeScreen):
         # Duration of the current track in ms (needed for seek calculation)
         self._dur_ms = 0
 
+        # Local progress ticker — anchors from last API poll, advances each second
+        self._last_prog_ms = 0
+        self._last_prog_ts = 0.0
+        self._ticker_event = None
+
         # Widget refs for reactive updates (populated in _build_player_panel)
         self._play_btn    = None
         self._shuffle_btn = None
@@ -285,6 +290,28 @@ class SpotifyScreen(PiHomeScreen):
         if self._poll_event:
             self._poll_event.cancel()
             self._poll_event = None
+        self._stop_ticker()
+
+    def _start_ticker(self):
+        """Start a 1-second Clock interval to advance the seek bar locally."""
+        self._stop_ticker()
+        self._ticker_event = Clock.schedule_interval(self._tick, 1.0)
+
+    def _stop_ticker(self):
+        if self._ticker_event:
+            self._ticker_event.cancel()
+            self._ticker_event = None
+
+    def _tick(self, dt):
+        """Advance progress and elapsed_text locally between API polls."""
+        if not self.is_playing or not self._dur_ms:
+            return
+        if time.time() < self._suppress_prog_until:
+            return
+        prog_ms = self._last_prog_ms + int((time.time() - self._last_prog_ts) * 1000)
+        prog_ms = min(prog_ms, self._dur_ms)
+        self.progress     = prog_ms / self._dur_ms
+        self.elapsed_text = _fmt_ms(prog_ms)
 
     def _fetch_state(self):
         if not self._access_token:
@@ -347,6 +374,14 @@ class SpotifyScreen(PiHomeScreen):
         if time.time() >= self._suppress_prog_until:
             self.progress     = (prog_ms / dur_ms) if dur_ms else 0.0
             self.elapsed_text = _fmt_ms(prog_ms)
+
+        # Anchor the local ticker to this fresh API reading
+        self._last_prog_ms = prog_ms
+        self._last_prog_ts = time.time()
+        if data.get("is_playing", False):
+            self._start_ticker()
+        else:
+            self._stop_ticker()
 
         device = data.get("device") or {}
         self.device_name    = device.get("name", "")
