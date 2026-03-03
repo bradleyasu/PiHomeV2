@@ -202,10 +202,7 @@
                 unit_label: 'HRS'
                 max_value: 23
                 focused: root.focused_segment == 0
-                on_touch_down:
-                    if self.collide_point(*args[1].pos):
-                        root.set_focus(0)
-                        return True
+                on_touch_down: if self.collide_point(*args[1].pos): root.set_focus(0)
 
             # Colon separator
             Label:
@@ -226,10 +223,7 @@
                 unit_label: 'MIN'
                 max_value: 59
                 focused: root.focused_segment == 1
-                on_touch_down:
-                    if self.collide_point(*args[1].pos):
-                        root.set_focus(1)
-                        return True
+                on_touch_down: if self.collide_point(*args[1].pos): root.set_focus(1)
 
             # Colon separator
             Label:
@@ -250,10 +244,7 @@
                 unit_label: 'SEC'
                 max_value: 59
                 focused: root.focused_segment == 2
-                on_touch_down:
-                    if self.collide_point(*args[1].pos):
-                        root.set_focus(2)
-                        return True
+                on_touch_down: if self.collide_point(*args[1].pos): root.set_focus(2)
 
         # ── Start button ──────────────────────────────────────────────────────
         BoxLayout:
@@ -264,10 +255,7 @@
             # Button surface
             BoxLayout:
                 size_hint: 1, 1
-                on_touch_down:
-                    if self.collide_point(*args[1].pos) and root.total_seconds > 0:
-                        root.start_timer()
-                        return True
+                on_touch_down: if self.collide_point(*args[1].pos) and root.total_seconds > 0: root._touch_start_timer(args[1])
 
                 canvas.before:
                     Color:

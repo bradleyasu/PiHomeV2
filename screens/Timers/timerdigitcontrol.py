@@ -80,3 +80,13 @@ class TimerDigitControl(BoxLayout):
 
     def reset(self):
         self.value = 0
+
+    def _touch_increment(self, touch):
+        """Increment and consume the touch (called from KV)."""
+        touch.grab(self)
+        self.increment()
+
+    def _touch_decrement(self, touch):
+        """Decrement and consume the touch (called from KV)."""
+        touch.grab(self)
+        self.decrement()

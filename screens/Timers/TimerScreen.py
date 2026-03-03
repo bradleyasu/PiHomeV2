@@ -143,6 +143,11 @@ class TimerScreen(PiHomeScreen):
         # NoTransition screen opacity at 0 on slower hardware.
         Clock.schedule_once(lambda _: self.go_back(), 0)
 
+    def _touch_start_timer(self, touch):
+        """Touch-safe wrapper: grab the touch then start the timer (called from KV)."""
+        touch.grab(self)
+        self.start_timer()
+
     # ── private helpers ───────────────────────────────────────────────────────
 
     def _reset(self):
