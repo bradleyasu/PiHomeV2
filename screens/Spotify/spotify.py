@@ -293,9 +293,9 @@ class SpotifyScreen(PiHomeScreen):
         self._stop_ticker()
 
     def _start_ticker(self):
-        """Start a 1-second Clock interval to advance the seek bar locally."""
+        """Start a 100 ms Clock interval to advance the seek bar locally."""
         self._stop_ticker()
-        self._ticker_event = Clock.schedule_interval(self._tick, 1.0)
+        self._ticker_event = Clock.schedule_interval(self._tick, 0.1)
 
     def _stop_ticker(self):
         if self._ticker_event:
@@ -310,8 +310,11 @@ class SpotifyScreen(PiHomeScreen):
             return
         prog_ms = self._last_prog_ms + int((time.time() - self._last_prog_ts) * 1000)
         prog_ms = min(prog_ms, self._dur_ms)
-        self.progress     = prog_ms / self._dur_ms
-        self.elapsed_text = _fmt_ms(prog_ms)
+        self.progress = prog_ms / self._dur_ms
+        # Only redraw the text label when the displayed second changes
+        new_text = _fmt_ms(prog_ms)
+        if new_text != self.elapsed_text:
+            self.elapsed_text = new_text
 
     def _fetch_state(self):
         if not self._access_token:
