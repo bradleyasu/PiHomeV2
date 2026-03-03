@@ -10,6 +10,11 @@
             pos: self.pos
             size: self.size
             radius: [0, 0, dp(16), dp(16)]
+        # Reset GL color state — Pi's OpenGL ES 2.0 batcher does not reset
+        # the active color between canvas groups; leaving it at bg_color
+        # (near-black) taints every widget drawn afterwards in the same batch.
+        Color:
+            rgba: 1, 1, 1, 1
 
     # ── Depleting progress bar + pill/tray separator (drawn on top) ─────────
     canvas.after:
@@ -31,6 +36,9 @@
         Rectangle:
             pos: self.x + dp(12), self.y + self.height - dp(65)
             size: self.width - dp(24), dp(1)
+        # Reset GL color state after canvas.after
+        Color:
+            rgba: 1, 1, 1, 1
 
     # ── Pill header ────────────────────────────────────────────────────────────
     BoxLayout:
@@ -108,6 +116,8 @@
                 Ellipse:
                     pos: self.x + dp(1), self.y + dp(1)
                     size: self.width - dp(2), self.height - dp(2)
+                Color:
+                    rgba: 1, 1, 1, 1
 
     # ── Expandable timer rows tray ─────────────────────────────────────────────
     BoxLayout:
