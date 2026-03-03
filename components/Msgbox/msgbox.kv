@@ -1,54 +1,150 @@
 #:kivy 2.0.0
-<Msgbox>:
-    size_hint: None, None
-    size: 400, 200
-    canvas:
-        Color:
-            rgba: root.backdrop_color
-        Rectangle:
-            pos: 0, 0
-            # fullscreen backdrop
-            size: dp(1024), dp(1024)
-        Color:
-            rgba: root.background_color
-        RoundedRectangle:
-            size: self.size
-            pos: self.pos
-            radius: [5, 5, 5, 5]
+#:import dp kivy.metrics.dp
 
+# ── Card widget \u2014 draws its own background, owns scale/opacity animation ──────
+<MsgboxCard>:
+    orientation: 'vertical'
+    size_hint: None, None
+    size: dp(440), dp(200)
+    padding: dp(24), dp(24), dp(24), dp(16)
+    spacing: dp(10)
+    opacity: self.card_opacity
+
+    # Scale transform wraps background drawing AND all children
+    canvas.before:
+        PushMatrix:
+        Scale:
+            origin: self.center_x, self.center_y, 0
+            x: self.card_scale
+            y: self.card_scale
+
+        # Drop shadow
+        Color:
+            rgba: 0, 0, 0, 0.28 * self.card_opacity
+        RoundedRectangle:
+            pos: self.x + dp(4), self.y - dp(2)
+            size: self.width, self.height
+            radius: [dp(16)]
+
+        # Layer 1: full card in accent color (gives us properly rounded top corners)
+        Color:
+            rgba: self.accent_color[0], self.accent_color[1], self.accent_color[2], self.card_opacity
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16)]
+
+        # Layer 2: card body overdraw in card color, only bottom corners rounded,
+        # leaving exactly dp(8) of accent color visible at the top
+        Color:
+            rgba: self.card_color[0], self.card_color[1], self.card_color[2], self.card_opacity
+        RoundedRectangle:
+            pos: self.x, self.y
+            size: self.width, self.height - dp(8)
+            radius: [dp(8), dp(8), dp(16), dp(16)]
+
+        # Elevation border over the whole card
+        Color:
+            rgba: self.border_color[0], self.border_color[1], self.border_color[2], 0.5 * self.card_opacity
+        Line:
+            rounded_rectangle: self.x, self.y, self.width, self.height, dp(16)
+            width: dp(1)
+
+    canvas.after:
+        PopMatrix:
+
+    # ── Title row: icon + text (left-aligned) ──────────────────────────────
     BoxLayout:
-        orientation: "vertical"
-        size: root.size
-        pos: root.pos   
-        padding: 10
-        canvas.before:
-            Color:
-                rgba: 0, 0, 0, 0
-            RoundedRectangle:
-                size: self.size
-                pos: self.pos
-                radius: [5, 5, 5, 5]
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(36)
+        spacing: dp(8)
 
         Label:
-            text: root.message
-            color: root.text_color
-            font_size: '20sp'
-        GridLayout:
-            rows: 1
-            spacing: 10
-            size_hint: 1, 0.3
-            id: button_grid
-            canvas:
-                Color:
-                    rgba: 0, 0, 0, 0
-                RoundedRectangle:
-                    size: self.size
-                    pos: self.pos
+            text: root.type_icon
+            font_name: 'MaterialIcons'
+            font_size: '22sp'
+            color: root.accent_color
+            size_hint_x: None
+            width: dp(28)
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
 
-            SimpleButton:
-                text: "Yes"
-                size_hint: 0.5, 1
-                # on_release: root.dismiss()
-            SimpleButton:
-                text: "No"
-                size_hint: 0.5, 1
+        Label:
+            text: root.title
+            font_name: 'Nunito'
+            font_size: '17sp'
+            bold: True
+            color: root.text_primary
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+
+    # ── Divider ────────────────────────────────────────────────────────────
+    Widget:
+        size_hint_y: None
+        height: dp(1)
+        canvas:
+            Color:
+                rgba: root.divider_color
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+    # ── Message body (centered) ────────────────────────────────────────────
+    Label:
+        text: root.message
+        font_name: 'Nunito'
+        font_size: '14sp'
+        color: root.text_secondary
+        text_size: self.width, None
+        size_hint_y: 1
+        halign: 'center'
+        valign: 'middle'
+
+    # ── Button row (centered) ──────────────────────────────────────────────
+    Widget:
+        size_hint_y: None
+        height: dp(8)
+
+    Widget:
+        size_hint_y: None
+        height: dp(1)
+        canvas:
+            Color:
+                rgba: root.divider_color
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'center'
+        size_hint_y: None
+        height: dp(34)
+
+        GridLayout:
+            id: button_grid
+            rows: 1
+            spacing: dp(10)
+            size_hint: None, 1
+            width: self.minimum_width
+
+
+# ── Full-screen overlay widget ─────────────────────────────────────────────
+<Msgbox>:
+    size_hint: 1, 1 
+
+    # Scrim
+    canvas.before:
+        Color:
+            rgba: root.scrim_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    # FloatLayout + pos_hint is the guaranteed center — no wrapper needed
+    MsgboxCard:
+        id: card
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
