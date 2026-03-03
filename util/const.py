@@ -5,6 +5,7 @@ from system.brightness import set_brightness
 CONF_FILE = "base.ini"
 THEME_FILE = "theme.ini"
 SERVER_PORT = 8989
+HTTPS_CALLBACK_PORT = 8990  # HTTPS-only server that handles OAuth/webhook callbacks
 GESTURE_DATABASE = GestureDatabase()
 
 CDN_ASSET = "https://cdn.pihome.io/assets/{}"

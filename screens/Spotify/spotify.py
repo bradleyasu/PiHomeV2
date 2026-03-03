@@ -5,10 +5,10 @@ OAuth2 Authorization Code Flow
 1. User adds Client ID + Client Secret in Settings → Spotify.
 2. Screen shows a two-step QR panel:
    Step 1 — scan the cert-trust QR to pre-accept PiHome's self-signed
-             HTTPS certificate in the phone's browser (one-time).
+             HTTPS certificate for the callback server (one-time, port 8990).
    Step 2 — scan the Spotify auth QR; approving it causes Spotify to
-             redirect to ``https://<pi-ip>:8989/spotify/callback``.
-3. PiHome's HTTPS server catches that request, extracts the ``code`` param,
+             redirect to ``https://<pi-ip>:8990/spotify/callback``.
+3. PiHome's dedicated HTTPS callback server (port 8990) catches that request, extracts the ``code`` param,
    and calls the screen's ``_handle_oauth_callback`` method via the
    generic ``server.callbacks`` registry.
 4. The callback runs on the server thread, starts a background exchange
@@ -151,9 +151,9 @@ class SpotifyScreen(PiHomeScreen):
         self._rtok  = CONFIG.get("spotify", "refresh_token", "").strip()
         self._redir = CONFIG.get("spotify", "redirect_uri",  "").strip()
         if not self._redir:
-            from util.const import SERVER_PORT
+            from util.const import HTTPS_CALLBACK_PORT
             from server.ssl_cert import lan_ip
-            self._redir = f"https://{lan_ip()}:{SERVER_PORT}/spotify/callback"
+            self._redir = f"https://{lan_ip()}:{HTTPS_CALLBACK_PORT}/spotify/callback"
 
     def on_config_update(self, config):
         old_cid  = self._cid

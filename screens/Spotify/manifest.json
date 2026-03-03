@@ -29,13 +29,6 @@
             "key": "client_secret"
         },
         {
-            "type": "string",
-            "title": "Redirect URI",
-            "desc": "Must exactly match a Redirect URI set in your Spotify app. Use http://<pi-ip>:8989/spotify/callback where <pi-ip> is your Pi's IP address.",
-            "section": "spotify",
-            "key": "redirect_uri"
-        },
-        {
             "type": "title",
             "title": "Authorization (auto-managed)"
         },

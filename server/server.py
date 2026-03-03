@@ -12,7 +12,7 @@ from threading import Thread
 from services.audio.audioplayernew import AUDIO_PLAYER
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE, Wallpaper
 
-from util.const import SERVER_PORT, _MUSIC_SCREEN
+from util.const import SERVER_PORT, HTTPS_CALLBACK_PORT, _MUSIC_SCREEN
 from util.helpers import get_app, process_webhook, toast
 from util.phlog import PIHOME_LOGGER
 
@@ -168,14 +168,58 @@ class PiHomeTCPServer(socketserver.TCPServer):
         )
 
 
+class CallbackRequestHandler(http.server.BaseHTTPRequestHandler):
+    """Minimal HTTPS-only request handler that routes GET requests to the
+    registered callback registry.  No static file serving, no POST — this
+    server exists solely to receive OAuth/webhook redirects over a trusted
+    HTTPS connection.
+    """
+
+    def do_GET(self):
+        if not self._dispatch_callback(self.path):
+            self._send_html_response(404, "<h2>Not found</h2>")
+
+    def _dispatch_callback(self, path: str) -> bool:
+        from urllib.parse import urlparse, parse_qs
+        from server.callbacks import _REGISTRY
+        for prefix, handler in list(_REGISTRY.items()):
+            if path.startswith(prefix):
+                params = parse_qs(urlparse(path).query)
+                try:
+                    result = handler(params)
+                except Exception as e:
+                    PIHOME_LOGGER.error(f"CallbackServer: handler '{prefix}' raised: {e}")
+                    self._send_html_response(500, "<h2>Internal error</h2>")
+                    return True
+                html = result if isinstance(result, str) and result else (
+                    "<p style='font-family:sans-serif'>Request received. You can close this tab.</p>"
+                )
+                self._send_html_response(200, html)
+                return True
+        return False
+
+    def _send_html_response(self, code: int, html: str):
+        body = html.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format, *args):
+        PIHOME_LOGGER.info("CallbackServer: " + format % args)
+
+
 class PiHomeServer():
     PORT = SERVER_PORT
     SOCKET_PORT = 9090
     SERVER_THREAD = None
     SOCKET_THREAD = None
+    CALLBACK_THREAD = None
     SOCKET_LOOP = None
     SOCKET_SERVER = None
     httpd = None
+    callback_httpd = None
     shutting_down = False
     SOCKET_HANDLER = SocketHandler()
     def __init__(self, **kwargs):
@@ -186,6 +230,8 @@ class PiHomeServer():
         self.SERVER_THREAD.start()
         self.SOCKET_THREAD = Thread(target=self._run_socket, daemon=True)
         self.SOCKET_THREAD.start()
+        self.CALLBACK_THREAD = Thread(target=self._run_callback, daemon=True)
+        self.CALLBACK_THREAD.start()
         
         PIHOME_LOGGER.info("Server: PiHome Server has started")
 
@@ -197,6 +243,9 @@ class PiHomeServer():
             PIHOME_LOGGER.info("Server: PiHome Server has shutdown")
         else:
             PIHOME_LOGGER.warn("Server: Failed to shutdown PiHome server.  It is not running")
+        if self.callback_httpd:
+            self.callback_httpd.shutdown()
+            self.callback_httpd = None
         self._shutdown_socket_loop()
 
     def is_online(self):
@@ -227,25 +276,42 @@ class PiHomeServer():
             self.SOCKET_LOOP = None
 
     def _run(self):
-        Handler = MyHttpRequestHandler
         try:
-            from server.ssl_cert import make_ssl_context
-            ssl_ctx = make_ssl_context()
-            with PiHomeTCPServer(("", self.PORT), Handler) as h:
-                if ssl_ctx:
-                    h.socket = ssl_ctx.wrap_socket(h.socket, server_side=True)
-                    PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTPS)".format(self.PORT))
-                else:
-                    PIHOME_LOGGER.warning("Server: SSL setup failed — falling back to HTTP")
-                    PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTP)".format(self.PORT))
+            with PiHomeTCPServer(("", self.PORT), MyHttpRequestHandler) as h:
+                PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTP)".format(self.PORT))
                 self.httpd = h
                 while not self.shutting_down:
                     h.serve_forever()
         except Exception as e:
             PIHOME_LOGGER.error("Server: PiHome Server failed to start: {}".format(e))
-            # try again after 20 seconds
             time.sleep(20)
             self._run()
+
+    def _run_callback(self):
+        """Run the HTTPS-only callback server on HTTPS_CALLBACK_PORT.
+        Uses the same self-signed cert as before — callers must accept it once
+        in the browser, but the main app stays on plain HTTP.
+        """
+        try:
+            from server.ssl_cert import make_ssl_context
+            ssl_ctx = make_ssl_context()
+            with PiHomeTCPServer(("", HTTPS_CALLBACK_PORT), CallbackRequestHandler) as h:
+                if ssl_ctx:
+                    h.socket = ssl_ctx.wrap_socket(h.socket, server_side=True)
+                    PIHOME_LOGGER.info(
+                        f"Server: Callback Server Listening on port: {HTTPS_CALLBACK_PORT} (HTTPS)"
+                    )
+                else:
+                    PIHOME_LOGGER.warning(
+                        f"Server: SSL unavailable — Callback Server on port: {HTTPS_CALLBACK_PORT} (HTTP)"
+                    )
+                self.callback_httpd = h
+                while not self.shutting_down:
+                    h.serve_forever()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Server: Callback Server failed to start: {e}")
+            time.sleep(20)
+            self._run_callback()
                 
     
     async def websocket_server(self, websocket):
@@ -258,18 +324,8 @@ class PiHomeServer():
             print("WebSocket connection closed")
 
     async def start_socket_server(self):
-        try:
-            from server.ssl_cert import make_ssl_context
-            ssl_ctx = make_ssl_context()
-        except Exception:
-            ssl_ctx = None
-        self.SOCKET_SERVER = await websockets.serve(
-            self.websocket_server, "0.0.0.0", 8765, ssl=ssl_ctx
-        )
-        if ssl_ctx:
-            PIHOME_LOGGER.info("Server: WebSocket Listening on port: 8765 (WSS)")
-        else:
-            PIHOME_LOGGER.warning("Server: WebSocket Listening on port: 8765 (WS — SSL unavailable)")
+        self.SOCKET_SERVER = await websockets.serve(self.websocket_server, "0.0.0.0", 8765)
+        PIHOME_LOGGER.info("Server: WebSocket Listening on port: 8765 (WS)")
         await asyncio.Future()  # Wait indefinitely
             
 
