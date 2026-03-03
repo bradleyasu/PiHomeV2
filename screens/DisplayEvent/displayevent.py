@@ -5,37 +5,80 @@ from services.audio.sfx import SFX
 from util.const import _HOME_SCREEN
 from util.tools import hex
 from kivy.clock import Clock
-from kivy.properties import ColorProperty, StringProperty
+from kivy.properties import ColorProperty, StringProperty, NumericProperty
 
 Builder.load_file("./screens/DisplayEvent/displayevent.kv")
 
 class DisplayEvent(PiHomeScreen):
     """
-    THIS SCREEN IS POORLY NAMED. It should be "displayscreen".  It is overloading the term 'event' with the 
-    event architecture.  This screen is used to display a message to the user.  It is used by the DisplayEvent
+    Informational display screen launched by external display events.
+    Shows a full-screen message with optional background image and
+    an optional auto-dismiss countdown.
     """
-    background = ColorProperty((0,0,0,0.9))
-    title = StringProperty("<title>")
-    message = StringProperty("<message>")
-    image = StringProperty("")
+    background      = ColorProperty((0, 0, 0, 0.92))
+    title           = StringProperty("")
+    message         = StringProperty("")
+    image           = StringProperty("")   # URL — rendered as full-screen background
+
+    # ── Timeout state ──────────────────────────────────────────────────────────
+    timeout_seconds = NumericProperty(0)   # 0 = no auto-dismiss
+    _target_screen  = StringProperty("")
+    _remaining      = NumericProperty(0)
+    _arc_angle      = NumericProperty(360)
+    _tick_event     = None
+
     def __init__(self, **kwargs):
         super(DisplayEvent, self).__init__(**kwargs)
 
+    # ── Public API called by the DisplayEvent event before goto() ─────────────
+
     def set_background(self, background):
         self.background = hex(background, 1)
-  
-    def set_timeout(self, seconds, screen = None):
-        # Only go_back to previous screen if the current screen is the screen that was displayed
-        if screen is None:
-            screen = _HOME_SCREEN
-        if PIHOME_SCREEN_MANAGER.current_screen == screen:
-            Clock.schedule_once(lambda _: self.go_back(), int(seconds))
+
+    def set_timeout(self, seconds, screen=None):
+        """Store timeout config. Countdown starts in on_enter once the screen
+        is actually visible. seconds=0 or None means stay open indefinitely."""
+        try:
+            self.timeout_seconds = max(0, int(seconds))
+        except (TypeError, ValueError):
+            self.timeout_seconds = 0
+        self._target_screen = screen or _HOME_SCREEN
+
+    # ── Countdown machinery ────────────────────────────────────────────────────
+
+    def _start_countdown(self):
+        self._stop_countdown()
+        if self.timeout_seconds <= 0:
+            return
+        self._remaining  = self.timeout_seconds
+        self._arc_angle  = 360
+        self._tick_event = Clock.schedule_interval(self._tick, 1)
+
+    def _stop_countdown(self):
+        if self._tick_event:
+            self._tick_event.cancel()
+            self._tick_event = None
+
+    def _tick(self, dt):
+        self._remaining -= 1
+        if self.timeout_seconds > 0:
+            self._arc_angle = max(0, 360 * self._remaining / self.timeout_seconds)
+        if self._remaining <= 0:
+            self._stop_countdown()
+            PIHOME_SCREEN_MANAGER.goto(self._target_screen or _HOME_SCREEN)
+
+    # ── Screen lifecycle ───────────────────────────────────────────────────────
 
     def on_enter(self, *args):
         SFX.play("multi_pop")
+        self._start_countdown()
         return super().on_enter(*args)
-    
+
+    def on_pre_leave(self, *args):
+        self._stop_countdown()
+        return super().on_pre_leave(*args)
 
     def on_touch_down(self, touch):
+        self._stop_countdown()
         self.go_back()
         return super().on_touch_down(touch)
