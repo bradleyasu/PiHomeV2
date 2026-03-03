@@ -1,6 +1,7 @@
 {
   "short_name": "PiHome",
-  "name": "Control your home with Raspberry Pi",
+  "name": "PiHome - Home Automation",
+  "description": "Control your home with Raspberry Pi",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,18 +11,22 @@
     {
       "src": "pihome_web_icon.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "pihome_web_icon.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait",
-  "theme_color": "#ffffff",
-  "background_color": "#000000"
+  "theme_color": "#0a0b14",
+  "background_color": "#0a0b14",
+  "categories": ["utilities"]
 }
