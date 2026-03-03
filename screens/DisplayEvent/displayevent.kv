@@ -47,7 +47,7 @@
             StencilUse
             # ── White card surface ────────────────────────────────────────────
             Color:
-                rgba: 1, 1, 1, 1
+                rgba: root.card_color
             RoundedRectangle:
                 pos: self.pos
                 size: self.size
@@ -76,7 +76,7 @@
             canvas.before:
                 # Subtle image placeholder tone
                 Color:
-                    rgba: 0.93, 0.93, 0.93, 1
+                    rgba: root.card_color[0] * 0.94, root.card_color[1] * 0.94, root.card_color[2] * 0.94, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -95,7 +95,7 @@
                 font_name: 'Nunito'
                 bold: True
                 font_size: '20sp'
-                color: 0.08, 0.08, 0.08, 1
+                color: root.text_color
                 size_hint_y: None
                 height: self.texture_size[1]
                 text_size: self.width, None
@@ -108,7 +108,7 @@
                 height: dp(1)
                 canvas:
                     Color:
-                        rgba: 0.88, 0.88, 0.88, 1
+                        rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.3
                     Rectangle:
                         pos: self.pos
                         size: self.size
@@ -118,15 +118,15 @@
                 id: scroll_area
                 size_hint_y: 1
                 do_scroll_x: False
-                bar_color: 0.65, 0.65, 0.65, 0.6
-                bar_inactive_color: 0.65, 0.65, 0.65, 0.2
+                bar_color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.6
+                bar_inactive_color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.2
                 bar_width: dp(3)
 
                 Label:
                     text: root.message
                     font_name: 'Nunito'
                     font_size: '14sp'
-                    color: 0.28, 0.28, 0.28, 1
+                    color: root.muted_color
                     size_hint_y: None
                     height: self.texture_size[1]
                     text_size: self.width, None
@@ -144,7 +144,7 @@
                     text: 'Tap anywhere to dismiss'
                     font_name: 'Nunito'
                     font_size: '11sp'
-                    color: 0.65, 0.65, 0.65, 1
+                    color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.6
                     halign: 'left'
                     valign: 'middle'
                     text_size: self.size
@@ -160,13 +160,13 @@
                     canvas.before:
                         # Track
                         Color:
-                            rgba: 0.86, 0.86, 0.86, 1
+                            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.3
                         Line:
                             circle: self.center_x, self.center_y, dp(14), 0, 360
                             width: dp(2)
                         # Depleting filled arc
                         Color:
-                            rgba: 0.2, 0.2, 0.2, 1
+                            rgba: root.text_color
                         Line:
                             circle: self.center_x, self.center_y, dp(14), 90, 90 + root._arc_angle
                             width: dp(2)
@@ -178,7 +178,7 @@
                         font_name: 'Nunito'
                         font_size: '11sp'
                         bold: True
-                        color: 0.15, 0.15, 0.15, 1
+                        color: root.text_color
                         halign: 'center'
                         valign: 'middle'
                         text_size: self.size

@@ -6,6 +6,7 @@ from util.const import _HOME_SCREEN
 from util.tools import hex
 from kivy.clock import Clock
 from kivy.properties import BooleanProperty, ColorProperty, StringProperty, NumericProperty
+import theme.theme as t
 
 Builder.load_file("./screens/DisplayEvent/displayevent.kv")
 
@@ -19,11 +20,16 @@ class DisplayEvent(PiHomeScreen):
     message         = StringProperty("")
     image           = StringProperty("")          # URL for the card image pane
 
+    # ── Theme colours (auto-refreshed by PiHomeScreen.on_config_update) ────────
+    card_color      = ColorProperty([1, 1, 1, 1])
+    text_color      = ColorProperty([0.08, 0.08, 0.08, 1])
+    muted_color     = ColorProperty([0.45, 0.45, 0.45, 1])
+
     # ── Image orientation (detected when texture loads) ────────────────────────
-    _img_landscape  = BooleanProperty(False)      # True → image on top, False → image on left
+    _img_landscape  = BooleanProperty(False)
 
     # ── Timeout state ─────────────────────────────────────────────────────────
-    timeout_seconds = NumericProperty(0)          # 0 = no auto-dismiss
+    timeout_seconds = NumericProperty(0)
     _target_screen  = StringProperty("")
     _remaining      = NumericProperty(0)
     _arc_angle      = NumericProperty(360)
@@ -31,6 +37,10 @@ class DisplayEvent(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super(DisplayEvent, self).__init__(**kwargs)
+        theme = t.Theme()
+        self.card_color  = theme.get_color(t.Theme.BACKGROUND_PRIMARY)
+        self.text_color  = theme.get_color(t.Theme.TEXT_PRIMARY)
+        self.muted_color = theme.get_color(t.Theme.TEXT_SECONDARY)
 
     # ── Public API called by the DisplayEvent event before goto() ─────────────
 
