@@ -92,9 +92,9 @@ class TimerDrawer(BoxLayout):
         self.timer_widgets.append(tw)
         if 'tray' in self.ids:
             self.ids.tray.add_widget(tw)
-        # timer.add_listener(
-        #     lambda _: Clock.schedule_once(lambda dt: self._on_timer_done(tw), 0)
-        # )
+        timer.add_listener(
+            lambda _: Clock.schedule_once(lambda dt: self._on_timer_done(tw), 0)
+        )
         # tw.start()
         # self._refresh()
         # try:
