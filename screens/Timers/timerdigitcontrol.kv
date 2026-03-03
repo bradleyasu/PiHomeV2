@@ -33,7 +33,7 @@
     BoxLayout:
         size_hint_y: None
         height: dp(36)
-        on_touch_down: if self.collide_point(*args[1].pos): root._touch_increment(args[1])
+        on_touch_down: if self.collide_point(*args[1].pos): root.increment()
         canvas.before:
             Color:
                 rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.22 if root.focused else 0.08)
@@ -79,7 +79,7 @@
     BoxLayout:
         size_hint_y: None
         height: dp(36)
-        on_touch_down: if self.collide_point(*args[1].pos): root._touch_decrement(args[1])
+        on_touch_down: if self.collide_point(*args[1].pos): root.decrement()
         canvas.before:
             Color:
                 rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], (0.22 if root.focused else 0.08)

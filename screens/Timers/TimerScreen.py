@@ -137,16 +137,7 @@ class TimerScreen(PiHomeScreen):
             name = self._auto_label()
         TIMER_DRAWER.create_timer(self.total_seconds, name)
         self._reset()
-        # Defer navigation to the next frame so any in-flight touch/event
-        # dispatch on the Pi's real touchscreen fully completes first.  Calling
-        # go_back() synchronously inside a touch callback can leave the
-        # NoTransition screen opacity at 0 on slower hardware.
-        Clock.schedule_once(lambda _: self.go_back(), 0)
-
-    def _touch_start_timer(self, touch):
-        """Touch-safe wrapper: grab the touch then start the timer (called from KV)."""
-        touch.grab(self)
-        self.start_timer()
+        self.go_back()
 
     # ── private helpers ───────────────────────────────────────────────────────
 
@@ -240,26 +231,16 @@ class TimerScreen(PiHomeScreen):
         chip_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
         chip.add_widget(chip_lbl)
 
-        # Bind touch — start immediately and return.
-        # Use touch.grab() so the Pi's touchscreen event is fully consumed
-        # and does not continue propagating up the widget tree after navigation.
+        # Bind touch — start immediately and return
         def _on_touch_down(w, touch):
             if w.collide_point(*touch.pos):
-                touch.grab(w)
                 self._start_quick_timer(duration, label)
                 return True
             return False
 
-        def _on_touch_up(w, touch):
-            if touch.grab_current is w:
-                touch.ungrab(w)
-                return True
-            return False
-
         chip.bind(on_touch_down=_on_touch_down)
-        chip.bind(on_touch_up=_on_touch_up)
         return chip
 
     def _start_quick_timer(self, duration: int, label: str):
         TIMER_DRAWER.create_timer(duration, label)
-        Clock.schedule_once(lambda _: self.go_back(), 0)
+        self.go_back()
