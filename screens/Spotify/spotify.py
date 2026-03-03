@@ -576,7 +576,7 @@ class SpotifyScreen(PiHomeScreen):
 
         def _update_dev(v):
             dev_lbl.text = v
-            dev_icon.opacity = 1 if v else 0
+            dev_icon.opacity = 1 if v else 0.5
         self.bind(device_name=lambda i, v: _update_dev(v))
         _update_dev(self.device_name)
 
