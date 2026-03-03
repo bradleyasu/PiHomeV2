@@ -27,6 +27,7 @@ class DisplayEvent(PiHomeScreen):
 
     # ── Image orientation (detected when texture loads) ────────────────────────
     _img_landscape  = BooleanProperty(False)
+    _img_aspect     = NumericProperty(1.0)   # texture width / height
 
     # ── Timeout state ─────────────────────────────────────────────────────────
     timeout_seconds = NumericProperty(0)
@@ -67,6 +68,7 @@ class DisplayEvent(PiHomeScreen):
         if texture is None:
             return
         self._img_landscape = texture.width >= texture.height
+        self._img_aspect    = texture.width / texture.height if texture.height else 1.0
 
     # ── Countdown machinery ────────────────────────────────────────────────────
 

@@ -20,7 +20,7 @@
         id: card
         orientation: 'horizontal' if (root.image and not root._img_landscape) else 'vertical'
         size_hint: None, None
-        width: root.width * 0.88
+        width: (min(root.height * 0.5 * root._img_aspect, root.width - dp(48))) if (root.image and root._img_landscape) else root.width * 0.88
         height: root.height * 0.84
         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
@@ -70,7 +70,8 @@
             keep_ratio: True
             # size_hint along main axis / cross axis per orientation
             size_hint_x: 0.42 if (root.image and not root._img_landscape) else 1
-            size_hint_y: 1   if (root.image and not root._img_landscape) else (0.42 if root.image else 0)
+            size_hint_y: None if root._img_landscape else (1 if (root.image and not root._img_landscape) else 0)
+            height: (root.height * 0.5) if root._img_landscape else dp(0)
             opacity: 1 if root.image else 0
             on_texture: root._on_img_texture(self, self.texture)
             canvas.before:
@@ -87,7 +88,7 @@
             padding: dp(24), dp(20), dp(24), dp(14)
             spacing: dp(10)
             size_hint_x: 0.58 if (root.image and not root._img_landscape) else 1
-            size_hint_y: 1   if (root.image and not root._img_landscape) else (0.58 if root.image else 1)
+            size_hint_y: 1
 
             # ── Title ──────────────────────────────────────────────────────────
             Label:
