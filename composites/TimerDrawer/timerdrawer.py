@@ -91,16 +91,17 @@ class TimerDrawer(BoxLayout):
         tw = PiHomeTimer(timer=timer)
         self.timer_widgets.append(tw)
         if 'tray' in self.ids:
-            self.ids.tray.add_widget(tw)
+            pass
+            # self.ids.tray.add_widget(tw)
         timer.add_listener(
             lambda _: Clock.schedule_once(lambda dt: self._on_timer_done(tw), 0)
         )
-        # tw.start()
-        # self._refresh()
-        # try:
-        #     self.serialize()
-        # except Exception as e:
-        #     PIHOME_LOGGER.error(f"TimerDrawer: serialize error: {e}")
+        tw.start()
+        self._refresh()
+        try:
+            self.serialize()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"TimerDrawer: serialize error: {e}")
 
     def _on_timer_done(self, tw):
         if tw in self.timer_widgets:
