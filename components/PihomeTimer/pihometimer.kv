@@ -5,32 +5,37 @@
     height: dp(54)
     padding: dp(14), dp(9), dp(8), dp(9)
     spacing: dp(10)
-    # No canvas.before background here — TimerDrawer already paints the full
-    # drawer background in its own canvas.before.  A second explicit Color
-    # instruction with alpha=1 inside a child leaks GL color state on Pi's
-    # OpenGL ES 2.0 driver, causing everything rendered afterwards to go black.
+    # All artwork is drawn on this root widget's canvas — no child widget
+    # has its own canvas block.  Child-widget canvas groups corrupt GL state
+    # on Pi's OpenGL ES 2.0 driver (VideoCore IV), blacking out the display.
+    canvas:
+        # Arc track ring  (center = left-padding 14 + half of 36dp spacer = 32dp)
+        Color:
+            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.22
+        Line:
+            circle: self.x + dp(32), self.center_y, dp(14)
+            width: dp(2)
+        # Progress arc (clockwise from 12 o'clock)
+        Color:
+            rgba: root.accent_color
+        Line:
+            circle: self.x + dp(32), self.center_y, dp(14), 90, 90 + 360 * root.progress
+            width: dp(2.5)
+        # Cancel hint circle behind the icon label
+        # center_x = self.right - right_padding(8) - half_label_width(17) = right - dp(25)
+        Color:
+            rgba: 1, 1, 1, 0.08
+        Ellipse:
+            pos: self.right - dp(40), self.center_y - dp(15)
+            size: dp(30), dp(30)
+        # GL state reset
+        Color:
+            rgba: 1, 1, 1, 1
 
-    # ── Arc progress ring ──────────────────────────────────────────────────────
+    # ── Arc spacer — bare Widget, zero canvas instructions ────────────────────
     Widget:
         size_hint: None, None
         size: dp(36), dp(36)
-        pos_hint: {'center_y': 0.5}
-        canvas:
-            # track ring
-            Color:
-                rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.22
-            Line:
-                circle: self.center_x, self.center_y, dp(14)
-                width: dp(2)
-            # progress arc (CCW from 12 o'clock)
-            Color:
-                rgba: root.accent_color
-            Line:
-                circle: self.center_x, self.center_y, dp(14), 90, 90 + 360 * root.progress
-                width: dp(2.5)
-            # Reset GL color state
-            Color:
-                rgba: 1, 1, 1, 1
 
     # ── Label + countdown ──────────────────────────────────────────────────────
     BoxLayout:
@@ -54,23 +59,15 @@
             valign: 'top'
             text_size: self.width, None
 
-    # ── Cancel button ──────────────────────────────────────────────────────────
-    Button:
+    # ── Cancel — plain Label, no canvas block; touch handled in Python ─────────
+    Label:
+        id: cancel_lbl
         size_hint: None, None
         size: dp(34), dp(34)
-        pos_hint: {'center_y': 0.5}
         text: '\ue5cd'
         font_name: 'MaterialIcons'
         color: root.muted_color
         font_size: '17sp'
-        background_normal: ''
-        background_color: 0, 0, 0, 0
-        on_release: root._do_cancel()
-        canvas.before:
-            Color:
-                rgba: 1, 1, 1, 0.08
-            Ellipse:
-                pos: self.x + dp(2), self.y + dp(2)
-                size: self.width - dp(4), self.height - dp(4)
-            Color:
-                rgba: 1, 1, 1, 1
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size

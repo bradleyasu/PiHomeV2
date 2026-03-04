@@ -76,3 +76,13 @@ class PiHomeTimer(BoxLayout):
     def _confirm_cancel(self):
         if self.timer:
             self.timer.cancel()
+
+    def on_touch_up(self, touch):
+        if not self.collide_point(*touch.pos):
+            return False
+        if 'cancel_lbl' in self.ids:
+            lbl = self.ids.cancel_lbl
+            if lbl.collide_point(*touch.pos):
+                self._do_cancel()
+                return True
+        return False
