@@ -1,0 +1,166 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DatePicker  — three-column spinbox (Month / Day / Year)
+# Pi-safe: no Line instructions anywhere.
+# ─────────────────────────────────────────────────────────────────────────────
+<DatePickerColumn>:
+    orientation: 'vertical'
+    spacing: 0
+    size_hint_y: None
+    height: dp(96)
+
+    # Up arrow
+    Label:
+        id: up_btn
+        text: '\ue5ce'
+        font_name: 'MaterialIcons'
+        font_size: '22sp'
+        color: root.accent_color
+        size_hint_y: None
+        height: dp(28)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    # Value
+    Label:
+        id: value_lbl
+        text: root.display_value
+        font_name: 'Nunito'
+        font_size: '18sp'
+        bold: True
+        color: root.text_color
+        size_hint_y: None
+        height: dp(32)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    # Column label (MONTH / DAY / YEAR)
+    Label:
+        text: root.col_label
+        font_name: 'Nunito'
+        font_size: '9sp'
+        bold: True
+        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.45
+        size_hint_y: None
+        height: dp(13)
+        halign: 'center'
+        valign: 'top'
+        text_size: self.size
+
+    # Down arrow
+    Label:
+        id: down_btn
+        text: '\ue5cf'
+        font_name: 'MaterialIcons'
+        font_size: '22sp'
+        color: root.accent_color
+        size_hint_y: None
+        height: dp(28)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+
+<DatePicker>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(96)
+    spacing: 0
+
+    DatePickerColumn:
+        id: month_col
+        col_label: 'MONTH'
+        accent_color: root.accent_color
+        text_color: root.text_color
+        muted_color: root.muted_color
+
+    # Date separator
+    Label:
+        text: '/'
+        font_name: 'Nunito'
+        font_size: '20sp'
+        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.4
+        size_hint: None, None
+        size: dp(18), dp(96)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    DatePickerColumn:
+        id: day_col
+        col_label: 'DAY'
+        accent_color: root.accent_color
+        text_color: root.text_color
+        muted_color: root.muted_color
+
+    Label:
+        text: '/'
+        font_name: 'Nunito'
+        font_size: '20sp'
+        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.4
+        size_hint: None, None
+        size: dp(18), dp(96)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    DatePickerColumn:
+        id: year_col
+        col_label: 'YEAR'
+        accent_color: root.accent_color
+        text_color: root.text_color
+        muted_color: root.muted_color
+
+    # Date / time divider
+    Label:
+        text: '  '
+        size_hint: None, None
+        size: dp(10), dp(96)
+
+    # Time separator dot
+    Label:
+        text: '\ue192'
+        font_name: 'MaterialIcons'
+        font_size: '8sp'
+        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.35
+        size_hint: None, None
+        size: dp(10), dp(96)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    Label:
+        text: '  '
+        size_hint: None, None
+        size: dp(10), dp(96)
+
+    DatePickerColumn:
+        id: hour_col
+        col_label: 'HOUR'
+        accent_color: root.accent_color
+        text_color: root.text_color
+        muted_color: root.muted_color
+
+    # Time colon separator
+    Label:
+        text: ':'
+        font_name: 'Nunito'
+        font_size: '22sp'
+        bold: True
+        color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.4
+        size_hint: None, None
+        size: dp(16), dp(96)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    DatePickerColumn:
+        id: minute_col
+        col_label: 'MIN'
+        accent_color: root.accent_color
+        text_color: root.text_color
+        muted_color: root.muted_color

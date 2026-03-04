@@ -2,7 +2,7 @@ from kivy.clock import Clock
 from kivy.graphics import Color, Rectangle
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, StringProperty
+from kivy.properties import ColorProperty, ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 
 Builder.load_file("./screens/TaskManagerScreen/taskrow.kv")
@@ -19,11 +19,15 @@ class TaskRow(BoxLayout):
     text_color       = ColorProperty([1.0, 1.0, 1.0, 0.9])
     muted_color      = ColorProperty([1.0, 1.0, 1.0, 0.4])
     accent_color     = ColorProperty([0.39, 0.71, 1.0, 1.0])
-
-    on_delete = None  # callback(task_id)
+    # ObjectProperty so it can be safely passed as a kwarg
+    on_delete_cb     = ObjectProperty(None, allownone=True)
 
     def __init__(self, **kwargs):
+        # Pull on_delete_cb out before super() so Kivy doesn't misroute it
+        cb = kwargs.pop('on_delete_cb', None)
         super().__init__(**kwargs)
+        if cb is not None:
+            self.on_delete_cb = cb
         Clock.schedule_once(self._build_canvas)
 
     # ── Python canvas (no KV canvas blocks — safe on Pi GL ES 2.0) ────────────
@@ -64,7 +68,7 @@ class TaskRow(BoxLayout):
         if not self.collide_point(*touch.pos):
             return False
         if self.ids.delete_lbl.collide_point(*touch.pos):
-            if self.on_delete:
-                self.on_delete(self.task_id)
+            if self.on_delete_cb:
+                self.on_delete_cb(self.task_id)
             return True
         return False

@@ -1,0 +1,50 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NumberStepper  —  [-]  value  [+]  generic counter widget
+# Pi-safe: no Line instructions.
+# ─────────────────────────────────────────────────────────────────────────────
+<NumberStepper>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(40)
+    spacing: 0
+
+    # Decrement button
+    Label:
+        id: dec_btn
+        text: '\ue15b'
+        font_name: 'MaterialIcons'
+        font_size: '22sp'
+        color: root.accent_color
+        size_hint: None, 1
+        width: dp(44)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    # Current value + unit
+    Label:
+        id: value_lbl
+        text: str(root.value) + ' ' + root.unit
+        font_name: 'Nunito'
+        font_size: '14sp'
+        bold: True
+        color: root.text_color
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+
+    # Increment button
+    Label:
+        id: inc_btn
+        text: '\ue145'
+        font_name: 'MaterialIcons'
+        font_size: '22sp'
+        color: root.accent_color
+        size_hint: None, 1
+        width: dp(44)
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size

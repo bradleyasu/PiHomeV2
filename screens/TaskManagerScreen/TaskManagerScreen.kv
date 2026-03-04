@@ -1,5 +1,8 @@
 #:kivy 2.0.0
 #:import dp kivy.metrics.dp
+#:import PiHomeSwitch components.Switch.switch.PiHomeSwitch
+#:import DatePicker components.DatePicker.datepicker.DatePicker
+#:import NumberStepper components.NumberStepper.numberstepper.NumberStepper
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TaskManagerScreen
@@ -127,10 +130,12 @@
             BoxLayout:
                 id: empty_state
                 orientation: 'vertical'
-                size_hint: 1, 1
+                size_hint: 1, None
+                height: dp(160)
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                 opacity: 0
                 spacing: dp(10)
-                padding: [dp(40), dp(80), dp(40), dp(20)]
+                padding: [dp(40), 0, dp(40), 0]
 
                 Label:
                     text: '\ue8b5'
@@ -306,24 +311,49 @@
                 valign: 'middle'
                 text_size: self.size
 
-        # Due-in selector
+        # ── Mode toggle row ────────────────────────────────────────────────
         BoxLayout:
             size_hint_y: None
-            height: dp(42)
+            height: dp(40)
             padding: [dp(18), dp(6), dp(18), dp(6)]
-            spacing: dp(6)
+            spacing: dp(10)
 
             Label:
+                id: lbl_due_in
                 text: 'DUE IN'
                 font_name: 'Nunito'
                 font_size: '10sp'
                 bold: True
-                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.5
+                color: root.accent_color
                 size_hint: None, 1
-                width: dp(48)
+                width: dp(50)
                 halign: 'left'
                 valign: 'middle'
                 text_size: self.size
+
+            PiHomeSwitch:
+                id: date_mode_switch
+                size: dp(46), dp(26)
+
+            Label:
+                id: lbl_specific
+                text: 'SPECIFIC DATE'
+                font_name: 'Nunito'
+                font_size: '10sp'
+                bold: False
+                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.45
+                size_hint_x: 1
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+        # ── Due-in chips (shown in offset mode) ───────────────────────────────
+        BoxLayout:
+            id: due_in_row
+            size_hint_y: None
+            height: dp(42)
+            padding: [dp(18), dp(6), dp(18), dp(6)]
+            spacing: dp(6)
 
             Label:
                 id: due_0
@@ -385,6 +415,56 @@
                 halign: 'center'
                 valign: 'middle'
                 text_size: self.size
+
+        # ── Specific-date section (shown in date mode) ────────────────────────
+        BoxLayout:
+            id: specific_date_section
+            orientation: 'vertical'
+            size_hint_y: None
+            height: 0
+            opacity: 0
+            spacing: 0
+            padding: 0
+
+            # Date picker
+            BoxLayout:
+                size_hint_y: None
+                height: dp(96)
+                padding: [dp(18), 0, dp(18), 0]
+
+                DatePicker:
+                    id: date_picker
+                    accent_color: root.accent_color
+                    text_color: root.text_color
+                    muted_color: root.muted_color
+
+            # Repeat-every row
+            BoxLayout:
+                size_hint_y: None
+                height: dp(48)
+                padding: [dp(18), dp(4), dp(18), dp(4)]
+                spacing: dp(10)
+
+                Label:
+                    text: 'REPEAT EVERY'
+                    font_name: 'Nunito'
+                    font_size: '10sp'
+                    bold: True
+                    color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.5
+                    size_hint: None, 1
+                    width: dp(90)
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+
+                NumberStepper:
+                    id: repeat_stepper
+                    value: 0
+                    unit: 'days  (0 = no repeat)'
+                    min_val: 0
+                    max_val: 365
+                    accent_color: root.accent_color
+                    text_color: root.text_color
 
         # Create button row
         BoxLayout:
