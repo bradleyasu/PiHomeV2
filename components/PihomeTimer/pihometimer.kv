@@ -5,24 +5,34 @@
     height: dp(54)
     padding: dp(14), dp(9), dp(8), dp(9)
     spacing: dp(10)
-    # DIAGNOSTIC: zero canvas instructions, zero child canvas blocks.
-    # Three plain Labels only — same as what we know works.
-    # If this resolves the black screen the root canvas: block is the culprit.
+    # No KV canvas blocks — all drawing done in Python to avoid Pi GL corruption.
 
-    Label:
+    Widget:
+        id: arc_widget
         size_hint: None, None
-        width: dp(36)
-        height: dp(36)
-        text: ''
+        size: dp(36), dp(36)
 
-    Label:
-        text: root.label + '  ' + root.time_label
-        color: root.text_color
-        font_size: '14sp'
-        font_name: 'Nunito'
-        halign: 'left'
-        valign: 'middle'
-        text_size: self.width, None
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(1)
+
+        Label:
+            text: root.label
+            color: root.text_color
+            font_size: '12sp'
+            font_name: 'Nunito'
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
+
+        Label:
+            text: root.time_label
+            color: root.accent_color
+            font_size: '13sp'
+            font_name: 'Nunito'
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
 
     Label:
         id: cancel_lbl

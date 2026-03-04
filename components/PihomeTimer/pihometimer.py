@@ -1,6 +1,7 @@
 import time
 
 from kivy.clock import Clock
+from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
@@ -33,6 +34,60 @@ class PiHomeTimer(BoxLayout):
         super().__init__(**kwargs)
         self.timer = timer or Timer(60)
         self.label = self.timer.label
+        Clock.schedule_once(self._build_canvas)
+
+    # ── canvas (all imperative — no KV canvas blocks) ─────────────────────────
+
+    def _build_canvas(self, *args):
+        # ── root background ──────────────────────────────────────────────────
+        with self.canvas.before:
+            self._bg_color_inst = Color(*self.bg_color)
+            self._bg_rect = Rectangle(pos=self.pos, size=self.size)
+        self.bind(pos=self._update_bg, size=self._update_bg,
+                  bg_color=lambda *a: setattr(self._bg_color_inst, 'rgba', self.bg_color))
+
+        # ── arc widget ───────────────────────────────────────────────────────
+        arc = self.ids.arc_widget
+        with arc.canvas:
+            # Track ring (full circle, muted colour)
+            self._track_color = Color(*self.muted_color)
+            self._track_line = Line(cap='none', width=dp(2.5))
+            # Progress arc (clockwise from 12-o'clock)
+            self._prog_color = Color(*self.accent_color)
+            self._prog_arc = Line(cap='none', width=dp(2.5))
+        self._update_arc()
+        arc.bind(pos=lambda *a: self._update_arc(),
+                 size=lambda *a: self._update_arc())
+        self.bind(progress=lambda *a: self._update_arc(),
+                  accent_color=lambda *a: self._update_arc(),
+                  muted_color=lambda *a: self._update_arc())
+
+        # ── cancel label pill background ─────────────────────────────────────
+        cancel = self.ids.cancel_lbl
+        with cancel.canvas.before:
+            self._cancel_bg = Color(1, 1, 1, 0.08)
+            self._cancel_ellipse = Ellipse(pos=cancel.pos, size=cancel.size)
+        cancel.bind(pos=self._update_cancel, size=self._update_cancel)
+
+    def _update_bg(self, *args):
+        self._bg_rect.pos = self.pos
+        self._bg_rect.size = self.size
+
+    def _update_arc(self, *args):
+        arc = self.ids.arc_widget
+        r = min(arc.width, arc.height) / 2 - dp(3)
+        cx, cy = arc.center_x, arc.center_y
+        self._track_color.rgba = self.muted_color
+        self._track_line.circle = (cx, cy, r, 0, 360)
+        self._prog_color.rgba = self.accent_color
+        # Clockwise sweep from 12 o'clock: start_angle = 90 - 360*progress, end = 90
+        start = 90 - 360 * self.progress
+        self._prog_arc.circle = (cx, cy, r, start, 90)
+
+    def _update_cancel(self, *args):
+        cancel = self.ids.cancel_lbl
+        self._cancel_ellipse.pos = cancel.pos
+        self._cancel_ellipse.size = cancel.size
 
     # ── lifecycle ──────────────────────────────────────────────────────────────
 
