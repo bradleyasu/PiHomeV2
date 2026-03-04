@@ -49,6 +49,7 @@ class TaskManagerScreen(PiHomeScreen):
     task_count   = NumericProperty(0)
 
     _panel_open    = False
+    _panel_closing  = False   # True while the hide animation is running
     _date_mode     = False       # False = due-in presets, True = specific date
     _switching     = False       # suppresses toggle handler during panel reset
     _selected_prio = 2          # MEDIUM default
@@ -254,11 +255,16 @@ class TaskManagerScreen(PiHomeScreen):
         anim.start(panel)
 
     def hide_create_panel(self):
-        self._panel_open = False
+        self._panel_open   = False
+        self._panel_closing = True
         panel = self.ids.create_panel
         anim = Animation(height=0, opacity=0,
                          duration=0.18, transition='in_cubic')
+        anim.bind(on_complete=self._on_panel_hidden)
         anim.start(panel)
+
+    def _on_panel_hidden(self, *args):
+        self._panel_closing = False
 
     def _select_priority(self, value):
         """Highlight the chosen priority pill (1=LOW, 2=MEDIUM, 3=HIGH)."""
@@ -346,10 +352,14 @@ class TaskManagerScreen(PiHomeScreen):
     # ── Touch handling ─────────────────────────────────────────────────────────
 
     def on_touch_down(self, touch):
-        # Grab every touch that starts on the open panel so no child widget
-        # (task rows, etc.) ever receives the corresponding touch_up.
-        if self._panel_open and self.ids.create_panel.collide_point(*touch.pos):
-            touch.grab(self)
+        # Block touches while the panel is open OR still animating closed.
+        # Use the panel's actual height as the ground truth — not the flag
+        # which goes False before the animation finishes.
+        panel = self.ids.create_panel
+        if (self._panel_open or self._panel_closing) and panel.height > 0:
+            if panel.collide_point(*touch.pos):
+                touch.grab(self)
+            # Either way, eat the touch — don't let children see it at all.
             return True
         return super().on_touch_down(touch)
 
