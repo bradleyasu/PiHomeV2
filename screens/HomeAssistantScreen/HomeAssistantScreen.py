@@ -1,9 +1,10 @@
 from threading import Thread
 
 from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, ListProperty
+from kivy.properties import ColorProperty, ListProperty, ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -19,6 +20,58 @@ from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantLi
 from theme import theme as t
 
 Builder.load_file("./screens/HomeAssistantScreen/HomeAssistantScreen.kv")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HaListenerRow
+# ─────────────────────────────────────────────────────────────────────────────
+
+class HaListenerRow(BoxLayout):
+    """Single row in the Listeners tab."""
+
+    listener_id   = StringProperty("")
+    entity_label  = StringProperty("")   # entity_id text
+    trigger_label = StringProperty("")   # e.g. "On state 'on'" or "On any change"
+    action_label  = StringProperty("")   # e.g. "→ execute alert"
+    text_color    = ColorProperty([1, 1, 1, 0.9])
+    muted_color   = ColorProperty([1, 1, 1, 0.4])
+    accent_color  = ColorProperty([0.39, 0.71, 1.0, 1.0])
+    on_delete_cb  = ObjectProperty(None, allownone=True)
+
+    def __init__(self, **kwargs):
+        cb = kwargs.pop('on_delete_cb', None)
+        super().__init__(**kwargs)
+        if cb is not None:
+            self.on_delete_cb = cb
+        Clock.schedule_once(self._build_canvas)
+
+    def _build_canvas(self, *_):
+        strip = self.ids.accent_strip
+        with strip.canvas:
+            self._strip_color = Color(*self.accent_color)
+            self._strip_rect  = Rectangle(pos=strip.pos, size=strip.size)
+        strip.bind(pos=self._update_strip, size=self._update_strip)
+        self.bind(accent_color=lambda *a: setattr(self._strip_color, 'rgba', self.accent_color))
+
+        with self.canvas.after:
+            self._sep_color = Color(1, 1, 1, 0.06)
+            self._sep_rect  = Rectangle(pos=(self.x, self.y), size=(self.width, dp(1)))
+        self.bind(pos=self._update_sep, size=self._update_sep)
+
+    def _update_strip(self, *_):
+        s = self.ids.accent_strip
+        self._strip_rect.pos  = s.pos
+        self._strip_rect.size = s.size
+
+    def _update_sep(self, *_):
+        self._sep_rect.pos  = (self.x, self.y)
+        self._sep_rect.size = (self.width, dp(1))
+
+    def on_touch_down(self, touch):
+        if self.ids.delete_lbl.collide_point(*touch.pos):
+            if self.on_delete_cb:
+                self.on_delete_cb(self.listener_id)
+            return True
+        return super().on_touch_down(touch)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Domain groups: (section_label, [domains], card_class, row_height)
@@ -39,6 +92,7 @@ class HomeAssistantScreen(PiHomeScreen):
     header_color = ColorProperty([0, 0, 0, 1])
     text_color   = ColorProperty([1, 1, 1, 1])
     accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    view_mode    = StringProperty('devices')   # 'devices' | 'listeners'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -61,6 +115,9 @@ class HomeAssistantScreen(PiHomeScreen):
     # ── Screen lifecycle ──────────────────────────────────────────────────────
 
     def on_pre_enter(self, *args):
+        # Always return to the devices tab on each entry
+        if self.view_mode != 'devices':
+            self.view_mode = 'devices'
         # Show the screen instantly with a loading message, then build on the next frame.
         self._show_loading()
         if HOME_ASSISTANT.current_states:
@@ -82,6 +139,25 @@ class HomeAssistantScreen(PiHomeScreen):
 
         Thread(target=_fetch, daemon=True).start()
 
+    def on_tab_devices(self):
+        """Switch to the Devices tab."""
+        if self.view_mode == 'devices':
+            return
+        self.view_mode = 'devices'
+        if HOME_ASSISTANT.current_states:
+            Clock.schedule_once(
+                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0
+            )
+        else:
+            Clock.schedule_once(lambda dt: self.refresh(), 0)
+
+    def on_tab_listeners(self):
+        """Switch to the Listeners tab."""
+        if self.view_mode == 'listeners':
+            return
+        self.view_mode = 'listeners'
+        Clock.schedule_once(lambda dt: self._build_listeners_list(), 0)
+
     def on_config_update(self, config):
         """Reconnect Home Assistant service if URL or token changed."""
         old_url   = getattr(HOME_ASSISTANT, 'HA_URL',   '')
@@ -98,6 +174,7 @@ class HomeAssistantScreen(PiHomeScreen):
         super().on_config_update(config)
 
     # ── Internal helpers ──────────────────────────────────────────────────────
+
     def _show_loading(self):
         """Replace scroll_content with a single centred loading label."""
         scroll_content = self.ids.get('scroll_content')
@@ -116,6 +193,92 @@ class HomeAssistantScreen(PiHomeScreen):
         )
         lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
         scroll_content.add_widget(lbl)
+
+    # ── Listeners tab ─────────────────────────────────────────────────────────
+
+    def _build_listeners_list(self):
+        """Populate scroll_content with listener rows (or an empty state)."""
+        scroll_content = self.ids.get('scroll_content')
+        if scroll_content is None:
+            return
+        scroll_content.clear_widgets()
+
+        listeners = HOME_ASSISTANT.ha_react_listeners
+
+        if not listeners:
+            # ── Empty state — vertically centred ────────────────────────────
+            # Top spacer pushes content to visual centre
+            scroll_content.add_widget(Widget(size_hint_y=None, height=dp(80)))
+
+            icon_lbl = Label(
+                text='\ue7f7',          # \ue7f7 = notifications_none  (Material Icons)
+                font_name='MaterialIcons',
+                font_size='42sp',
+                color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.2),
+                size_hint_y=None,
+                height=dp(52),
+                halign='center',
+                valign='middle',
+            )
+            icon_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+            scroll_content.add_widget(icon_lbl)
+
+            empty_lbl = Label(
+                text='No listeners configured',
+                font_name='Nunito',
+                font_size='15sp',
+                color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.35),
+                size_hint_y=None,
+                height=dp(28),
+                halign='center',
+                valign='middle',
+            )
+            empty_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+            scroll_content.add_widget(empty_lbl)
+
+            sub_lbl = Label(
+                text='Use the hareact webhook event to add one.',
+                font_name='Nunito',
+                font_size='11sp',
+                color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.2),
+                size_hint_y=None,
+                height=dp(20),
+                halign='center',
+                valign='middle',
+            )
+            sub_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+            scroll_content.add_widget(sub_lbl)
+            return
+
+        scroll_content.add_widget(
+            self._section_label(f"LISTENERS  ({len(listeners)})")
+        )
+        for listener in listeners:
+            scroll_content.add_widget(self._make_listener_row(listener))
+
+    def _make_listener_row(self, listener):
+        state_part   = f"state = '{listener.state}'" if listener.state else "any change"
+        trigger_lbl  = f"When {state_part}"
+        action_type  = listener.action.get('type', 'event') if isinstance(listener.action, dict) else 'event'
+        action_lbl   = f"\u2192 execute {action_type}"
+
+        row = HaListenerRow(
+            listener_id   = listener.id,
+            entity_label  = listener.entity_id,
+            trigger_label = trigger_lbl,
+            action_label  = action_lbl,
+            text_color    = list(self.text_color),
+            muted_color   = [self.text_color[0], self.text_color[1], self.text_color[2], 0.4],
+            accent_color  = list(self.accent_color),
+        )
+        row.on_delete_cb = self._delete_listener
+        return row
+
+    def _delete_listener(self, listener_id: str):
+        HOME_ASSISTANT.remove_react_listener(listener_id)
+        # Rebuild the listeners list to reflect the removal
+        Clock.schedule_once(lambda _: self._build_listeners_list(), 0)
+
     def _section_label(self, text: str) -> Label:
         lbl = Label(
             text=text,

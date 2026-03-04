@@ -2,6 +2,77 @@
 #:import dp kivy.metrics.dp
 
 # ─────────────────────────────────────────────────────────────────────────────
+# HaListenerRow — single row for the Listeners tab
+# ─────────────────────────────────────────────────────────────────────────────
+<HaListenerRow>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(64)
+    spacing: 0
+    padding: 0
+
+    Widget:
+        id: accent_strip
+        size_hint: None, 1
+        width: dp(4)
+
+    BoxLayout:
+        orientation: 'horizontal'
+        padding: [dp(14), dp(8), dp(8), dp(8)]
+        spacing: dp(8)
+
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(3)
+
+            Label:
+                text: root.entity_label
+                font_name: 'Nunito'
+                font_size: '13sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(22)
+
+            Label:
+                text: root.trigger_label
+                font_name: 'Nunito'
+                font_size: '10sp'
+                color: root.muted_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(14)
+
+            Label:
+                text: root.action_label
+                font_name: 'Nunito'
+                font_size: '10sp'
+                color: root.accent_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(14)
+
+        Label:
+            id: delete_lbl
+            size_hint: None, 1
+            width: dp(44)
+            text: '\ue872'
+            font_name: 'MaterialIcons'
+            font_size: '20sp'
+            color: root.muted_color
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # HomeAssistantScreen — device control dashboard
 # ─────────────────────────────────────────────────────────────────────────────
 <HomeAssistantScreen>:
@@ -43,12 +114,14 @@
                 text_size: self.width, None
                 size_hint_x: 1
 
-            # Refresh button
+            # Refresh button — only relevant on Devices tab
             BoxLayout:
+                id: refresh_btn
                 size_hint: None, None
                 size: dp(36), dp(36)
                 pos_hint: {'center_y': 0.5}
                 padding: dp(4)
+                opacity: 1 if root.view_mode == 'devices' else 0
                 canvas.before:
                     Color:
                         rgba: 1, 1, 1, 0.07
@@ -57,14 +130,78 @@
                         size: self.size
                         radius: [dp(9)]
                 on_touch_down:
-                    if self.collide_point(*args[1].pos): root.refresh()
+                    if self.collide_point(*args[1].pos) and root.view_mode == 'devices': root.refresh()
                 Label:
                     text: '\u21bb'
                     color: root.text_color
                     font_name: 'ArialUnicode'
                     font_size: '20sp'
 
-        # ── Scrollable device grid ────────────────────────────────────────────
+        # ── Tab strip ────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(36)
+            spacing: 0
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos:  self.pos
+                    size: self.size
+
+            # Devices tab
+            BoxLayout:
+                id: tab_devices
+                size_hint_x: 0.5
+                padding: [dp(0), dp(4), dp(0), dp(0)]
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.on_tab_devices()
+
+                canvas.after:
+                    Color:
+                        rgba: root.accent_color if root.view_mode == 'devices' else (1, 1, 1, 0.12)
+                    Rectangle:
+                        pos:  self.x, self.y
+                        size: self.width, dp(2)
+
+                Label:
+                    text: 'DEVICES'
+                    font_name: 'Nunito'
+                    font_size: '11sp'
+                    bold: True
+                    color: root.accent_color if root.view_mode == 'devices' else (root.text_color[0], root.text_color[1], root.text_color[2], 0.4)
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            # Listeners tab
+            BoxLayout:
+                id: tab_listeners
+                size_hint_x: 0.5
+                padding: [dp(0), dp(4), dp(0), dp(0)]
+                on_touch_down:
+                    if self.collide_point(*args[1].pos): root.on_tab_listeners()
+
+                canvas.after:
+                    Color:
+                        rgba: root.accent_color if root.view_mode == 'listeners' else (1, 1, 1, 0.12)
+                    Rectangle:
+                        pos:  self.x, self.y
+                        size: self.width, dp(2)
+
+                Label:
+                    text: 'LISTENERS'
+                    font_name: 'Nunito'
+                    font_size: '11sp'
+                    bold: True
+                    color: root.accent_color if root.view_mode == 'listeners' else (root.text_color[0], root.text_color[1], root.text_color[2], 0.4)
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+        # ── Scrollable content (shared by both tabs) ──────────────────────────
         ScrollView:
             id: scroll_view
             size_hint: 1, 1
