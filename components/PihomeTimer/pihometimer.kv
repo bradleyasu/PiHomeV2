@@ -5,61 +5,25 @@
     height: dp(54)
     padding: dp(14), dp(9), dp(8), dp(9)
     spacing: dp(10)
-    # All artwork is drawn on this root widget's canvas — no child widget
-    # has its own canvas block.  Child-widget canvas groups corrupt GL state
-    # on Pi's OpenGL ES 2.0 driver (VideoCore IV), blacking out the display.
-    canvas:
-        # Arc track ring  (center = left-padding 14 + half of 36dp spacer = 32dp)
-        Color:
-            rgba: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.22
-        Line:
-            circle: self.x + dp(32), self.center_y, dp(14)
-            width: dp(2)
-        # Progress arc (clockwise from 12 o'clock)
-        Color:
-            rgba: root.accent_color
-        Line:
-            circle: self.x + dp(32), self.center_y, dp(14), 90, 90 + 360 * root.progress
-            width: dp(2.5)
-        # Cancel hint circle behind the icon label
-        # center_x = self.right - right_padding(8) - half_label_width(17) = right - dp(25)
-        Color:
-            rgba: 1, 1, 1, 0.08
-        Ellipse:
-            pos: self.right - dp(40), self.center_y - dp(15)
-            size: dp(30), dp(30)
-        # GL state reset
-        Color:
-            rgba: 1, 1, 1, 1
+    # DIAGNOSTIC: zero canvas instructions, zero child canvas blocks.
+    # Three plain Labels only — same as what we know works.
+    # If this resolves the black screen the root canvas: block is the culprit.
 
-    # ── Arc spacer — bare Widget, zero canvas instructions ────────────────────
-    Widget:
+    Label:
         size_hint: None, None
-        size: dp(36), dp(36)
+        width: dp(36)
+        height: dp(36)
+        text: ''
 
-    # ── Label + countdown ──────────────────────────────────────────────────────
-    BoxLayout:
-        orientation: 'vertical'
-        spacing: dp(1)
-        Label:
-            text: root.label
-            color: root.text_color
-            font_size: '12sp'
-            font_name: 'Nunito'
-            bold: True
-            halign: 'left'
-            valign: 'bottom'
-            text_size: self.width, None
-        Label:
-            text: root.time_label
-            color: root.accent_color
-            font_size: '19sp'
-            font_name: 'Nunito'
-            halign: 'left'
-            valign: 'top'
-            text_size: self.width, None
+    Label:
+        text: root.label + '  ' + root.time_label
+        color: root.text_color
+        font_size: '14sp'
+        font_name: 'Nunito'
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.width, None
 
-    # ── Cancel — plain Label, no canvas block; touch handled in Python ─────────
     Label:
         id: cancel_lbl
         size_hint: None, None
