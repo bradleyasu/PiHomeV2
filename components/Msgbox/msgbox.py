@@ -1,3 +1,5 @@
+from collections import deque
+
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -72,6 +74,8 @@ class Msgbox(FloatLayout):
         super().__init__(**kwargs)
         # KV rule has already run, ids is populated
         self._card = self.ids.card
+        # Set by MsgboxFactory to advance the queue when this box is dismissed
+        self._factory_cb = None
 
     # ── Internal helpers ───────────────────────────────────────────────────
 
@@ -145,6 +149,8 @@ class Msgbox(FloatLayout):
         def _remove(*_):
             if self.parent:
                 self.parent.remove_widget(self)
+            if self._factory_cb:
+                self._factory_cb()
 
         card = self._card
         anim_scrim = Animation(scrim_color=[0, 0, 0, 0], t='linear', d=0.22)
@@ -212,6 +218,18 @@ class Msgbox(FloatLayout):
 # ── Factory ────────────────────────────────────────────────────────────────
 
 class MsgboxFactory:
+    """Singleton factory that ensures only one Msgbox is on screen at a time.
+
+    Subsequent show() calls while a box is active are enqueued and displayed
+    in FIFO order as each box is dismissed (by user or timeout).
+    """
+
+    def __init__(self):
+        self._queue  = deque()   # pending entries
+        self._active = None      # currently visible Msgbox, or None
+        self.msgbox  = None      # last shown box (legacy accessor)
+
+    # ── Public API ──────────────────────────────────────────────────────────
 
     def show(
         self,
@@ -224,25 +242,48 @@ class MsgboxFactory:
         on_no=None,
     ):
         """
-        Create and display a Msgbox as the topmost widget in the app.
-        Returns the Msgbox instance.
+        Display a Msgbox, or enqueue it if one is already on screen.
+        Returns None when enqueued (box hasn't been created yet).
         """
-        box = Msgbox()
-        box.title   = title
-        box.message = message
-        box.type    = type
-        box.set_buttons(buttons, on_yes, on_no)
+        entry = dict(
+            title=title, message=message, timeout=timeout,
+            type=type, buttons=buttons, on_yes=on_yes, on_no=on_no,
+        )
+        if self._active is None:
+            return self._show_entry(entry)
+        else:
+            self._queue.append(entry)
+            return None
 
-        # Add to the root layout at index 0 — topmost in the draw stack
+    # ── Internal ────────────────────────────────────────────────────────────
+
+    def _show_entry(self, entry):
+        box = Msgbox()
+        box.title   = entry['title']
+        box.message = entry['message']
+        box.type    = entry['type']
+        box.set_buttons(entry['buttons'], entry['on_yes'], entry['on_no'])
+        box._factory_cb = self._on_dismissed
+
         app = get_app()
         app.layout.add_widget(box, index=0)
         box.show()
 
-        if timeout > 0:
-            Clock.schedule_once(lambda _: box.dismiss(), timeout)
+        if entry['timeout'] > 0:
+            Clock.schedule_once(lambda _: box.dismiss(), entry['timeout'])
 
-        self.msgbox = box
+        self._active = box
+        self.msgbox  = box
         return box
+
+    def _on_dismissed(self):
+        """Called by the active Msgbox after it removes itself from the tree."""
+        self._active = None
+        if self._queue:
+            next_entry = self._queue.popleft()
+            # Small delay so the outgoing animation fully clears before the
+            # next card animates in — avoids visual overlap on slow hardware.
+            Clock.schedule_once(lambda _: self._show_entry(next_entry), 0.15)
 
 
 MSGBOX_FACTORY = MsgboxFactory()
