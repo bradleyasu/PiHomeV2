@@ -168,26 +168,30 @@ class DatePicker(BoxLayout):
             return datetime(y, m, 1, hr, mn)
 
     def set_date(self, dt: datetime):
-        """Set the spinbox to a specific datetime. Safe to call before init."""
-        if not self._init_done:
-            PIHOME_LOGGER.warn(f"DatePicker.set_date: not init yet, storing pending: {dt}")
+        """Set the spinbox to a specific datetime. Forces column reinit if needed."""
+        # Always force a fresh configure so stale init-time values are overwritten
+        self._force_set(dt)
+
+    def _force_set(self, dt: datetime):
+        """Unconditionally configure all columns to the given datetime."""
+        if not self.ids:
             self._pending_date = dt
             return
-        self._apply_date(dt)
-
-    def _apply_date(self, dt: datetime):
-        """Directly update all column values. Must only be called after init."""
-        PIHOME_LOGGER.info(f"DatePicker._apply_date: {dt}")
         year_max = max(dt.year + 5, datetime.now().year + 5)
         month_col  = self.ids.month_col
         day_col    = self.ids.day_col
         year_col   = self.ids.year_col
         hour_col   = self.ids.hour_col
         minute_col = self.ids.minute_col
-        year_col._max = year_max
-        month_col._set(dt.month)
-        year_col._set(dt.year)
-        day_col._max = calendar.monthrange(dt.year, dt.month)[1]
-        day_col._set(dt.day)
-        hour_col._set(dt.hour)
-        minute_col._set(dt.minute)
+        # Re-configure so _min/_max/_fmt are correct, then set value
+        month_col.configure( dt.month +1, 1,         12,                         "{:02d}", self._on_month_change)
+        year_col.configure(  dt.year,  dt.year,   dt.year + 10,               "{}",     None)
+        day_col.configure(   dt.day,   1,         calendar.monthrange(dt.year, dt.month)[1], "{:02d}", self._clamp_day)
+        hour_col.configure(  dt.hour,  0,         23,                         "{:02d}", None)
+        minute_col.configure(dt.minute, 0,        59,                         "{:02d}", None)
+        self._init_done = True
+        PIHOME_LOGGER.info(f"DatePicker._force_set: {dt} → m={dt.month} d={dt.day} y={dt.year} h={dt.hour} min={dt.minute}")
+
+    def _apply_date(self, dt: datetime):
+        """Alias kept for pending-date apply path."""
+        self._force_set(dt)

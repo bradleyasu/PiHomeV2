@@ -243,9 +243,9 @@ class TaskManagerScreen(PiHomeScreen):
         specific.opacity = 0
         self._update_toggle_labels(False)
 
-        # Reset date picker to 1 hour from now (ensures it starts in a valid/future state)
+        # Reset date picker to current time — user can adjust from here
         from datetime import datetime, timedelta as _td
-        self.ids.date_picker.set_date(datetime.now() + _td(hours=1))
+        self.ids.date_picker.set_date(datetime.now())
         self.ids.repeat_stepper.value = 0
 
         target_h = dp(_PANEL_HEIGHT_DUE_IN)
