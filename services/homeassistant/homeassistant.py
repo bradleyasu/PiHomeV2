@@ -1,18 +1,57 @@
 from threading import Thread
+import atexit
+import json
+import os
+import uuid
 import requests
 import websockets
 import asyncio
-import json
 from events.pihomeevent import PihomeEventFactory
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
+
+class HaReactListener:
+    """A persistent HA state-change listener that fires a PiHome event as
+    its action.  Serialised to / from ha_listeners.pihome as plain JSON."""
+
+    def __init__(self, entity_id, action, state=None, id=None):
+        self.id        = id or str(uuid.uuid4())
+        self.entity_id = entity_id
+        self.state     = state   # None = fire on ANY state change
+        self.action    = action  # dict — executed via PihomeEventFactory
+
+    def matches(self, entity_id, new_state):
+        if self.entity_id != entity_id:
+            return False
+        if self.state is None:
+            return True
+        return self.state == new_state
+
+    def to_dict(self):
+        return {
+            "id":        self.id,
+            "entity_id": self.entity_id,
+            "state":     self.state,
+            "action":    self.action,
+        }
+
+    @staticmethod
+    def from_dict(d):
+        return HaReactListener(
+            entity_id = d["entity_id"],
+            action    = d["action"],
+            state     = d.get("state"),
+            id        = d["id"],
+        )
+
 
 class HomeAssistant:
     """"
     This class serves as a wrapper for the Home Assistant API.
     """
     PIHOME_CONNECTED_SENSOR = "sensor.pihome_connected"
+    REACT_LISTENERS_FILE    = "ha_listeners.pihome"
     ha_is_available = False
     methods = {
         "get": requests.get,
@@ -22,12 +61,15 @@ class HomeAssistant:
     current_states = {}
     websocket = None
     listeners = []
+    ha_react_listeners = []
     event_thread = None
     event_loop = None
     is_shutting_down = False
-    
+
     def __init__(self, **kwargs):
         super(HomeAssistant, self).__init__(**kwargs)
+        self.ha_react_listeners = []  # instance list — avoids class-level sharing
+        atexit.register(self._serialize_react_listeners)
 
     def __del__(self):
         self.shutdown()
@@ -62,6 +104,7 @@ class HomeAssistant:
             self.event_thread = Thread(target=self._start_loop, daemon=True)
             self.event_thread.start()
             self.current_states = self.get_all_states()
+            self._deserialize_react_listeners()
         except Exception as e:
             PIHOME_LOGGER.error(f"Error connecting to Home Assistant: {e}")
             self.ha_is_available = False
@@ -113,6 +156,60 @@ class HomeAssistant:
     def add_listener(self, listener):
         self.listeners.append(listener)
 
+    # ── HA React Listeners ─────────────────────────────────────────────────
+
+    def add_react_listener(self, listener: HaReactListener):
+        """Register a persistent react listener and persist to disk."""
+        self.ha_react_listeners.append(listener)
+        self._serialize_react_listeners()
+        PIHOME_LOGGER.info(
+            f"HaReactListener added: {listener.id} "
+            f"({listener.entity_id} → {listener.state or 'any'})"
+        )
+        return listener.id
+
+    def remove_react_listener(self, listener_id: str) -> bool:
+        """Remove a react listener by ID and persist the change."""
+        before = len(self.ha_react_listeners)
+        self.ha_react_listeners = [
+            l for l in self.ha_react_listeners if l.id != listener_id
+        ]
+        removed = len(self.ha_react_listeners) < before
+        if removed:
+            self._serialize_react_listeners()
+            PIHOME_LOGGER.info(f"HaReactListener removed: {listener_id}")
+        else:
+            PIHOME_LOGGER.warn(f"HaReactListener not found for removal: {listener_id}")
+        return removed
+
+    def _serialize_react_listeners(self):
+        data = [l.to_dict() for l in self.ha_react_listeners]
+        try:
+            with open(self.REACT_LISTENERS_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+            PIHOME_LOGGER.info(
+                f"Serialized {len(data)} HA react listener(s) to "
+                f"{self.REACT_LISTENERS_FILE}"
+            )
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to serialize HA react listeners: {e}")
+
+    def _deserialize_react_listeners(self):
+        if not os.path.exists(self.REACT_LISTENERS_FILE):
+            return
+        try:
+            with open(self.REACT_LISTENERS_FILE, "r") as f:
+                data = json.load(f)
+            self.ha_react_listeners = [HaReactListener.from_dict(d) for d in data]
+            PIHOME_LOGGER.info(
+                f"Loaded {len(self.ha_react_listeners)} HA react listener(s) "
+                f"from {self.REACT_LISTENERS_FILE}"
+            )
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to deserialize HA react listeners: {e}")
+
+    # ── Connection ─────────────────────────────────────────────────────────
+
     def _handle_message(self, data):
         # find and update state in current states
         if "event" in data and "event_type" in data["event"] and data["event"]["event_type"] == "state_changed":
@@ -127,6 +224,24 @@ class HomeAssistant:
             # Notify All Listeners
             for listener in self.listeners:
                 listener.on_state_change(entity_id, state["state"], state)
+
+            # Fire any matching HA-react listeners
+            for react in list(self.ha_react_listeners):
+                if react.matches(entity_id, state["state"]):
+                    try:
+                        PIHOME_LOGGER.info(
+                            f"HaReactListener {react.id}: firing for "
+                            f"{entity_id} → {state['state']}"
+                        )
+                        Clock.schedule_once(
+                            lambda _dt, a=react.action:
+                                PihomeEventFactory.create_event_from_dict(a).execute(),
+                            0
+                        )
+                    except Exception as e:
+                        PIHOME_LOGGER.error(
+                            f"HaReactListener {react.id}: failed to fire action: {e}"
+                        )
 
     def configure_connection(self):
         """
