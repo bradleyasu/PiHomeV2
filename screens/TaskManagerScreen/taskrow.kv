@@ -1,0 +1,76 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+<TaskRow>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(68)
+    spacing: 0
+    padding: 0
+
+    # Priority colour strip — filled in Python, no canvas block here
+    Widget:
+        id: priority_strip
+        size_hint: None, 1
+        width: dp(4)
+
+    # Main content
+    BoxLayout:
+        orientation: 'horizontal'
+        padding: [dp(14), dp(10), dp(8), dp(10)]
+        spacing: dp(8)
+
+        # Left: labels
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(2)
+
+            Label:
+                id: name_lbl
+                text: root.task_name
+                font_name: 'Nunito'
+                font_size: '14sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(24)
+
+            Label:
+                id: desc_lbl
+                text: root.task_description
+                font_name: 'Nunito'
+                font_size: '11sp'
+                color: root.muted_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(16)
+
+            Label:
+                id: due_lbl
+                text: root.due_label
+                font_name: 'Nunito'
+                font_size: '10sp'
+                color: root.accent_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.width, None
+                size_hint_y: None
+                height: dp(14)
+
+        # Right: delete
+        Label:
+            id: delete_lbl
+            size_hint: None, 1
+            width: dp(44)
+            text: '\ue872'
+            font_name: 'MaterialIcons'
+            font_size: '20sp'
+            color: root.muted_color
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size

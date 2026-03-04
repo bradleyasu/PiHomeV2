@@ -1,0 +1,411 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TaskManagerScreen
+# Canvas safety: only Rectangle / RoundedRectangle / Ellipse in KV canvas
+# blocks (no Line). All dynamic drawing done in Python.
+# ─────────────────────────────────────────────────────────────────────────────
+
+<TaskManagerScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    # ── Main content column ───────────────────────────────────────────────────
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: 1, 1
+
+        # ── Header bar ────────────────────────────────────────────────────────
+        BoxLayout:
+            id: header_bar
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(52)
+            padding: [dp(68), dp(8), dp(16), dp(8)]
+            spacing: dp(10)
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # Screen icon
+            Label:
+                text: '\ue8b5'
+                font_name: 'MaterialIcons'
+                font_size: '22sp'
+                color: root.accent_color
+                size_hint: None, 1
+                width: dp(28)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            # Screen title
+            Label:
+                text: 'Tasks'
+                font_name: 'Nunito'
+                font_size: '18sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
+
+            # Active task count
+            Label:
+                text: str(root.task_count) + ' active'
+                font_name: 'Nunito'
+                font_size: '11sp'
+                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.6
+                size_hint: None, 1
+                width: dp(56)
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+
+            # Add / toggle button
+            Label:
+                id: add_btn
+                text: '\ue145'
+                font_name: 'MaterialIcons'
+                font_size: '28sp'
+                color: root.accent_color
+                size_hint: None, 1
+                width: dp(40)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # ── Section label bar ─────────────────────────────────────────────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(30)
+            padding: [dp(18), dp(6), dp(16), dp(4)]
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Label:
+                text: 'UPCOMING'
+                font_name: 'Nunito'
+                font_size: '10sp'
+                bold: True
+                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.5
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+        # ── Task list (scrollable) ─────────────────────────────────────────────
+        FloatLayout:
+            size_hint: 1, 1
+
+            ScrollView:
+                size_hint: 1, 1
+                do_scroll_x: False
+
+                BoxLayout:
+                    id: task_scroll
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 0
+
+            # Empty state overlay
+            BoxLayout:
+                id: empty_state
+                orientation: 'vertical'
+                size_hint: 1, 1
+                opacity: 0
+                spacing: dp(10)
+                padding: [dp(40), dp(80), dp(40), dp(20)]
+
+                Label:
+                    text: '\ue8b5'
+                    font_name: 'MaterialIcons'
+                    font_size: '56sp'
+                    color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.25
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+                    size_hint_y: None
+                    height: dp(80)
+
+                Label:
+                    text: 'No tasks scheduled'
+                    font_name: 'Nunito'
+                    font_size: '16sp'
+                    color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.5
+                    halign: 'center'
+                    valign: 'top'
+                    text_size: self.size
+                    size_hint_y: None
+                    height: dp(28)
+
+                Label:
+                    text: 'Tap + to create your first task'
+                    font_name: 'Nunito'
+                    font_size: '12sp'
+                    color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.3
+                    halign: 'center'
+                    valign: 'top'
+                    text_size: self.size
+                    size_hint_y: None
+                    height: dp(22)
+
+    # ── Create panel (anchored to screen bottom, slides up as FloatLayout child)
+    BoxLayout:
+        id: create_panel
+        orientation: 'vertical'
+        size_hint_x: 1
+        size_hint_y: None
+        height: 0
+        opacity: 0
+        pos: root.x, root.y
+        spacing: 0
+
+        canvas.before:
+            Color:
+                rgba: root.card_color
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Panel header
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            padding: [dp(18), dp(10), dp(10), dp(10)]
+            spacing: dp(8)
+
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Label:
+                text: 'New Task'
+                font_name: 'Nunito'
+                font_size: '16sp'
+                bold: True
+                color: root.text_color
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_x: 1
+
+            Label:
+                id: close_panel_btn
+                text: '\ue5cd'
+                font_name: 'MaterialIcons'
+                font_size: '22sp'
+                color: root.muted_color
+                size_hint: None, 1
+                width: dp(44)
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # Name input
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            padding: [dp(18), dp(6), dp(18), dp(6)]
+
+            TextInput:
+                id: name_input
+                hint_text: 'Task name'
+                font_name: 'Nunito'
+                font_size: '14sp'
+                foreground_color: root.text_color
+                background_color: root.bg_color
+                hint_text_color: root.muted_color
+                cursor_color: root.accent_color
+                multiline: False
+                padding: [dp(10), dp(8)]
+
+        # Description input
+        BoxLayout:
+            size_hint_y: None
+            height: dp(44)
+            padding: [dp(18), dp(4), dp(18), dp(4)]
+
+            TextInput:
+                id: desc_input
+                hint_text: 'Description  (optional)'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                foreground_color: root.text_color
+                background_color: root.bg_color
+                hint_text_color: root.muted_color
+                cursor_color: root.accent_color
+                multiline: False
+                padding: [dp(10), dp(8)]
+
+        # Priority selector
+        BoxLayout:
+            size_hint_y: None
+            height: dp(42)
+            padding: [dp(18), dp(6), dp(18), dp(6)]
+            spacing: dp(10)
+
+            Label:
+                text: 'PRIORITY'
+                font_name: 'Nunito'
+                font_size: '10sp'
+                bold: True
+                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.5
+                size_hint: None, 1
+                width: dp(62)
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: prio_low
+                text: 'LOW'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: prio_med
+                text: 'MEDIUM'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                bold: True
+                color: [1.0, 0.60, 0.20, 1.0]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: prio_high
+                text: 'HIGH'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # Due-in selector
+        BoxLayout:
+            size_hint_y: None
+            height: dp(42)
+            padding: [dp(18), dp(6), dp(18), dp(6)]
+            spacing: dp(6)
+
+            Label:
+                text: 'DUE IN'
+                font_name: 'Nunito'
+                font_size: '10sp'
+                bold: True
+                color: root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.5
+                size_hint: None, 1
+                width: dp(48)
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: due_0
+                text: '15m'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: due_1
+                text: '30m'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: due_2
+                text: '1h'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                bold: True
+                color: root.accent_color
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: due_3
+                text: '2h'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: due_4
+                text: '4h'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                id: due_5
+                text: '1 day'
+                font_name: 'Nunito'
+                font_size: '12sp'
+                color: [1, 1, 1, 0.35]
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # Create button row
+        BoxLayout:
+            size_hint_y: None
+            height: dp(54)
+            padding: [dp(18), dp(10), dp(18), dp(10)]
+
+            Label:
+                id: create_btn
+                text: 'CREATE TASK'
+                font_name: 'Nunito'
+                font_size: '14sp'
+                bold: True
+                color: root.bg_color[0], root.bg_color[1], root.bg_color[2], 1
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+                canvas.before:
+                    Color:
+                        rgba: root.accent_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(8)]

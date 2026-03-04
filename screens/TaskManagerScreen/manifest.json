@@ -1,0 +1,10 @@
+{
+    "module": "TaskManagerScreen.TaskManagerScreen",
+    "name": "TaskManagerScreen",
+    "id": "_task_manager",
+    "label": "Tasks",
+    "icon": "https://cdn.pihome.io/assets/default_app_icon.png",
+    "description": "View and manage scheduled tasks",
+    "hidden": false,
+    "requires_pin": false
+}
