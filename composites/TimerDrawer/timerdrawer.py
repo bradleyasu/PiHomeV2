@@ -242,6 +242,13 @@ class TimerDrawer(BoxLayout):
             self.ids.tray.dispatch('on_touch_move', touch)
         return True
 
+    def on_touch_up(self, touch):
+        if not self.collide_point(*touch.pos):
+            return False
+        if self.expanded and 'tray' in self.ids:
+            self.ids.tray.dispatch('on_touch_up', touch)
+        return True
+
     # ── pill right-button action ──────────────────────────────────────────────
 
     def _pill_right_action(self):
