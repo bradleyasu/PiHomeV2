@@ -46,21 +46,18 @@ class PiHomeTimer(BoxLayout):
         self.bind(pos=self._update_bg, size=self._update_bg,
                   bg_color=lambda *a: setattr(self._bg_color_inst, 'rgba', self.bg_color))
 
-        # ── arc widget ───────────────────────────────────────────────────────
-        arc = self.ids.arc_widget
-        with arc.canvas:
-            # Track ring (full circle, muted colour)
-            self._track_color = Color(*self.muted_color)
-            self._track_line = Line(cap='none', width=dp(2.5))
-            # Progress arc (clockwise from 12-o'clock)
-            self._prog_color = Color(*self.accent_color)
-            self._prog_arc = Line(cap='none', width=dp(2.5))
-        self._update_arc()
-        arc.bind(pos=lambda *a: self._update_arc(),
-                 size=lambda *a: self._update_arc())
-        self.bind(progress=lambda *a: self._update_arc(),
-                  accent_color=lambda *a: self._update_arc(),
-                  muted_color=lambda *a: self._update_arc())
+        # ── arc widget — disabled for black-screen diagnostic ───────────────
+        # arc = self.ids.arc_widget
+        # with arc.canvas:
+        #     self._track_color = Color(*self.muted_color)
+        #     self._track_line = Line(cap='none', width=dp(2.5))
+        #     self._prog_color = Color(*self.accent_color)
+        #     self._prog_arc = Line(cap='none', width=dp(2.5))
+        # self._update_arc()
+        # arc.bind(pos=lambda *a: self._update_arc(), size=lambda *a: self._update_arc())
+        # self.bind(progress=lambda *a: self._update_arc(),
+        #           accent_color=lambda *a: self._update_arc(),
+        #           muted_color=lambda *a: self._update_arc())
 
         # ── cancel label pill background ─────────────────────────────────────
         cancel = self.ids.cancel_lbl
@@ -73,16 +70,10 @@ class PiHomeTimer(BoxLayout):
         self._bg_rect.pos = self.pos
         self._bg_rect.size = self.size
 
-    def _update_arc(self, *args):
-        arc = self.ids.arc_widget
-        r = min(arc.width, arc.height) / 2 - dp(3)
-        cx, cy = arc.center_x, arc.center_y
-        self._track_color.rgba = self.muted_color
-        self._track_line.circle = (cx, cy, r, 0, 360)
-        self._prog_color.rgba = self.accent_color
-        # Clockwise sweep from 12 o'clock: start_angle = 90 - 360*progress, end = 90
-        start = 90 - 360 * self.progress
-        self._prog_arc.circle = (cx, cy, r, start, 90)
+    # def _update_arc(self, *args):  # disabled for black-screen diagnostic
+    #     arc = self.ids.arc_widget
+    #     ...
+
 
     def _update_cancel(self, *args):
         cancel = self.ids.cancel_lbl
