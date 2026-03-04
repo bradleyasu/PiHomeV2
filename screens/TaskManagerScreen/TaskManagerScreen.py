@@ -345,33 +345,47 @@ class TaskManagerScreen(PiHomeScreen):
 
     # ── Touch handling ─────────────────────────────────────────────────────────
 
+    def on_touch_down(self, touch):
+        # Grab every touch that starts on the open panel so no child widget
+        # (task rows, etc.) ever receives the corresponding touch_up.
+        if self._panel_open and self.ids.create_panel.collide_point(*touch.pos):
+            touch.grab(self)
+            return True
+        return super().on_touch_down(touch)
+
     def on_touch_up(self, touch):
+        # Release our grab without letting it propagate further.
+        if touch.grab_current is self:
+            touch.ungrab(self)
+            # Now resolve the intended action using the touch's real position.
+            if self.ids.add_btn.collide_point(*touch.pos):
+                self.toggle_create_panel()
+                return True
+
+            if self._panel_open:
+                if self.ids.close_panel_btn.collide_point(*touch.pos):
+                    self.hide_create_panel()
+                    return True
+
+                for p, lbl_id in [(1, 'prio_low'), (2, 'prio_med'), (3, 'prio_high')]:
+                    if self.ids[lbl_id].collide_point(*touch.pos):
+                        self._select_priority(p)
+                        return True
+
+                for i, lbl_id in enumerate(['due_0', 'due_1', 'due_2', 'due_3', 'due_4', 'due_5']):
+                    if self.ids[lbl_id].collide_point(*touch.pos):
+                        self._select_due(i)
+                        return True
+
+            return True  # panel was open — swallow regardless
+
         if not self.collide_point(*touch.pos):
             return super().on_touch_up(touch)
 
-        # Add / toggle panel button
+        # Add / toggle panel button (panel is closed here)
         if self.ids.add_btn.collide_point(*touch.pos):
             self.toggle_create_panel()
             return True
 
-        if self._panel_open:
-            if self.ids.close_panel_btn.collide_point(*touch.pos):
-                self.hide_create_panel()
-                return True
-
-            for p, lbl_id in [(1, 'prio_low'), (2, 'prio_med'), (3, 'prio_high')]:
-                if self.ids[lbl_id].collide_point(*touch.pos):
-                    self._select_priority(p)
-                    return True
-
-            for i, lbl_id in enumerate(['due_0', 'due_1', 'due_2', 'due_3', 'due_4', 'due_5']):
-                if self.ids[lbl_id].collide_point(*touch.pos):
-                    self._select_due(i)
-                    return True
-
-            # Consume any touch that lands on the open panel so it can't
-            # fall through to task rows rendered beneath it.
-            if self.ids.create_panel.collide_point(*touch.pos):
-                return True
 
         return super().on_touch_up(touch)
