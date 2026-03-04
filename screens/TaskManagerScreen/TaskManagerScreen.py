@@ -352,31 +352,32 @@ class TaskManagerScreen(PiHomeScreen):
     # ── Touch handling ─────────────────────────────────────────────────────────
 
     def on_touch_down(self, touch):
-        # Block touches while the panel is open OR still animating closed.
-        # Use the panel's actual height as the ground truth — not the flag
-        # which goes False before the animation finishes.
         panel = self.ids.create_panel
-        if (self._panel_open or self._panel_closing) and panel.height > 0:
-            if panel.collide_point(*touch.pos):
-                touch.grab(self)
-            # Either way, eat the touch — don't let children see it at all.
+
+        # While animating closed, block everything.
+        if self._panel_closing:
             return True
+
+        if self._panel_open:
+            if panel.collide_point(*touch.pos):
+                # Touch is on the panel — tag it so on_touch_up knows it's ours,
+                # then let super() dispatch normally so form widgets receive it.
+                touch.ud['_tm_panel'] = True
+                return super().on_touch_down(touch)
+            else:
+                # Touch is outside the panel (on task rows beneath) — block it.
+                return True
+
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
-        # Kivy delivers on_touch_up twice for a grabbed touch:
-        #   1) with touch.grab_current is self  → our intentional grab
-        #   2) with touch.grab_current = None   → normal tree dispatch
-        # We must block BOTH paths while the panel is open or closing.
-        panel = self.ids.create_panel
-        panel_active = (self._panel_open or self._panel_closing) and panel.height > 0
+        # While animating closed, block everything.
+        if self._panel_closing:
+            return True
 
-        if touch.grab_current is self:
-            touch.ungrab(self)
-            if self.ids.add_btn.collide_point(*touch.pos):
-                self.toggle_create_panel()
-                return True
-            if self._panel_open:
+        if self._panel_open:
+            if touch.ud.get('_tm_panel'):
+                # Touch started on the panel — handle our interactive controls.
                 if self.ids.close_panel_btn.collide_point(*touch.pos):
                     self.hide_create_panel()
                     return True
@@ -388,16 +389,16 @@ class TaskManagerScreen(PiHomeScreen):
                     if self.ids[lbl_id].collide_point(*touch.pos):
                         self._select_due(i)
                         return True
-            return True  # swallow — panel was open
-
-        # Second delivery (normal tree dispatch): block children if panel active.
-        if panel_active:
-            return True
+                # Not one of our explicit controls — let the form widget handle it.
+                return super().on_touch_up(touch)
+            else:
+                # Touch started outside the panel — block it.
+                return True
 
         if not self.collide_point(*touch.pos):
             return super().on_touch_up(touch)
 
-        # Panel is fully closed — handle add button.
+        # Panel fully closed — only the add button is live here.
         if self.ids.add_btn.collide_point(*touch.pos):
             self.toggle_create_panel()
             return True
