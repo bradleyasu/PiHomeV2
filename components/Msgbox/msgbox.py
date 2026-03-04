@@ -145,9 +145,9 @@ class Msgbox(FloatLayout):
 
         def _update(*_):
             frac = max(0.0, 1.0 - elapsed[0] / total)
-            # Anchor to card top-right, 4dp inset so it sits inside the border
+            # Anchor to card bottom-right, 4dp inset so it sits inside the border
             card = self._card
-            dot.pos = (card.right - SIZE - dp(4), card.top - SIZE - dp(4))
+            dot.pos = (card.right - SIZE - dp(4), card.y + dp(4))
             px, py  = dot.pos
             dot.canvas.clear()
             with dot.canvas:
