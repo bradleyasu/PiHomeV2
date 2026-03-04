@@ -369,4 +369,9 @@ class TaskManagerScreen(PiHomeScreen):
                     self._select_due(i)
                     return True
 
+            # Consume any touch that lands on the open panel so it can't
+            # fall through to task rows rendered beneath it.
+            if self.ids.create_panel.collide_point(*touch.pos):
+                return True
+
         return super().on_touch_up(touch)

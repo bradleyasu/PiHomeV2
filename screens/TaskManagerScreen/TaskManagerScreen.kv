@@ -3,6 +3,7 @@
 #:import PiHomeSwitch components.Switch.switch.PiHomeSwitch
 #:import DatePicker components.DatePicker.datepicker.DatePicker
 #:import NumberStepper components.NumberStepper.numberstepper.NumberStepper
+#:import PiTextInput components.Keyboard.keyboard.PiTextInput
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TaskManagerScreen
@@ -231,7 +232,7 @@
             height: dp(48)
             padding: [dp(18), dp(6), dp(18), dp(6)]
 
-            TextInput:
+            PiTextInput:
                 id: name_input
                 hint_text: 'Task name'
                 font_name: 'Nunito'
@@ -249,7 +250,7 @@
             height: dp(44)
             padding: [dp(18), dp(4), dp(18), dp(4)]
 
-            TextInput:
+            PiTextInput:
                 id: desc_input
                 hint_text: 'Description  (optional)'
                 font_name: 'Nunito'
