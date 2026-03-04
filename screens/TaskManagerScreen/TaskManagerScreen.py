@@ -255,6 +255,12 @@ class TaskManagerScreen(PiHomeScreen):
         anim.start(panel)
 
     def hide_create_panel(self):
+        # Unfocus any active text field so focus state doesn't carry over
+        # into the next panel open cycle.
+        for field_id in ('name_input', 'desc_input'):
+            field = self.ids.get(field_id)
+            if field and field.focus:
+                field.focus = False
         self._panel_open   = False
         self._panel_closing = True
         panel = self.ids.create_panel

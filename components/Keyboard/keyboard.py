@@ -308,6 +308,14 @@ class PiTextInput(TextInput):
         else:
             Clock.schedule_once(self._maybe_hide, 0.06)
 
+    def on_touch_up(self, touch):
+        result = super().on_touch_up(touch)
+        if _IS_PI and self.collide_point(*touch.pos) and self.focus:
+            # Field was already focused — on_focus won't fire again,
+            # so show the keyboard explicitly on each tap.
+            Clock.schedule_once(lambda dt: _get_keyboard().show(self), 0)
+        return result
+
     def _maybe_hide(self, dt):
         kb = _get_keyboard()
         if kb.target is self:
