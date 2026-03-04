@@ -364,38 +364,42 @@ class TaskManagerScreen(PiHomeScreen):
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
-        # Release our grab without letting it propagate further.
+        # Kivy delivers on_touch_up twice for a grabbed touch:
+        #   1) with touch.grab_current is self  → our intentional grab
+        #   2) with touch.grab_current = None   → normal tree dispatch
+        # We must block BOTH paths while the panel is open or closing.
+        panel = self.ids.create_panel
+        panel_active = (self._panel_open or self._panel_closing) and panel.height > 0
+
         if touch.grab_current is self:
             touch.ungrab(self)
-            # Now resolve the intended action using the touch's real position.
             if self.ids.add_btn.collide_point(*touch.pos):
                 self.toggle_create_panel()
                 return True
-
             if self._panel_open:
                 if self.ids.close_panel_btn.collide_point(*touch.pos):
                     self.hide_create_panel()
                     return True
-
                 for p, lbl_id in [(1, 'prio_low'), (2, 'prio_med'), (3, 'prio_high')]:
                     if self.ids[lbl_id].collide_point(*touch.pos):
                         self._select_priority(p)
                         return True
-
                 for i, lbl_id in enumerate(['due_0', 'due_1', 'due_2', 'due_3', 'due_4', 'due_5']):
                     if self.ids[lbl_id].collide_point(*touch.pos):
                         self._select_due(i)
                         return True
+            return True  # swallow — panel was open
 
-            return True  # panel was open — swallow regardless
+        # Second delivery (normal tree dispatch): block children if panel active.
+        if panel_active:
+            return True
 
         if not self.collide_point(*touch.pos):
             return super().on_touch_up(touch)
 
-        # Add / toggle panel button (panel is closed here)
+        # Panel is fully closed — handle add button.
         if self.ids.add_btn.collide_point(*touch.pos):
             self.toggle_create_panel()
             return True
-
 
         return super().on_touch_up(touch)
