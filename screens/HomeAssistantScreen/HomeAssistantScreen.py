@@ -123,7 +123,7 @@ class HomeAssistantScreen(PiHomeScreen):
         self._show_loading()
         if HOME_ASSISTANT.current_states:
             Clock.schedule_once(
-                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0.4
+                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0.8
             )
         else:
             Clock.schedule_once(lambda dt: self.refresh(), 0.8)
