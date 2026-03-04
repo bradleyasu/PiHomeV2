@@ -354,30 +354,28 @@ class TaskManagerScreen(PiHomeScreen):
     def on_touch_down(self, touch):
         panel = self.ids.create_panel
 
-        # While animating closed, block everything.
         if self._panel_closing:
             return True
 
         if self._panel_open:
             if panel.collide_point(*touch.pos):
-                # Touch is on the panel — tag it so on_touch_up knows it's ours,
-                # then let super() dispatch normally so form widgets receive it.
+                # Dispatch ONLY to the panel — never let super() reach task rows.
                 touch.ud['_tm_panel'] = True
-                return super().on_touch_down(touch)
-            else:
-                # Touch is outside the panel (on task rows beneath) — block it.
-                return True
+                panel.on_touch_down(touch)
+            # Block everything outside the panel (task rows, etc.)
+            return True
 
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
-        # While animating closed, block everything.
+        panel = self.ids.create_panel
+
         if self._panel_closing:
             return True
 
         if self._panel_open:
             if touch.ud.get('_tm_panel'):
-                # Touch started on the panel — handle our interactive controls.
+                # Check our own controls first.
                 if self.ids.close_panel_btn.collide_point(*touch.pos):
                     self.hide_create_panel()
                     return True
@@ -389,16 +387,14 @@ class TaskManagerScreen(PiHomeScreen):
                     if self.ids[lbl_id].collide_point(*touch.pos):
                         self._select_due(i)
                         return True
-                # Not one of our explicit controls — let the form widget handle it.
-                return super().on_touch_up(touch)
-            else:
-                # Touch started outside the panel — block it.
-                return True
+                # Dispatch ONLY to the panel for everything else (inputs, date picker…)
+                panel.on_touch_up(touch)
+            # Always block — task rows must never receive touch_up while panel is active.
+            return True
 
         if not self.collide_point(*touch.pos):
             return super().on_touch_up(touch)
 
-        # Panel fully closed — only the add button is live here.
         if self.ids.add_btn.collide_point(*touch.pos):
             self.toggle_create_panel()
             return True
