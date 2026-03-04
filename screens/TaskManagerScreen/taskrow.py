@@ -2,7 +2,7 @@ from kivy.clock import Clock
 from kivy.graphics import Color, Rectangle
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import ColorProperty, ObjectProperty, StringProperty
+from kivy.properties import BooleanProperty, ColorProperty, ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 
 Builder.load_file("./screens/TaskManagerScreen/taskrow.kv")
@@ -15,6 +15,8 @@ class TaskRow(BoxLayout):
     task_name        = StringProperty("Task")
     task_description = StringProperty("")
     due_label        = StringProperty("")
+    repeat_label     = StringProperty("")
+    is_passive       = BooleanProperty(False)
     priority_color   = ColorProperty([0.39, 0.71, 1.0, 1.0])
     text_color       = ColorProperty([1.0, 1.0, 1.0, 0.9])
     muted_color      = ColorProperty([1.0, 1.0, 1.0, 0.4])

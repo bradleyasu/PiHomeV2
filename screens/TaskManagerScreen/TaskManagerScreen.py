@@ -120,28 +120,38 @@ class TaskManagerScreen(PiHomeScreen):
             secs = diff.total_seconds()
             PIHOME_LOGGER.info(f"TaskManagerScreen._make_row: secs={secs:.1f} for task={task.name!r}")
             if secs < 0:
-                due_str = "overdue"
+                relative = "overdue"
             elif secs < 3600:
                 mins = max(1, int(secs / 60))
-                due_str = f"in {mins} min"
+                relative = f"in {mins} min"
             elif secs < 86400:
                 hrs  = int(secs / 3600)
                 mins = int((secs % 3600) / 60)
-                due_str = f"in {hrs}h {mins}m" if mins else f"in {hrs}h"
+                relative = f"in {hrs}h {mins}m" if mins else f"in {hrs}h"
             elif secs < 7 * 86400:
                 days = int(secs / 86400)
-                due_str = f"in {days} day" if days == 1 else f"in {days} days"
+                relative = f"in {days} day" if days == 1 else f"in {days} days"
             elif secs < 30 * 86400:
                 weeks = int(secs / (7 * 86400))
-                due_str = f"in {weeks} week" if weeks == 1 else f"in {weeks} weeks"
+                relative = f"in {weeks} week" if weeks == 1 else f"in {weeks} weeks"
             elif secs < 365 * 86400:
                 months = int(secs / (30 * 86400))
-                due_str = f"in {months} month" if months == 1 else f"in {months} months"
+                relative = f"in {months} month" if months == 1 else f"in {months} months"
             else:
                 years = int(secs / (365 * 86400))
-                due_str = f"in {years} year" if years == 1 else f"in {years} years"
+                relative = f"in {years} year" if years == 1 else f"in {years} years"
+            # Exact datetime  e.g. "Mar 4, 3:45 PM"
+            exact = start_time.strftime("%b %-d, %-I:%M %p").replace("AM", "am").replace("PM", "pm")
+            due_str = f"{relative}  ·  {exact}"
         else:
             due_str = "event-based"
+
+        # Repeat label
+        repeat_days = getattr(task, 'repeat_days', 0)
+        if repeat_days and repeat_days > 0:
+            repeat_label = f"every {repeat_days} day" if repeat_days == 1 else f"every {repeat_days} days"
+        else:
+            repeat_label = ""
 
         # Dim finished rows
         is_done = task.status in (TaskStatus.COMPLETED, TaskStatus.CANCELED)
@@ -154,6 +164,8 @@ class TaskManagerScreen(PiHomeScreen):
             task_name        = task.name,
             task_description = task.description or "",
             due_label        = due_str,
+            repeat_label     = repeat_label,
+            is_passive       = bool(getattr(task, 'is_passive', False)),
             priority_color   = prio_color,
             text_color       = [1, 1, 1, alpha],
             muted_color      = [1, 1, 1, muted_a],
