@@ -144,9 +144,11 @@ class TimerDrawer(BoxLayout):
         """
         if 'tray' not in self.ids or not self.expanded:
             return
+        from kivy.uix.label import Label
         self.ids.tray.clear_widgets()
-        for tw in self.timer_widgets:
-            self.ids.tray.add_widget(tw)
+        self.ids.tray.add_widget(Label(text="test", size_hint_y=None, height=dp(54)))
+        # for tw in self.timer_widgets:
+            # self.ids.tray.add_widget(tw)
 
     def _clear_tray(self):
         """Remove all PiHomeTimer widgets from the tray's render tree.
