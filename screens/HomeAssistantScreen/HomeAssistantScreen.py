@@ -126,7 +126,7 @@ class HomeAssistantScreen(PiHomeScreen):
                 lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0.4
             )
         else:
-            Clock.schedule_once(lambda dt: self.refresh(), 0.4)
+            Clock.schedule_once(lambda dt: self.refresh(), 0.8)
         return super().on_pre_enter(*args)
 
     # ── Public API ────────────────────────────────────────────────────────────
