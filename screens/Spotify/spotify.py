@@ -702,16 +702,30 @@ class SpotifyScreen(PiHomeScreen):
             min_val=0.0, max_val=1.0, value=self.progress,
             size_hint_y=None, height=dp(24),
         )
-        self.bind(progress=lambda i, v: setattr(prog_slider, "value", v))
+        # Only push progress to the slider while the user isn't dragging it.
+        # Binding value→seek on every pixel caused seeks to fire during
+        # normal ticker/poll updates, making playback jumpy.
+        _dragging = [False]
 
-        # Seek on drag — debounced 0.4 s so we don't spam on every pixel
-        _seek_ev = [None]
-        def _on_seek_change(inst, frac):
+        def _prog_to_slider(inst, v):
+            if not _dragging[0]:
+                prog_slider.value = v
+
+        self.bind(progress=_prog_to_slider)
+
+        # Suppress poll overwrite as soon as the drag starts so the thumb
+        # doesn't snap back mid-gesture.  Seek fires once on release.
+        def _on_drag_start():
+            _dragging[0] = True
+            self._suppress_prog_until = time.time() + 5.0
+
+        def _on_seek_end(frac):
+            _dragging[0] = False
             self._suppress_prog_until = time.time() + 3.0
-            if _seek_ev[0]:
-                _seek_ev[0].cancel()
-            _seek_ev[0] = Clock.schedule_once(lambda dt: self.seek_track(frac), 0.4)
-        prog_slider.bind(value=_on_seek_change)
+            self.seek_track(frac)
+
+        prog_slider.on_drag_start = _on_drag_start
+        prog_slider.on_seek_end   = _on_seek_end
 
         time_row = BoxLayout(
             orientation="horizontal",

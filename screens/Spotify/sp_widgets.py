@@ -6,7 +6,8 @@ from kivy.animation import Animation
 from kivy.graphics import Color, Ellipse, RoundedRectangle
 from kivy.metrics import dp
 from kivy.properties import (
-    BooleanProperty, ColorProperty, NumericProperty, StringProperty,
+    BooleanProperty, ColorProperty, NumericProperty, ObjectProperty,
+    StringProperty,
 )
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
@@ -33,6 +34,12 @@ class SpotifySlider(Widget):
     min_val      = NumericProperty(0.0)
     max_val      = NumericProperty(1.0)
     value        = NumericProperty(0.0)
+
+    # Drag lifecycle callbacks — set from outside to respond to user gestures
+    # on_drag_start():   called when the user first presses the slider
+    # on_seek_end(frac): called with the final 0..1 value when the user releases
+    on_drag_start = ObjectProperty(None)
+    on_seek_end   = ObjectProperty(None)
     track_color  = ColorProperty([0.20, 0.20, 0.20, 1])
     fill_color   = ColorProperty([0.11, 0.73, 0.33, 1])
     thumb_color  = ColorProperty([1, 1, 1, 1])
@@ -92,6 +99,8 @@ class SpotifySlider(Widget):
             touch.grab(self)
             self._set_from_touch(touch)
             Animation(_thumb_s=1.45, d=0.10, t="out_quad").start(self)
+            if self.on_drag_start:
+                self.on_drag_start()
             return True
         return super().on_touch_down(touch)
 
@@ -105,6 +114,8 @@ class SpotifySlider(Widget):
         if touch.grab_current is self:
             touch.ungrab(self)
             Animation(_thumb_s=1.0, d=0.18, t="out_quad").start(self)
+            if self.on_seek_end:
+                self.on_seek_end(self.value)
             return True
         return super().on_touch_up(touch)
 
