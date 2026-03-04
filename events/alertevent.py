@@ -45,8 +45,8 @@ class AlertEvent(PihomeEvent):
             "title": self.type_def("string"),
             "message": self.type_def("string"),
             "timeout": self.type_def("integer"),
-            "level": self.type_def("string"),
-            "buttons": self.type_def("string"),
-            "on_yes": self.type_def("string", False),
-            "on_no": self.type_def("string", False)
+            "level": self.type_def("string", True, "0: Error, 1: Warning, 2: Info, 3: Success"),
+            "buttons": self.type_def("number", True, "0: OK, 1: Yes/No"),
+            "on_yes": self.type_def("event", False),
+            "on_no": self.type_def("event", False)
         }
