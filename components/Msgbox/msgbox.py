@@ -124,24 +124,37 @@ class Msgbox(FloatLayout):
         anim_card.start(card)
 
     def _start_countdown(self, timeout):
-        """Overlay a shrinking pie-sector on the card's top-right corner.
+        """Overlay a shrinking pie-sector on the card's bottom-right corner.
 
         Uses only Ellipse (safe on Pi VideoCore IV).  Two layers:
           1. A faint full circle as a background track.
           2. A filled pie sector (angle_end shrinks from 360° to 0°) that
              drains clockwise as time runs out.
+
+        Visibility is tied to card_opacity so the indicator fades in/out
+        in perfect sync with the card's show and dismiss animations.
+        The clock doesn't start until the card's in-animation finishes so
+        the widget is never visible before the card has fully appeared.
         """
         from kivy.graphics import Color, Ellipse as GlEllipse
 
-        SIZE   = dp(28)
-        total  = float(timeout)
+        SIZE    = dp(28)
+        total   = float(timeout)
         elapsed = [0.0]
         # Capture accent color now — _refresh_theme() has already run in show()
-        accent = list(self._card.accent_color)
+        accent  = list(self._card.accent_color)
 
         dot = Widget(size_hint=(None, None), size=(SIZE, SIZE))
+        dot.opacity = 0  # invisible until card_opacity binds it up
         self.add_widget(dot)
         self._countdown_widget = dot
+
+        # Sync dot opacity to the card's animated opacity property.
+        # This makes the indicator fade in with the show animation and
+        # fade out automatically during dismiss — no extra work needed.
+        self._card.bind(
+            card_opacity=lambda inst, val: setattr(dot, 'opacity', val)
+        )
 
         def _update(*_):
             frac = max(0.0, 1.0 - elapsed[0] / total)
@@ -162,8 +175,6 @@ class Msgbox(FloatLayout):
                     angle_end=90 + 360.0 * frac,
                 )
 
-        _update()  # draw immediately (card layout is already done after show())
-
         def _tick(dt):
             elapsed[0] += dt
             _update()
@@ -172,8 +183,20 @@ class Msgbox(FloatLayout):
                     self._countdown_event.cancel()
                     self._countdown_event = None
 
-        # ~20 fps — readable animation, gentle on Pi GPU
-        self._countdown_event = Clock.schedule_interval(_tick, 1.0 / 20.0)
+        def _begin(*_):
+            # Guard: box may have been dismissed before the delay fired
+            if self._countdown_event is None:
+                return
+            self._countdown_event = None
+            _update()
+            # ~20 fps — readable animation, gentle on Pi GPU
+            self._countdown_event = Clock.schedule_interval(_tick, 1.0 / 20.0)
+
+        # Delay first draw + interval start until the card in-animation
+        # completes (d=0.38s), so the indicator never flashes before the card.
+        # Store the schedule_once handle in _countdown_event so that dismiss()
+        # cancels it cleanly if the box is dismissed before it fires.
+        self._countdown_event = Clock.schedule_once(_begin, 0.38)
 
     def dismiss(self, on_done=None):
         """Animate out, then remove self from parent and fire on_done.
