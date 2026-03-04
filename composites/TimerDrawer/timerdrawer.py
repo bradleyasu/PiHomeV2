@@ -136,6 +136,18 @@ class TimerDrawer(BoxLayout):
         self.width = min(dp(380), app_w - dp(32))
         self.x     = (app_w - self.width) / 2.0
 
+    def _populate_tray(self):
+        """Add timer row widgets to the tray after the open animation completes.
+
+        Guarded: if the drawer was collapsed again before the animation finished
+        (e.g. a timer completed mid-animation) this is a no-op.
+        """
+        if 'tray' not in self.ids or not self.expanded:
+            return
+        self.ids.tray.clear_widgets()
+        for tw in self.timer_widgets:
+            self.ids.tray.add_widget(tw)
+
     def _clear_tray(self):
         """Remove all PiHomeTimer widgets from the tray's render tree.
 
@@ -163,27 +175,26 @@ class TimerDrawer(BoxLayout):
     def on_expanded(self, instance, value):
         """Animate the tray open or closed, keeping the pill header stationary.
 
-        Widgets are added to / removed from the tray here so they are only
-        in the render tree while the tray is actually visible.
+        Timer row widgets are kept OUT of the tray during any animation.
+        - Opening: animate the drawer to full height first, THEN add rows.
+        - Closing: remove rows IMMEDIATELY, then animate closed.
+        This avoids concurrent animation + BoxLayout do_layout() passes that
+        choke the Pi's VideoCore IV and black out the display.
         """
         if not self.in_position:
             return
-        if value:
-            # Populate the tray before animating open
-            if 'tray' in self.ids:
-                self.ids.tray.clear_widgets()
-                for tw in self.timer_widgets:
-                    self.ids.tray.add_widget(tw)
-        else:
-            # Clear the tray after animating closed (via on_complete)
-            pass
         n          = len(self.timer_widgets)
         new_height = _PILL_H + (_ROW_H * n if value else 0)
         target_y   = Window.height - new_height
         anim = Animation(height=new_height, y=target_y, t='out_quad', d=0.28)
-        if not value:
-            # Remove widgets from the tray once the close animation finishes
-            anim.bind(on_complete=lambda *_: self._clear_tray())
+        if value:
+            # Rows are added AFTER the open animation completes — zero layout
+            # work happens while the animation is running.
+            anim.bind(on_complete=lambda *_: self._populate_tray())
+        else:
+            # Pull rows out of the tray RIGHT NOW (before animation starts) so
+            # no do_layout() fires during the closing animation either.
+            self._clear_tray()
         anim.start(self)
 
     def on_height(self, instance, value):
