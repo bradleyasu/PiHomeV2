@@ -48,16 +48,32 @@
                 size_hint_y: None
                 height: dp(14)
 
-            Label:
-                text: root.action_label
-                font_name: 'Nunito'
-                font_size: '10sp'
-                color: root.accent_color
-                halign: 'left'
-                valign: 'middle'
-                text_size: self.width, None
+            # Action row: MaterialIcons arrow + Nunito event-type text
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: dp(3)
                 size_hint_y: None
                 height: dp(14)
+
+                Label:
+                    text: '\ue315'
+                    font_name: 'MaterialIcons'
+                    font_size: '12sp'
+                    color: root.accent_color
+                    size_hint: None, 1
+                    width: dp(14)
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+                Label:
+                    text: root.action_label
+                    font_name: 'Nunito'
+                    font_size: '10sp'
+                    color: root.accent_color
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
 
         Label:
             id: delete_lbl

@@ -118,14 +118,15 @@ class HomeAssistantScreen(PiHomeScreen):
         # Always return to the devices tab on each entry
         if self.view_mode != 'devices':
             self.view_mode = 'devices'
-        # Show the screen instantly with a loading message, then build on the next frame.
+        # Show loading state immediately, but delay the actual data build by
+        # ~0.4 s so the app-menu slide-out animation can finish without hitching.
         self._show_loading()
         if HOME_ASSISTANT.current_states:
             Clock.schedule_once(
-                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0
+                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0.4
             )
         else:
-            Clock.schedule_once(lambda dt: self.refresh(), 0)
+            Clock.schedule_once(lambda dt: self.refresh(), 0.4)
         return super().on_pre_enter(*args)
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -176,23 +177,42 @@ class HomeAssistantScreen(PiHomeScreen):
     # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _show_loading(self):
-        """Replace scroll_content with a single centred loading label."""
+        """Fill scroll_content with a vertically centred hourglass + text."""
         scroll_content = self.ids.get('scroll_content')
         if scroll_content is None:
             return
         scroll_content.clear_widgets()
-        lbl = Label(
-            text='Loading...',
-            font_name='Nunito',
-            font_size='16sp',
-            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.45),
+
+        # Top spacer — pushes the icon+text block to approximate vertical centre.
+        # The content area below the header (52dp) + tab strip (36dp) is ~392dp
+        # on a 480px-tall display, so ~dp(130) gets us close to the middle.
+        scroll_content.add_widget(Widget(size_hint_y=None, height=dp(130)))
+
+        icon_lbl = Label(
+            text='\ue863',          # hourglass_empty — Material Icons
+            font_name='MaterialIcons',
+            font_size='40sp',
+            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.25),
             size_hint_y=None,
-            height=dp(60),
+            height=dp(52),
             halign='center',
             valign='middle',
         )
-        lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
-        scroll_content.add_widget(lbl)
+        icon_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+        scroll_content.add_widget(icon_lbl)
+
+        text_lbl = Label(
+            text='Loading...',
+            font_name='Nunito',
+            font_size='15sp',
+            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.35),
+            size_hint_y=None,
+            height=dp(30),
+            halign='center',
+            valign='middle',
+        )
+        text_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+        scroll_content.add_widget(text_lbl)
 
     # ── Listeners tab ─────────────────────────────────────────────────────────
 
@@ -260,7 +280,7 @@ class HomeAssistantScreen(PiHomeScreen):
         state_part   = f"state = '{listener.state}'" if listener.state else "any change"
         trigger_lbl  = f"When {state_part}"
         action_type  = listener.action.get('type', 'event') if isinstance(listener.action, dict) else 'event'
-        action_lbl   = f"\u2192 execute {action_type}"
+        action_lbl   = f"execute {action_type}"
 
         row = HaListenerRow(
             listener_id   = listener.id,
