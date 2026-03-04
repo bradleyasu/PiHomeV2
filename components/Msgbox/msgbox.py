@@ -118,9 +118,29 @@ class Msgbox(FloatLayout):
         anim_card.start(card)
 
     def dismiss(self, on_done=None):
-        """Animate out, then remove self from parent."""
+        """Animate out, then remove self from parent and fire on_done.
+
+        on_done can be:
+          - None        → nothing happens
+          - a callable  → called directly (programmatic usage)
+          - a dict      → treated as a PiHome event dict and executed via
+                          PihomeEventFactory (webhook / task usage)
+        """
+        def _fire_on_done():
+            if on_done is None:
+                return
+            if callable(on_done):
+                on_done()
+            elif isinstance(on_done, dict):
+                try:
+                    from events.pihomeevent import PihomeEventFactory
+                    PihomeEventFactory.create_event_from_dict(on_done).execute()
+                except Exception as e:
+                    from util.phlog import PIHOME_LOGGER
+                    PIHOME_LOGGER.error(f"Msgbox: failed to execute on_done event: {e}")
+
         if on_done is not None:
-            Clock.schedule_once(lambda _: on_done(), 0.28)
+            Clock.schedule_once(lambda _: _fire_on_done(), 0.28)
 
         def _remove(*_):
             if self.parent:
