@@ -75,7 +75,9 @@ class Msgbox(FloatLayout):
         # KV rule has already run, ids is populated
         self._card = self.ids.card
         # Set by MsgboxFactory to advance the queue when this box is dismissed
-        self._factory_cb = None
+        self._factory_cb    = None
+        self._countdown_event  = None
+        self._countdown_widget = None
 
     # ── Internal helpers ───────────────────────────────────────────────────
 
@@ -121,6 +123,58 @@ class Msgbox(FloatLayout):
         anim_scrim.start(self)
         anim_card.start(card)
 
+    def _start_countdown(self, timeout):
+        """Overlay a shrinking pie-sector on the card's top-right corner.
+
+        Uses only Ellipse (safe on Pi VideoCore IV).  Two layers:
+          1. A faint full circle as a background track.
+          2. A filled pie sector (angle_end shrinks from 360° to 0°) that
+             drains clockwise as time runs out.
+        """
+        from kivy.graphics import Color, Ellipse as GlEllipse
+
+        SIZE   = dp(28)
+        total  = float(timeout)
+        elapsed = [0.0]
+        # Capture accent color now — _refresh_theme() has already run in show()
+        accent = list(self._card.accent_color)
+
+        dot = Widget(size_hint=(None, None), size=(SIZE, SIZE))
+        self.add_widget(dot)
+        self._countdown_widget = dot
+
+        def _update(*_):
+            frac = max(0.0, 1.0 - elapsed[0] / total)
+            # Anchor to card top-right, 4dp inset so it sits inside the border
+            card = self._card
+            dot.pos = (card.right - SIZE - dp(4), card.top - SIZE - dp(4))
+            px, py  = dot.pos
+            dot.canvas.clear()
+            with dot.canvas:
+                # Background track
+                Color(1, 1, 1, 0.15)
+                GlEllipse(pos=(px, py), size=(SIZE, SIZE))
+                # Foreground countdown sector — drains clockwise from the top
+                Color(*accent)
+                GlEllipse(
+                    pos=(px, py), size=(SIZE, SIZE),
+                    angle_start=90,
+                    angle_end=90 + 360.0 * frac,
+                )
+
+        _update()  # draw immediately (card layout is already done after show())
+
+        def _tick(dt):
+            elapsed[0] += dt
+            _update()
+            if elapsed[0] >= total:
+                if self._countdown_event:
+                    self._countdown_event.cancel()
+                    self._countdown_event = None
+
+        # ~20 fps — readable animation, gentle on Pi GPU
+        self._countdown_event = Clock.schedule_interval(_tick, 1.0 / 20.0)
+
     def dismiss(self, on_done=None):
         """Animate out, then remove self from parent and fire on_done.
 
@@ -130,6 +184,11 @@ class Msgbox(FloatLayout):
           - a dict      → treated as a PiHome event dict and executed via
                           PihomeEventFactory (webhook / task usage)
         """
+        # Stop the countdown clock (no-op if it was never started)
+        if self._countdown_event:
+            self._countdown_event.cancel()
+            self._countdown_event = None
+
         def _fire_on_done():
             if on_done is None:
                 return
@@ -270,6 +329,7 @@ class MsgboxFactory:
         box.show()
 
         if entry['timeout'] > 0:
+            box._start_countdown(entry['timeout'])
             Clock.schedule_once(lambda _: box.dismiss(), entry['timeout'])
 
         self._active = box
