@@ -20,7 +20,7 @@ class AlertEvent(PihomeEvent):
 
 
     def execute(self):
-        MSGBOX_FACTORY.show(self.title, self.message, self.timeout, self.type, self.buttons, self.on_yes, self.on_no)
+        MSGBOX_FACTORY.show(self.title, self.message, self.timeout, self.level, self.buttons, self.on_yes, self.on_no)
         return {
             "code": 200,
             "body": {"status": "success", "message": "Alert displayed"}
