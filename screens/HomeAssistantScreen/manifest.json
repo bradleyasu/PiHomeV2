@@ -7,7 +7,7 @@
     "description": "Home Assistant Interface",
     "hidden": false,
     "requires_pin": false,
-    "index": 10,
+    "index": 4,
     "settingsIndex": 1,
     "icon": "./screens/HomeAssistantScreen/icon.png",
     "settings": [

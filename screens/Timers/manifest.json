@@ -5,6 +5,7 @@
     "label": "New Timer",
     "icon": "./screens/Timers/icon.png",
     "description": "",
+    "index": 2,
     "hidden": false,
     "requires_pin": false
 }

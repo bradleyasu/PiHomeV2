@@ -8,6 +8,7 @@
     "description": "Spotify playback controller",
     "hidden": false,
     "requires_pin": false,
+    "index": 4,
     "icon": "./screens/Spotify/icon.png",
     "settings": [
         {

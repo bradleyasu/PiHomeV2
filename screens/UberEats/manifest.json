@@ -6,6 +6,7 @@
     "settingsLabel": "Uber Eats",
     "settingsIndex": 5,
     "description": "Live Uber Eats order tracking",
+    "index": 7,
     "hidden": false,
     "requires_pin": false,
     "icon": "./screens/UberEats/icon.png",

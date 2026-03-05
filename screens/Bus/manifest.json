@@ -8,6 +8,7 @@
     "description": "Bus",
     "hidden": false,
     "icon": "screens/Bus/icon.png",
+    "index": 6,
     "requires_pin": false,
     "settings": [
         {

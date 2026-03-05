@@ -8,6 +8,7 @@
     "description": "",
     "hidden": false,
     "icon": "screens/PiHole/icon.png",
+    "index": 8,
     "requires_pin": false,
     "settings": [
         {
