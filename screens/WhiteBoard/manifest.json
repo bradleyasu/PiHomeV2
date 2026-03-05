@@ -1,0 +1,11 @@
+{
+    "module": "WhiteBoard.whiteboard",
+    "name": "WhiteBoard",
+    "id": "_whiteboard",
+    "label": "Whiteboard",
+    "icon": "./screens/WhiteBoard/icon.png",
+    "description": "Freehand drawing canvas",
+    "index": 11,
+    "hidden": false,
+    "requires_pin": false
+}

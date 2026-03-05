@@ -1,11 +1,5 @@
 #:kivy 2.0.0
+# WhiteBoard — all UI is constructed in Python (whiteboard.py).
+# This file is kept for Builder registration only.
 <WhiteBoard>:
-    size: self.size
-    pos: self.pos
     size_hint: 1, 1
-    canvas.before:
-        Color:
-            rgba:  (0,0,0,1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
