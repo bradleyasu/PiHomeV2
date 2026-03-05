@@ -304,6 +304,8 @@ class BambuLabScreen(PiHomeScreen):
             Clock.schedule_once(lambda dt: self._set_state("error", "Connection Failed"), 0)
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
+        if self._mqtt_stop.is_set():
+            return
         if rc == 0:
             topic = _REPORT_TOPIC.format(serial=self._serial)
             client.subscribe(topic)
@@ -314,6 +316,8 @@ class BambuLabScreen(PiHomeScreen):
             Clock.schedule_once(lambda dt: self._set_state("error", f"Auth Failed (rc={rc})"), 0)
 
     def _on_mqtt_disconnect(self, client, userdata, rc):
+        if self._mqtt_stop.is_set():
+            return
         PIHOME_LOGGER.warn(f"BambuLab: MQTT disconnected (rc={rc})")
         Clock.schedule_once(lambda dt: self._set_state("disconnected", "Disconnected"), 0)
 
