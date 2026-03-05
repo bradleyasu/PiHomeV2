@@ -5,7 +5,7 @@
     "label": "Whiteboard",
     "icon": "./screens/WhiteBoard/icon.png",
     "description": "Freehand drawing canvas",
-    "index": 11,
+    "index": 4,
     "hidden": false,
     "requires_pin": false
 }
