@@ -1,0 +1,26 @@
+{
+    "module": "Cocktail.cocktail",
+    "name": "CocktailScreen",
+    "id": "_cocktail",
+    "label": "Cocktails",
+    "settingsLabel": "Cocktails",
+    "settingsIndex": 10,
+    "description": "Browse and search cocktail recipes via TheCocktailDB",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 15,
+    "icon": "./screens/Cocktail/icon.png",
+    "settings": [
+        {
+            "type": "title",
+            "title": "TheCocktailDB"
+        },
+        {
+            "type": "string",
+            "title": "API Key",
+            "desc": "Your TheCocktailDB API key. Leave as '1' to use the free tier. Paid keys unlock full ingredient images and additional endpoints.",
+            "section": "cocktaildb",
+            "key": "api_key"
+        }
+    ]
+}
