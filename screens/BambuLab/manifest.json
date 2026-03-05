@@ -53,6 +53,13 @@
             "desc": "Display live RTSPS stream from the printer. Requires 'LAN Mode Liveview' enabled on the printer (firmware 01.06+)",
             "section": "bambulab",
             "key": "camera_enabled"
+        },
+        {
+            "type": "string",
+            "title": "Camera FPS",
+            "desc": "Frames per second for the camera feed (1-30). Lower values reduce CPU load. Recommended: 5 for Pi 3, 15 for Pi 4+",
+            "section": "bambulab",
+            "key": "camera_fps"
         }
     ]
 }

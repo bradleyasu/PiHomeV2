@@ -27,6 +27,7 @@ Rotary Encoder
 import json
 import ssl
 import threading
+import time
 
 from kivy.clock import Clock
 from kivy.graphics.texture import Texture
@@ -141,6 +142,7 @@ class BambuLabScreen(PiHomeScreen):
         self._camera_thread = None
         self._camera_stop   = threading.Event()
         self._camera_player = None
+        self._camera_tex    = None   # reused texture to avoid per-frame allocation
         self._load_config()
 
     # ── Property observers (keep formatted strings in sync) ────────────────────
@@ -187,6 +189,10 @@ class BambuLabScreen(PiHomeScreen):
         self._serial      = CONFIG.get("bambulab", "serial",       "").strip()
         self._enabled     = _bool("enabled")
         self.camera_enabled = _bool("camera_enabled")
+        try:
+            self._camera_fps = max(1, min(30, int(CONFIG.get("bambulab", "camera_fps", "5"))))
+        except ValueError:
+            self._camera_fps = 5
 
     def on_config_update(self, config):
         old_ip, old_code, old_serial = self._ip, self._access_code, self._serial
@@ -379,6 +385,7 @@ class BambuLabScreen(PiHomeScreen):
             except Exception:
                 pass
         self._camera_player = None
+        self._camera_tex    = None
         self.camera_texture = None
 
     def _camera_run(self):
@@ -398,19 +405,25 @@ class BambuLabScreen(PiHomeScreen):
             )
             self._camera_player = player
             first_frame = True
+            frame_interval = 1.0 / self._camera_fps
+            last_upload = 0.0
 
             while not self._camera_stop.is_set():
                 frame, val = player.get_frame()
                 if val == "eof" or self._camera_stop.is_set():
                     break
                 if frame is not None:
-                    if first_frame:
-                        first_frame = False
-                        Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
-                    img, _pts = frame
-                    Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
+                    now = time.monotonic()
+                    if now - last_upload >= frame_interval:
+                        last_upload = now
+                        if first_frame:
+                            first_frame = False
+                            Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
+                        img, _pts = frame
+                        Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
+                    # else: decoded frame discarded — decoder keeps running internally
                 else:
-                    self._camera_stop.wait(0.033)  # ~30 fps cap
+                    self._camera_stop.wait(min(0.033, frame_interval))
 
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: camera error: {e}")
@@ -422,10 +435,12 @@ class BambuLabScreen(PiHomeScreen):
         try:
             w, h = img.get_size()
             data = bytes(img.to_bytearray()[0])
-            tex = Texture.create(size=(w, h), colorfmt="rgb")
-            tex.blit_buffer(data, colorfmt="rgb", bufferfmt="ubyte")
-            tex.flip_vertical()
-            self.camera_texture = tex
+            if self._camera_tex is None or self._camera_tex.size != (w, h):
+                tex = Texture.create(size=(w, h), colorfmt="rgb")
+                tex.flip_vertical()
+                self._camera_tex = tex
+            self._camera_tex.blit_buffer(data, colorfmt="rgb", bufferfmt="ubyte")
+            self.camera_texture = self._camera_tex
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: texture update error: {e}")
 
