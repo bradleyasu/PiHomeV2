@@ -76,6 +76,21 @@ _STATE_LABELS = {
     "OFFLINE": "OFFLINE",
 }
 
+# Pre-allocated color lists — avoids creating new list objects on every MQTT message
+_COLOR_ACCENT      = list(_ACCENT)
+_COLOR_IDLE        = [0.45, 0.45, 0.45, 1]
+_COLOR_PAUSE       = [0.95, 0.65, 0.10, 1]
+_COLOR_FAILED      = [0.85, 0.25, 0.25, 1]
+_COLOR_FINISH      = [0.20, 0.60, 0.95, 1]
+_COLOR_ERROR       = [0.85, 0.25, 0.25, 1]
+
+_STATE_COLORS = {
+    "RUNNING": _COLOR_ACCENT,
+    "PAUSE":   _COLOR_PAUSE,
+    "FAILED":  _COLOR_FAILED,
+    "FINISH":  _COLOR_FINISH,
+}
+
 
 # ── Screen ─────────────────────────────────────────────────────────────────────
 
@@ -242,6 +257,8 @@ class BambuLabScreen(PiHomeScreen):
             PIHOME_LOGGER.error("BambuLab: paho-mqtt not installed — run: pip install paho-mqtt")
             self._set_state("error", "paho-mqtt missing")
             return
+        if self._mqtt_thread and self._mqtt_thread.is_alive():
+            return  # previous thread still shutting down, don't spawn a second
         self._mqtt_stop.clear()
         self._mqtt_thread = threading.Thread(target=self._mqtt_run, daemon=True, name="bambulab-mqtt")
         self._mqtt_thread.start()
@@ -301,6 +318,8 @@ class BambuLabScreen(PiHomeScreen):
         Clock.schedule_once(lambda dt: self._set_state("disconnected", "Disconnected"), 0)
 
     def _on_mqtt_message(self, client, userdata, msg):
+        if self._mqtt_stop.is_set():
+            return  # screen is inactive — discard
         try:
             payload = json.loads(msg.payload.decode())
             p = payload.get("print", {})
@@ -313,11 +332,11 @@ class BambuLabScreen(PiHomeScreen):
         self.connection_state = state
         self.connection_label = state.upper()
         if state == "connected":
-            self.status_color = list(_ACCENT)
+            self.status_color = _COLOR_ACCENT
         elif state == "error":
-            self.status_color = [0.85, 0.25, 0.25, 1]
+            self.status_color = _COLOR_ERROR
         else:
-            self.status_color = [0.45, 0.45, 0.45, 1]
+            self.status_color = _COLOR_IDLE
 
     def _apply_print_data(self, p: dict):
         state = p.get("gcode_state", self.gcode_state)
@@ -352,15 +371,7 @@ class BambuLabScreen(PiHomeScreen):
                 break
 
     def _resolve_state_color(self, state: str) -> list:
-        if state == "RUNNING":
-            return list(_ACCENT)
-        if state == "PAUSE":
-            return [0.95, 0.65, 0.10, 1]
-        if state == "FAILED":
-            return [0.85, 0.25, 0.25, 1]
-        if state == "FINISH":
-            return [0.20, 0.60, 0.95, 1]
-        return [0.45, 0.45, 0.45, 1]
+        return _STATE_COLORS.get(state, _COLOR_IDLE)
 
     # ── Camera ─────────────────────────────────────────────────────────────────
 
@@ -369,6 +380,8 @@ class BambuLabScreen(PiHomeScreen):
             PIHOME_LOGGER.error("BambuLab: ffpyplayer not available")
             self.camera_status = "ffpyplayer missing"
             return
+        if self._camera_thread and self._camera_thread.is_alive():
+            return  # previous thread still shutting down, don't spawn a second
         self.camera_status = "Connecting..."
         self._camera_stop.clear()
         self._camera_thread = threading.Thread(
@@ -414,16 +427,19 @@ class BambuLabScreen(PiHomeScreen):
                     break
                 if frame is not None:
                     now = time.monotonic()
-                    if now - last_upload >= frame_interval:
+                    elapsed = now - last_upload
+                    if elapsed >= frame_interval:
                         last_upload = now
                         if first_frame:
                             first_frame = False
                             Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
                         img, _pts = frame
                         Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
-                    # else: decoded frame discarded — decoder keeps running internally
+                    else:
+                        # Sleep the remaining interval — avoids busy-looping between uploads
+                        self._camera_stop.wait(frame_interval - elapsed)
                 else:
-                    self._camera_stop.wait(min(0.033, frame_interval))
+                    self._camera_stop.wait(frame_interval)
 
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: camera error: {e}")
