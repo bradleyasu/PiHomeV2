@@ -1,0 +1,58 @@
+{
+    "module": "BambuLab.bambulab",
+    "name": "BambuLabScreen",
+    "id": "_bambulab",
+    "label": "BambuLab",
+    "settingsLabel": "BambuLab",
+    "settingsIndex": 10,
+    "description": "BambuLab 3D Printer Monitor",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 10,
+    "icon": "screens/BambuLab/icon.png",
+    "settings": [
+        {
+            "type": "title",
+            "title": "Printer Connection"
+        },
+        {
+            "type": "bool",
+            "title": "Enabled",
+            "desc": "Enable BambuLab printer monitoring",
+            "section": "bambulab",
+            "key": "enabled"
+        },
+        {
+            "type": "string",
+            "title": "Printer IP Address",
+            "desc": "Local IP address of the BambuLab printer (e.g. 192.168.1.100)",
+            "section": "bambulab",
+            "key": "ip"
+        },
+        {
+            "type": "string",
+            "title": "Access Code",
+            "desc": "Found in printer Settings > WLAN > Access Code",
+            "section": "bambulab",
+            "key": "access_code"
+        },
+        {
+            "type": "string",
+            "title": "Serial Number",
+            "desc": "Printer serial number (found in Settings or Bambu Studio)",
+            "section": "bambulab",
+            "key": "serial"
+        },
+        {
+            "type": "title",
+            "title": "Camera"
+        },
+        {
+            "type": "bool",
+            "title": "Enable Camera Feed",
+            "desc": "Display live RTSPS stream from the printer. Requires 'LAN Mode Liveview' enabled on the printer (firmware 01.06+)",
+            "section": "bambulab",
+            "key": "camera_enabled"
+        }
+    ]
+}
