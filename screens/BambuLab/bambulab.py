@@ -62,7 +62,12 @@ Builder.load_file("./screens/BambuLab/bambulab.kv")
 _MQTT_PORT    = 8883
 _RTSP_PORT    = 322
 _MQTT_USER    = "bblp"
-_REPORT_TOPIC = "device/{serial}/report"
+_REPORT_TOPIC  = "device/{serial}/report"
+_REQUEST_TOPIC = "device/{serial}/request"
+
+# Interval between periodic pushall requests (seconds).
+# P1P has performance constraints — Bambu recommends no more than once per 5 min.
+_PUSHALL_INTERVAL = 300
 
 # BambuLab brand green
 _ACCENT = (0.0, 0.68, 0.26, 1.0)
@@ -296,12 +301,33 @@ class BambuLabScreen(PiHomeScreen):
             self._mqtt_client = client
             client.connect(self._ip, _MQTT_PORT, keepalive=60)
 
+            last_pushall = time.monotonic()
             while not self._mqtt_stop.is_set():
                 client.loop(timeout=1.0)
+                # Periodically re-request full state (important for P1 series
+                # which only sends changed fields in normal reports)
+                now = time.monotonic()
+                if now - last_pushall >= _PUSHALL_INTERVAL:
+                    last_pushall = now
+                    self._send_pushall(client)
 
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: MQTT thread error: {e}")
             Clock.schedule_once(lambda dt: self._set_state("error", "Connection Failed"), 0)
+
+    def _send_pushall(self, client):
+        """Ask the printer to push a full status snapshot."""
+        topic = _REQUEST_TOPIC.format(serial=self._serial)
+        payload = json.dumps({
+            "pushing": {
+                "sequence_id": "0",
+                "command": "pushall",
+                "version": 1,
+                "push_target": 1,
+            }
+        })
+        client.publish(topic, payload)
+        PIHOME_LOGGER.info("BambuLab: sent pushall request")
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         if self._mqtt_stop.is_set():
@@ -311,6 +337,8 @@ class BambuLabScreen(PiHomeScreen):
             client.subscribe(topic)
             PIHOME_LOGGER.info(f"BambuLab: MQTT connected, subscribed to {topic}")
             Clock.schedule_once(lambda dt: self._set_state("connected", "Connected"), 0)
+            # Request full status snapshot so we get all fields immediately
+            self._send_pushall(client)
         else:
             PIHOME_LOGGER.error(f"BambuLab: MQTT connect refused (rc={rc})")
             Clock.schedule_once(lambda dt: self._set_state("error", f"Auth Failed (rc={rc})"), 0)
