@@ -354,11 +354,12 @@ class BambuLabScreen(PiHomeScreen):
             return  # screen is inactive — discard
         try:
             payload = json.loads(msg.payload.decode())
-            p = payload.get("print", {})
-            if p:
-                Clock.schedule_once(lambda dt: self._apply_print_data(p), 0)
         except Exception as e:
-            PIHOME_LOGGER.error(f"BambuLab: MQTT message parse error: {e}")
+            PIHOME_LOGGER.error(f"BambuLab: MQTT JSON parse error: {e}")
+            return
+        p = payload.get("print")
+        if p and isinstance(p, dict):
+            Clock.schedule_once(lambda dt, data=p: self._apply_print_data(data), 0)
 
     def _set_state(self, state, label=""):
         self.connection_state = state
@@ -370,37 +371,62 @@ class BambuLabScreen(PiHomeScreen):
         else:
             self.status_color = _COLOR_IDLE
 
+    @staticmethod
+    def _safe_int(value, fallback):
+        """Convert value to int, returning fallback on None or error."""
+        if value is None:
+            return fallback
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return fallback
+
+    @staticmethod
+    def _safe_float(value, fallback):
+        """Convert value to float, returning fallback on None or error."""
+        if value is None:
+            return fallback
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return fallback
+
     def _apply_print_data(self, p: dict):
-        state = p.get("gcode_state", self.gcode_state)
-        self.gcode_state    = state
-        self.state_label    = _STATE_LABELS.get(state, state)
-        self.state_color    = self._resolve_state_color(state)
-        self.print_progress = int(p.get("mc_percent", self.print_progress))
-        self.layer_current  = int(p.get("layer_num", self.layer_current))
-        self.layer_total    = int(p.get("total_layer_num", self.layer_total))
-        self.eta_minutes    = int(p.get("mc_remaining_time", self.eta_minutes))
-        self.temp_nozzle    = float(p.get("nozzle_temper",  self.temp_nozzle))
-        self.temp_bed       = float(p.get("bed_temper",     self.temp_bed))
-        self.temp_chamber   = float(p.get("chamber_temper", self.temp_chamber))
-        self.print_speed    = int(p.get("spd_mag", self.print_speed))
+        try:
+            state = p.get("gcode_state")
+            if state is not None:
+                self.gcode_state = state
+                self.state_label = _STATE_LABELS.get(state, state)
+                self.state_color = self._resolve_state_color(state)
 
-        job = p.get("subtask_name", "") or p.get("gcode_file", "")
-        if job:
-            self.job_name = job
+            self.print_progress = self._safe_int(p.get("mc_percent"), self.print_progress)
+            self.layer_current  = self._safe_int(p.get("layer_num"), self.layer_current)
+            self.layer_total    = self._safe_int(p.get("total_layer_num"), self.layer_total)
+            self.eta_minutes    = self._safe_int(p.get("mc_remaining_time"), self.eta_minutes)
+            self.temp_nozzle    = self._safe_float(p.get("nozzle_temper"), self.temp_nozzle)
+            self.temp_bed       = self._safe_float(p.get("bed_temper"), self.temp_bed)
+            self.temp_chamber   = self._safe_float(p.get("chamber_temper"), self.temp_chamber)
+            self.print_speed    = self._safe_int(p.get("spd_mag"), self.print_speed)
 
-        # Filament from AMS tray data
-        ams_data = p.get("ams", {})
-        if isinstance(ams_data, dict):
-            for ams_unit in ams_data.get("ams", []):
-                for tray in ams_unit.get("tray", []):
-                    tray_type = tray.get("tray_type", "")
-                    tray_color = tray.get("tray_color", "")
-                    if tray_type:
-                        self.filament_type = f"{tray_type} {tray_color}".strip()
-                        break
-                else:
-                    continue
-                break
+            job = p.get("subtask_name") or p.get("gcode_file")
+            if job:
+                self.job_name = job
+
+            # Filament from AMS tray data
+            ams_data = p.get("ams")
+            if isinstance(ams_data, dict):
+                for ams_unit in ams_data.get("ams", []):
+                    for tray in ams_unit.get("tray", []):
+                        tray_type = tray.get("tray_type", "")
+                        tray_color = tray.get("tray_color", "")
+                        if tray_type:
+                            self.filament_type = f"{tray_type} {tray_color}".strip()
+                            break
+                    else:
+                        continue
+                    break
+        except Exception as e:
+            PIHOME_LOGGER.error(f"BambuLab: error applying print data: {e}")
 
     def _resolve_state_color(self, state: str) -> list:
         return _STATE_COLORS.get(state, _COLOR_IDLE)
