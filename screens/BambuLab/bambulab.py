@@ -163,6 +163,7 @@ class BambuLabScreen(PiHomeScreen):
         self._camera_stop   = threading.Event()
         self._camera_player = None
         self._camera_tex    = None   # reused texture to avoid per-frame allocation
+        self._device_serial = None   # auto-detected from MQTT topic
         self._load_config()
 
     # ── Property observers (keep formatted strings in sync) ────────────────────
@@ -317,7 +318,8 @@ class BambuLabScreen(PiHomeScreen):
 
     def _send_pushall(self, client):
         """Ask the printer to push a full status snapshot."""
-        topic = _REQUEST_TOPIC.format(serial=self._serial)
+        serial = self._device_serial or self._serial
+        topic = _REQUEST_TOPIC.format(serial=serial)
         payload = json.dumps({
             "pushing": {
                 "sequence_id": "0",
@@ -327,15 +329,18 @@ class BambuLabScreen(PiHomeScreen):
             }
         })
         client.publish(topic, payload)
-        PIHOME_LOGGER.info("BambuLab: sent pushall request")
+        PIHOME_LOGGER.info(f"BambuLab: sent pushall request to {serial}")
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         if self._mqtt_stop.is_set():
             return
         if rc == 0:
-            topic = _REPORT_TOPIC.format(serial=self._serial)
-            client.subscribe(topic)
-            PIHOME_LOGGER.info(f"BambuLab: MQTT connected, subscribed to {topic}")
+            # Subscribe with single-level wildcard so we receive reports even
+            # if the configured serial doesn't exactly match the printer's
+            # device ID (the broker runs on the printer itself, so only that
+            # printer's messages will arrive).
+            client.subscribe("device/+/report")
+            PIHOME_LOGGER.info("BambuLab: MQTT connected, subscribed to device/+/report")
             Clock.schedule_once(lambda dt: self._set_state("connected", "Connected"), 0)
             # Request full status snapshot so we get all fields immediately
             self._send_pushall(client)
@@ -357,6 +362,17 @@ class BambuLabScreen(PiHomeScreen):
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: MQTT JSON parse error: {e}")
             return
+
+        # Auto-detect the real device serial from the topic so that pushall
+        # requests target the correct device even if the config serial is wrong.
+        # Topic format: device/<serial>/report
+        parts = msg.topic.split("/")
+        if len(parts) >= 2 and parts[0] == "device":
+            detected = parts[1]
+            if detected != self._device_serial:
+                PIHOME_LOGGER.info(f"BambuLab: detected device serial {detected}")
+                self._device_serial = detected
+
         p = payload.get("print")
         if p and isinstance(p, dict):
             Clock.schedule_once(lambda dt, data=p: self._apply_print_data(data), 0)
@@ -405,7 +421,15 @@ class BambuLabScreen(PiHomeScreen):
             self.eta_minutes    = self._safe_int(p.get("mc_remaining_time"), self.eta_minutes)
             self.temp_nozzle    = self._safe_float(p.get("nozzle_temper"), self.temp_nozzle)
             self.temp_bed       = self._safe_float(p.get("bed_temper"), self.temp_bed)
-            self.temp_chamber   = self._safe_float(p.get("chamber_temper"), self.temp_chamber)
+            # chamber_temper was removed in recent firmware; fall back to
+            # the nested device → ctc → info → temp path used by X1C.
+            chamber = p.get("chamber_temper")
+            if chamber is None:
+                try:
+                    chamber = p["device"]["ctc"]["info"]["temp"]
+                except (KeyError, TypeError):
+                    pass
+            self.temp_chamber   = self._safe_float(chamber, self.temp_chamber)
             self.print_speed    = self._safe_int(p.get("spd_mag"), self.print_speed)
 
             job = p.get("subtask_name") or p.get("gcode_file")
