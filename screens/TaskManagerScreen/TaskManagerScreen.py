@@ -114,11 +114,9 @@ class TaskManagerScreen(PiHomeScreen):
 
         # Due-time display
         start_time = getattr(task, 'start_time', None)
-        PIHOME_LOGGER.info(f"TaskManagerScreen._make_row: task={task.name!r} start_time={start_time!r}")
         if start_time:
             diff = start_time - datetime.now()
             secs = diff.total_seconds()
-            PIHOME_LOGGER.info(f"TaskManagerScreen._make_row: secs={secs:.1f} for task={task.name!r}")
             if secs < 0:
                 relative = "overdue"
             elif secs < 3600:
@@ -235,6 +233,7 @@ class TaskManagerScreen(PiHomeScreen):
         self._panel_open = True
         from kivy.metrics import dp
         panel = self.ids.create_panel
+        panel.disabled = False
 
         # Reset form to defaults
         self.ids.name_input.text = ""
@@ -283,6 +282,7 @@ class TaskManagerScreen(PiHomeScreen):
 
     def _on_panel_hidden(self, *args):
         self._panel_closing = False
+        self.ids.create_panel.disabled = True
 
     def _select_priority(self, value):
         """Highlight the chosen priority pill (1=LOW, 2=MEDIUM, 3=HIGH)."""
@@ -370,30 +370,33 @@ class TaskManagerScreen(PiHomeScreen):
     # ── Touch handling ─────────────────────────────────────────────────────────
 
     def on_touch_down(self, touch):
-        panel = self.ids.create_panel
-
         if self._panel_closing:
             return True
 
         if self._panel_open:
+            panel = self.ids.create_panel
             if panel.collide_point(*touch.pos):
-                # Dispatch ONLY to the panel — never let super() reach task rows.
                 touch.ud['_tm_panel'] = True
-                panel.on_touch_down(touch)
-            # Block everything outside the panel (task rows, etc.)
+                return panel.on_touch_down(touch)
+            # Block everything outside the panel
             return True
 
         return super().on_touch_down(touch)
 
-    def on_touch_up(self, touch):
-        panel = self.ids.create_panel
+    def on_touch_move(self, touch):
+        if self._panel_closing or self._panel_open:
+            if touch.ud.get('_tm_panel'):
+                return self.ids.create_panel.on_touch_move(touch)
+            return True
+        return super().on_touch_move(touch)
 
+    def on_touch_up(self, touch):
         if self._panel_closing:
             return True
 
         if self._panel_open:
+            panel = self.ids.create_panel
             if touch.ud.get('_tm_panel'):
-                # Check our own controls first.
                 if self.ids.close_panel_btn.collide_point(*touch.pos):
                     self.hide_create_panel()
                     return True
@@ -405,9 +408,7 @@ class TaskManagerScreen(PiHomeScreen):
                     if self.ids[lbl_id].collide_point(*touch.pos):
                         self._select_due(i)
                         return True
-                # Dispatch ONLY to the panel for everything else (inputs, date picker…)
-                panel.on_touch_up(touch)
-            # Always block — task rows must never receive touch_up while panel is active.
+                return panel.on_touch_up(touch)
             return True
 
         if not self.collide_point(*touch.pos):
