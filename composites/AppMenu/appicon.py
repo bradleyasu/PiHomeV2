@@ -45,4 +45,5 @@ class AppIcon(BoxLayout):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.on_select(self.app_key)
-            return False
+            return True
+        return False

@@ -41,4 +41,5 @@ class Hamburger(Widget):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.is_open = not self.is_open
-            return False
+            return True
+        return False

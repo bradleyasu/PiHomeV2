@@ -28,7 +28,7 @@ Builder.load_file("./composites/AppMenu/appmenu.kv")
 class AppMenu(FloatLayout):
 
     background_color = ColorProperty((0,0,0, 0.8))
-    disabled = False
+    _menu_active = False
 
     def __init__(self, screens, **kwargs):
         super(AppMenu, self).__init__(**kwargs)
@@ -68,7 +68,7 @@ class AppMenu(FloatLayout):
 
 
     def open_app(self, key):
-        if self.disabled:
+        if not self._menu_active:
             return
         # Start the dismiss animation immediately so the menu is visibly
         # closing, then navigate after a short delay. This ensures slow-loading
@@ -82,7 +82,7 @@ class AppMenu(FloatLayout):
 
     def hide(self):
         self.opacity = 0
-        self.disabled = True
+        self._menu_active = False
         self.pos = (0, 1000)
         self.grid.pos = (0, 1000)
         self.view.pos = (0, 1000)
@@ -92,7 +92,7 @@ class AppMenu(FloatLayout):
 
     def dismiss(self):
         """Animated close — icons slide up and fade, then snap offscreen."""
-        self.disabled = True
+        self._menu_active = False
         icons = list(self.grid.children)  # reversed insertion order = bottom-right first
         total = len(icons)
         for i, icon in enumerate(icons):
@@ -105,7 +105,7 @@ class AppMenu(FloatLayout):
         fade.start(self)
 
     def show(self):
-        self.disabled = False
+        self._menu_active = True
         self.pos = (0, 0)
         self.view.pos = (0, 0)
         self.grid.pos = (0, 0)
@@ -121,6 +121,27 @@ class AppMenu(FloatLayout):
 
     def reset(self):
         self.grid.clear_widgets()
+
+    # ── Touch handling — consume ALL touches when menu is visible ────────────
+
+    def on_touch_down(self, touch):
+        if not self._menu_active:
+            return False
+        # Dispatch to children (AppIcons) then consume regardless
+        super().on_touch_down(touch)
+        return True
+
+    def on_touch_move(self, touch):
+        if not self._menu_active:
+            return False
+        super().on_touch_move(touch)
+        return True
+
+    def on_touch_up(self, touch):
+        if not self._menu_active:
+            return False
+        super().on_touch_up(touch)
+        return True
 
     def show_apps(self):
         count = 0
