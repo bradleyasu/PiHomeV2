@@ -120,34 +120,61 @@ class HomeAssistant:
             self.event_loop.close()
 
     async def _connect_to_websocket(self):
-        socket_url = f"{self.HA_URL}/websocket".replace("http://", "ws://")
-        self.websocket = await websockets.connect(socket_url)
-        auth = {
-            "type": "auth",
-            "access_token": self.HA_TOKEN
-        }
-        response = await self.websocket.recv()
-        await self.websocket.send(json.dumps(auth))
-        response = await self.websocket.recv()
-        PIHOME_LOGGER.info("Home Assistant Connection Response: {}".format(response))
-        if "auth_ok" in response:
-            message = {
-                "id": 1,
-                "type": "subscribe_events",
-                "event_type": "state_changed"
-            }
-            await self._send_message(message)
-            PIHOME_LOGGER.info("Subscribed to Home Assistant events.")
-            self.set_state(self.PIHOME_CONNECTED_SENSOR, "on")
-            while not self.is_shutting_down:
-                try:
+        backoff = 1  # seconds
+        max_backoff = 60
+
+        while not self.is_shutting_down:
+            try:
+                socket_url = f"{self.HA_URL}/websocket".replace("http://", "ws://")
+                self.websocket = await websockets.connect(socket_url)
+                auth = {
+                    "type": "auth",
+                    "access_token": self.HA_TOKEN
+                }
+                response = await self.websocket.recv()
+                await self.websocket.send(json.dumps(auth))
+                response = await self.websocket.recv()
+                PIHOME_LOGGER.info("Home Assistant Connection Response: {}".format(response))
+                if "auth_ok" not in response:
+                    PIHOME_LOGGER.error("Home Assistant authentication failed.")
+                    break
+
+                message = {
+                    "id": 1,
+                    "type": "subscribe_events",
+                    "event_type": "state_changed"
+                }
+                await self._send_message(message)
+                PIHOME_LOGGER.info("Subscribed to Home Assistant events.")
+                self.set_state(self.PIHOME_CONNECTED_SENSOR, "on")
+                self.current_states = self.get_all_states()
+                backoff = 1  # reset backoff on successful connection
+
+                while not self.is_shutting_down:
                     message = await self.websocket.recv()
                     data = json.loads(message)
                     self._handle_message(data)
-                except Exception as e:
-                    if not self.is_shutting_down:
-                        PIHOME_LOGGER.error(f"WebSocket error: {e}")
+
+            except Exception as e:
+                if self.is_shutting_down:
                     break
+                PIHOME_LOGGER.error(f"WebSocket error: {e}")
+                self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
+
+            # Close stale websocket before reconnecting
+            if self.websocket:
+                try:
+                    await self.websocket.close()
+                except Exception:
+                    pass
+                self.websocket = None
+
+            if self.is_shutting_down:
+                break
+
+            PIHOME_LOGGER.info(f"Home Assistant: reconnecting in {backoff}s...")
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, max_backoff)
 
     async def _send_message(self, message):
         await self.websocket.send(json.dumps(message))
