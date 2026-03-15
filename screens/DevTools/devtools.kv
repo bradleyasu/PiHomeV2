@@ -1,24 +1,576 @@
 #:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
 <DevTools>:
-    size_hint: 1, 1
-    size: dp(800), dp(600)
     canvas.before:
         Color:
-            rgba: (0, 0, 0, 1)
+            rgba: root.bg_color
         Rectangle:
-            pos: self.pos
             size: self.size
+            pos: self.pos
+        Color:
+            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.04
+        Ellipse:
+            pos: -dp(80), self.height * 0.3
+            size: self.width * 0.5, self.height * 0.8
 
-    FloatLayout:
+    BoxLayout:
+        orientation: "vertical"
         size_hint: 1, 1
-        pos: 0, 0
 
-        Label:
-            id: ip_addr
-            text: "PiHome IP Address: " + root.local_ip
-            font_size: "20sp"
-            color: (1, 1, 1, 1)
-            size_hint: None, None
-            pos: root.width / 2 - self.width / 2, 10
+        # ── Header ──────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(44)
+            padding: dp(54), 0, dp(14), 0
+            spacing: dp(8)
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+                Color:
+                    rgba: 1, 1, 1, 0.06
+                Rectangle:
+                    size: self.width, dp(1)
+                    pos: self.x, self.y
 
-    
+            Label:
+                text: "\ue869"
+                font_name: "MaterialIcons"
+                font_size: sp(20)
+                color: root.accent_color
+                size_hint_x: None
+                width: dp(26)
+                halign: "center"
+                valign: "middle"
+
+            Label:
+                text: "DEV TOOLS"
+                font_name: "Nunito"
+                font_size: sp(12)
+                bold: True
+                color: root.text_color
+                size_hint_x: None
+                width: dp(80)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Widget:
+
+            # Hostname
+            Label:
+                text: root.hostname
+                font_name: "Nunito"
+                font_size: sp(10)
+                color: root.muted_color
+                size_hint_x: None
+                width: dp(120)
+                halign: "right"
+                valign: "middle"
+                text_size: self.size
+
+            # Uptime icon + text
+            Label:
+                text: "\ue425"
+                font_name: "MaterialIcons"
+                font_size: sp(14)
+                color: root.muted_color
+                size_hint_x: None
+                width: dp(18)
+                halign: "center"
+                valign: "middle"
+
+            Label:
+                text: root.uptime_text
+                font_name: "Nunito"
+                font_size: sp(10)
+                color: root.muted_color
+                size_hint_x: None
+                width: dp(70)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+        # ── Body ────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            padding: dp(12), dp(10), dp(12), dp(10)
+            spacing: dp(12)
+
+            # ── Left Column: System Info ────────────────────────────────
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.38
+                spacing: dp(8)
+
+                # -- System Card --
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(10), dp(8)
+                    spacing: dp(3)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(6)]
+
+                    Label:
+                        text: "SYSTEM"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    # CPU Temp
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(22)
+                        Label:
+                            text: "\ue1ff"
+                            font_name: "MaterialIcons"
+                            font_size: sp(14)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(22)
+                        Label:
+                            text: "CPU Temp"
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.muted_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.cpu_temp
+                            font_name: "Nunito"
+                            font_size: sp(12)
+                            bold: True
+                            color: root.text_color
+                            size_hint_x: None
+                            width: dp(60)
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                    # Memory
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(22)
+                        Label:
+                            text: "\ue322"
+                            font_name: "MaterialIcons"
+                            font_size: sp(14)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(22)
+                        Label:
+                            text: "Memory"
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.muted_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.mem_text
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            bold: True
+                            color: root.text_color
+                            size_hint_x: None
+                            width: dp(110)
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                    # Memory bar
+                    Widget:
+                        size_hint_y: None
+                        height: dp(6)
+                        canvas:
+                            Color:
+                                rgba: 1, 1, 1, 0.08
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(3)]
+                            Color:
+                                rgba: root.accent_color if root.mem_percent < 80 else [1, 0.4, 0.2, 1]
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: max(dp(6), self.width * root.mem_percent / 100.0), self.height
+                                radius: [dp(3)]
+
+                    # Disk
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(22)
+                        Label:
+                            text: "\ue1db"
+                            font_name: "MaterialIcons"
+                            font_size: sp(14)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(22)
+                        Label:
+                            text: "Disk"
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.muted_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.disk_text
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            bold: True
+                            color: root.text_color
+                            size_hint_x: None
+                            width: dp(110)
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                    # Disk bar
+                    Widget:
+                        size_hint_y: None
+                        height: dp(6)
+                        canvas:
+                            Color:
+                                rgba: 1, 1, 1, 0.08
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(3)]
+                            Color:
+                                rgba: root.accent_color if root.disk_percent < 85 else [1, 0.4, 0.2, 1]
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: max(dp(6), self.width * root.disk_percent / 100.0), self.height
+                                radius: [dp(3)]
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(2)
+
+                    # OS info row
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(18)
+                        Label:
+                            text: "OS"
+                            font_name: "Nunito"
+                            font_size: sp(9)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(30)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.os_info
+                            font_name: "Nunito"
+                            font_size: sp(9)
+                            color: root.text_color
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+                            shorten: True
+                            shorten_from: "right"
+
+                    # Python + Arch row
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(18)
+                        Label:
+                            text: "Python"
+                            font_name: "Nunito"
+                            font_size: sp(9)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(46)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.python_ver
+                            font_name: "Nunito"
+                            font_size: sp(9)
+                            color: root.text_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.arch_info
+                            font_name: "Nunito"
+                            font_size: sp(9)
+                            color: root.muted_color
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+                            size_hint_x: None
+                            width: dp(60)
+
+                # -- Network Card --
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(10), dp(8)
+                    spacing: dp(3)
+                    size_hint_y: None
+                    height: dp(90)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(6)]
+
+                    Label:
+                        text: "NETWORK"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    # IP address
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(20)
+                        Label:
+                            text: "IP"
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(46)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.local_ip
+                            font_name: "Nunito"
+                            font_size: sp(12)
+                            bold: True
+                            color: root.accent_color
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                    # HTTP server
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(20)
+                        Label:
+                            text: "HTTP"
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(46)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+
+                        # Status dot
+                        Widget:
+                            size_hint: None, None
+                            size: dp(7), dp(7)
+                            pos_hint: {"center_y": 0.5}
+                            canvas:
+                                Color:
+                                    rgba: [0.3, 0.85, 0.4, 1] if root.server_online else [0.9, 0.3, 0.3, 1]
+                                Ellipse:
+                                    pos: self.pos
+                                    size: self.size
+
+                        Label:
+                            text: root.server_status
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.text_color
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                    # Log level
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(20)
+                        Label:
+                            text: "Log"
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(46)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                        Label:
+                            text: root.log_level
+                            font_name: "Nunito"
+                            font_size: sp(11)
+                            color: root.text_color
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                Widget:
+
+            # ── Center Column: QR Code ──────────────────────────────────
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.24
+                spacing: dp(8)
+
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(8), dp(8)
+                    spacing: dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(6)]
+
+                    Label:
+                        text: "WEB ACCESS"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Image:
+                        source: root.qr_source
+                        size_hint: None, None
+                        size: dp(130), dp(130)
+                        pos_hint: {"center_x": 0.5}
+                        allow_stretch: True
+                        keep_ratio: True
+
+                    Label:
+                        text: root.server_url
+                        font_name: "Nunito"
+                        font_size: sp(8)
+                        color: root.accent_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.ws_url
+                        font_name: "Nunito"
+                        font_size: sp(8)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(12)
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                # Screens loaded
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(36)
+                    padding: dp(10), dp(4)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(6)]
+
+                    Label:
+                        text: "\ue1b1"
+                        font_name: "MaterialIcons"
+                        font_size: sp(16)
+                        color: root.muted_color
+                        size_hint_x: None
+                        width: dp(22)
+
+                    Label:
+                        text: "Screens"
+                        font_name: "Nunito"
+                        font_size: sp(10)
+                        color: root.muted_color
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.screen_count
+                        font_name: "Nunito"
+                        font_size: sp(14)
+                        bold: True
+                        color: root.text_color
+                        size_hint_x: None
+                        width: dp(30)
+                        halign: "right"
+                        valign: "middle"
+                        text_size: self.size
+
+                Widget:
+
+            # ── Right Column: Actions ───────────────────────────────────
+            BoxLayout:
+                id: actions_col
+                orientation: "vertical"
+                size_hint_x: 0.38
+                spacing: dp(0)
+
+                FloatLayout:
+                    id: actions_panel
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(6)]
+
+                    Label:
+                        text: "ACTIONS"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        color: root.muted_color
+                        size_hint: None, None
+                        size: dp(100), dp(14)
+                        pos: self.parent.x + dp(10), self.parent.top - dp(18)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size

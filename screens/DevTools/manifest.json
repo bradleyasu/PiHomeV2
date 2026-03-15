@@ -3,7 +3,24 @@
     "name": "DevTools",
     "id": "_devtools",
     "label": "Dev Tools",
-    "description": "Access Dev Tools",
+    "description": "System diagnostics, server info, and administrative controls",
+    "icon": "https://cdn.pihome.io/assets/default_app_icon.png",
     "hidden": false,
-    "requires_pin": false
+    "requires_pin": true,
+    "index": 999,
+    "settingsIndex": 999,
+    "settings": [
+        {
+            "type": "title",
+            "title": "Logging"
+        },
+        {
+            "type": "options",
+            "title": "Log Level",
+            "desc": "Controls how much detail is written to the log file",
+            "section": "logging",
+            "key": "level",
+            "options": ["DEBUG", "INFO", "WARNING", "ERROR"]
+        }
+    ]
 }
