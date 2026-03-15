@@ -1,165 +1,803 @@
 
-# PIHOME
-
-![Boot Screen](.github/images/1.png "Boot Screen")
-
-PiHome is an open source ("for fun") project that I've been working on.  PiHome has no microphone, camera, or big tech company backend collecting data.  It's simply a home kiosk/informational and control panel to replace (and potentially do more than) products like the Amazon Echo, Google Home, etc.  
-
-In it's current state, PiHome has a Home Screen that displays current time, weather via location information and tomorrow.io API and a settings panel.  Additionally, it has a "custom screen" I've built for public transportation information - upcoming bus departure times.
-
-![3dPrint](.github/images/3d_print.png "3D Print")
-
-Although not required, PiHome is designed to work with a rotary encoder/knob controls.  Each screen is responsible for overriding default behavior for the rotary encoder (currently audio controls), so if you develop your own screens, please consider making use of this.  All default pihome functionality will work without the rotary encoder.  I have 3D printed a custom case for PiHome and the *.3MF can be found in the `./3dprint` directory of this repository.  There is also a README in that directory with more information on setting up the rotary encoder hardware.  The 3D Print/Models are adapted for pihome from the plexamp-pi project by Paul Arden.  Please see the plexamp-pi project on github for more information: https://github.com/ardenpm/plexamp-pi
-
-
-### Custom Screens
-
-To create a custom screen, create subdirectory within the `screens` directory that is typically named whatever your screen ("PiHome app") is and within your directory, create two files named `<yourapp.py>` and `<yourapp.kv>`.  The `py` file contains business logic for your application while the `kv` file contains UI markdown.  Please refer to the Kivy documentation for more information on this.  Your `py` file should extend the `PiHomeScreen` (refer to other screens in this directory as an example).  `PiHomeScreen` provides a few properties that can be overriden that PiHome will use.  For example, a default name and icon.  PiHome will automatically find and load any screens in the `screens` directory that includes a `manifest.json` file.  The `manifest.json` file should contain metadata about how the screen should be loaded. 
-
-Example `manifest.json`:
-```json
-{
-    "module": "NewYearsEve.newyearseve", // This is the subdirectory and file name of the screen.  The path is /screens/NewYearsEven/newyearseve.py
-    "name": "NewYearsEveScreen",  // The name of the screen. IMPORTANT:  This must match the class name in the py file
-    "id": "nye", // This can be anything you want as long as it is unique among all other screens
-    "label": "New Years!", // This is the label that will appear in the app menu
-    "description": "", // Currently unused
-    "hidden": false, // If this is true, the screen will be loaded into pihome but not accessible.  This is useful if you're creating a custom event that needs to trigger the screen but shouldn't be accessible otherwise
-    "requires_pin": false, // If this is set to true, you'll be prompted to enter your pin.  Your pin is configured in the settings screen
-    "index": 4 // This is the order in which the screen will appear in the app menu.  If it is unset, apps will be rendered in whatever order they were found in the filesystem.  Currently, the only screen that has an index is the home screen and it is set to 0 to ensure it is always the first screen
-}
-```
-
-### Custom Events
-
-To leverage full power of PiHome, you can create custom events that do various things.  PiHome comes with a series of default events that you can refer to.  To create a custom event, add a new event into the `events` directory.  The event should be a python file that extends the `PiHomeEvent` class.  The `PiHomeEvent` class provides a few properties that can be overriden that PiHome will use.  For example, a default name and icon.  PiHome will automatically find and load any events in the `events` directory.   Events are triggered by MQTT messages or webhooks.  The payload of the message should contain a `type` key that matches the type of the event.  The rest of the payload can be whatever you like and will be passed into the constructor of your event.  
-
-The `execute()` function is what should happen when the event gets triggered.  For example, if you have created a custom screen from the previous section that is set to hidden (for example, some sort of notification screen), you can pass the payload properties to that screen and display it through the PIHOME_SCREEN_MANAGER - Which you can access from anywhere. 
-
-
-![App Screen](.github/images/4.png "App Screen")
-
-
-### Settings/Configuration 
-
-API Configurations, Weather, Wallpaper, and News can be configured from the Settings screen.  Also available in the App menu.
-
-![Weather Screen](.github/images/3.png "Weather Screen")
-
-
-### News Sources
-News sources are currently only subreddits. You can enable or disable news.  When enabled, the current hot posts from the subreddit(s) configured will be displayed in the upper left corner.  You do not have to select an actual news subreddit.  If you pick `/r/aww` for example, photos will be displayed instead of text posts.
+# PiHome
 
 ![Home Screen](.github/images/2.png "Home Screen")
- 
-### Wallpaper
-By default, PiHome will display wallpapers from the PiHome CDN (https://pihome.io).  You can configure this to be a Custom Image URL that is static, Current "hot" posts from the subreddit of your choice (defaults to /r/wallpapers), or a Wallhaven search (defaults to landscapes).  If Wallhaven or Reddit wallpaper sources are selected, the background will periodically change, alternating through the latest wallpapers available. 
 
-### MQTT Services
-MQTT services are also available.  You can connect your PiHome to an MQTT services of your choice (I use Adafruit.io) and send custom information from external services such as IFTTT, your own scripts, etc. (See MQTT section below for payload information).
+PiHome is an open-source home kiosk and control panel for the Raspberry Pi. It replaces products like Amazon Echo Show and Google Nest Hub without any microphones, cameras pointed at you, or big-tech backends collecting your data. Everything runs locally on your Pi.
 
+PiHome provides a touch-friendly interface on the official 7" Raspberry Pi display with weather, news, wallpapers, music playback, Home Assistant integration, 3D printer monitoring, and more. It's extensible through a manifest-driven screen system and a powerful event/webhook API.
 
-> This is a hobby project that I hope may be useful to others.  Although currently not very exciting, https://pihome.io is the official site for the project.  Python is not my day to day language, I'm sure some of the syntax and coding styles are not up to standard.  This is also a learning project for myself.  Please feel free to open issues or pull requests. 
+## Features
 
+- **Weather** - Real-time conditions and forecast via Tomorrow.io
+- **Dynamic Wallpapers** - Rotate backgrounds from Reddit, Wallhaven, custom URLs, or the PiHome CDN
+- **News** - Headlines from configurable Reddit sources
+- **Music Player** - Stream audio from URLs, local files, and saved radio stations with album art
+- **AirPlay** - Receive audio from Apple devices via shairport-sync
+- **Home Assistant** - Monitor and control entities, set up reactive automations
+- **3D Printer Monitoring** - BambuLab printer status with live camera feed
+- **Spotify** - Playback control and now-playing display
+- **Pi-hole** - DNS ad-blocker control panel
+- **Timers & Tasks** - Scheduled and event-driven task management
+- **Transit Tracker** - Real-time bus departures (Pittsburgh Regional Transit)
+- **Cocktail Browser** - Search recipes from TheCocktailDB
+- **Whiteboard** - Freehand drawing canvas
+- **Control Center** - Up to 8 configurable quick-action buttons that execute shell commands
+- **Rotary Encoder** - Optional physical knob for volume, navigation, and per-screen actions
+- **Webhook & MQTT API** - Control PiHome from external services like IFTTT, Home Assistant automations, or custom scripts
+- **Web Interface** - Progressive Web App for remote access
+- **Dark/Light Themes** - Fully configurable color theming
 
----
+![App Menu](.github/images/4.png "App Menu")
 
+## Requirements
 
-### Requirements:
+- [Raspberry Pi 3B+ or newer](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+- [Official 7" LCD Touch Screen](https://www.raspberrypi.com/products/raspberry-pi-touch-display/) (800x480)
+- [Raspberry Pi OS Lite](https://www.raspberrypi.com/software/) (no desktop environment)
+- Network connectivity (WiFi or Ethernet)
 
-- [Raspberry Pi 3+](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
-- [Official 7" LCD Touch Screen](https://www.raspberrypi.com/products/raspberry-pi-touch-display/)
-- [Raspberry  PI  OS Lite (No Desktop Environment)](https://www.raspberrypi.com/software/)
+## Installation
 
-### Installation
+1. Install Raspberry Pi OS Lite and connect to WiFi
+2. Optionally configure auto-login via `raspi-config`
+3. Run the installer:
 
-- Install RaspPI Lite OS
-- Setup Wifi through RaspPi setup tools
-- Optionally set your raspberry pi os to bypass login via `raspi-config`
-- Install PiHome with:
-
-```
+```bash
 curl -sSL https://pihome.io/install | bash
 ```
 
-### Timers
+The installer will set up all dependencies, build required libraries, and configure PiHome as a systemd service that starts on boot.
 
-### The Task Manager and Tasks
+### Installer Options
 
+You can pass flags to customize the installation:
 
-### PiHome Events
+```bash
+# Skip AirPlay (shairport-sync) installation
+curl -sSL https://pihome.io/install | bash -s -- --skip-airplay
 
-If configured, PiHome can subscribe to MQTT feeds and react to events.  These payloads can also be posted to pihome via a webhook that looks like
+# Run install.sh directly with options
+sudo ./setup/install.sh --help
+sudo ./setup/install.sh --verbose        # Show command output
+sudo ./setup/install.sh --skip-airplay   # Skip AirPlay support
+sudo ./setup/install.sh --clean          # Start fresh (ignore previous progress)
+```
+
+### Service Management
+
+PiHome runs as a systemd service:
+
+```bash
+sudo systemctl start pihome      # Start PiHome
+sudo systemctl stop pihome       # Stop PiHome
+sudo systemctl restart pihome    # Restart PiHome
+sudo systemctl status pihome     # Check status
+tail -f /usr/local/PiHome/pihome.log  # View live logs
+```
+
+### Updating
+
+```bash
+pihome-update    # Pull latest changes from git
+```
+
+Or to update and restart in one step:
+
+```bash
+cd /usr/local/PiHome && ./update_and_restart.sh
+```
+
+## Configuration
+
+PiHome is configured through the Settings screen (PIN-protected) or by editing `base.ini` directly. Configuration sections include:
+
+| Section | Purpose |
+|---------|---------|
+| `[window]` | Display resolution (default 800x480) |
+| `[security]` | PIN code for Settings access |
+| `[theme]` | Dark/light mode toggle |
+| `[weather]` | Tomorrow.io API key, coordinates |
+| `[wallpaper]` | Source (Reddit, Wallhaven, Custom, CDN), subreddits, search terms |
+| `[news]` | News source and subreddits |
+| `[mqtt]` | Broker host, port, credentials, topic |
+| `[audio]` | Audio device selection |
+| `[music]` | Discogs API token for album art |
+| `[lofi]` | Local audio folder paths and labels |
+| `[controlcenter]` | 8 configurable buttons (icon, label, shell command each) |
+| `[homeassistant]` | Host URL and long-lived access token |
+| `[bambulab]` | Printer IP, access code, serial, camera settings |
+| `[spotify]` | Client ID, secret, OAuth tokens |
+| `[pihole]` | API key, host IP |
+| `[bus]` | Transit API key, routes, stops |
+| `[ubereats]` | Session cookie, CSRF token, polling hours |
+| `[cocktaildb]` | TheCocktailDB API key |
+| `[logging]` | Log level and output path |
+
+## Screens
+
+PiHome uses a manifest-driven screen discovery system. Each screen lives in its own directory under `screens/` and is automatically loaded if it contains a `manifest.json` file.
+
+### Built-in Screens
+
+| Screen | Description |
+|--------|-------------|
+| **Home** | Clock, weather, news, wallpaper, and control center |
+| **Home Assistant** | Entity monitoring and control with device cards |
+| **Timers** | Create and manage countdown timers |
+| **Task Manager** | View and manage scheduled/event-driven tasks |
+| **BambuLab** | 3D printer status, temperatures, and live camera feed |
+| **Spotify** | Playback control and now-playing display |
+| **Music Player** | Local audio playback with playlists and album art |
+| **Pi-hole** | DNS ad-blocker statistics and controls |
+| **Bus** | Real-time transit departures (Pittsburgh Regional Transit) |
+| **Uber Eats** | Live order tracking |
+| **Cocktails** | Recipe search from TheCocktailDB |
+| **Whiteboard** | Freehand drawing canvas |
+| **Settings** | Configuration panel (PIN-protected) |
+| **Dev Tools** | Development and debugging utilities |
+
+### Creating a Custom Screen
+
+1. Create a directory under `screens/` (e.g., `screens/MyScreen/`)
+2. Add a `manifest.json` file
+3. Create your Python module and Kivy layout file
+
+#### manifest.json
+
 ```json
 {
-    "webhook": {
-        // Your payload here
-    }
+    "module": "MyScreen.myscreen",
+    "name": "MyScreenClass",
+    "id": "my_screen",
+    "label": "My Screen",
+    "description": "A custom screen",
+    "icon": "https://example.com/icon.png",
+    "hidden": false,
+    "disabled": false,
+    "requires_pin": false,
+    "index": 20,
+    "settings": [
+        {
+            "type": "title",
+            "title": "My Screen Settings"
+        },
+        {
+            "type": "string",
+            "title": "API Key",
+            "desc": "Your API key for the service",
+            "section": "myscreen",
+            "key": "api_key"
+        },
+        {
+            "type": "bool",
+            "title": "Enable Feature",
+            "desc": "Toggle this feature on or off",
+            "section": "myscreen",
+            "key": "feature_enabled"
+        },
+        {
+            "type": "options",
+            "title": "Display Mode",
+            "desc": "Choose how content is displayed",
+            "section": "myscreen",
+            "key": "display_mode",
+            "options": ["Compact", "Full", "Minimal"]
+        }
+    ]
 }
 ```
 
+**Manifest Fields:**
 
+| Field | Required | Description |
+|-------|----------|-------------|
+| `module` | Yes | Import path relative to `screens/` (e.g., `MyScreen.myscreen`) |
+| `name` | Yes | Class name to instantiate (must match your Python class) |
+| `id` | Yes | Unique screen identifier |
+| `label` | Yes | Display name in the app menu |
+| `description` | No | Metadata description |
+| `icon` | No | Icon URL or local path for the app menu |
+| `hidden` | No | If `true`, the screen loads but doesn't appear in the app menu (default: `false`) |
+| `disabled` | No | If `true`, the screen is not loaded at all (default: `false`) |
+| `requires_pin` | No | If `true`, PIN entry is required to access the screen (default: `false`) |
+| `index` | No | Sort order in the app menu (lower = first, default: `9999`) |
+| `settingsLabel` | No | Override the label shown in the Settings screen |
+| `settingsIndex` | No | Sort order in the Settings screen (default: `9999`) |
+| `settings` | No | Array of setting definitions (see below) |
 
-Display
-Shows a message on the screen. 
+**Setting Types:**
+
+| Type | Description |
+|------|-------------|
+| `title` | Section header (no config value) |
+| `string` | Text input |
+| `numeric` | Number input |
+| `bool` | Toggle switch (stored as `0`/`1`) |
+| `options` | Dropdown with predefined choices |
+
+Each setting (except `title`) requires `section` and `key` fields that map to the INI config file.
+
+#### Python Screen
+
+```python
+from interface.pihomescreen import PiHomeScreen
+from util.configuration import CONFIG
+from kivy.clock import Clock
+
+class MyScreenClass(PiHomeScreen):
+
+    def on_enter(self, *args):
+        super().on_enter(*args)
+        # Called when screen becomes active
+        # Start connections, polling, etc.
+
+    def on_pre_leave(self, *args):
+        super().on_pre_leave(*args)
+        # Called before screen exits
+        # Stop connections, clean up
+
+    def on_config_update(self, config):
+        # Called when settings change
+        api_key = CONFIG.get("myscreen", "api_key", "")
+        # Apply new settings...
+        super().on_config_update(config)
+
+    def on_rotary_turn(self, direction, button_pressed):
+        """Handle rotary encoder turn.
+
+        Args:
+            direction: 1 (clockwise) or -1 (counter-clockwise)
+            button_pressed: True if the button is held while turning
+
+        Returns:
+            True if handled, False to propagate to default behavior (volume)
+        """
+        return True
+
+    def on_rotary_pressed(self):
+        """Handle short press. Return True if handled."""
+        return True
+
+    def on_rotary_long_pressed(self):
+        """Handle long press. Return True if handled."""
+        self.go_back()
+        return True
+```
+
+**PiHomeScreen Base Class:**
+
+| Method / Property | Description |
+|-------------------|-------------|
+| `on_enter(*args)` | Screen becomes active |
+| `on_pre_leave(*args)` | Screen is about to exit |
+| `on_config_update(config)` | Settings were changed |
+| `show()` | Navigate to this screen |
+| `go_back()` | Navigate to previous screen |
+| `on_rotary_turn(direction, pressed)` | Rotary encoder turned (default: volume) |
+| `on_rotary_pressed()` | Short press (default: play/pause) |
+| `on_rotary_long_pressed()` | Long press (default: stop audio) |
+| `on_gesture(gesture_name)` | Touch gesture recognized |
+| `is_open` | `True` when screen is displayed |
+| `locked` | When `True`, prevents navigation away |
+| `bg_color`, `text_color`, `accent_color`, etc. | Theme colors (auto-updated) |
+
+**Key Patterns:**
+
+- Use `threading.Thread(daemon=True)` with `threading.Event()` for background work
+- Push UI updates from threads via `Clock.schedule_once(lambda dt: ..., 0)`
+- Start connections in `on_enter()`, stop them in `on_pre_leave()`
+- Always call `super().on_config_update(config)` at the end of your override
+
+## Events
+
+Events are the core action system in PiHome. They can be triggered via MQTT messages, HTTP webhooks, WebSocket messages, or composed within other events.
+
+### Sending Events
+
+**Via MQTT** - Publish a JSON message to your configured MQTT topic:
+```json
+{"type": "display", "title": "Hello", "message": "World", "image": "https://example.com/img.png"}
+```
+
+**Via HTTP POST** - Send to `http://<pihome-ip>:8989`:
+```json
+{"type": "display", "title": "Hello", "message": "World", "image": "https://example.com/img.png"}
+```
+
+Or wrapped in a webhook envelope:
+```json
+{"webhook": {"type": "display", "title": "Hello", "message": "World", "image": "https://example.com/img.png"}}
+```
+
+**Via WebSocket** - Connect to `ws://<pihome-ip>:8765` and send the same JSON format.
+
+### Event Reference
+
+#### display
+
+Show a fullscreen message with an image.
+
 ```json
 {
     "type": "display",
-    "background": "<(r,g,b,a)>", // Optional
-    "title": "<title>",
-    "message": "<message>",
-    "image": "<image_url>",
-    "timeout": "<seconds>" // Optional
+    "title": "Package Delivered",
+    "message": "Your package has arrived at the front door",
+    "image": "https://example.com/package.png",
+    "background": [0.2, 0.2, 0.2, 1.0],
+    "timeout": 30
 }
 ```
 
-Display Image
-Shows an image on the screen
+| Field | Required | Description |
+|-------|----------|-------------|
+| `title` | Yes | Heading text |
+| `message` | Yes | Body text |
+| `image` | Yes | Image URL |
+| `background` | No | RGBA color list or hex string |
+| `timeout` | No | Auto-dismiss after N seconds |
+
+#### image
+
+Display a fullscreen image.
+
 ```json
 {
-    "type": "image", 
-    "image_url": "<image_src_url>", 
-    "timeout": "seconds", // Optional 
-    "reload_interval": "<seconds>" // Optional
+    "type": "image",
+    "image": "https://example.com/photo.jpg",
+    "timeout": 60,
+    "reload_interval": 10
 }
 ```
 
-App Trigger
-Triggers an app.  The app key should match the id as described in the manifest.json file for the screen.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `image` | Yes | Image URL |
+| `timeout` | No | Auto-dismiss after N seconds |
+| `reload_interval` | No | Refresh the image every N seconds |
+
+#### alert
+
+Show a message box with buttons.
+
+```json
+{
+    "type": "alert",
+    "title": "Confirm Action",
+    "message": "Are you sure you want to proceed?",
+    "timeout": 30,
+    "level": 1,
+    "buttons": 1,
+    "on_yes": {"type": "homeassistant", "entity_id": "switch.garage", "method": "set", "state": "turn_on"},
+    "on_no": {"type": "toast", "label": "Cancelled"}
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `title` | Yes | Alert heading |
+| `message` | Yes | Alert body |
+| `timeout` | Yes | Auto-dismiss after N seconds |
+| `level` | No | 0=Error, 1=Warning, 2=Info, 3=Success |
+| `buttons` | No | 0=OK only, 1=Yes/No |
+| `on_yes` | No | Event to fire on "Yes" (when `buttons: 1`) |
+| `on_no` | No | Event to fire on "No" (when `buttons: 1`) |
+
+#### app
+
+Navigate to a screen.
+
 ```json
 {
     "type": "app",
-    "key": "<app key>" // Not app name!  The key should match the key from the screens array in main.py:setup()
+    "app": "_bambulab"
 }
 ```
 
-Timer
-Creates a timer.  The on_complete is optional and can be set to another PiHomeEvent payload.  See The Timer Section for more inforamtion on how timers work.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `app` | Yes | Screen ID (the `id` field from its manifest) |
+
+#### audio
+
+Control audio playback.
+
 ```json
 {
-    "webhook": {
-            "type": "timer",
-            "duration": <TIMER_AMOUNT>, // Number of seconds the timer should run
-            "label": "Feed The Dog!", // Label for the timer
-            "on_complete": {} // Optioanl PiHome Event triggered when the timer is complete
-    }
+    "type": "audio",
+    "action": "play_url",
+    "value": "https://example.com/stream.mp3"
 }
 ```
 
-Task 
-Schedules a new task with the task manager.  See Tasks Section for more information on how Tasks and the TaskManager work.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `action` | Yes | One of: `play_url`, `play`, `stop`, `volume`, `next`, `prev`, `previous`, `clear_queue`, `save_url`, `save`, `save_current` |
+| `value` | No | Parameter for the action (URL, volume level, etc.) |
+
+#### timer
+
+Create a countdown timer.
+
 ```json
 {
-    "webhook": {
-        "type": "task",
-        "name": "Water the plants!", // Name will be displayed in the task screen
-        "description": "Don't forget to water the plants!  They're thirsty too", // Description will be displayed in the task screen
-        "start_time": "02/23/2024 7:00", // When should the task be displayed on the screen?  This an be a date in MM/DD/YYYY HH:MM format or a delta in the format of delta:<hours> hours, delta:<days> days, etc
-        "priority": 1, // What is the priority of the task?  1 is the lowest, 3 is the highest.  Higher priority tasks will play more annoying sounds
-        "repeat_days": 1, // How frequently the task should repeat.  0 for no repeat.  Upon execution, a new task will be created next time the task is due
-        "background_image": <URL>, // Optional image url, leave this out if you don't want an image background
-        "on_confirm": {}, // Optional PiHome Event When the Confirm Button is Pressed
-        "on_cancel": {} // Optional PiHome Event When the Cancel Button is Pressed
-    }
+    "type": "timer",
+    "label": "Pizza Timer",
+    "duration": 900,
+    "on_complete": {"type": "alert", "title": "Timer Done", "message": "Pizza is ready!", "timeout": 60}
 }
 ```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `label` | Yes | Timer display name |
+| `duration` | Yes | Duration in seconds |
+| `on_complete` | No | Event to fire when timer expires |
+
+#### task
+
+Create a scheduled or event-triggered task.
+
+```json
+{
+    "type": "task",
+    "name": "Water the Plants",
+    "description": "The garden needs watering",
+    "priority": 2,
+    "start_time": "03/15/2026 07:00",
+    "repeat_days": 1,
+    "on_confirm": {"type": "toast", "label": "Task completed!"},
+    "background_image": "https://example.com/plants.jpg"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Task display name |
+| `description` | Yes | Task details |
+| `priority` | Yes | 1=Low, 2=Medium, 3=High (higher = more persistent notifications) |
+| `start_time` | No* | `MM/DD/YYYY HH:MM` or delta format: `delta:2 hours`, `delta:3 days` |
+| `state_id` | No* | Home Assistant entity ID to trigger on state change |
+| `trigger_state` | No | Specific state value that triggers (used with `state_id`) |
+| `is_passive` | No | If `true`, don't show popup notification (default: `false`) |
+| `repeat_days` | No | Repeat every N days (0 = no repeat) |
+| `on_run` | No | Event to fire when task starts |
+| `on_confirm` | No | Event to fire when user confirms |
+| `on_cancel` | No | Event to fire when user cancels |
+| `background_image` | No | Image URL for task display |
+
+\* Either `start_time` or `state_id` is required.
+
+#### homeassistant
+
+Interact with Home Assistant entities.
+
+```json
+{
+    "type": "homeassistant",
+    "entity_id": "light.living_room",
+    "method": "set",
+    "state": "turn_on",
+    "data": "{\"brightness\": 255}"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `entity_id` | Yes | HA entity ID (e.g., `light.living_room`) |
+| `method` | Yes | `set` (call service / set state) or `get` (read state) |
+| `state` | No | Service to call (e.g., `turn_on`, `turn_off`) or state to set |
+| `data` | No | JSON string of additional service data |
+
+#### hareact
+
+Register a persistent Home Assistant state-change listener that fires a PiHome event.
+
+```json
+{
+    "type": "hareact",
+    "entity_id": "binary_sensor.front_door",
+    "state": "on",
+    "action": {"type": "display", "title": "Door Opened", "message": "Front door was opened", "image": "https://example.com/door.png", "timeout": 15}
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `entity_id` | Yes | HA entity to watch |
+| `action` | Yes | PiHome event to execute when triggered |
+| `state` | No | Specific state to react to (omit for any change) |
+
+Returns a `listener_id` that can be used with `remove_hareact` to unregister. Listeners persist across restarts.
+
+#### remove_hareact
+
+Remove a registered HA state-change listener.
+
+```json
+{
+    "type": "remove_hareact",
+    "id": "listener-uuid-here"
+}
+```
+
+#### command
+
+Execute a registered system command.
+
+```json
+{
+    "type": "command",
+    "execute": "update"
+}
+```
+
+Available commands: `update`, `soften` (brightness 10%), `brighten` (brightness 100%)
+
+#### shell
+
+Execute a shell command asynchronously.
+
+```json
+{
+    "type": "shell",
+    "command": "curl",
+    "args": "-s https://api.example.com/data",
+    "on_complete": {"type": "toast", "label": "Result: $1"},
+    "on_error": {"type": "alert", "title": "Error", "message": "Command failed: $1", "timeout": 10}
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `command` | Yes | Executable to run |
+| `args` | No | Command arguments |
+| `on_complete` | No | Event to fire on success (`$1` = stdout) |
+| `on_error` | No | Event to fire on failure (`$1` = stdout) |
+
+#### sfx
+
+Play a sound effect.
+
+```json
+{
+    "type": "sfx",
+    "name": "notification",
+    "state": "play",
+    "loop": false
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Sound effect name (use `introspect` to list available) |
+| `state` | No | `play` or `stop` (default: `play`) |
+| `loop` | No | Loop the sound (default: `false`) |
+
+#### wallpaper
+
+Control the wallpaper service.
+
+```json
+{
+    "type": "wallpaper",
+    "action": "shuffle"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `action` | Yes | `shuffle` (next wallpaper) or `ban` (block a URL) |
+| `value` | No | URL to ban (required when action is `ban`) |
+
+#### multi
+
+Execute multiple events in sequence.
+
+```json
+{
+    "type": "multi",
+    "events": [
+        {"type": "sfx", "name": "notification"},
+        {"type": "display", "title": "Alert", "message": "Multiple things happened", "image": "https://example.com/img.png", "timeout": 10}
+    ]
+}
+```
+
+#### delete
+
+Delete an entity (currently supports tasks).
+
+```json
+{
+    "type": "delete",
+    "entity": "task",
+    "id": "task-id-here"
+}
+```
+
+#### acktask
+
+Acknowledge the currently active task.
+
+```json
+{
+    "type": "acktask",
+    "confirm": true
+}
+```
+
+#### status
+
+Get system status (primarily used via `GET /status`).
+
+```json
+{
+    "type": "status",
+    "depth": "advanced"
+}
+```
+
+Returns wallpaper, weather, audio, timers, screens, and tasks data. With `depth: "advanced"`, also includes CPU temperature and saved radio stations.
+
+#### introspect
+
+Discover available events and their schemas.
+
+```json
+{
+    "type": "introspect"
+}
+```
+
+Or for a specific event:
+
+```json
+{
+    "type": "introspect",
+    "event": "task"
+}
+```
+
+## Creating Custom Events
+
+Events live in the `events/` directory. Each event is a Python file that extends `PihomeEvent`:
+
+```python
+from events.pihomeevent import PihomeEvent
+
+class MyCustomEvent(PihomeEvent):
+    type = "my_custom"
+
+    def __init__(self, **kwargs):
+        self.message = kwargs.get("message", "")
+
+    def execute(self):
+        # Do something...
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": self.message}
+        }
+```
+
+Events are automatically discovered by the event factory. Once added, they can be triggered via MQTT, HTTP, or WebSocket using `{"type": "my_custom", "message": "hello"}`.
+
+## API Endpoints
+
+PiHome runs three servers:
+
+| Server | Port | Protocol | Purpose |
+|--------|------|----------|---------|
+| HTTP | 8989 | HTTP | Main API and web interface |
+| WebSocket | 8765 | WS | Real-time event communication |
+| Callback | 8990 | HTTPS | OAuth redirects (Spotify, etc.) |
+
+### HTTP API
+
+**`GET /status`** - Full system status (weather, audio, screens, tasks, timers, wallpaper)
+
+**`GET /status/<service>`** - Status for a specific service (e.g., `/status/weather`, `/status/audio`)
+
+**`POST /`** - Execute an event:
+```bash
+curl -X POST http://pihome:8989 \
+  -H "Content-Type: application/json" \
+  -d '{"type": "display", "title": "Hello", "message": "From curl!", "image": "https://example.com/img.png"}'
+```
+
+**`GET /`** - Web interface (PWA)
+
+### WebSocket API
+
+Connect to `ws://<pihome-ip>:8765` and send JSON event payloads:
+
+```javascript
+const ws = new WebSocket("ws://pihome:8765");
+ws.send(JSON.stringify({type: "status", depth: "advanced"}));
+```
+
+### MQTT
+
+Publish JSON event payloads to your configured MQTT topic. Configure the broker in Settings or `base.ini` under `[mqtt]`.
+
+## Rotary Encoder (Optional)
+
+PiHome supports an optional rotary encoder for physical controls. Each screen can override the default behavior.
+
+**Default behavior:**
+- **Turn** - Volume up/down
+- **Press** - Play/pause audio
+- **Long press** - Stop audio and clear playlist
+
+**GPIO Wiring:**
+
+| Encoder Pin | Raspberry Pi GPIO |
+|-------------|-------------------|
+| DT (A) | GPIO 17 |
+| CLK (B) | GPIO 22 |
+| SW (Button) | GPIO 27 |
+| + | 3.3V |
+| GND | GND |
+
+On non-Pi systems (macOS), keyboard keys simulate the encoder: Up/Down arrows for turn, Spacebar for press.
+
+## 3D Printed Case
+
+![3D Print](.github/images/3d_print.png "3D Print")
+
+PiHome includes 3D printable case files in the `3dprint/` directory:
+
+- `Frame.3mf` - Main housing
+- `BackCover.3mf` - Rear enclosure
+- `IO_Cover.3mf` - Port access panel
+- `USB_Cover.3mf` - USB port cover
+- `Stand.3mf` - Desktop stand
+- `Knob.3mf` - Rotary encoder knob
+
+Case design adapted from the [plexamp-pi](https://github.com/ardenpm/plexamp-pi) project by Paul Arden.
+
+## Project Structure
+
+```
+pihome/
+├── main.py                  # Application entry point
+├── base.ini                 # Configuration file
+├── theme.ini                # Theme color definitions
+├── requirements.txt         # Python dependencies
+├── screens/                 # App screens (manifest-driven discovery)
+│   ├── Home/
+│   ├── BambuLab/
+│   ├── Settings/
+│   └── ...
+├── events/                  # Event types (auto-discovered)
+├── services/                # Background services
+│   ├── audio/               # Music player, sound effects
+│   ├── homeassistant/       # Home Assistant integration
+│   ├── wallpaper/           # Wallpaper rotation
+│   ├── weather/             # Weather polling
+│   ├── taskmanager/         # Task scheduling
+│   └── timers/              # Countdown timers
+├── interface/               # Base classes (PiHomeScreen, ScreenManager)
+├── server/                  # HTTP, WebSocket, and callback servers
+├── networking/              # MQTT client, API poller
+├── theme/                   # Theme system
+├── system/                  # Hardware (rotary encoder, brightness)
+├── web/                     # Web interface (PWA)
+├── setup/                   # Installation scripts and systemd service
+└── 3dprint/                 # 3D printable case files
+```
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Boot Screen](.github/images/1.png "Boot Screen") | ![Home Screen](.github/images/2.png "Home Screen") |
+| ![Weather](.github/images/3.png "Weather") | ![App Menu](.github/images/4.png "App Menu") |
+
+## Contributing
+
+This is a hobby project. Python is not my primary language, so coding style may vary. Issues and pull requests are welcome.
+
+## License
+
+Open source. See repository for license details.

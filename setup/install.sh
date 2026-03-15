@@ -1,248 +1,726 @@
 #!/bin/bash
+# =============================================================================
+# PiHome Installer
+# Install: sudo curl -sSL https://pihome.io/install | bash
+# =============================================================================
+set -uo pipefail
 
+# -----------------------------------------------------------------------------
+# Constants
+# -----------------------------------------------------------------------------
+readonly PIHOME_VERSION="1.0.0"
+readonly PIHOME_DIR="/usr/local/PiHome"
+readonly PIHOME_REPO="https://github.com/bradleyasu/PiHomeV2.git"
+readonly SDL2_CDN="https://cdn.pihome.io/bin"
+readonly LOG_FILE="/tmp/pihome-install.log"
+readonly STATE_FILE="/tmp/pihome-install-state"
+readonly REQUIRED_DISK_MB=2048
+readonly TOTAL_PHASES=8
 
-# Install Script: sudo curl -sSL https://pihome.io/install | bash
+# Options (overridden by CLI flags)
+SKIP_AIRPLAY=false
+VERBOSE=false
+UNATTENDED=false
 
+# Track warnings for summary
+WARNINGS=()
 
-# Colors
+# -----------------------------------------------------------------------------
+# UX Utilities
+# -----------------------------------------------------------------------------
 
-PINK=`tput setaf 200`
-ENDCOLOR=`tput sgr0`
+# Colors (fallback gracefully if tput unavailable)
+if command -v tput &>/dev/null && tput colors &>/dev/null; then
+    PINK=$(tput setaf 200 2>/dev/null || echo "")
+    GREEN=$(tput setaf 2 2>/dev/null || echo "")
+    YELLOW=$(tput setaf 3 2>/dev/null || echo "")
+    RED=$(tput setaf 1 2>/dev/null || echo "")
+    BOLD=$(tput bold 2>/dev/null || echo "")
+    DIM=$(tput dim 2>/dev/null || echo "")
+    RESET=$(tput sgr0 2>/dev/null || echo "")
+else
+    PINK="" GREEN="" YELLOW="" RED="" BOLD="" DIM="" RESET=""
+fi
 
-# Vars
-PROFILE=/home/$USER/.bashrc
-PIHOME=/usr/local/PiHome
-LOG=$PIHOME/install.log
+print_banner() {
+    echo ""
+    echo "${PINK}"
+    echo '  ______ _ _   _                      '
+    echo '  | ___ (_) | | |                     '
+    echo '  | |_/ /_| |_| | ___  _ __ ___   ___ '
+    echo '  |  __/| |  _  |/ _ \| '"'"'_ ` _ \ / _ \'
+    echo '  | |   | | | | | (_) | | | | | |  __/'
+    echo '  \_|   |_\_| |_/\___/|_| |_| |_|\___|'
+    echo "${RESET}"
+    echo "  ${DIM}Installer v${PIHOME_VERSION}${RESET}"
+    echo "  ======================================"
+    echo ""
+}
 
-echo $PINK
-echo "______ _ _   _                      ";
-echo "| ___ (_) | | |                     ";
-echo "| |_/ /_| |_| | ___  _ __ ___   ___ ";
-echo "|  __/| |  _  |/ _ \| '_ V _  \ / _ \\";
-echo "| |   | | | | | (_) | | | | | |  __/";
-echo "\_|   |_\_| |_/\___/|_| |_| |_|\___|";
-echo $ENDCOLOR
-echo "------------------------------------";
-echo ""
+print_header() {
+    local num="$1" total="$2" desc="$3"
+    echo ""
+    echo "  ${BOLD}[${num}/${total}] ${desc}${RESET}"
+    echo "  $(printf '%.0s-' {1..40})"
+}
 
-echo "Setting up..."
-mkdir $PIHOME
-cd $PIHOME
+print_step() {
+    printf "  ${DIM}->  %s${RESET}" "$1"
+}
 
+print_step_done() {
+    printf "\r  ${GREEN}[ok]${RESET} %s\n" "$1"
+}
 
-echo "Preparing system..."
-sudo apt-get -y update  >> $LOG
+print_success() {
+    echo "  ${GREEN}[ok]${RESET} $1"
+}
 
-echo "Installing Dependencies, this may take a few minutes..."
-sudo apt-get -y install python3-setuptools git-core python3-dev python3-pip >> $LOG
+print_warning() {
+    echo "  ${YELLOW}[!!]${RESET} $1"
+    WARNINGS+=("$1")
+}
 
-sudo apt-get -y install pkg-config libgl1-mesa-dev libgles2-mesa-dev \
-   libgstreamer1.0-dev \
-   gstreamer1.0-plugins-{bad,base,good,ugly} \
-   gstreamer1.0-{omx,alsa} libmtdev-dev \
-   xclip xsel libjpeg-dev >> $LOG
+print_error() {
+    echo "  ${RED}[ERR]${RESET} $1"
+}
 
-# Install GStreamer
-# Kivy needs this for soundboard
-sudo apt-get -y install gstreamer1.0-pulseaudio >> $LOG
+print_check_pass() {
+    echo "  ${GREEN}[ok]${RESET} $1"
+}
 
-sudo apt-get -y install libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev libudev-dev libasound2-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev git build-essential >> $LOG
-sudo apt-get -y install gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev libwayland-bin libwayland-dev libxi-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev x11proto-randr-dev x11proto-scrnsaver-dev x11proto-video-dev x11proto-xinerama-dev >> $LOG
+print_check_warn() {
+    echo "  ${YELLOW}[!!]${RESET} $1"
+}
 
-echo "Setting up Simple DirectMedia Layer, please wait..."
-# Install SDL2
-wget https://cdn.pihome.io/bin/SDL2-2.0.10.tar.gz
-tar -zxvf SDL2-2.0.10.tar.gz
-pushd SDL2-2.0.10
-./configure --enable-video-kmsdrm --disable-video-opengl --disable-video-x11 --disable-video-rpi
-make -j$(nproc)
-sudo make install
-popd
+print_check_fail() {
+    echo "  ${RED}[FAIL]${RESET} $1"
+}
 
-# Install SDL2_image:
+# Spinner: runs while a background PID is alive
+# Usage: spin $pid "Doing something"
+spin() {
+    local pid="$1" message="$2"
+    local chars='|/-\'
+    local i=0 elapsed=0
+    while kill -0 "$pid" 2>/dev/null; do
+        printf "\r  ${DIM} %s  %s (%ds)${RESET}   " "${chars:$((i % 4)):1}" "$message" "$elapsed"
+        sleep 1
+        elapsed=$((elapsed + 1))
+        i=$((i + 1))
+    done
+    printf "\r%80s\r" ""  # clear line
+}
 
-wget https://cdn.pihome.io/bin/SDL2_image-2.0.5.tar.gz
-tar -zxvf SDL2_image-2.0.5.tar.gz
-pushd SDL2_image-2.0.5
-./configure
-make -j$(nproc)
-sudo make install
-popd
+# Core wrapper: run a command with spinner and logging
+# On failure: offers Retry / Skip / Abort
+# Usage: run_logged "Description" command arg1 arg2 ...
+run_logged() {
+    local description="$1"
+    shift
 
-# Install SDL2_mixer:
+    while true; do
+        print_step "$description"
 
-wget https://cdn.pihome.io/bin/SDL2_mixer-2.0.4.tar.gz
-tar -zxvf SDL2_mixer-2.0.4.tar.gz
-pushd SDL2_mixer-2.0.4
-./configure
-make -j$(nproc)
-sudo make install
-popd
+        if [ "$VERBOSE" = true ]; then
+            "$@" 2>&1 | tee -a "$LOG_FILE" &
+        else
+            "$@" >> "$LOG_FILE" 2>&1 &
+        fi
+        local pid=$!
 
-# Install SDL2_ttf:
+        if [ "$VERBOSE" = false ]; then
+            spin $pid "$description"
+        fi
 
-wget https://cdn.pihome.io/bin/SDL2_ttf-2.0.15.tar.gz
-tar -zxvf SDL2_ttf-2.0.15.tar.gz
-pushd SDL2_ttf-2.0.15
-./configure
-make -j$(nproc)
-sudo make install
-popd
+        local exit_code=0
+        wait $pid || exit_code=$?
 
+        if [ $exit_code -eq 0 ]; then
+            print_step_done "$description"
+            return 0
+        fi
 
-sudo apt-get -y install mesa-common-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev >> $LOG
-sudo apt-get -y install libmtdev1 >> $LOG
+        print_error "$description failed (exit code $exit_code)"
+        echo "  ${DIM}See ${LOG_FILE} for details${RESET}"
 
-# Image manipulation
-sudo apt-get -y install libopenjp2-7 >> $LOG
+        if [ "$UNATTENDED" = true ]; then
+            print_error "Aborting (unattended mode)"
+            exit 1
+        fi
 
-# FFMPEG 
-sudo apt-get -y install ffmpeg >> $LOG
+        echo ""
+        local choice
+        read -rp "  [R]etry / [S]kip / [A]bort? " choice < /dev/tty
+        case "$choice" in
+            [Rr]*) echo ""; continue ;;
+            [Ss]*) print_warning "Skipped: $description"; return 0 ;;
+            [Aa]*) echo "  Aborting installation."; exit 1 ;;
+            *)     echo "  Aborting installation."; exit 1 ;;
+        esac
+    done
+}
 
-# MPG123 to play audio effects
-# sudo apt-get -y install mpg123 >> $LOG
-sudo apt-get -y install mplayer >> $LOG
-sudo apt-get -y install mpv libmpv1 >> $LOG
+# Prompt user for yes/no (curl-pipe safe)
+confirm() {
+    local prompt="$1" default="${2:-y}"
+    if [ "$UNATTENDED" = true ]; then
+        return 0
+    fi
+    local choice
+    read -rp "  $prompt " choice < /dev/tty
+    case "$default" in
+        y) [[ ! "$choice" =~ ^[Nn] ]] ;;
+        n) [[ "$choice" =~ ^[Yy] ]] ;;
+    esac
+}
 
-# VLC
-# sudo apt-get -y install vlc >> $LOG
+# -----------------------------------------------------------------------------
+# Pre-flight Checks
+# -----------------------------------------------------------------------------
+preflight_checks() {
+    echo "  ${BOLD}Pre-flight checks${RESET}"
+    echo "  $(printf '%.0s-' {1..40})"
 
-# MQTT Services
-python3 -m pip install --break-system-packages paho-mqtt >> $LOG
+    local hard_fail=false
 
-# QR Code Services
-python3 -m pip install --break-system-packages qrcode[pil] >> $LOG
+    # OS check
+    if [ -f /etc/os-release ]; then
+        # shellcheck source=/dev/null
+        . /etc/os-release
+        if [[ "${ID:-}" == "raspbian" || "${ID_LIKE:-}" == *"debian"* || "${ID:-}" == "debian" ]]; then
+            print_check_pass "OS: ${PRETTY_NAME:-$ID}"
+        else
+            print_check_warn "OS: ${PRETTY_NAME:-$ID} (expected Raspberry Pi OS / Debian)"
+        fi
+    else
+        print_check_warn "Could not detect OS"
+    fi
 
-# VLC 
-# python3 -m pip install python-vlc >> $LOG
+    # Architecture
+    local arch
+    arch=$(uname -m)
+    if [[ "$arch" == "armv7l" || "$arch" == "aarch64" ]]; then
+        print_check_pass "Architecture: $arch"
+    else
+        print_check_warn "Architecture: $arch (expected armv7l or aarch64)"
+    fi
 
-# Playsound
-# python3 -m pip install playsound >> $LOG
+    # Disk space
+    local avail_mb
+    avail_mb=$(df -m /usr/local 2>/dev/null | awk 'NR==2 {print $4}')
+    if [ -n "$avail_mb" ] && [ "$avail_mb" -ge "$REQUIRED_DISK_MB" ]; then
+        print_check_pass "Disk space: ${avail_mb}MB available"
+    elif [ -n "$avail_mb" ]; then
+        print_check_fail "Disk space: ${avail_mb}MB available (need ${REQUIRED_DISK_MB}MB)"
+        hard_fail=true
+    else
+        print_check_warn "Could not check disk space"
+    fi
 
-# python3 -m pip install mpyg321 >> $LOG
-python3 -m pip install --break-system-packages mplayer.py >> $LOG
-python3 -m pip install --break-system-packages python-mpv >> $LOG
+    # Internet
+    if curl -s --max-time 5 "$SDL2_CDN" >/dev/null 2>&1; then
+        print_check_pass "Internet connectivity"
+    elif curl -s --max-time 5 https://github.com >/dev/null 2>&1; then
+        print_check_warn "CDN unreachable, but internet works"
+    else
+        print_check_fail "No internet connectivity"
+        hard_fail=true
+    fi
 
-python3 -m pip install --break-system-packages websockets >> $LOG
+    # Python 3
+    if command -v python3 &>/dev/null; then
+        local pyver
+        pyver=$(python3 --version 2>&1 | awk '{print $2}')
+        local pymajor pyminor
+        pymajor=$(echo "$pyver" | cut -d. -f1)
+        pyminor=$(echo "$pyver" | cut -d. -f2)
+        if [ "$pymajor" -ge 3 ] && [ "$pyminor" -ge 9 ]; then
+            print_check_pass "Python $pyver"
+        else
+            print_check_warn "Python $pyver (3.9+ recommended)"
+        fi
+    else
+        print_check_warn "Python 3 not found (will be installed)"
+    fi
 
-# Update MPV
+    # Existing installation
+    if [ -d "$PIHOME_DIR" ]; then
+        print_check_warn "Existing installation found at $PIHOME_DIR"
+        if ! confirm "Upgrade existing installation? [Y/n]" "y"; then
+            echo "  Aborting."
+            exit 0
+        fi
+    fi
 
-curl https://non-gnu.uvt.nl/debian/uvt_key.gpg --output uvt_key.gpg
-sudo mv uvt_key.gpg /etc/apt/trusted.gpg.d
-sudo apt-get -y install apt-transport-https
-sudo sh -c 'echo "deb https://non-gnu.uvt.nl/debian $(lsb_release -sc) uvt" >> /etc/apt/sources.list.d/non-gnu-uvt.list'
-sudo apt-get -y update
-sudo apt-get -y install -t "o=UvT" mpv
+    # Resume state
+    if [ -f "$STATE_FILE" ]; then
+        local completed
+        completed=$(wc -l < "$STATE_FILE" | tr -d ' ')
+        print_check_warn "Previous install state found ($completed phases completed)"
+        echo "  ${DIM}  Completed phases will be skipped. Use --clean to start fresh.${RESET}"
+    fi
 
+    echo ""
 
-# Install AirPlay services 'shairport'
-sudo apt-get -y install --no-install-recommends build-essential git autoconf automake libtool system-dev\
-   libpopt-dev libconfig-dev libasound2-dev avahi-daemon libavahi-client-dev libssl-dev libsoxr-dev \
-   libplist-dev libsodium-dev uuid-dev libgcrypt-dev xxd libplist-utils \
-   libavutil-dev libavcodec-dev libavformat-dev >> $LOG
+    if [ "$hard_fail" = true ]; then
+        print_error "Pre-flight checks failed. Please fix the issues above and re-run."
+        exit 1
+    fi
+}
 
-# Installing nqptp, a shairport dependency 
+# -----------------------------------------------------------------------------
+# Resume / State Tracking
+# -----------------------------------------------------------------------------
+mark_phase_complete() {
+    echo "$1" >> "$STATE_FILE"
+}
 
-sudo git clone https://github.com/mikebrady/nqptp.git
-cd nqptp
-sudo autoreconf -fi # about a minute on a Raspberry Pi.
-sudo ./configure --with-systemd-startup
-sudo make
-sudo make install
-cd ..
+is_phase_complete() {
+    [ -f "$STATE_FILE" ] && grep -qx "$1" "$STATE_FILE" 2>/dev/null
+}
 
-sudo systemctl enable nqptp
-sudo systemctl start nqptp
+# -----------------------------------------------------------------------------
+# Phase 1: Setup Directories
+# -----------------------------------------------------------------------------
+phase_setup_directories() {
+    local phase_id="setup_directories"
+    if is_phase_complete "$phase_id"; then
+        print_success "Directories already set up, skipping"
+        return 0
+    fi
 
+    print_header 1 "$TOTAL_PHASES" "Setting up directories"
 
-# Install shairport sync
-sudo git clone https://github.com/mikebrady/shairport-sync.git
-cd shairport-sync
-sudo autoreconf -fi # about 1.5 minutes on a Raspberry Pi B
-sudo ./configure --sysconfdir=/etc --with-alsa --with-soxr --with-avahi --with-ssl=openssl --with-systemd-startup --with-airplay-2
-sudo  make 
-sudo make install
-sh user-service-install.sh
-cd ..
+    if [ ! -d "$PIHOME_DIR" ]; then
+        if sudo mkdir -p "$PIHOME_DIR"; then
+            print_success "Created $PIHOME_DIR"
+        else
+            print_error "Failed to create $PIHOME_DIR"
+            exit 1
+        fi
+    else
+        print_success "$PIHOME_DIR exists"
+    fi
 
-# IMPORTANT, MAKE SURE THE CURRENT USER HAS AUDIO GROUP PERMISSIONS TO USE SHAIRPORT SYNC
-CURRENT_USER=$(whoami)
-sudo usermod -aG audio "$CURRENT_USER"  
+    # Initialize log
+    echo "=== PiHome Install Log - $(date) ===" > "$LOG_FILE"
+    print_success "Log file: $LOG_FILE"
 
+    mark_phase_complete "$phase_id"
+}
 
-# make install
+# -----------------------------------------------------------------------------
+# Phase 2: Clone Repository
+# -----------------------------------------------------------------------------
+phase_clone_repository() {
+    local phase_id="clone_repository"
+    if is_phase_complete "$phase_id"; then
+        print_success "Repository already cloned, skipping"
+        return 0
+    fi
 
-echo "Installing Kivy..."
-python3 -m pip install --break-system-packages kivy[base] >> $LOG
+    print_header 2 "$TOTAL_PHASES" "Fetching PiHome"
 
-echo "Installing ffpyplayer as audio provider..."
-python3 -m pip install --break-system-packages ffpyplayer >> $LOG
+    if [ -d "$PIHOME_DIR/.git" ]; then
+        # Already cloned (likely via bootstrap.sh), just ensure it's current
+        print_success "Repository present at $PIHOME_DIR"
+    else
+        run_logged "Cloning repository" sudo git clone "$PIHOME_REPO" "$PIHOME_DIR"
+    fi
 
-# required for numpy
-sudo apt-get -y install libopenblas-dev >> $LOG
+    mark_phase_complete "$phase_id"
+}
 
-# required for sounddevice
-sudo apt-get -y install libportaudio2 >> $LOG
-sudo apt-get -y install python3-cffi >> $LOG
+# -----------------------------------------------------------------------------
+# Phase 3: System Dependencies
+# -----------------------------------------------------------------------------
+phase_system_dependencies() {
+    local phase_id="system_dependencies"
+    if is_phase_complete "$phase_id"; then
+        print_success "System dependencies already installed, skipping"
+        return 0
+    fi
 
-python3 -m pip install --break-system-packages ffmpeg-python==0.2.0 >> $LOG
-python3 -m pip install --break-system-packages numpy==1.26.4 >> $LOG
-python3 -m pip install --break-system-packages sounddevice==0.4.6 >> $LOG
-python3 -m pip install --break-system-packages Pillow==10.2.0 >> $LOG
+    print_header 3 "$TOTAL_PHASES" "Installing system dependencies"
 
-# ID3 Tag parsing
-python3 -m pip install --break-system-packages eyed3 >> $LOG
-# TODO install yt-dlp from cdn
+    run_logged "Updating package lists" \
+        sudo apt-get -y update
 
-echo "Installing Flowers..."
-#garden install mapview >> $LOG
+    run_logged "Installing core packages" \
+        sudo apt-get -y install \
+            python3-setuptools git-core python3-dev python3-pip
 
-echo "Setting up environment..."
+    run_logged "Installing graphics libraries" \
+        sudo apt-get -y install \
+            pkg-config libgl1-mesa-dev libgles2-mesa-dev \
+            mesa-common-dev libfreetype6-dev libdrm-dev libgbm-dev \
+            libudev-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev \
+            libmtdev-dev libmtdev1 xclip xsel
 
-echo "" >> $PROFILE
-echo 'alias pihome="cd /usr/local/PiHome && ./launch.sh"' >> $PROFILE
-echo 'alias pihome-update="cd /usr/local/PiHome && ./update.sh"' >> $PROFILE
-echo "" >> $PROFILE
-source $PROFILE
-clear
+    run_logged "Installing GStreamer" \
+        sudo apt-get -y install \
+            libgstreamer1.0-dev \
+            gstreamer1.0-plugins-bad gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
+            gstreamer1.0-alsa gstreamer1.0-pulseaudio
 
-echo $PINK
-echo ""
-echo "Setting up PiHome systemd service..."
-echo ""
-echo $ENDCOLOR
+    run_logged "Installing SDL2 development libraries" \
+        sudo apt-get -y install \
+            libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
 
-# Make scripts executable
-cd $PIHOME
-chmod 755 ./launch.sh
-chmod 755 ./update.sh
-chmod 755 ./setup/install-service.sh
+    run_logged "Installing display/input libraries" \
+        sudo apt-get -y install \
+            gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev \
+            libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev \
+            libwayland-bin libwayland-dev libxi-dev libxinerama-dev \
+            libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev \
+            x11proto-randr-dev x11proto-scrnsaver-dev \
+            x11proto-video-dev x11proto-xinerama-dev
 
-# Install and enable the systemd service
-echo "Installing PiHome as a system service..."
-sudo cp $PIHOME/setup/pihome.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable pihome.service
+    run_logged "Installing media packages" \
+        sudo apt-get -y install \
+            ffmpeg mplayer mpv libmpv1
 
-echo $PINK
-echo ""
-echo "╔════════════════════════════════════════════╗"
-echo "║  PiHome Installation Complete!             ║"
-echo "╚════════════════════════════════════════════╝"
-echo ""
-echo $ENDCOLOR
-echo "PiHome has been configured to start automatically on boot."
-echo ""
-echo "Commands:"
-echo "  sudo systemctl start pihome     - Start PiHome now"
-echo "  sudo systemctl status pihome    - Check service status"
-echo "  sudo systemctl stop pihome      - Stop the service"
-echo "  sudo systemctl restart pihome   - Restart the service"
-echo "  tail -f /usr/local/PiHome/pihome.log         - View live logs"
-echo ""
-echo "To start PiHome now, run: sudo systemctl start pihome"
-echo "Or reboot the system to start automatically."
-echo ""
+    run_logged "Installing audio support" \
+        sudo apt-get -y install \
+            libportaudio2 python3-cffi libasound2-dev
 
-echo "Restarting system to apply changes..."
-sudo reboot
+    run_logged "Installing image processing" \
+        sudo apt-get -y install \
+            libopenjp2-7
+
+    run_logged "Installing build tools" \
+        sudo apt-get -y install \
+            build-essential git autoconf automake libtool libopenblas-dev
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Phase 4: Build SDL2 from Source
+# -----------------------------------------------------------------------------
+build_sdl_component() {
+    local url="$1" configure_flags="${2:-}"
+    local tarball="${url##*/}"
+    local dirname="${tarball%.tar.gz}"
+
+    (
+        cd /tmp || exit 1
+        [ -f "$tarball" ] || wget -q "$url" -O "$tarball"
+        tar -zxf "$tarball"
+        cd "$dirname" || exit 1
+        if [ -n "$configure_flags" ]; then
+            # Word splitting is intentional here for multiple flags
+            # shellcheck disable=SC2086
+            ./configure $configure_flags
+        else
+            ./configure
+        fi
+        make -j"$(nproc)"
+        sudo make install
+    )
+    # Clean up
+    rm -rf "/tmp/$tarball" "/tmp/$dirname"
+}
+
+phase_build_sdl2() {
+    local phase_id="build_sdl2"
+    if is_phase_complete "$phase_id"; then
+        print_success "SDL2 already built, skipping"
+        return 0
+    fi
+
+    print_header 4 "$TOTAL_PHASES" "Building SDL2 libraries (this takes a while)"
+
+    run_logged "Building SDL2 2.0.10" \
+        build_sdl_component \
+            "${SDL2_CDN}/SDL2-2.0.10.tar.gz" \
+            "--enable-video-kmsdrm --disable-video-opengl --disable-video-x11 --disable-video-rpi"
+
+    run_logged "Building SDL2_image 2.0.5" \
+        build_sdl_component \
+            "${SDL2_CDN}/SDL2_image-2.0.5.tar.gz"
+
+    run_logged "Building SDL2_mixer 2.0.4" \
+        build_sdl_component \
+            "${SDL2_CDN}/SDL2_mixer-2.0.4.tar.gz"
+
+    run_logged "Building SDL2_ttf 2.0.15" \
+        build_sdl_component \
+            "${SDL2_CDN}/SDL2_ttf-2.0.15.tar.gz"
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Phase 5: Build AirPlay (shairport-sync)
+# -----------------------------------------------------------------------------
+phase_build_airplay() {
+    local phase_id="build_airplay"
+    if is_phase_complete "$phase_id"; then
+        print_success "AirPlay already built, skipping"
+        return 0
+    fi
+
+    if [ "$SKIP_AIRPLAY" = true ]; then
+        print_header 5 "$TOTAL_PHASES" "AirPlay support (skipped)"
+        print_warning "AirPlay skipped via --skip-airplay"
+        mark_phase_complete "$phase_id"
+        return 0
+    fi
+
+    print_header 5 "$TOTAL_PHASES" "Building AirPlay support"
+
+    # AirPlay-specific dependencies
+    run_logged "Installing AirPlay build dependencies" \
+        sudo apt-get -y install --no-install-recommends \
+            libpopt-dev libconfig-dev avahi-daemon libavahi-client-dev \
+            libssl-dev libsoxr-dev libplist-dev libsodium-dev uuid-dev \
+            libgcrypt-dev xxd libplist-utils \
+            libavutil-dev libavcodec-dev libavformat-dev
+
+    # nqptp
+    run_logged "Building nqptp" bash -c '
+        cd /tmp
+        rm -rf nqptp
+        git clone https://github.com/mikebrady/nqptp.git
+        cd nqptp
+        autoreconf -fi
+        ./configure --with-systemd-startup
+        make
+        sudo make install
+        rm -rf /tmp/nqptp
+    '
+
+    run_logged "Enabling nqptp service" bash -c '
+        sudo systemctl enable nqptp
+        sudo systemctl start nqptp
+    '
+
+    # shairport-sync
+    run_logged "Building shairport-sync" bash -c '
+        cd /tmp
+        rm -rf shairport-sync
+        git clone https://github.com/mikebrady/shairport-sync.git
+        cd shairport-sync
+        autoreconf -fi
+        ./configure --sysconfdir=/etc --with-alsa --with-soxr --with-avahi \
+            --with-ssl=openssl --with-systemd-startup --with-airplay-2
+        make
+        sudo make install
+        sh user-service-install.sh
+        rm -rf /tmp/shairport-sync
+    '
+
+    # Add user to audio group
+    local current_user
+    current_user=$(whoami)
+    sudo usermod -aG audio "$current_user"
+    print_success "Added $current_user to audio group"
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Phase 6: Python Dependencies
+# -----------------------------------------------------------------------------
+phase_python_dependencies() {
+    local phase_id="python_dependencies"
+    if is_phase_complete "$phase_id"; then
+        print_success "Python dependencies already installed, skipping"
+        return 0
+    fi
+
+    print_header 6 "$TOTAL_PHASES" "Installing Python packages"
+
+    run_logged "Installing Kivy" \
+        python3 -m pip install --break-system-packages "kivy[base]"
+
+    run_logged "Installing Python dependencies" \
+        python3 -m pip install --break-system-packages \
+            -r "$PIHOME_DIR/requirements.txt"
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Phase 7: Configure Environment
+# -----------------------------------------------------------------------------
+phase_configure_environment() {
+    local phase_id="configure_environment"
+    if is_phase_complete "$phase_id"; then
+        print_success "Environment already configured, skipping"
+        return 0
+    fi
+
+    print_header 7 "$TOTAL_PHASES" "Configuring environment"
+
+    local profile="/home/${SUDO_USER:-$USER}/.bashrc"
+
+    # Add aliases idempotently
+    if ! grep -q 'alias pihome=' "$profile" 2>/dev/null; then
+        {
+            echo ""
+            echo "# PiHome aliases"
+            echo "alias pihome=\"cd ${PIHOME_DIR} && ./launch.sh\""
+            echo "alias pihome-update=\"cd ${PIHOME_DIR} && ./update.sh\""
+        } >> "$profile"
+        print_success "Added shell aliases to $profile"
+    else
+        print_success "Shell aliases already present"
+    fi
+
+    # Make scripts executable
+    chmod 755 "$PIHOME_DIR/launch.sh" 2>/dev/null || true
+    chmod 755 "$PIHOME_DIR/update.sh" 2>/dev/null || true
+    chmod 755 "$PIHOME_DIR/setup/install-service.sh" 2>/dev/null || true
+    print_success "Scripts marked executable"
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Phase 8: Install Systemd Service
+# -----------------------------------------------------------------------------
+phase_install_service() {
+    local phase_id="install_service"
+    if is_phase_complete "$phase_id"; then
+        print_success "Service already installed, skipping"
+        return 0
+    fi
+
+    print_header 8 "$TOTAL_PHASES" "Installing PiHome service"
+
+    sudo cp "$PIHOME_DIR/setup/pihome.service" /etc/systemd/system/
+    print_success "Service file installed"
+
+    sudo systemctl daemon-reload
+    print_success "Systemd reloaded"
+
+    sudo systemctl enable pihome.service
+    print_success "PiHome service enabled (starts on boot)"
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Summary
+# -----------------------------------------------------------------------------
+print_summary() {
+    echo ""
+    echo "  ${GREEN}${BOLD}========================================${RESET}"
+    echo "  ${GREEN}${BOLD}  Installation Complete!${RESET}"
+    echo "  ${GREEN}${BOLD}========================================${RESET}"
+    echo ""
+    echo "  ${BOLD}Installed components:${RESET}"
+    is_phase_complete "system_dependencies" && print_success "System dependencies"
+    is_phase_complete "build_sdl2"          && print_success "SDL2 libraries"
+    is_phase_complete "build_airplay"       && print_success "AirPlay (shairport-sync)"
+    is_phase_complete "python_dependencies" && print_success "Python packages"
+    is_phase_complete "install_service"     && print_success "PiHome systemd service"
+
+    if [ ${#WARNINGS[@]} -gt 0 ]; then
+        echo ""
+        echo "  ${BOLD}Warnings:${RESET}"
+        for w in "${WARNINGS[@]}"; do
+            echo "  ${YELLOW}[!!]${RESET} $w"
+        done
+    fi
+
+    echo ""
+    echo "  ${BOLD}Commands:${RESET}"
+    echo "    sudo systemctl start pihome    Start PiHome now"
+    echo "    sudo systemctl status pihome   Check service status"
+    echo "    sudo systemctl stop pihome     Stop the service"
+    echo "    sudo systemctl restart pihome  Restart the service"
+    echo "    tail -f ${PIHOME_DIR}/pihome.log   View live logs"
+    echo ""
+    echo "  ${DIM}Full install log: ${LOG_FILE}${RESET}"
+}
+
+# -----------------------------------------------------------------------------
+# CLI Argument Parsing
+# -----------------------------------------------------------------------------
+print_usage() {
+    echo "Usage: install.sh [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --clean          Remove install state and start fresh"
+    echo "  --skip-airplay   Skip AirPlay (shairport-sync) installation"
+    echo "  --verbose        Show command output in terminal"
+    echo "  --unattended     Skip all confirmation prompts"
+    echo "  --help           Show this help message"
+}
+
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --clean)
+                rm -f "$STATE_FILE"
+                ;;
+            --skip-airplay)
+                SKIP_AIRPLAY=true
+                ;;
+            --verbose)
+                VERBOSE=true
+                ;;
+            --unattended)
+                UNATTENDED=true
+                ;;
+            --help)
+                print_usage
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1"
+                print_usage
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+main() {
+    parse_args "$@"
+    print_banner
+    preflight_checks
+
+    echo "  This will install PiHome to ${BOLD}${PIHOME_DIR}${RESET}"
+    echo "  Installation log: ${DIM}${LOG_FILE}${RESET}"
+    echo ""
+
+    if ! confirm "Continue with installation? [Y/n]" "y"; then
+        echo "  Installation cancelled."
+        exit 0
+    fi
+
+    phase_setup_directories      # 1/8
+    phase_clone_repository       # 2/8
+    phase_system_dependencies    # 3/8
+    phase_build_sdl2             # 4/8
+    phase_build_airplay          # 5/8
+    phase_python_dependencies    # 6/8
+    phase_configure_environment  # 7/8
+    phase_install_service        # 8/8
+
+    # Clean up state file on success
+    rm -f "$STATE_FILE"
+
+    print_summary
+
+    echo ""
+    if confirm "Reboot now to apply all changes? [y/N]" "n"; then
+        echo "  Rebooting..."
+        sudo reboot
+    else
+        echo "  ${DIM}Remember to reboot before starting PiHome.${RESET}"
+        echo ""
+    fi
+}
+
+main "$@"
