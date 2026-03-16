@@ -28,11 +28,11 @@ class CommandEvent(PihomeEvent):
     def to_json(self):
         return json.dumps({
             "type": self.type,
-            "command": self.command
+            "execute": self.command
         })
 
     def to_definition(self):
         return {
             "type": self.type,
-            "command": self.type_def("string")
+            "execute": self.type_def("string")
         }
