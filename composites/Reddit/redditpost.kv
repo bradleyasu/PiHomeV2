@@ -92,7 +92,7 @@
     BoxLayout:
         orientation: 'vertical'
         size_hint: None, None
-        size: dp(764), dp(452)
+        size: root.width - dp(36), root.height - dp(28)
         pos: dp(18), dp(14)
         spacing: 0
 
@@ -326,8 +326,7 @@
 
         # ── Content region — POST panel and COMMENTS panel share this space ───
         FloatLayout:
-            size_hint_y: None
-            height: dp(305)
+            size_hint_y: 1
             canvas.before:
                 StencilPush
                 Rectangle:

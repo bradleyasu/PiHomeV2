@@ -2,13 +2,14 @@ from composites.Weather.weatherdetails import WeatherDetails
 from kivy.lang import Builder
 from kivy.properties import Property, BooleanProperty, ColorProperty, StringProperty, NumericProperty, DictProperty, ListProperty, ObjectProperty, ReferenceListProperty
 from kivy.metrics import dp
+from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.animation import Animation
 from kivy.clock import Clock
 from services.weather.weather import WEATHER
 from theme.theme import Theme
 from util.configuration import CONFIG
-from util.helpers import get_app 
+from util.helpers import get_app
 from util.phlog import PIHOME_LOGGER
 from util.tools import get_semi_transparent_gaussian_blur_png_from_color
 
@@ -40,6 +41,7 @@ class WeatherWidget(Widget):
     overlay_opacity = NumericProperty(0)
     overlay_y_offset = NumericProperty(10)
     overlay_active = False
+    overlay_size = ListProperty([100, 100])
 
     pill_stat = StringProperty("")
     pill_stat_color = ColorProperty([1.0, 1.0, 1.0, 1.0])
@@ -89,7 +91,7 @@ class WeatherWidget(Widget):
         super(WeatherWidget, self).__init__(**kwargs)
         self.size = size
         self.pos = pos
-        self.overlay_size = dp(get_app().width-40), dp(get_app().height-80)
+        self.overlay_size = [Window.width - dp(40), Window.height - dp(80)]
         self._apply_theme_colors()
         self._clock_event = None
 

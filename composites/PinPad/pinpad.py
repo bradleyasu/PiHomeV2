@@ -12,8 +12,8 @@ from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
+from kivy.core.window import Window
 from util.configuration import CONFIG
-from util.helpers import get_app
 from util.tools import hex
 from kivy.uix.widget import Widget
 
@@ -112,13 +112,16 @@ class PinPad(Widget):
         self.background_color = (0,0,0,0)
         self.pinpad_background_color = Theme().get_color(Theme().BACKGROUND_SECONDARY, 0)
         self.pinpad_opacity = 0
-        self.y_position = dp(get_app().width - 100)
-        self.height = dp(get_app().height/3 - 40)
+        # Start card above the visible window
+        self.y_position = Window.height + dp(100)
 
 
     def animate(self):
+        # Center the dp(405)-tall card vertically in the window
+        card_h = dp(405)
+        target_y = (Window.height - card_h) / 2
         animation = Animation(background_color=(0,0,0,0.6), t='linear', d=.2)
-        animation &= Animation(y_position=(self.height /2 - dp(40)), t='out_elastic', d=1)
+        animation &= Animation(y_position=target_y, t='out_elastic', d=1)
         animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='linear', d=.2)
         animation &= Animation(pinpad_opacity=1, t='linear', d=.2)
         animation.start(self)

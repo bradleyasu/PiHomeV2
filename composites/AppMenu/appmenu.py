@@ -42,9 +42,10 @@ class AppMenu(FloatLayout):
     def build(self):
         pad_x   = dp(14)
         spacing = dp(16)
+        screen_w = Window.width
         # How many columns fit if each icon is at least dp(100) wide?
-        cols = max(3, int((Window.width - pad_x * 2 + spacing) / (dp(100) + spacing)))
-        icon_w = (Window.width - pad_x * 2 - spacing * (cols - 1)) / cols
+        cols = max(3, int((screen_w - pad_x * 2 + spacing) / (dp(100) + spacing)))
+        icon_w = (screen_w - pad_x * 2 - spacing * (cols - 1)) / cols
         icon_h = round(icon_w * 1.20)
         self.icon_w = icon_w
         self.icon_h = icon_h
@@ -83,9 +84,10 @@ class AppMenu(FloatLayout):
     def hide(self):
         self.opacity = 0
         self._menu_active = False
-        self.pos = (0, 1000)
-        self.grid.pos = (0, 1000)
-        self.view.pos = (0, 1000)
+        offscreen_y = Window.height + 100
+        self.pos = (0, offscreen_y)
+        self.grid.pos = (0, offscreen_y)
+        self.view.pos = (0, offscreen_y)
         # Reset all icons so they're ready for the next open
         for icon in self.grid.children:
             icon.reset_anim()

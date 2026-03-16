@@ -1,23 +1,28 @@
 import os
 
-from networking.poller import POLLER
-from services.homeassistant.homeassistant import HOME_ASSISTANT
-
 os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
+# CONFIG has no Kivy dependency — safe to import before Window creation.
+from util.configuration import CONFIG
+
+# All Kivy Config.set calls MUST happen before any import that triggers
+# Window creation (kivy.graphics, kivy.core.window, kivy.uix, etc.).
 from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+Config.set('graphics', 'verify_gl_main_thread', '0')
+Config.set('graphics', 'width', str(CONFIG.get_int('window', 'width', 800)))
+Config.set('graphics', 'height', str(CONFIG.get_int('window', 'height', 480)))
+
+# Now safe to import modules that create the Window / GL context
+from networking.poller import POLLER
+from services.homeassistant.homeassistant import HOME_ASSISTANT
 from kivy.graphics import Line
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
-
-Config.set('kivy', 'keyboard_mode', 'systemandmulti')
-Config.set('graphics', 'verify_gl_main_thread', '0')
 from components.Hamburger.hamburger import Hamburger
-
-from util.configuration import CONFIG
-from util.phlog import PIHOME_LOGGER 
+from util.phlog import PIHOME_LOGGER
 
 from server.server import SERVER
 from util.const import _TASK_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TRIANGLE, GESTURE_W, TEMP_DIR
@@ -103,9 +108,16 @@ class PiHome(App):
         self.layout.bind(on_touch_move=lambda _, touch:self.on_touch_move(touch))
 
 
-        self.menu_button.pos = (dp(10), dp(426))
         self.menu_button.event_handler = lambda value: self.set_app_menu_open(value)
         self.menu_button.size_hint = (None, None)
+
+        # Position hamburger at top-left; bind to Window size so it tracks
+        # the actual coordinate system regardless of density or resize behavior.
+        def _update_menu_pos(*_):
+            self.menu_button.pos = (dp(10), Window.height - self.menu_button.height - dp(10))
+        self.menu_button.bind(size=_update_menu_pos)
+        Window.bind(size=_update_menu_pos)
+        _update_menu_pos()
         
         # Load default background into ScreenManager canvas
         try:

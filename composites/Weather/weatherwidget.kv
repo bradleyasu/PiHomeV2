@@ -26,8 +26,8 @@
 
         BoxLayout:
             orientation: 'vertical'
-            size: root.overlay_size
-            pos: dp(20), dp(20 + root.overlay_y_offset)
+            size_hint: 1, 1
+            pos_hint: {'x': 0, 'y': 0}
             padding: dp(20), dp(14)
             spacing: dp(10)
 
@@ -150,8 +150,6 @@
                         width: 1
 
             # ── Stat chips: 3 cols × 2 rows ──────────────────────────────────
-            # Each chip row is dp(48): padding dp(8)×2 leaves dp(32) for
-            # label(dp(14)) + spacing(dp(4)) + value(dp(14)) = dp(32) exact fit
             GridLayout:
                 cols: 3
                 spacing: dp(6)
@@ -368,8 +366,6 @@
                         width: 1
 
             # ── Hourly / Daily forecast (shared fixed-height slot) ───────────
-            # Both grids live inside one RelativeLayout so only one slot is used
-            # in the parent BoxLayout — no layout shift when toggling.
             RelativeLayout:
                 size_hint_y: None
                 height: dp(145)
@@ -425,6 +421,9 @@
                         WeatherDetails:
                             is_daily: True
                             details: root.future_daily[5] if len(root.future_daily) > 5 else {}
+
+            # Spacer — absorbs leftover vertical space so content stays at the top
+            Widget:
 
     # ── Compact pill (always visible) ────────────────────────────────────────
     BoxLayout:
