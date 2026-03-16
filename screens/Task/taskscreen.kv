@@ -128,9 +128,9 @@
                     height: dp(54)
                     spacing: dp(10)
 
-                    # Dismiss
+                    # Snooze
                     TaskButton:
-                        on_release: root.cancel()
+                        on_release: root.snooze()
                         canvas.before:
                             Color:
                                 rgba: 1, 1, 1, 0.10
@@ -144,7 +144,7 @@
                                 rounded_rectangle: [self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(12)]
                                 width: dp(1)
                         Label:
-                            text: 'Dismiss'
+                            text: 'Snooze'
                             font_size: '16sp'
                             bold: True
                             font_name: 'Nunito'

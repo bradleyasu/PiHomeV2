@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from kivy.lang import Builder
 from events.pihomeevent import PihomeEventFactory
 from interface.pihomescreen import PiHomeScreen
@@ -95,4 +96,32 @@ class TaskScreen(PiHomeScreen):
             self.on_cancel.execute()
         from services.taskmanager.taskmanager import TaskStatus
         self.task.set_status(TaskStatus.CANCELED)
+        self.go_back()
+
+    def snooze(self):
+        self.locked = False
+        if self.on_cancel is not None:
+            self.on_cancel.execute()
+        from services.taskmanager.taskmanager import TaskStatus, ScheduledTask, TASK_MANAGER
+        self.task.set_status(TaskStatus.CANCELED)
+
+        # Build snoozed task name, avoiding double-prefixing
+        snoozed_name = self.task.name if self.task.name.startswith("[SNOOZED] ") else f"[SNOOZED] {self.task.name}"
+
+        snoozed_task = ScheduledTask(
+            name=snoozed_name,
+            description=self.task.description,
+            start_time=datetime.now() + timedelta(minutes=10),
+            status=TaskStatus.PENDING,
+            priority=self.task.priority,
+            is_passive=self.task.is_passive,
+            repeat_days=0,
+            on_run=self.task.on_run,
+            on_confirm=self.task.on_confirm,
+            on_cancel=self.task.on_cancel,
+            background_image=self.task.background_image,
+            cacheable=False,
+        )
+        TASK_MANAGER.add_task(snoozed_task)
+        PIHOME_LOGGER.info(f"Snoozed task '{self.task.name}' for 10 minutes")
         self.go_back()
