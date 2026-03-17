@@ -159,7 +159,10 @@ class HomeAssistant:
                 if self.is_shutting_down:
                     break
                 PIHOME_LOGGER.error(f"WebSocket error: {e}")
-                self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
+                try:
+                    self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
+                except Exception:
+                    pass
 
             # Close stale websocket before reconnecting
             if self.websocket:
