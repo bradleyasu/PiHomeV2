@@ -1,5 +1,7 @@
 #:kivy 2.0.0
-#: import ew kivy.uix.effectwidget
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
 <Toast>:
     size_hint: None, None
     size: self.size
@@ -9,29 +11,63 @@
         Scale:
             origin: self.center
             xyz: [1, self.zoom, 1]
+
+        # Background fill
         Color:
             rgba: self.background_color
         RoundedRectangle:
             size: self.size
             pos: self.x, self.y + self.y_pos_offset
+            radius: [dp(10)]
 
-    GridLayout:
-        canvas:
-            Color:
-                rgba: (0,1,0,0)
-            Rectangle:
-                size: root.size
-                pos: root.pos
-        cols: 1
+        # Border outline
+        Color:
+            rgba: self.border_color
+        Line:
+            rounded_rectangle: [self.x, self.y + self.y_pos_offset, self.width, self.height, dp(10)]
+            width: dp(1)
+
+    BoxLayout:
+        orientation: "horizontal"
         size: root.size
         size_hint: None, None
         pos: root.x, root.y + root.y_pos_offset
+        padding: dp(14), dp(8), dp(14), dp(8)
+        spacing: dp(10)
 
+        # Level icon
+        Label:
+            text: root.icon
+            font_name: "MaterialIcons"
+            font_size: sp(20)
+            color: root.text_color
+            size_hint_x: None
+            width: dp(24)
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+        # Toast text
         Label:
             text: root.text
+            font_name: "Nunito"
+            font_size: sp(13)
             color: root.text_color
-            # size_hint_y: None
-            # text_size: self.width, None
-            # height: self.texture_size[1]
-            width: root.width
-    
+            halign: "left"
+            valign: "middle"
+            text_size: self.width, None
+            shorten: True
+            shorten_from: "right"
+            max_lines: 2
+
+        # Dismiss hint
+        Label:
+            text: "\ue5cd"
+            font_name: "MaterialIcons"
+            font_size: sp(16)
+            color: root.text_color[0], root.text_color[1], root.text_color[2], 0.5
+            size_hint_x: None
+            width: dp(20)
+            halign: "center"
+            valign: "middle"
+            text_size: self.size

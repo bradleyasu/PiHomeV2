@@ -1,6 +1,6 @@
 import sys
 from kivy.graphics import Line
-from util.const import GESTURE_DATABASE
+from util.const import GESTURE_DATABASE, GESTURE_SWIPE_DOWN, GESTURE_SWIPE_DOWN_FROM_TOP
 from kivy.uix.widget import Widget
 from util.helpers import simplegesture
 
@@ -27,7 +27,8 @@ class GestureWidget(Widget):
             return
         userdata = touch.ud
         userdata['line'] = Line(points=(touch.x, touch.y))
-        return False 
+        userdata['start_y'] = touch.y
+        return False
 
     def touch_up(self, touch):
         if not self.collide_point(*touch.pos):
@@ -39,7 +40,13 @@ class GestureWidget(Widget):
         g2 = GESTURE_DATABASE.find(g, minscore=0.70)
         # print(GESTURE_DATABASE.gesture_to_str(g))
         if g2:
-            self.on_gesture(g2[1])
+            matched = g2[1]
+            if matched == GESTURE_SWIPE_DOWN:
+                start_y = touch.ud.get('start_y', 0)
+                if start_y >= self.height * 0.85:
+                    self.on_gesture(GESTURE_SWIPE_DOWN_FROM_TOP)
+                    return
+            self.on_gesture(matched)
         else:
             self.on_click()
 

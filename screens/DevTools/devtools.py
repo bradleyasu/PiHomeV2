@@ -32,6 +32,7 @@ from system.brightness import get_brightness, set_brightness
 from theme.theme import Theme
 from util.configuration import CONFIG
 from util.const import SERVER_PORT
+from util.helpers import get_app
 from util.phlog import PIHOME_LOGGER
 
 Builder.load_file("./screens/DevTools/devtools.kv")
@@ -111,6 +112,7 @@ class DevTools(PiHomeScreen):
             ("Toggle Server",    "secondary", self.action_toggle_server),
             ("Reload Config",    "secondary", self.action_reload_config),
             ("Clear Task Cache", "secondary", self.action_clear_task_cache),
+            ("Test Toast",       "secondary", self.action_test_toast),
         ]
 
         pad = dp(8)
@@ -312,6 +314,9 @@ class DevTools(PiHomeScreen):
             0, 2, MSGBOX_BUTTONS["YES_NO"],
             on_yes=lambda: do_update(),
         )
+
+    def action_test_toast(self):
+        get_app().show_toast("Hello world", level="info", timeout=5)
 
     def on_config_update(self, config):
         self.log_level = CONFIG.get("logging", "level", "INFO").upper()

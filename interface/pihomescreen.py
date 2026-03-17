@@ -2,7 +2,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
 from services.audio.audioplayernew import AUDIO_PLAYER
 from system.brightness import get_brightness, set_brightness
-from util.const import GESTURE_DATABASE
+from util.const import GESTURE_DATABASE, GESTURE_SWIPE_DOWN, GESTURE_SWIPE_DOWN_FROM_TOP
 from util.helpers import get_app, simplegesture
 
 class PiHomeScreen(Screen):
@@ -48,6 +48,7 @@ class PiHomeScreen(Screen):
     def touch_down(self, touch):
         userdata = touch.ud
         userdata['line'] = Line(points=(touch.x, touch.y))
+        userdata['start_y'] = touch.y
         return False
 
     def touch_up(self, touch):
@@ -57,7 +58,13 @@ class PiHomeScreen(Screen):
         g2 = GESTURE_DATABASE.find(g, minscore=0.70)
         # print(GESTURE_DATABASE.gesture_to_str(g))
         if g2:
-            self.on_gesture(g2[1])
+            matched = g2[1]
+            if matched == GESTURE_SWIPE_DOWN:
+                start_y = touch.ud.get('start_y', 0)
+                if start_y >= self.height * 0.95:
+                    self.on_gesture(GESTURE_SWIPE_DOWN_FROM_TOP)
+                    return False
+            self.on_gesture(matched)
         return False
 
     def touch_move(self, touch):

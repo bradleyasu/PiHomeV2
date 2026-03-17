@@ -219,10 +219,10 @@ class Wallpaper:
 
         self.url_cache.append(url)
         while len(self.url_cache) > self.cache_size:
-            url = self.url_cache.pop(0)
+            evicted = self.url_cache.pop(0)
             try:
-                os.remove("{}/_rsz_{}.png".format(TEMP_DIR, url_hash(url)))
-                os.remove("{}/_color_{}.png".format(TEMP_DIR, url_hash(url)))
+                os.remove("{}/_rsz_{}.png".format(TEMP_DIR, url_hash(evicted)))
+                os.remove("{}/_color_{}.png".format(TEMP_DIR, url_hash(evicted)))
             except Exception as e:
                 break
 

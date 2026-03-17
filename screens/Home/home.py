@@ -37,7 +37,7 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from util.const import (
     _SETTINGS_SCREEN, CDN_ASSET,
-    GESTURE_SWIPE_DOWN, GESTURE_SWIPE_UP,
+    GESTURE_SWIPE_DOWN, GESTURE_SWIPE_DOWN_FROM_TOP, GESTURE_SWIPE_UP,
     GESTURE_SWIPE_LEFT_TO_RIGHT, GESTURE_SWIPE_RIGHT_TO_LEFT,
 )
 
@@ -63,6 +63,8 @@ class HomeScreen(PiHomeScreen):
     brightness_slider = None
     banButton = None
     qr_img = None
+    _qr_poll_event = None
+    _qr_last_source = None
 
     # ── HA favorites panel state ──────────────────────────────────────────────
     _ha_card      = None   # currently displayed HADeviceCard widget, or None
@@ -114,7 +116,7 @@ class HomeScreen(PiHomeScreen):
     # ── Gestures ──────────────────────────────────────────────────────────────
 
     def handle_gesture(self, gesture):
-        if gesture == GESTURE_SWIPE_DOWN:
+        if gesture == GESTURE_SWIPE_DOWN_FROM_TOP:
             self._handle_swipe_down()
         elif gesture == GESTURE_SWIPE_UP:
             self._handle_swipe_up()
@@ -277,6 +279,26 @@ class HomeScreen(PiHomeScreen):
 
         Animation(x=target_x, opacity=1, t='out_quad', d=0.28).start(card)
 
+    # ── QR sync ─────────────────────────────────────────────────────────────
+
+    def _update_qr(self):
+        source = WALLPAPER_SERVICE.source
+        self._qr_last_source = source
+        qr_path = QR().from_url(source)
+
+        if self.qr_img is not None:
+            self.remove_widget(self.qr_img)
+
+        self.qr_img = NetworkImage(qr_path, size=(dp(256), dp(256)), pos=(dp(10), dp(10)))
+        self.qr_img.pos = (dp(get_app().width - 320), dp(100))
+        self.add_widget(self.qr_img)
+
+    def _check_qr_source(self):
+        if self.qr_img is None:
+            return
+        if WALLPAPER_SERVICE.source != self._qr_last_source:
+            self._update_qr()
+
     # ── Config / lifecycle ────────────────────────────────────────────────────
 
     def on_config_update(self, config):
@@ -329,12 +351,14 @@ class HomeScreen(PiHomeScreen):
             self.banButton.bind(on_release=lambda x: WALLPAPER_SERVICE.ban())
             self.add_widget(self.banButton)
 
-            qr = QR().from_url(WALLPAPER_SERVICE.source)
-            self.qr_img = NetworkImage(qr, size=(dp(256), dp(256)), pos=(dp(10), dp(10)))
-            # center the qr code
-            self.qr_img.pos = (dp(get_app().width - 320), dp(100))
-            self.add_widget(self.qr_img)
+            self._update_qr()
+            self._qr_poll_event = Clock.schedule_interval(lambda _: self._check_qr_source(), 2)
         else:
+            if self._qr_poll_event:
+                self._qr_poll_event.cancel()
+                self._qr_poll_event = None
+            self._qr_last_source = None
+
             self.remove_widget(self.brightness_slider)
             self.brightness_slider = None
             self.remove_widget(self.banButton)
