@@ -1,0 +1,126 @@
+{
+    "module": "Nanoleaf.nanoleaf",
+    "name": "NanoleafScreen",
+    "id": "_nanoleaf",
+    "label": "Nanoleaf",
+    "settingsLabel": "Nanoleaf",
+    "settingsIndex": 20,
+    "description": "Control Nanoleaf Shapes panels individually with color picker and layout view",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 20,
+    "icon": "screens/Nanoleaf/icon.png",
+    "settings": [
+        {
+            "type": "title",
+            "title": "Controller 1"
+        },
+        {
+            "type": "string",
+            "title": "IP Address",
+            "desc": "Local IP address of your Nanoleaf controller (e.g. 192.168.1.50)",
+            "section": "nanoleaf",
+            "key": "ip_1"
+        },
+        {
+            "type": "string",
+            "title": "Auth Token",
+            "desc": "Auth token (use Pair button on screen, or paste manually)",
+            "section": "nanoleaf",
+            "key": "token_1"
+        },
+        {
+            "type": "string",
+            "title": "Display Name",
+            "desc": "Friendly name for this controller (e.g. Living Room)",
+            "section": "nanoleaf",
+            "key": "name_1"
+        },
+        {
+            "type": "title",
+            "title": "Controller 2 (optional)"
+        },
+        {
+            "type": "string",
+            "title": "IP Address",
+            "desc": "Leave blank if you only have one controller",
+            "section": "nanoleaf",
+            "key": "ip_2"
+        },
+        {
+            "type": "string",
+            "title": "Auth Token",
+            "desc": "Auth token (use Pair button on screen, or paste manually)",
+            "section": "nanoleaf",
+            "key": "token_2"
+        },
+        {
+            "type": "string",
+            "title": "Display Name",
+            "desc": "Friendly name for this controller",
+            "section": "nanoleaf",
+            "key": "name_2"
+        },
+        {
+            "type": "title",
+            "title": "Controller 3 (optional)"
+        },
+        {
+            "type": "string",
+            "title": "IP Address",
+            "desc": "Leave blank if not used",
+            "section": "nanoleaf",
+            "key": "ip_3"
+        },
+        {
+            "type": "string",
+            "title": "Auth Token",
+            "desc": "Auth token (use Pair button on screen, or paste manually)",
+            "section": "nanoleaf",
+            "key": "token_3"
+        },
+        {
+            "type": "string",
+            "title": "Display Name",
+            "desc": "Friendly name for this controller",
+            "section": "nanoleaf",
+            "key": "name_3"
+        },
+        {
+            "type": "title",
+            "title": "Controller 4 (optional)"
+        },
+        {
+            "type": "string",
+            "title": "IP Address",
+            "desc": "Leave blank if not used",
+            "section": "nanoleaf",
+            "key": "ip_4"
+        },
+        {
+            "type": "string",
+            "title": "Auth Token",
+            "desc": "Auth token (use Pair button on screen, or paste manually)",
+            "section": "nanoleaf",
+            "key": "token_4"
+        },
+        {
+            "type": "string",
+            "title": "Display Name",
+            "desc": "Friendly name for this controller",
+            "section": "nanoleaf",
+            "key": "name_4"
+        },
+        {
+            "type": "title",
+            "title": "General"
+        },
+        {
+            "type": "numeric",
+            "title": "Refresh Interval",
+            "desc": "How often to poll panel state when screen is open (seconds)",
+            "section": "nanoleaf",
+            "key": "refresh_interval"
+        }
+    ]
+}

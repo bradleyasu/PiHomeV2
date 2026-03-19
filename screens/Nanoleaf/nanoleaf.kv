@@ -1,0 +1,403 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<NanoleafScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+
+        # ── Header ──────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(44)
+            padding: dp(54), 0, dp(10), 0
+            spacing: dp(8)
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+                Color:
+                    rgba: 1, 1, 1, 0.06
+                Rectangle:
+                    size: self.width, dp(1)
+                    pos: self.x, self.y
+
+            # Screen icon
+            Label:
+                text: "\ue40a"
+                font_name: "MaterialIcons"
+                font_size: sp(20)
+                color: root.accent_color
+                size_hint_x: None
+                width: dp(26)
+                halign: "center"
+                valign: "middle"
+
+            # Title
+            Label:
+                text: "NANOLEAF"
+                font_name: "Nunito"
+                font_size: sp(12)
+                bold: True
+                color: root.text_color
+                size_hint_x: None
+                width: dp(80)
+
+            # Dynamic controller tabs (populated in Python)
+            BoxLayout:
+                id: ctrl_tabs
+                orientation: "horizontal"
+                size_hint_x: None
+                width: self.minimum_width
+                spacing: dp(4)
+
+            # Add controller "+" button (visible when <4 controllers)
+            BoxLayout:
+                id: add_btn_header
+                size_hint_x: None
+                width: dp(30) if not root.show_empty_state else 0
+                opacity: 1 if not root.show_empty_state else 0
+                padding: dp(2)
+                canvas.before:
+                    Color:
+                        rgba: root.card_color if not root.show_empty_state else [0, 0, 0, 0]
+                    RoundedRectangle:
+                        size: self.size
+                        pos: self.pos
+                        radius: [dp(4)]
+                Label:
+                    text: "\ue145"
+                    font_name: "MaterialIcons"
+                    font_size: sp(16)
+                    color: root.accent_color
+                    halign: "center"
+                    valign: "middle"
+
+            # Spacer
+            Widget:
+
+            # Power toggle
+            BoxLayout:
+                id: power_btn
+                size_hint_x: None
+                width: dp(36)
+                padding: dp(4)
+                canvas.before:
+                    Color:
+                        rgba: root.accent_color if root.power_on else [0.35, 0.35, 0.35, 1]
+                    RoundedRectangle:
+                        size: self.size
+                        pos: self.pos
+                        radius: [dp(4)]
+                Label:
+                    text: "\ue8ac"
+                    font_name: "MaterialIcons"
+                    font_size: sp(18)
+                    color: root.bg_color if root.power_on else [0.6, 0.6, 0.6, 1]
+                    halign: "center"
+                    valign: "middle"
+
+            # Status dot
+            Widget:
+                size_hint: None, None
+                size: dp(8), dp(8)
+                pos_hint: {"center_y": 0.5}
+                canvas:
+                    Color:
+                        rgba: root.status_color
+                    Ellipse:
+                        pos: self.pos
+                        size: self.size
+
+        # ── Body ────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            spacing: dp(4)
+
+            # Left — Panel layout canvas + empty state overlay
+            RelativeLayout:
+                # Panel canvas (always present, renders when panels exist)
+                PanelCanvas:
+                    id: panel_canvas
+                    panels: root.panels
+                    panel_colors: root.panel_colors
+                    selected_panel: root.selected_panel
+                    side_length: root.side_length
+                    on_panel_selected: root.on_panel_tapped(*args)
+                    size_hint: 1, 1
+
+                # Empty state — shown when no controllers configured
+                BoxLayout:
+                    id: empty_state
+                    orientation: "vertical"
+                    size_hint: 1, 1
+                    opacity: 1 if root.show_empty_state else 0
+                    disabled: not root.show_empty_state
+                    padding: dp(40)
+                    spacing: dp(12)
+
+                    Widget:
+
+                    Label:
+                        text: "\ue40a"
+                        font_name: "MaterialIcons"
+                        font_size: sp(48)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(56)
+                        halign: "center"
+                        valign: "middle"
+
+                    Label:
+                        text: "No Nanoleaf Controllers"
+                        font_name: "Nunito"
+                        font_size: sp(16)
+                        bold: True
+                        color: root.text_color
+                        size_hint_y: None
+                        height: dp(28)
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: "Discover controllers on your network to get started"
+                        font_name: "Nunito"
+                        font_size: sp(11)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(20)
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                    # Add Controller button
+                    AnchorLayout:
+                        size_hint_y: None
+                        height: dp(44)
+                        BoxLayout:
+                            id: add_ctrl_btn
+                            orientation: "horizontal"
+                            size_hint: None, None
+                            size: dp(220), dp(42)
+                            spacing: dp(6)
+                            padding: dp(16), 0, dp(16), 0
+                            canvas.before:
+                                Color:
+                                    rgba: root.accent_color
+                                RoundedRectangle:
+                                    size: self.size
+                                    pos: self.pos
+                                    radius: [dp(6)]
+                            Label:
+                                text: "\ue145"
+                                font_name: "MaterialIcons"
+                                font_size: sp(18)
+                                color: [1, 1, 1, 1]
+                                size_hint_x: None
+                                width: dp(24)
+                                halign: "center"
+                                valign: "middle"
+                            Label:
+                                text: "ADD CONTROLLER"
+                                font_name: "Nunito"
+                                font_size: sp(12)
+                                bold: True
+                                color: [1, 1, 1, 1]
+                                halign: "left"
+                                valign: "middle"
+                                text_size: self.size
+
+                    Widget:
+
+            # Right — Controls sidebar
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: None
+                width: dp(260)
+                padding: dp(10), dp(8), dp(10), dp(8)
+                spacing: dp(6)
+                canvas.before:
+                    Color:
+                        rgba: root.card_color
+                    RoundedRectangle:
+                        size: self.size
+                        pos: self.pos
+                        radius: [dp(6), 0, 0, dp(6)]
+
+                # Color wheel
+                ColorWheel:
+                    id: color_wheel
+                    size_hint: 1, None
+                    height: min(self.parent.width - dp(20), dp(200))
+                    hue: root.current_hue
+                    saturation: root.current_sat
+                    brightness: root.current_brightness
+
+                # Brightness row
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(32)
+                    spacing: dp(6)
+
+                    Label:
+                        text: "\ue518"
+                        font_name: "MaterialIcons"
+                        font_size: sp(18)
+                        color: root.muted_color
+                        size_hint_x: None
+                        width: dp(24)
+                        halign: "center"
+                        valign: "middle"
+
+                    Slider:
+                        id: brightness_slider
+                        min: 1
+                        max: 100
+                        value: root.current_brightness
+                        on_value: root.on_brightness_slider(self.value)
+                        cursor_size: dp(20), dp(20)
+
+                    Label:
+                        text: root.brightness_text
+                        font_name: "Nunito"
+                        font_size: sp(11)
+                        color: root.muted_color
+                        size_hint_x: None
+                        width: dp(36)
+                        halign: "right"
+                        valign: "middle"
+                        text_size: self.size
+
+                # Set All / Effects buttons row
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(34)
+                    spacing: dp(6)
+
+                    # Set All toggle
+                    BoxLayout:
+                        id: set_all_btn
+                        canvas.before:
+                            Color:
+                                rgba: root.accent_color if root.set_all_mode else root.header_color
+                            RoundedRectangle:
+                                size: self.size
+                                pos: self.pos
+                                radius: [dp(4)]
+                        Label:
+                            text: "SET ALL"
+                            font_name: "Nunito"
+                            font_size: sp(10)
+                            bold: True
+                            color: root.bg_color if root.set_all_mode else root.text_color
+                            halign: "center"
+                            valign: "middle"
+                            text_size: self.size
+
+                    # Effects button
+                    BoxLayout:
+                        id: effects_btn
+                        canvas.before:
+                            Color:
+                                rgba: root.header_color
+                            RoundedRectangle:
+                                size: self.size
+                                pos: self.pos
+                                radius: [dp(4)]
+                        Label:
+                            text: "EFFECTS"
+                            font_name: "Nunito"
+                            font_size: sp(10)
+                            bold: True
+                            color: root.text_color
+                            halign: "center"
+                            valign: "middle"
+                            text_size: self.size
+
+                # Current effect label
+                Label:
+                    text: root.effect_text
+                    font_name: "Nunito"
+                    font_size: sp(9)
+                    color: root.muted_color
+                    size_hint_y: None
+                    height: dp(18)
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
+
+                # Rotary mode indicator
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(22)
+                    spacing: dp(4)
+                    Label:
+                        text: "\ue3a5" if root.rotary_mode == "brightness" else "\ue40a"
+                        font_name: "MaterialIcons"
+                        font_size: sp(14)
+                        color: root.accent_color
+                        size_hint_x: None
+                        width: dp(20)
+                        halign: "center"
+                        valign: "middle"
+                    Label:
+                        text: root.rotary_mode_text
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        color: root.muted_color
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                # Pair button (visible when token missing)
+                BoxLayout:
+                    id: pair_btn
+                    size_hint_y: None
+                    height: dp(34) if root.show_pair_btn else 0
+                    opacity: 1 if root.show_pair_btn else 0
+                    disabled: not root.show_pair_btn
+                    canvas.before:
+                        Color:
+                            rgba: [0.2, 0.65, 0.4, 1] if root.show_pair_btn else [0, 0, 0, 0]
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(4)]
+                    Label:
+                        text: "PAIR CONTROLLER"
+                        font_name: "Nunito"
+                        font_size: sp(10)
+                        bold: True
+                        color: [1, 1, 1, 1]
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                # Status text
+                Label:
+                    text: root.status_text
+                    font_name: "Nunito"
+                    font_size: sp(9)
+                    color: root.muted_color
+                    size_hint_y: None
+                    height: dp(16)
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
+
+                # Bottom spacer
+                Widget:
