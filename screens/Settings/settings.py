@@ -374,8 +374,6 @@ class SettingsScreen(PiHomeScreen):
             sidebar.add_widget(item)
             self._sidebar_items.append(item)
 
-        sidebar.add_widget(Widget())   # pushes items to top
-
     def _select_panel(self, index):
         for i, item in enumerate(self._sidebar_items):
             item.is_selected = (i == index)

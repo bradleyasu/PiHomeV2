@@ -385,14 +385,11 @@
             orientation: 'horizontal'
             size_hint: 1, 1
 
-            # Left sidebar
+            # Left sidebar (scrollable)
             BoxLayout:
-                id: settings_sidebar
                 orientation: 'vertical'
                 size_hint_x: None
                 width: dp(175)
-                padding: [dp(6), dp(10), dp(6), dp(10)]
-                spacing: dp(2)
 
                 canvas.before:
                     Color:
@@ -400,6 +397,19 @@
                     Rectangle:
                         pos:  self.pos
                         size: self.size
+
+                ScrollView:
+                    do_scroll_x: False
+                    bar_width: 0
+                    scroll_type: ['content']
+
+                    BoxLayout:
+                        id: settings_sidebar
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: [dp(6), dp(10), dp(6), dp(10)]
+                        spacing: dp(2)
 
             # Thin divider
             Widget:
