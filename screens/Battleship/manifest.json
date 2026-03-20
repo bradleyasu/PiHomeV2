@@ -1,0 +1,30 @@
+{
+    "module": "Battleship.battleship",
+    "name": "BattleshipScreen",
+    "id": "_battleship",
+    "label": "Battleship",
+    "settingsLabel": "Battleship",
+    "settingsIndex": 60,
+    "description": "Two-player naval combat game",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 60,
+    "icon": "screens/Battleship/icon.png",
+    "settings": [
+        { "type": "title", "title": "Player Names" },
+        {
+            "type": "string",
+            "title": "Player 1 Name",
+            "desc": "Display name for Player 1",
+            "section": "battleship",
+            "key": "p1_name"
+        },
+        {
+            "type": "string",
+            "title": "Player 2 Name",
+            "desc": "Display name for Player 2",
+            "section": "battleship",
+            "key": "p2_name"
+        }
+    ]
+}
