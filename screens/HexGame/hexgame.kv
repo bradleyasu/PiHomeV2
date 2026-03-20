@@ -1,0 +1,75 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<HexGameScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+
+        # ── Header ──
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(44)
+            padding: dp(54), 0, dp(10), 0
+            spacing: dp(8)
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+                Color:
+                    rgba: 1, 1, 1, 0.06
+                Rectangle:
+                    size: self.width, dp(1)
+                    pos: self.x, self.y
+
+            Label:
+                text: "\ue1b1"
+                font_name: "MaterialIcons"
+                font_size: sp(20)
+                color: root.accent_color
+                size_hint_x: None
+                width: dp(26)
+                halign: "center"
+                valign: "middle"
+
+            Label:
+                text: "HEX"
+                font_name: "Nunito"
+                font_size: sp(12)
+                bold: True
+                color: root.text_color
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Widget:
+
+            Label:
+                text: root.status_text
+                font_name: "Nunito"
+                font_size: sp(10)
+                color: root.muted_color
+                halign: "right"
+                valign: "middle"
+                text_size: self.size
+
+        # ── Body ──
+        FloatLayout:
+            id: body
+            canvas.before:
+                Color:
+                    rgba: 0.05, 0.05, 0.08, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos

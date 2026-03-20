@@ -1,0 +1,39 @@
+{
+    "module": "HexGame.hexgame",
+    "name": "HexGameScreen",
+    "id": "_hexgame",
+    "label": "Hex",
+    "settingsLabel": "Hex",
+    "settingsIndex": 61,
+    "description": "Two-player hex connection strategy game",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 61,
+    "icon": "screens/HexGame/icon.png",
+    "settings": [
+        { "type": "title", "title": "Player Names" },
+        {
+            "type": "string",
+            "title": "Player 1 Name (Blue)",
+            "desc": "Connects left to right edges",
+            "section": "hexgame",
+            "key": "p1_name"
+        },
+        {
+            "type": "string",
+            "title": "Player 2 Name (Red)",
+            "desc": "Connects top to bottom edges",
+            "section": "hexgame",
+            "key": "p2_name"
+        },
+        { "type": "title", "title": "Board" },
+        {
+            "type": "options",
+            "title": "Board Size",
+            "desc": "Grid dimensions (larger = longer game)",
+            "section": "hexgame",
+            "key": "board_size",
+            "options": ["7", "9", "11"]
+        }
+    ]
+}
