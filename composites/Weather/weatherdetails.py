@@ -74,6 +74,8 @@ class WeatherDetails(Widget):
                     "weatherCodeDay": 10000,
                     "weatherCodeNight": 10001,
                     "windDirection": 239.09,
+                    "snowAccumulation": 0,
+                    "rainAccumulation": 0,
                     "windSpeed": 9.81
             }
         """

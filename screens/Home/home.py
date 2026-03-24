@@ -147,9 +147,7 @@ class HomeScreen(PiHomeScreen):
             return
         self._ha_favorites = favs
         if self._ha_card is None:
-            # No card visible — slide down from above
-            idx = 0 if delta > 0 else len(favs) - 1
-            self._show_ha_card(idx)
+            return  # card not visible — only swipe-down should show it
         else:
             new_idx = (self._ha_idx + delta) % len(favs)
             # Slide current card out in the swipe direction, new card in from the opposite edge

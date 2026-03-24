@@ -7,6 +7,7 @@ from threading import Thread
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
 from networking.poller import POLLER
+from services.weather.insight import Insight
 from util.configuration import CONFIG
 from util.helpers import get_app, toast
 from util.phlog import PIHOME_LOGGER
@@ -16,7 +17,10 @@ class Weather:
     Weather interface with tomorrow.io api to fetch current weather information
     based on latitude and longitude location 
     """
-    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=temperature,temperatureApparent,humidity,windSpeed,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windSpeed,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=rainAccumulation,snowAccumulation,temperature,temperatureApparent,humidity,windSpeed,windGust,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
+
+    insight_api_url = "https://api.tomorrow.io/v4/events?insights=thunderstorms&insights=air&insights=wind&insights=floods&insights=winter&insights=tornado&insights=temperature&buffer=1&location={},{}&apikey={}"
+
     latitude = 0
     longitude = 0 
     api_key = ""
@@ -27,6 +31,8 @@ class Weather:
     weather_code = 0 # Current weather Code
     weather_code_day = 0 # Weather for today, sunrise to sunset
     weather_code_night = 0 # Weather code during the night
+    snow_accumulation = 0
+    rain_accumulation = 0
     temperature = 0
     feels_like = 0
     humidity = 0
@@ -52,6 +58,8 @@ class Weather:
     future = []
     future_daily = []
 
+    insights = []
+
     def __init__(self, **kwargs):
         super(Weather, self).__init__(**kwargs)
         self.enabled = CONFIG.get_int("weather", "enabled", 0)
@@ -61,6 +69,7 @@ class Weather:
         if self.enabled == 1:
             if self.api_key != "":
                 self.register_weather_api_call(self.api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_weather)
+                self.register_weather_api_call(self.insight_api_url.format(self.latitude, self.longitude, self.api_key), self.interval, self.update_insights)
             else:
                 PIHOME_LOGGER.warn("[ WEATHER ] Weather is enabled but no API key is set.  Weather features are disabled.")
                 Clock.schedule_once(lambda _: toast("Weather API key is not set, please configure in settings", "warn", 10), 15)
@@ -81,7 +90,8 @@ class Weather:
             if value["timestep"] == 'current':
                 self.proc_current(value)
 
-
+    def update_insights(self, insight_data):
+        self.insights = Insight.from_response(insight_data)
 
     def proc_forcast(self, data):
         #self.future = data["intervals"]
@@ -104,6 +114,9 @@ class Weather:
         self.sunrise_time = data["sunriseTime"]
         self.sunset_time = data["sunsetTime"]
         self.feels_like = data["temperatureApparent"]
+        self.rain_accumulation = data["rainAccumulation"]
+        self.snow_accumulation = data["snowAccumulation"]
+        self.wind_gust = data["windGust"]
 
     def is_currently_day(self, dt=None):
         """
