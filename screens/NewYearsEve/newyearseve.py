@@ -16,7 +16,7 @@ class NewYearsEveScreen(PiHomeScreen):
         super(NewYearsEveScreen, self).__init__(**kwargs)
 
     def on_enter(self, *args):
-        self.start(True)
+        self.start()
         return super().on_enter(*args)
 
     def on_leave(self, *args):
