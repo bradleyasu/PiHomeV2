@@ -209,15 +209,7 @@ class DevTools(PiHomeScreen):
     def action_restart_pihome(self):
         def do_restart():
             PIHOME_LOGGER.info("DevTools: Restarting PiHome service...")
-            try:
-                subprocess.Popen(
-                    ["sudo", "systemctl", "restart", "pihome"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            except Exception as e:
-                PIHOME_LOGGER.error("DevTools: Restart failed: {}".format(e))
-
+            PIHOME_SCREEN_MANAGER.goto("_shutdown")
         MSGBOX_FACTORY.show(
             "Restart PiHome",
             "Restart the PiHome application?",
