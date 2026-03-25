@@ -12,16 +12,28 @@
         pos: root.pos
         size: root.size
 
-        # ── Startup logo — centered, fades out ────────────────────────────────
+        # ── Startup logo — centered, scales in then lifts away ────────────────
         Label:
             id: home_pihome_logo
             color: root.text_color
             text: "PiHome"
-            pos_hint: {'center_x': .5, 'center_y': .5}
+            pos_hint: {'center_x': .5}
+            y: root.center_y - self.height / 2 + root.logo_y_offset
             font_size: '72sp'
             font_name: 'Nunito'
             bold: True
             opacity: root.logo_opacity
+            size_hint: None, None
+            size: self.texture_size
+            canvas.before:
+                PushMatrix
+                Scale:
+                    x: root.logo_scale
+                    y: root.logo_scale
+                    z: 1
+                    origin: self.center
+            canvas.after:
+                PopMatrix
 
         # ── Date / Time — lower-left, slides up on startup ────────────────────
         Label:

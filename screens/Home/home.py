@@ -51,7 +51,9 @@ class HomeScreen(PiHomeScreen):
     text_color = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY, 0.3))
 
-    logo_opacity = NumericProperty(1)
+    logo_opacity = NumericProperty(0)
+    logo_scale = NumericProperty(0.85)
+    logo_y_offset = NumericProperty(0)
 
     date_time_y_offset = NumericProperty(-100)
     date_time_opacity = NumericProperty(0)
@@ -84,11 +86,31 @@ class HomeScreen(PiHomeScreen):
 
     def on_enter(self, *args):
         if self.is_first_run is True:
+            # Hide hamburger during splash
+            try:
+                get_app().menu_button.disable()
+            except Exception:
+                pass
+            # Logo fades + scales in immediately
+            self._logo_intro()
+            # Main reveal after loading delay
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False
 
         self._start_wave_visualizer()
         return super().on_enter(*args)
+
+    def _logo_intro(self):
+        """Fade and scale the logo in on first load."""
+        intro = Animation(logo_opacity=1, logo_scale=1.0, t='out_cubic', d=1.2)
+        # Gentle breathing pulse while waiting
+        breathe_in = Animation(logo_scale=1.03, t='in_out_sine', d=2.5)
+        breathe_out = Animation(logo_scale=0.97, t='in_out_sine', d=2.5)
+        breathe = breathe_in + breathe_out
+        breathe.repeat = True
+        intro.bind(on_complete=lambda *_: breathe.start(self))
+        self._logo_breathe = breathe
+        intro.start(self)
 
     def on_pre_leave(self, *args):
         self._stop_wave_visualizer()
@@ -124,11 +146,41 @@ class HomeScreen(PiHomeScreen):
 
     def startup_animation(self):
         SFX.play("startup")
-        animation = Animation(logo_opacity = 0, t='linear', d=1)
-        animation &= Animation(date_time_opacity = 1, t='out_elastic', d=1)
-        animation &= Animation(date_time_y_offset = 0, t='out_elastic', d=1)
-        animation &= Animation(weather_opacity = 1, t='linear', d=1)
-        animation.start(self)
+
+        # Stop the breathing loop
+        if hasattr(self, '_logo_breathe'):
+            self._logo_breathe.cancel(self)
+
+        # Phase 1: Logo lifts up and fades out
+        logo_exit = Animation(
+            logo_opacity=0,
+            logo_y_offset=dp(40),
+            logo_scale=1.05,
+            t='in_out_cubic', d=0.8
+        )
+
+        # Phase 2: Date/time slides up smoothly
+        dt_reveal = Animation(
+            date_time_opacity=1,
+            date_time_y_offset=0,
+            t='out_cubic', d=0.7
+        )
+
+        # Phase 3: Weather fades in
+        weather_reveal = Animation(weather_opacity=1, t='out_cubic', d=0.6)
+
+        # Sequence: logo out → (short pause) → date/time → weather → hamburger
+        def _after_logo(*args):
+            Clock.schedule_once(lambda _: dt_reveal.start(self), 0.15)
+            Clock.schedule_once(lambda _: weather_reveal.start(self), 0.45)
+            # Re-enable the hamburger menu
+            try:
+                get_app().menu_button.enable()
+            except Exception:
+                pass
+
+        logo_exit.bind(on_complete=_after_logo)
+        logo_exit.start(self)
 
     def run(self):
         time.ctime()
