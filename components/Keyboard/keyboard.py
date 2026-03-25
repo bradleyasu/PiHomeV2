@@ -152,7 +152,8 @@ class PiHomeKeyboard(BoxLayout):
         # so the Pi display metrics are fully initialised first.
         kb_row_h  = dp(52)
         kb_pad    = dp(8)
-        kb_height = kb_row_h * KB_ROWS + kb_pad * 2 + dp(4) * (KB_ROWS - 1)
+        preview_h = dp(36)
+        kb_height = preview_h + kb_row_h * KB_ROWS + kb_pad * 2 + dp(4) * (KB_ROWS - 1)
 
         self.orientation = 'vertical'
         self.size_hint   = (1, None)
@@ -160,7 +161,7 @@ class PiHomeKeyboard(BoxLayout):
         self._kb_height  = kb_height
         self.y           = -kb_height   # start off-screen below
         self.opacity     = 0
-        self.padding     = [dp(10), kb_pad, dp(10), kb_pad]
+        self.padding     = [dp(10), kb_pad, dp(10), 0]
         self.spacing     = dp(4)
 
         th = Theme()
@@ -188,6 +189,67 @@ class PiHomeKeyboard(BoxLayout):
                                    size=(self.width, dp(1)))
         self.bind(pos=self._upd_bg, size=self._upd_bg)
 
+        # ── Text preview bar (sits above key rows) ──────────────────────
+        self._preview_bar = BoxLayout(
+            orientation='horizontal',
+            size_hint=(1, None),
+            height=preview_h,
+            padding=[dp(12), dp(4), dp(12), dp(4)],
+        )
+        preview_bg = _lift(bg, 1.4)
+        with self._preview_bar.canvas.before:
+            Color(rgba=preview_bg)
+            self._preview_bg_rect = RoundedRectangle(
+                pos=self._preview_bar.pos,
+                size=self._preview_bar.size,
+                radius=[dp(6)],
+            )
+            # bottom separator
+            Color(rgba=(1, 1, 1, 0.07))
+            self._preview_sep = Rectangle(
+                pos=self._preview_bar.pos,
+                size=(self._preview_bar.width, dp(1)),
+            )
+        self._preview_bar.bind(
+            pos=self._upd_preview_bg, size=self._upd_preview_bg
+        )
+
+        self._preview_label = Label(
+            text='',
+            font_name='Nunito',
+            font_size='14sp',
+            color=(1, 1, 1, 0.85),
+            halign='left',
+            valign='middle',
+            shorten=True,
+            shorten_from='left',
+        )
+        self._preview_label.bind(
+            size=lambda i, v: setattr(i, 'text_size', v)
+        )
+        self._preview_hint = Label(
+            text='',
+            font_name='Nunito',
+            font_size='11sp',
+            color=(1, 1, 1, 0.30),
+            halign='right',
+            valign='middle',
+            size_hint_x=None,
+            width=dp(100),
+        )
+        self._preview_hint.bind(
+            size=lambda i, v: setattr(i, 'text_size', v)
+        )
+        self._preview_bar.add_widget(self._preview_label)
+        self._preview_bar.add_widget(self._preview_hint)
+        self.add_widget(self._preview_bar)
+
+        # ── Key rows container ──────────────────────────────────────────
+        self._keys_container = BoxLayout(
+            orientation='vertical', size_hint=(1, 1), spacing=dp(4),
+        )
+        self.add_widget(self._keys_container)
+
         self._build_rows()
 
     # ── private ───────────────────────────────────────────────────────────────
@@ -198,8 +260,15 @@ class PiHomeKeyboard(BoxLayout):
         self._line.pos = (self.x, self.top - dp(1))
         self._line.size = (self.width, dp(1))
 
+    def _upd_preview_bg(self, *_):
+        bar = self._preview_bar
+        self._preview_bg_rect.pos  = bar.pos
+        self._preview_bg_rect.size = bar.size
+        self._preview_sep.pos  = (bar.x, bar.y)
+        self._preview_sep.size = (bar.width, dp(1))
+
     def _build_rows(self):
-        self.clear_widgets()
+        self._keys_container.clear_widgets()
         rows = _ROW_UPPER if self.shifted else (_ROW_NUM if self.nums else _ROW_LOWER)
         for row in rows:
             total_w = sum(w for _, w in row)
@@ -207,7 +276,7 @@ class PiHomeKeyboard(BoxLayout):
             for lbl, w in row:
                 key = _Key(lbl, w / total_w, self._press, self._theme)
                 row_box.add_widget(key)
-            self.add_widget(row_box)
+            self._keys_container.add_widget(row_box)
 
     # ── public ────────────────────────────────────────────────────────────────
 
@@ -216,8 +285,14 @@ class PiHomeKeyboard(BoxLayout):
         # (Kivy's normal focus exclusivity relies on _bind_keyboard which
         # PiTextInput suppresses on Pi.)
         if self.target is not None and self.target is not target:
+            self.target.unbind(text=self._sync_preview)
             self.target.focus = False
         self.target = target
+        # Sync preview bar to the new target
+        target.bind(text=self._sync_preview)
+        self._sync_preview(target, target.text)
+        hint = getattr(target, 'hint_text', '')
+        self._preview_hint.text = hint if hint else ''
         # Re-add to Window each time so we are always the topmost widget
         if self.parent:
             self.parent.remove_widget(self)
@@ -227,11 +302,18 @@ class PiHomeKeyboard(BoxLayout):
         Animation(y=0, d=0.2, t='out_cubic').start(self)
 
     def hide(self):
+        if self.target is not None:
+            self.target.unbind(text=self._sync_preview)
         Animation.cancel_all(self, 'y')
         anim = Animation(y=-self._kb_height, d=0.18, t='in_cubic')
         anim.bind(on_complete=lambda *_: setattr(self, 'opacity', 0))
         anim.start(self)
+        self._preview_label.text = ''
+        self._preview_hint.text = ''
         self.target = None
+
+    def _sync_preview(self, instance, text):
+        self._preview_label.text = text
 
     # ── kivy property observers ───────────────────────────────────────────────
 
