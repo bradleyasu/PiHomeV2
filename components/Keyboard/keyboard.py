@@ -212,6 +212,11 @@ class PiHomeKeyboard(BoxLayout):
     # ── public ────────────────────────────────────────────────────────────────
 
     def show(self, target):
+        # Unfocus the previous target so only one field is active at a time.
+        # (Kivy's normal focus exclusivity relies on _bind_keyboard which
+        # PiTextInput suppresses on Pi.)
+        if self.target is not None and self.target is not target:
+            self.target.focus = False
         self.target = target
         # Re-add to Window each time so we are always the topmost widget
         if self.parent:
@@ -288,6 +293,8 @@ class PiTextInput(TextInput):
     normally so physical-keyboard debugging is unaffected.
     """
 
+    _active_input = None   # class-level ref to the currently focused instance
+
     def _bind_keyboard(self):
         if _IS_PI:
             return   # suppress Kivy's keyboard on Pi
@@ -299,13 +306,22 @@ class PiTextInput(TextInput):
         super()._unbind_keyboard()
 
     def on_focus(self, instance, value):
-        # Do NOT call super().on_focus — TextInput handles focus internally
-        # via the property system; calling it directly raises AttributeError.
-        if not _IS_PI:
-            return   # let macOS handle keyboard normally
         if value:
+            # Unfocus the previously active PiTextInput so only one field
+            # is active at a time.  _bind_keyboard is suppressed on Pi so
+            # Kivy can't enforce this for us.
+            prev = PiTextInput._active_input
+            if prev is not None and prev is not self and prev.focus:
+                prev.focus = False
+            PiTextInput._active_input = self
+            if not _IS_PI:
+                return   # macOS uses Kivy's native keyboard
             Clock.schedule_once(lambda dt: _get_keyboard().show(self), 0)
         else:
+            if PiTextInput._active_input is self:
+                PiTextInput._active_input = None
+            if not _IS_PI:
+                return
             Clock.schedule_once(self._maybe_hide, 0.06)
 
     def on_touch_up(self, touch):
