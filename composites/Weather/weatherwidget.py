@@ -1,8 +1,11 @@
+import math
 from datetime import datetime, timezone
+from random import uniform
 
 from composites.Weather.weatherdetails import WeatherDetails
 from composites.Weather.weatherchips import (
     UVChip, WindChip, PrecipChip, HumidityChip, CloudChip, SunMoonChip,
+    PrecipParticle,
 )
 from kivy.lang import Builder
 from kivy.properties import Property, BooleanProperty, ColorProperty, StringProperty, NumericProperty, DictProperty, ListProperty, ObjectProperty, ReferenceListProperty
@@ -15,7 +18,7 @@ from kivy.uix.carousel import Carousel
 from kivy.uix.floatlayout import FloatLayout
 from kivy.animation import Animation
 from kivy.clock import Clock
-from kivy.graphics import Color, RoundedRectangle, Rectangle, Ellipse, Line
+from kivy.graphics import Color, RoundedRectangle, Rectangle, Ellipse, Line, InstructionGroup
 from services.weather.weather import WEATHER
 from services.weather.insight import Insight, Severity
 from theme.theme import Theme
@@ -120,6 +123,12 @@ class WeatherWidget(Widget):
         self._clock_event = None
         self._last_alert_keys = []
 
+        # Ambient overlay precipitation particles
+        self._overlay_particles = []
+        self._overlay_particle_group = InstructionGroup()
+        self._overlay_particle_clock = None
+        self._overlay_spawn_timer = 0
+
         if CONFIG.get_int("weather", "enabled", 0) == 1:
             self._clock_event = Clock.schedule_interval(lambda _: self.update(), 1)
             PIHOME_LOGGER.info("Weather is enabled.  Weather update thread will be running.")
@@ -156,6 +165,102 @@ class WeatherWidget(Widget):
                 precip_chip.start_particles()
             else:
                 precip_chip.stop_particles()
+
+        # Ambient overlay particles
+        if opacity == 1:
+            self._start_overlay_particles()
+        else:
+            self._stop_overlay_particles()
+
+    # ── Ambient overlay precipitation ──
+
+    def _start_overlay_particles(self):
+        if self._overlay_particle_clock is not None:
+            return
+        overlay = self.ids.get('overlay_card')
+        if overlay:
+            overlay.canvas.after.add(self._overlay_particle_group)
+        self._overlay_particle_clock = Clock.schedule_interval(self._overlay_particle_tick, 1 / 20.0)
+
+    def _stop_overlay_particles(self):
+        if self._overlay_particle_clock is not None:
+            self._overlay_particle_clock.cancel()
+            self._overlay_particle_clock = None
+        self._overlay_particles.clear()
+        self._overlay_particle_group.clear()
+        overlay = self.ids.get('overlay_card')
+        if overlay:
+            try:
+                overlay.canvas.after.remove(self._overlay_particle_group)
+            except ValueError:
+                pass
+
+    def _overlay_particle_tick(self, dt):
+        intensity = WEATHER.precip_intensity
+        prob = WEATHER.precip_propability
+        is_snow = WEATHER.temperature <= 32
+
+        # Only animate when precipitation is likely
+        if intensity <= 0 and prob <= 20:
+            if self._overlay_particles:
+                self._overlay_particles.clear()
+                self._overlay_particle_group.clear()
+            return
+
+        overlay = self.ids.get('overlay_card')
+        if not overlay or overlay.width == 0:
+            return
+
+        ox, oy = overlay.pos
+        ow, oh = overlay.size
+
+        # Spawn particles — intensity is in inches/hr (imperial)
+        # Light ~0.05, moderate ~0.2, heavy ~0.5+
+        max_particles = min(40, max(6, int(intensity * 50)))
+        spawn_rate = max(0.03, 0.30 - intensity * 0.5)
+        self._overlay_spawn_timer += dt
+        while self._overlay_spawn_timer >= spawn_rate and len(self._overlay_particles) < max_particles:
+            self._overlay_spawn_timer -= spawn_rate
+            x = uniform(ox, ox + ow)
+            y = oy + oh
+            if is_snow:
+                vy = -uniform(dp(20), dp(35))
+                vx = uniform(-dp(5), dp(5))
+                size = uniform(2.5, 4.5)
+                life = uniform(2.5, 4.0)
+            else:
+                vy = -uniform(dp(60), dp(120))
+                vx = uniform(-dp(4), dp(4))
+                size = uniform(1.5, 3.0)
+                life = uniform(0.8, 1.8)
+            self._overlay_particles.append(PrecipParticle(x, y, vx, vy, size, life))
+
+        # Update particles
+        dead = []
+        for p in self._overlay_particles:
+            p.age += dt
+            if is_snow:
+                p.x += math.sin(p.age * 1.5 + p.phase) * dp(12) * dt
+                p.y += p.vy * dt
+            else:
+                p.x += p.vx * dt
+                p.y += p.vy * dt
+            if p.age >= p.life or p.y < oy:
+                dead.append(p)
+        for p in dead:
+            self._overlay_particles.remove(p)
+
+        # Redraw
+        self._overlay_particle_group.clear()
+        for p in self._overlay_particles:
+            opacity = max(0, 1.0 - (p.age / p.life)) * 0.5
+            if is_snow:
+                self._overlay_particle_group.add(Color(0.9, 0.93, 1.0, opacity))
+            else:
+                self._overlay_particle_group.add(Color(0.4, 0.6, 1.0, opacity))
+            self._overlay_particle_group.add(Ellipse(
+                pos=(p.x - p.size / 2, p.y - p.size / 2),
+                size=(p.size, p.size)))
 
     def animate_in(self):
         animation = Animation(y_offset = 0, t='out_elastic', d=2)
