@@ -128,17 +128,6 @@
         },
         {
             "type": "title",
-            "title": "Music"
-        },
-        {
-            "type": "string",
-            "title": "Album Art Source",
-            "desc": "Set your Discogs API Token",
-            "section": "music",
-            "key": "album_art_source"
-        },
-        {
-            "type": "title",
             "title": "MQTT"
         },
         {

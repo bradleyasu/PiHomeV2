@@ -10,7 +10,6 @@ from server.socket_handler import SocketHandler
 import websockets
 import asyncio
 from threading import Thread
-from services.audio.audioplayernew import AUDIO_PLAYER
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE, Wallpaper
 
 from util.const import SERVER_PORT, HTTPS_CALLBACK_PORT, _MUSIC_SCREEN

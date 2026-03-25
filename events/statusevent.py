@@ -22,16 +22,12 @@ class StatusEvent(PihomeEvent):
             return self.return_base()
 
     def return_advanced(self):
-        from services.audio.audioplayernew import AUDIO_PLAYER
         data = self.return_base()
-        data["audio"]["radio"] = AUDIO_PLAYER.saved_urls
-        data["temp"] = get_cpu_temp()
         return data
 
     def return_base(self):
         from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
         from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
-        from services.audio.audioplayernew import AUDIO_PLAYER
         from services.taskmanager.taskmanager import TASK_MANAGER
         from services.weather.weather import WEATHER
         from services.wallpaper.wallpaper import WALLPAPER_SERVICE
@@ -53,17 +49,6 @@ class StatusEvent(PihomeEvent):
                 "precip_propability": WEATHER.precip_propability,
                 "future": WEATHER.future
             }, 
-            "audio": {
-                "is_playing": AUDIO_PLAYER.is_playing,
-                "is_paused": AUDIO_PLAYER.paused,
-                "title": AUDIO_PLAYER.title,
-                "percent": AUDIO_PLAYER.percent,
-                "volume": (AUDIO_PLAYER.volume * 100.0),
-                "queue_pos": AUDIO_PLAYER.queue_pos,
-                "queue": AUDIO_PLAYER.queue,
-                "album_art": AUDIO_PLAYER.album_art,
-                "state": AUDIO_PLAYER.current_state
-            },
             "timers":
                 list(map(lambda t: {
                     "label": t.timer.label,

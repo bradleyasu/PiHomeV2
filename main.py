@@ -359,12 +359,6 @@ class PiHome(App):
         except:
             pass
         try:
-            from services.audio.audioplayernew import AUDIO_PLAYER
-            AUDIO_PLAYER.is_shutting_down = True
-            AUDIO_PLAYER.stop(clear_playlist=True)
-        except:
-            pass
-        try:
             HOME_ASSISTANT.is_shutting_down = True
         except:
             pass
