@@ -253,18 +253,36 @@ class WeatherWidget(Widget):
             container = self.ids.get("hourly_container")
             if container:
                 container.clear_widgets()
+                widgets = []
                 for item in hourly_data:
                     wd = WeatherDetails(details=item)
                     container.add_widget(wd)
+                    widgets.append(wd)
+                self._set_next_temps(widgets, hourly_data)
 
         if len(daily_data) != self._daily_count:
             self._daily_count = len(daily_data)
             container = self.ids.get("daily_container")
             if container:
                 container.clear_widgets()
+                widgets = []
                 for item in daily_data:
                     wd = WeatherDetails(details=item, is_daily=True)
                     container.add_widget(wd)
+                    widgets.append(wd)
+                self._set_next_temps(widgets, daily_data)
+
+    @staticmethod
+    def _set_next_temps(widgets, data):
+        """Set next_temp_value on each WeatherDetails for the trend line."""
+        for i, wd in enumerate(widgets):
+            try:
+                if i < len(data) - 1:
+                    wd.next_temp_value = data[i + 1]["values"]["temperature"]
+                else:
+                    wd.next_temp_value = data[i]["values"]["temperature"]
+            except (KeyError, TypeError):
+                pass
 
     # ── Alert carousel ──
 

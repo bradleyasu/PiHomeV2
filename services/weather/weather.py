@@ -17,7 +17,7 @@ class Weather:
     Weather interface with tomorrow.io api to fetch current weather information
     based on latitude and longitude location 
     """
-    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=rainAccumulation,snowAccumulation,temperature,temperatureApparent,humidity,windSpeed,windGust,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=rainAccumulation,cloudCover,snowAccumulation,temperature,temperatureApparent,humidity,windSpeed,windGust,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
 
     insight_api_url = "https://api.tomorrow.io/v4/events?insights=thunderstorms&insights=air&insights=wind&insights=floods&insights=winter&insights=tornado&insights=temperature&buffer=1&location={},{}&apikey={}"
 
