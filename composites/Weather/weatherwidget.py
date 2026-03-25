@@ -73,6 +73,10 @@ class WeatherWidget(Widget):
 
     y_offset = NumericProperty(50)
 
+    # ── Forecast scroll state ──
+    _hourly_count = 0   # track widget count to avoid unnecessary rebuilds
+    _daily_count = 0
+
     # ── Alert carousel state ──
     alert_count = NumericProperty(0)
     alert_opacity = NumericProperty(0)
@@ -210,7 +214,7 @@ class WeatherWidget(Widget):
             self.future = WEATHER.future
             self.future_daily = WEATHER.future_daily
             self.day = WEATHER.future[1]
-
+            self._rebuild_forecast()
 
             conf = get_app().web_conf
             if conf != None:
@@ -234,6 +238,33 @@ class WeatherWidget(Widget):
 
         except Exception as e:
             PIHOME_LOGGER.error(e)
+
+    # ── Forecast scroll ──
+
+    def _rebuild_forecast(self):
+        """Rebuild hourly/daily forecast widgets when data changes."""
+        hourly_data = self.future[:24]  # cap at 24 hours
+        daily_data = self.future_daily
+
+        # Only rebuild if count changed (data updates within same count
+        # are handled by existing WeatherDetails clock intervals)
+        if len(hourly_data) != self._hourly_count:
+            self._hourly_count = len(hourly_data)
+            container = self.ids.get("hourly_container")
+            if container:
+                container.clear_widgets()
+                for item in hourly_data:
+                    wd = WeatherDetails(details=item)
+                    container.add_widget(wd)
+
+        if len(daily_data) != self._daily_count:
+            self._daily_count = len(daily_data)
+            container = self.ids.get("daily_container")
+            if container:
+                container.clear_widgets()
+                for item in daily_data:
+                    wd = WeatherDetails(details=item, is_daily=True)
+                    container.add_widget(wd)
 
     # ── Alert carousel ──
 
