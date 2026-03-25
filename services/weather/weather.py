@@ -26,7 +26,7 @@ class Weather:
     api_key = ""
 
     data_avail = False
-    interval = 60 * 30 # 60 seconds time 30 for 30 minute update interval 
+    interval = 60 * 10 # 60 seconds time 30 for 10 minute update interval 
 
     weather_code = 0 # Current weather Code
     weather_code_day = 0 # Weather for today, sunrise to sunset
