@@ -171,6 +171,18 @@
                     size_hint_y: None
                     height: dp(22)
 
+    # ── Scrim overlay (dims background when create panel is open) ──────────────
+    Widget:
+        id: panel_scrim
+        size_hint: 1, 1
+        opacity: 0
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 0.55
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
     # ── Create panel (anchored to screen bottom, slides up as FloatLayout child)
     BoxLayout:
         id: create_panel
@@ -179,7 +191,7 @@
         size_hint_y: None
         height: 0
         opacity: 0
-        pos: 0, 0
+        pos: 0, -9999
         spacing: 0
         disabled: True
 

@@ -78,6 +78,13 @@ class TaskManagerScreen(PiHomeScreen):
 
     # ── Screen lifecycle ───────────────────────────────────────────────────────
 
+    def on_config_update(self, config):
+        super().on_config_update(config)
+        # Override base class derived card_color (0.85 alpha) — panel needs
+        # full opacity so it doesn't show the task list through it.
+        hc = self.header_color
+        self.card_color = (hc[0], hc[1], hc[2], 1.0)
+
     def on_enter(self, *args):
         super().on_enter(*args)
         self.refresh_tasks()
@@ -234,6 +241,7 @@ class TaskManagerScreen(PiHomeScreen):
         from kivy.metrics import dp
         panel = self.ids.create_panel
         panel.disabled = False
+        panel.y = 0
 
         # Reset form to defaults
         self.ids.name_input.text = ""
@@ -265,6 +273,9 @@ class TaskManagerScreen(PiHomeScreen):
                          duration=0.25, transition='out_cubic')
         anim.start(panel)
 
+        # Fade in scrim overlay
+        Animation(opacity=1, duration=0.25, t='out_cubic').start(self.ids.panel_scrim)
+
     def hide_create_panel(self):
         # Unfocus any active text field so focus state doesn't carry over
         # into the next panel open cycle.
@@ -280,9 +291,15 @@ class TaskManagerScreen(PiHomeScreen):
         anim.bind(on_complete=self._on_panel_hidden)
         anim.start(panel)
 
+        # Fade out scrim overlay
+        Animation(opacity=0, duration=0.18, t='in_cubic').start(self.ids.panel_scrim)
+
     def _on_panel_hidden(self, *args):
         self._panel_closing = False
-        self.ids.create_panel.disabled = True
+        panel = self.ids.create_panel
+        panel.disabled = True
+        # Move offscreen so collapsed children can't intercept touches
+        panel.y = -9999
 
     def _select_priority(self, value):
         """Highlight the chosen priority pill (1=LOW, 2=MEDIUM, 3=HIGH)."""
