@@ -19,3 +19,6 @@ timers.pihome
 orders.sh
 
 game_state.json
+/game_state.json
+./game_state.json
+*/game_state.json
