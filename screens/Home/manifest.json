@@ -36,6 +36,14 @@
             "key": "wave_visualizer"
         },
         {
+            "type": "options",
+            "title": "Visualizer Intensity",
+            "desc": "Controls the size, opacity, and speed of the wave animation",
+            "section": "home",
+            "key": "wave_intensity",
+            "options": ["Low", "Medium", "High"]
+        },
+        {
             "type": "title",
             "title": "Weather"
         },

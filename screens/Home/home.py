@@ -97,9 +97,11 @@ class HomeScreen(PiHomeScreen):
     def _start_wave_visualizer(self):
         from util.configuration import CONFIG
         enabled = CONFIG.get("home", "wave_visualizer", "0").strip().lower() in ("1", "true")
+        intensity = CONFIG.get("home", "wave_intensity", "Low").strip().lower()
         viz = self.ids.get('wave_visualizer')
         if viz:
             if enabled:
+                viz.intensity = intensity
                 viz.opacity = 1
                 viz.start()
             else:

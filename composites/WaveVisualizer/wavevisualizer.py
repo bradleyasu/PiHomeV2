@@ -34,11 +34,19 @@ WAVE_LAYERS = [
 
 PROC_PATH = "/proc/asound/card1/pcm0p/sub0/status"
 
+# Intensity presets: (amplitude_scale, alpha_scale, speed_scale)
+INTENSITY_PRESETS = {
+    "low":    (1.0, 1.0, 1.0),
+    "medium": (1.6, 1.5, 1.15),
+    "high":   (2.4, 2.0, 1.3),
+}
+
 
 class WaveVisualizer(Widget):
     """Ambient bottom-edge wave animation that activates when audio plays."""
 
     audio_playing = BooleanProperty(False)
+    intensity = StringProperty("low")
     _target_amplitude = NumericProperty(0)
     _current_amplitude = NumericProperty(0)
 
@@ -52,6 +60,13 @@ class WaveVisualizer(Widget):
         self._time = 0.0
         self._anim_clock = None
         self._poll_clock = None
+        self._amp_scale = 1.0
+        self._alpha_scale = 1.0
+        self._speed_scale = 1.0
+
+    def on_intensity(self, instance, value):
+        preset = INTENSITY_PRESETS.get(value.lower(), INTENSITY_PRESETS["low"])
+        self._amp_scale, self._alpha_scale, self._speed_scale = preset
 
     @classmethod
     def _get_gradient_texture(cls):
@@ -142,14 +157,14 @@ class WaveVisualizer(Widget):
         tex = self._get_gradient_texture()
 
         for color_rgba, base_amp, freq_mult, phase, speed in WAVE_LAYERS:
-            amp = dp(base_amp) * amp_scale
+            amp = dp(base_amp) * amp_scale * self._amp_scale
 
             # Gentle amplitude modulation (breathing)
-            breath = 0.7 + 0.3 * math.sin(t * speed * 0.5 + phase)
+            breath = 0.7 + 0.3 * math.sin(t * speed * self._speed_scale * 0.5 + phase)
             amp *= breath
 
             r, g, b, a = color_rgba
-            a *= amp_scale  # fade alpha with amplitude
+            a = min(1.0, a * self._alpha_scale) * amp_scale  # fade alpha with amplitude
 
             self._wave_group.add(Color(r, g, b, a))
 
@@ -157,15 +172,17 @@ class WaveVisualizer(Widget):
             vertices = []
             indices = []
 
+            scaled_speed = speed * self._speed_scale
+
             for i in range(segments + 1):
                 px = x0 + i * dx
                 frac = i / segments  # 0..1 across width
 
                 # Overlaid sine waves for organic motion
                 y_wave = (
-                    math.sin(frac * math.pi * 2.0 * freq_mult + t * speed + phase) * 0.5
-                    + math.sin(frac * math.pi * 3.5 * freq_mult + t * speed * 0.7 + phase * 1.3) * 0.25
-                    + math.sin(frac * math.pi * 5.0 * freq_mult + t * speed * 1.3 + phase * 0.7) * 0.15
+                    math.sin(frac * math.pi * 2.0 * freq_mult + t * scaled_speed + phase) * 0.5
+                    + math.sin(frac * math.pi * 3.5 * freq_mult + t * scaled_speed * 0.7 + phase * 1.3) * 0.25
+                    + math.sin(frac * math.pi * 5.0 * freq_mult + t * scaled_speed * 1.3 + phase * 0.7) * 0.15
                 )
                 py_top = y0 + h * 0.15 + y_wave * amp
                 py_bottom = y0
