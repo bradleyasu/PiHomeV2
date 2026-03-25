@@ -29,20 +29,21 @@
 
     canvas.after:
         # Empty dot rings — anchored to y_position so they animate with the card
+        # _dot_x_offset shifts dots horizontally during shake animation
         Color:
             rgba: root.dot_empty_color
         Line:
             width: dp(1.5)
-            circle: root.width/2 - dp(45), root.y_position + dp(330), dp(8), 0, 360
+            circle: root.width/2 - dp(45) + root._dot_x_offset, root.y_position + dp(330), dp(8), 0, 360
         Line:
             width: dp(1.5)
-            circle: root.width/2 - dp(15), root.y_position + dp(330), dp(8), 0, 360
+            circle: root.width/2 - dp(15) + root._dot_x_offset, root.y_position + dp(330), dp(8), 0, 360
         Line:
             width: dp(1.5)
-            circle: root.width/2 + dp(15), root.y_position + dp(330), dp(8), 0, 360
+            circle: root.width/2 + dp(15) + root._dot_x_offset, root.y_position + dp(330), dp(8), 0, 360
         Line:
             width: dp(1.5)
-            circle: root.width/2 + dp(45), root.y_position + dp(330), dp(8), 0, 360
+            circle: root.width/2 + dp(45) + root._dot_x_offset, root.y_position + dp(330), dp(8), 0, 360
         # Filled dots (angle_end drives 0=empty, 360=full)
         Color:
             rgba: root.dot_filled_color
@@ -50,22 +51,22 @@
             angle_start: 0
             angle_end: self.pin_one
             size: dp(16), dp(16)
-            pos: root.width/2 - dp(53), root.y_position + dp(322)
+            pos: root.width/2 - dp(53) + root._dot_x_offset, root.y_position + dp(322)
         Ellipse:
             angle_start: 0
             angle_end: self.pin_two
             size: dp(16), dp(16)
-            pos: root.width/2 - dp(23), root.y_position + dp(322)
+            pos: root.width/2 - dp(23) + root._dot_x_offset, root.y_position + dp(322)
         Ellipse:
             angle_start: 0
             angle_end: self.pin_three
             size: dp(16), dp(16)
-            pos: root.width/2 + dp(7), root.y_position + dp(322)
+            pos: root.width/2 + dp(7) + root._dot_x_offset, root.y_position + dp(322)
         Ellipse:
             angle_start: 0
             angle_end: self.pin_four
             size: dp(16), dp(16)
-            pos: root.width/2 + dp(37), root.y_position + dp(322)
+            pos: root.width/2 + dp(37) + root._dot_x_offset, root.y_position + dp(322)
 
     FloatLayout:
         id: pin_pad_float_container

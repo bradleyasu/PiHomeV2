@@ -16,10 +16,23 @@ class Hamburger(Widget):
     mid_opacity     = NumericProperty(1)
 
     is_open = BooleanProperty(False)
+    _disabled = BooleanProperty(False)
     event_handler = None
 
     def __init__(self, **kwargs):
         super(Hamburger, self).__init__(**kwargs)
+
+    def disable(self):
+        """Hide and disable the hamburger button."""
+        self._disabled = True
+        Animation.cancel_all(self, 'opacity')
+        Animation(opacity=0, t='linear', d=0.15).start(self)
+
+    def enable(self):
+        """Re-show and enable the hamburger button."""
+        self._disabled = False
+        Animation.cancel_all(self, 'opacity')
+        Animation(opacity=1, t='linear', d=0.2).start(self)
 
     def on_is_open(self, instance, value):
         if value:
@@ -39,6 +52,8 @@ class Hamburger(Widget):
             self.event_handler(value)
 
     def on_touch_down(self, touch):
+        if self._disabled:
+            return False
         if self.collide_point(*touch.pos):
             self.is_open = not self.is_open
             return True

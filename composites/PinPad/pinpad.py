@@ -35,6 +35,8 @@ class PinPad(Widget):
     pin_three = NumericProperty(0)
     pin_four  = NumericProperty(0)
 
+    _dot_x_offset = NumericProperty(0)  # for shake animation
+
     def __init__(self, on_enter=lambda _: print('enter'), **kwargs):
         super(PinPad, self).__init__(**kwargs)
         self.pin = CONFIG.get('security', 'pin', '')
@@ -87,9 +89,28 @@ class PinPad(Widget):
             self.on_enter()
             self.hide()
         else:
+            self._shake_wrong_pin()
+
+    def _shake_wrong_pin(self):
+        """Shake the dots and clear the code on wrong PIN."""
+        original_x = 0
+        # Quick horizontal shake: right → left → right → left → center
+        shake = (
+            Animation(_dot_x_offset=dp(12), t='out_quad', d=0.06)
+            + Animation(_dot_x_offset=-dp(10), t='out_quad', d=0.06)
+            + Animation(_dot_x_offset=dp(8), t='out_quad', d=0.06)
+            + Animation(_dot_x_offset=-dp(6), t='out_quad', d=0.05)
+            + Animation(_dot_x_offset=dp(3), t='out_quad', d=0.05)
+            + Animation(_dot_x_offset=0, t='out_quad', d=0.05)
+        )
+
+        def _on_shake_done(*args):
             self.code = ""
             self.refresh_pins()
-        
+
+        shake.bind(on_complete=_on_shake_done)
+        shake.start(self)
+
     def backspace(self, *args):
         self.code = self.code[:-1]
         self.refresh_pins()
@@ -116,25 +137,43 @@ class PinPad(Widget):
         self.y_position = Window.height + dp(100)
 
 
-    def animate(self):
-        # Center the dp(405)-tall card vertically in the window
+    def show(self):
+        self.reset()
+        self.opacity = 1
+
         card_h = dp(405)
         target_y = (Window.height - card_h) / 2
-        animation = Animation(background_color=(0,0,0,0.6), t='linear', d=.2)
-        animation &= Animation(y_position=target_y, t='out_elastic', d=1)
-        animation &= Animation(pinpad_background_color=(Theme().get_color(Theme().BACKGROUND_SECONDARY, 1)), t='linear', d=.2)
-        animation &= Animation(pinpad_opacity=1, t='linear', d=.2)
-        animation.start(self)
 
-    def show(self):
-        self.opacity = 1
-        self.animate()
+        # Scrim fades in first, then card slides down smoothly
+        scrim = Animation(background_color=(0, 0, 0, 0.6), t='linear', d=0.2)
+        scrim &= Animation(
+            pinpad_background_color=Theme().get_color(Theme().BACKGROUND_SECONDARY, 1),
+            t='linear', d=0.2
+        )
+        slide = Animation(y_position=target_y, t='out_cubic', d=0.4)
+        slide &= Animation(pinpad_opacity=1, t='linear', d=0.3)
+
+        anim = scrim + slide
+        anim.start(self)
 
     def hide(self):
-        self.opacity = 0
-        self.animate()
-        # after .3 seconds, remove the widget
-        Clock.schedule_once(lambda x: self.parent.remove_widget(self), 0.3)
+        card_h = dp(405)
+        # Slide card down off screen and fade out
+        slide_out = Animation(
+            y_position=-card_h - dp(20),
+            pinpad_opacity=0,
+            t='in_cubic', d=0.3
+        )
+        fade_scrim = Animation(background_color=(0, 0, 0, 0), t='linear', d=0.2)
+        anim = slide_out + fade_scrim
+
+        def _on_complete(*args):
+            self.opacity = 0
+            if self.parent:
+                self.parent.remove_widget(self)
+
+        anim.bind(on_complete=_on_complete)
+        anim.start(self)
 
     def touch_check(self, widget, touch):
         if self.opacity == 0:

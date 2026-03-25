@@ -1,16 +1,20 @@
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Line
+from kivy.properties import BooleanProperty
 from system.brightness import get_brightness, set_brightness
 from util.const import GESTURE_DATABASE, GESTURE_SWIPE_DOWN, GESTURE_SWIPE_DOWN_FROM_TOP
 from util.helpers import get_app, simplegesture
 
 class PiHomeScreen(Screen):
 
+    # Locked screens can't be navigated away from.
+    locked = BooleanProperty(False)
+
     def __init__(self, icon = "https://cdn.pihome.io/assets/default_app_icon.png", label = "PiHome App", is_hidden = False, requires_pin = False, **kwargs):
         super(PiHomeScreen, self).__init__(**kwargs)
         self.icon = icon
         self.label = label
-        self.is_hidden = is_hidden 
+        self.is_hidden = is_hidden
         self.requires_pin = requires_pin
         self.on_gesture = lambda _: ()
         self.bind(on_touch_down=lambda _, touch:self.touch_down(touch))
@@ -21,8 +25,16 @@ class PiHomeScreen(Screen):
 
         self.size_hint = (1, 1)
 
-        # Locked screens can't be navigated away from.  Logic with in the screen implementation can take advantage of this
-        self.locked = False
+    def on_locked(self, instance, value):
+        """Disable/enable the hamburger menu when screen lock state changes."""
+        try:
+            btn = get_app().menu_button
+            if value:
+                btn.disable()
+            else:
+                btn.enable()
+        except Exception:
+            pass
 
     def on_pre_leave(self, *args):
         self.manager.last_screen = self.name
