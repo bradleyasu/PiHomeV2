@@ -79,6 +79,8 @@ class WeatherWidget(Widget):
     # ── Forecast scroll state ──
     _hourly_count = 0   # track widget count to avoid unnecessary rebuilds
     _daily_count = 0
+    _hourly_start = None  # startTime of first hourly item
+    _daily_start = None   # startTime of first daily item
 
     # ── Alert carousel state ──
     alert_count = NumericProperty(0)
@@ -266,10 +268,11 @@ class WeatherWidget(Widget):
         hourly_data = self.future[:24]  # cap at 24 hours
         daily_data = self.future_daily
 
-        # Only rebuild if count changed (data updates within same count
-        # are handled by existing WeatherDetails clock intervals)
-        if len(hourly_data) != self._hourly_count:
+        # Detect data shifts by checking count OR first item's startTime
+        hourly_start = hourly_data[0]["startTime"] if hourly_data else None
+        if len(hourly_data) != self._hourly_count or hourly_start != self._hourly_start:
             self._hourly_count = len(hourly_data)
+            self._hourly_start = hourly_start
             container = self.ids.get("hourly_container")
             if container:
                 container.clear_widgets()
@@ -280,8 +283,10 @@ class WeatherWidget(Widget):
                     widgets.append(wd)
                 self._set_next_temps(widgets, hourly_data)
 
-        if len(daily_data) != self._daily_count:
+        daily_start = daily_data[0]["startTime"] if daily_data else None
+        if len(daily_data) != self._daily_count or daily_start != self._daily_start:
             self._daily_count = len(daily_data)
+            self._daily_start = daily_start
             container = self.ids.get("daily_container")
             if container:
                 container.clear_widgets()
