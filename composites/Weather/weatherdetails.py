@@ -132,9 +132,15 @@ class WeatherDetails(Widget):
         if conf != None:
             host = conf["host"]
             path = conf["weather_icons"]
-            day_code = 0 if WEATHER.is_currently_day(slot_dt) else 1
-            self.icon = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), day_code)
-            self.icon_fallback = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), 0)
+            if self.is_daily:
+                # Use weatherCodeFullDay with daytime icon variant for daily cards
+                code = details["values"].get("weatherCodeFullDay", details["values"]["weatherCode"])
+                self.icon = "{}{}{}0.png".format(host, path, str(code))
+                self.icon_fallback = "{}{}{}0.png".format(host, path, str(code))
+            else:
+                day_code = 0 if WEATHER.is_currently_day(slot_dt) else 1
+                self.icon = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), day_code)
+                self.icon_fallback = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), 0)
 
     # ── Temperature trend rendering ──
 

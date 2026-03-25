@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 
 from composites.Weather.weatherdetails import WeatherDetails
+from composites.Weather.weatherchips import (
+    UVChip, WindChip, PrecipChip, HumidityChip, CloudChip, SunMoonChip,
+)
 from kivy.lang import Builder
 from kivy.properties import Property, BooleanProperty, ColorProperty, StringProperty, NumericProperty, DictProperty, ListProperty, ObjectProperty, ReferenceListProperty
 from kivy.metrics import dp, sp
@@ -144,6 +147,14 @@ class WeatherWidget(Widget):
         animation &= Animation(overlay_y_offset = offset, t='out_elastic', d=2)
         animation.start(self)
 
+        # Start/stop precipitation particles based on overlay visibility
+        precip_chip = self.ids.get('chip_precip')
+        if precip_chip:
+            if opacity == 1:
+                precip_chip.start_particles()
+            else:
+                precip_chip.stop_particles()
+
     def animate_in(self):
         animation = Animation(y_offset = 0, t='out_elastic', d=2)
         animation.start(self)
@@ -178,6 +189,8 @@ class WeatherWidget(Widget):
         self._apply_theme_colors()
         for widget in self.walk():
             if isinstance(widget, WeatherDetails):
+                widget.on_config_update(config)
+            if hasattr(widget, 'on_config_update') and isinstance(widget, (UVChip, WindChip, PrecipChip, HumidityChip, CloudChip, SunMoonChip)):
                 widget.on_config_update(config)
 
     def update(self):
@@ -233,6 +246,13 @@ class WeatherWidget(Widget):
             if self.is_loaded is False:
                 self.animate_in()
                 self.is_loaded = True
+
+            # Update stat chips
+            for chip_id in ('chip_uv', 'chip_wind', 'chip_precip',
+                            'chip_humidity', 'chip_cloud', 'chip_sunmoon'):
+                chip = self.ids.get(chip_id)
+                if chip:
+                    chip.update_data(WEATHER)
 
             self._update_alerts()
 

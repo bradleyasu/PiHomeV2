@@ -17,7 +17,7 @@ class Weather:
     Weather interface with tomorrow.io api to fetch current weather information
     based on latitude and longitude location 
     """
-    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=rainAccumulation,cloudCover,snowAccumulation,temperature,temperatureApparent,humidity,windSpeed,windGust,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
+    api_url = "https://api.tomorrow.io/v4/timelines?location={},{}&fields=weatherCodeFullDay,rainAccumulation,cloudCover,snowAccumulation,temperature,temperatureApparent,dewPoint,moonPhase,humidity,windSpeed,windGust,uvIndex,weatherCode,weatherCodeDay,weatherCodeNight,visibility,precipitationProbability,precipitationIntensity,windDirection,sunriseTime,sunsetTime&timesteps=current,1h,1d&units=imperial&apikey={}"
 
     insight_api_url = "https://api.tomorrow.io/v4/events?insights=thunderstorms&insights=air&insights=wind&insights=floods&insights=winter&insights=tornado&insights=temperature&buffer=1&location={},{}&apikey={}"
 
@@ -46,6 +46,7 @@ class Weather:
     cloud_cover = 0
     moon_phase = 0
     uv_index = 0
+    dew_point = 0
 
     epa_air_quality = 0 # Lower is better
 
@@ -117,6 +118,9 @@ class Weather:
         self.rain_accumulation = data["rainAccumulation"]
         self.snow_accumulation = data["snowAccumulation"]
         self.wind_gust = data["windGust"]
+        self.moon_phase = data["moonPhase"]
+        self.dew_point = data["dewPoint"]
+        self.cloud_cover = data.get("cloudCover", 0)
 
     def is_currently_day(self, dt=None):
         """

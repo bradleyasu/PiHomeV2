@@ -154,205 +154,37 @@
                 cols: 3
                 spacing: dp(6)
                 size_hint_y: None
-                height: dp(96)
+                height: dp(110)
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: dp(10), dp(8), dp(10), dp(8)
-                    spacing: dp(4)
-                    canvas.before:
-                        Color:
-                            rgba: root.chip_bg_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12)]
-                    Label:
-                        text: 'UV Index'
-                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
-                        font_size: '11sp'
-                        font_name: 'Nunito'
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
-                    Label:
-                        text: root.uvIndex
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
+                UVChip:
+                    id: chip_uv
+                    chip_bg_color: root.chip_bg_color
+                    text_color: root.text_color
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: dp(10), dp(8), dp(10), dp(8)
-                    spacing: dp(4)
-                    canvas.before:
-                        Color:
-                            rgba: root.chip_bg_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12)]
-                    Label:
-                        text: 'Wind'
-                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
-                        font_size: '11sp'
-                        font_name: 'Nunito'
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
-                    Label:
-                        text: root.windSpeed
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
+                WindChip:
+                    id: chip_wind
+                    chip_bg_color: root.chip_bg_color
+                    text_color: root.text_color
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: dp(10), dp(8), dp(10), dp(8)
-                    spacing: dp(4)
-                    canvas.before:
-                        Color:
-                            rgba: root.chip_bg_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12)]
-                    Label:
-                        text: 'Precip'
-                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
-                        font_size: '11sp'
-                        font_name: 'Nunito'
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
-                    Label:
-                        text: root.precipPercent
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
+                PrecipChip:
+                    id: chip_precip
+                    chip_bg_color: root.chip_bg_color
+                    text_color: root.text_color
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: dp(10), dp(8), dp(10), dp(8)
-                    spacing: dp(4)
-                    canvas.before:
-                        Color:
-                            rgba: root.chip_bg_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12)]
-                    Label:
-                        text: 'Humidity'
-                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
-                        font_size: '11sp'
-                        font_name: 'Nunito'
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
-                    Label:
-                        text: root.humidity
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
+                HumidityChip:
+                    id: chip_humidity
+                    chip_bg_color: root.chip_bg_color
+                    text_color: root.text_color
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: dp(10), dp(8), dp(10), dp(8)
-                    spacing: dp(4)
-                    canvas.before:
-                        Color:
-                            rgba: root.chip_bg_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12)]
-                    Label:
-                        text: 'Cloud Cover'
-                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
-                        font_size: '11sp'
-                        font_name: 'Nunito'
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
-                    Label:
-                        text: root.cloudCover
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
+                CloudChip:
+                    id: chip_cloud
+                    chip_bg_color: root.chip_bg_color
+                    text_color: root.text_color
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: dp(10), dp(8), dp(10), dp(8)
-                    spacing: dp(4)
-                    canvas.before:
-                        Color:
-                            rgba: root.chip_bg_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12)]
-                    Label:
-                        text: 'Air Quality'
-                        color: root.text_color[0], root.text_color[1], root.text_color[2], 0.50
-                        font_size: '11sp'
-                        font_name: 'Nunito'
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
-                    Label:
-                        text: root.airQuality
-                        color: root.text_color
-                        font_size: '14sp'
-                        font_name: 'Nunito'
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: dp(14)
+                SunMoonChip:
+                    id: chip_sunmoon
+                    chip_bg_color: root.chip_bg_color
+                    text_color: root.text_color
 
             # Divider
             Widget:
@@ -368,7 +200,7 @@
             # ── Hourly / Daily forecast (scrollable) ───────────────────────
             RelativeLayout:
                 size_hint_y: None
-                height: dp(145)
+                height: dp(121)
 
                 ScrollView:
                     id: hourly_scroll
@@ -384,7 +216,7 @@
                         orientation: 'horizontal'
                         size_hint_x: None
                         width: self.minimum_width
-                        height: dp(145)
+                        height: dp(121)
                         spacing: dp(6)
                         padding: dp(2), 0
 
@@ -402,7 +234,7 @@
                         orientation: 'horizontal'
                         size_hint_x: None
                         width: self.minimum_width
-                        height: dp(145)
+                        height: dp(121)
                         spacing: dp(6)
                         padding: dp(2), 0
 
