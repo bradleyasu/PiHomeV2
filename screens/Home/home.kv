@@ -53,6 +53,13 @@
             size_hint: None, None
             pos: root.width - dp(326), dp(16)
 
+        # ── Audio wave visualizer — bottom edge ─────────────────────────────
+        WaveVisualizer:
+            id: wave_visualizer
+            size_hint: 1, None
+            height: dp(60)
+            pos: root.pos
+
         # ── Weather pill — top-right, hidden until splash finishes ────────────
         WeatherWidget:
             id: weather_widget

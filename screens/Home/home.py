@@ -19,6 +19,7 @@ from components.Button.circlebutton import CircleButton
 from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
+from composites.WaveVisualizer.wavevisualizer import WaveVisualizer
 from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
@@ -86,7 +87,29 @@ class HomeScreen(PiHomeScreen):
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False
 
+        self._start_wave_visualizer()
         return super().on_enter(*args)
+
+    def on_pre_leave(self, *args):
+        self._stop_wave_visualizer()
+        return super().on_pre_leave(*args)
+
+    def _start_wave_visualizer(self):
+        from util.configuration import CONFIG
+        enabled = CONFIG.get("home", "wave_visualizer", "0").strip().lower() in ("1", "true")
+        viz = self.ids.get('wave_visualizer')
+        if viz:
+            if enabled:
+                viz.opacity = 1
+                viz.start()
+            else:
+                viz.opacity = 0
+                viz.stop()
+
+    def _stop_wave_visualizer(self):
+        viz = self.ids.get('wave_visualizer')
+        if viz:
+            viz.stop()
 
     def change_brightness(self, value):
         set_brightness(value)
@@ -301,6 +324,8 @@ class HomeScreen(PiHomeScreen):
     def on_config_update(self, config):
         self.ids.weather_widget.on_config_update(config)
         self.ids.reddit_widget.on_config_update(config)
+        if self.is_open:
+            self._start_wave_visualizer()
         super().on_config_update(config)
 
     # ── Rotary encoder ────────────────────────────────────────────────────────

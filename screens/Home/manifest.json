@@ -29,6 +29,13 @@
             "key": "dark_mode"
         },
         {
+            "type": "bool",
+            "title": "Audio Wave Visualizer",
+            "desc": "Show an ambient wave animation at the bottom of the home screen when audio is playing",
+            "section": "home",
+            "key": "wave_visualizer"
+        },
+        {
             "type": "title",
             "title": "Weather"
         },
