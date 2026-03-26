@@ -154,6 +154,12 @@ class WeatherWidget(Widget):
         return super(WeatherWidget, self).on_touch_down(touch)
     
     def overlay_animate(self, opacity = 1, offset = 0):
+        # Bring overlay to the top of the z-order so it renders above alerts
+        overlay = self.ids.get('overlay_card')
+        if overlay and opacity == 1:
+            self.remove_widget(overlay)
+            self.add_widget(overlay)
+
         animation = Animation(overlay_opacity = opacity, t='linear', d=0.5)
         animation &= Animation(overlay_y_offset = offset, t='out_elastic', d=2)
         animation.start(self)

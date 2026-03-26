@@ -3,6 +3,40 @@
     size_hint: None, None
     size: self.size
 
+    # ── Alert carousel (centered on screen, behind overlay) ─────────────────
+    # Collapses to 0x0 when no alerts so it cannot intercept touches
+    FloatLayout:
+        size_hint: None, None
+        size: (root.parent.size if root.parent else (800, 480)) if root.alert_count > 0 else (0, 0)
+        pos: (root.parent.pos if root.parent else (0, 0)) if root.alert_count > 0 else (0, 0)
+        opacity: root.alert_opacity
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, None
+            size: min(root.parent.width - dp(80), dp(500)) if root.parent else dp(400), dp(200)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            spacing: dp(6)
+
+            Carousel:
+                id: alert_carousel
+                direction: 'right'
+                size_hint_y: None
+                height: dp(170)
+                min_move: 0.1
+                anim_move_duration: 0.3
+
+            # Page indicator dots
+            BoxLayout:
+                id: alert_dots
+                orientation: 'horizontal'
+                size_hint: None, None
+                height: dp(14)
+                width: self.minimum_width
+                pos_hint: {'center_x': 0.5}
+                spacing: dp(6)
+                padding: dp(4), 0
+
     # ── Expanded overlay (shown on tap) ──────────────────────────────────────
     FloatLayout:
         id: overlay_card
@@ -241,40 +275,6 @@
 
             # Spacer — absorbs leftover vertical space so content stays at the top
             Widget:
-
-    # ── Alert carousel (centered on screen) ──────────────────────────────────
-    # Collapses to 0x0 when no alerts so it cannot intercept touches
-    FloatLayout:
-        size_hint: None, None
-        size: (root.parent.size if root.parent else (800, 480)) if root.alert_count > 0 else (0, 0)
-        pos: (root.parent.pos if root.parent else (0, 0)) if root.alert_count > 0 else (0, 0)
-        opacity: root.alert_opacity
-
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint: None, None
-            size: min(root.parent.width - dp(80), dp(500)) if root.parent else dp(400), dp(200)
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            spacing: dp(6)
-
-            Carousel:
-                id: alert_carousel
-                direction: 'right'
-                size_hint_y: None
-                height: dp(170)
-                min_move: 0.1
-                anim_move_duration: 0.3
-
-            # Page indicator dots
-            BoxLayout:
-                id: alert_dots
-                orientation: 'horizontal'
-                size_hint: None, None
-                height: dp(14)
-                width: self.minimum_width
-                pos_hint: {'center_x': 0.5}
-                spacing: dp(6)
-                padding: dp(4), 0
 
     # ── Compact pill (always visible) ────────────────────────────────────────
     BoxLayout:
