@@ -240,4 +240,4 @@ class PiHomeScreenManager(ScreenManager):
         self.screens_loaded = True
 
         
-PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=NoTransition())
+PIHOME_SCREEN_MANAGER = PiHomeScreenManager(transition=FadeTransition(duration=0.15))
