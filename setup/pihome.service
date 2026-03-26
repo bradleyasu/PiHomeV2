@@ -1,6 +1,6 @@
 [Unit]
 Description=PiHome Smart Home Interface
-After=network-online.target sound.target
+After=network-online.target sound.target pihome-splash.service
 Wants=network-online.target
 
 [Service]
@@ -11,6 +11,8 @@ Environment="KIVY_AUDIO=ffpyplayer"
 Environment="KIVY_VIDEO=video_ffpyplayer"
 Environment="DISPLAY=:0"
 Environment="HOME=/root"
+ExecStartPre=-/bin/systemctl stop pihome-splash.service
+ExecStartPre=-/usr/bin/killall fbi
 ExecStart=/usr/bin/python3 /usr/local/PiHome/main.py
 Restart=on-failure
 RestartSec=10

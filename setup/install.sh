@@ -15,7 +15,7 @@ readonly SDL2_CDN="https://cdn.pihome.io/bin"
 readonly LOG_FILE="/tmp/pihome-install.log"
 readonly STATE_FILE="/tmp/pihome-install-state"
 readonly REQUIRED_DISK_MB=2048
-readonly TOTAL_PHASES=8
+readonly TOTAL_PHASES=9
 
 # Options (overridden by CLI flags)
 SKIP_AIRPLAY=false
@@ -627,7 +627,72 @@ phase_configure_environment() {
 }
 
 # -----------------------------------------------------------------------------
-# Phase 8: Install Systemd Service
+# Phase 8: Boot Splash
+# -----------------------------------------------------------------------------
+phase_boot_splash() {
+    local phase_id="boot_splash"
+    if is_phase_complete "$phase_id"; then
+        print_success "Boot splash already configured, skipping"
+        return 0
+    fi
+
+    print_header 8 "$TOTAL_PHASES" "Configuring boot splash"
+
+    # Install fbi (framebuffer imageviewer)
+    run_logged "Installing fbi" \
+        sudo apt-get -y install fbi
+
+    # Install splash service
+    sudo cp "$PIHOME_DIR/setup/pihome-splash.service" /etc/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable pihome-splash.service
+    print_success "Splash service installed and enabled"
+
+    # Quiet the boot console (suppress kernel messages, cursor, logo)
+    local cmdline="/boot/cmdline.txt"
+    if [ ! -f "$cmdline" ] && [ -f "/boot/firmware/cmdline.txt" ]; then
+        cmdline="/boot/firmware/cmdline.txt"
+    fi
+
+    if [ -f "$cmdline" ]; then
+        # Back up original
+        sudo cp "$cmdline" "${cmdline}.bak"
+
+        local quiet_opts="quiet splash loglevel=0 logo.nologo vt.global_cursor_default=0 consoleblank=0"
+        local current
+        current=$(cat "$cmdline")
+
+        # Add each option if not already present
+        for opt in $quiet_opts; do
+            if ! echo "$current" | grep -q "$opt"; then
+                current="$current $opt"
+            fi
+        done
+
+        echo "$current" | sudo tee "$cmdline" > /dev/null
+        print_success "Boot console quieted ($cmdline)"
+    else
+        print_warning "Could not find cmdline.txt — boot text will still be visible"
+    fi
+
+    # Disable the Raspberry Pi rainbow splash
+    local config="/boot/config.txt"
+    if [ ! -f "$config" ] && [ -f "/boot/firmware/config.txt" ]; then
+        config="/boot/firmware/config.txt"
+    fi
+
+    if [ -f "$config" ]; then
+        if ! grep -q "disable_splash=1" "$config"; then
+            echo "disable_splash=1" | sudo tee -a "$config" > /dev/null
+        fi
+        print_success "Disabled Raspberry Pi rainbow splash"
+    fi
+
+    mark_phase_complete "$phase_id"
+}
+
+# -----------------------------------------------------------------------------
+# Phase 9: Install Systemd Service
 # -----------------------------------------------------------------------------
 phase_install_service() {
     local phase_id="install_service"
@@ -636,7 +701,7 @@ phase_install_service() {
         return 0
     fi
 
-    print_header 8 "$TOTAL_PHASES" "Installing PiHome service"
+    print_header 9 "$TOTAL_PHASES" "Installing PiHome service"
 
     sudo cp "$PIHOME_DIR/setup/pihome.service" /etc/systemd/system/
     print_success "Service file installed"
@@ -664,6 +729,7 @@ print_summary() {
     is_phase_complete "build_sdl2"          && print_success "SDL2 libraries"
     is_phase_complete "build_airplay"       && print_success "AirPlay (shairport-sync)"
     is_phase_complete "python_dependencies" && print_success "Python packages"
+    is_phase_complete "boot_splash"         && print_success "Boot splash screen"
     is_phase_complete "install_service"     && print_success "PiHome systemd service"
 
     if [ ${#WARNINGS[@]} -gt 0 ]; then
@@ -745,14 +811,15 @@ main() {
         exit 0
     fi
 
-    phase_setup_directories      # 1/8
-    phase_clone_repository       # 2/8
-    phase_system_dependencies    # 3/8
-    phase_build_sdl2             # 4/8
-    phase_build_airplay          # 5/8
-    phase_python_dependencies    # 6/8
-    phase_configure_environment  # 7/8
-    phase_install_service        # 8/8
+    phase_setup_directories      # 1/9
+    phase_clone_repository       # 2/9
+    phase_system_dependencies    # 3/9
+    phase_build_sdl2             # 4/9
+    phase_build_airplay          # 5/9
+    phase_python_dependencies    # 6/9
+    phase_configure_environment  # 7/9
+    phase_boot_splash            # 8/9
+    phase_install_service        # 9/9
 
     # Clean up state file on success
     rm -f "$STATE_FILE"

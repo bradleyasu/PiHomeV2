@@ -1,0 +1,16 @@
+[Unit]
+Description=PiHome Boot Splash
+DefaultDependencies=no
+After=local-fs.target
+Before=pihome.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/fbi --noverbose --autozoom --fitwidth -T 1 /usr/local/PiHome/setup/splash.png
+ExecStop=/bin/kill -SIGTERM $MAINPID
+StandardInput=tty
+StandardOutput=tty
+
+[Install]
+WantedBy=sysinit.target

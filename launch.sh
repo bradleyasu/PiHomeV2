@@ -23,5 +23,7 @@ echo "------------------------------------";
 echo ""
 
 echo "Starting PiHome..."
+# Kill boot splash if running
+sudo killall fbi 2>/dev/null || true
 cd /usr/local/PiHome
 sudo -E python3 main.py
