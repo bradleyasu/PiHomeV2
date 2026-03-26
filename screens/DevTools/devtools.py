@@ -113,6 +113,7 @@ class DevTools(PiHomeScreen):
             ("Reload Config",    "secondary", self.action_reload_config),
             ("Clear Task Cache", "secondary", self.action_clear_task_cache),
             ("Test Toast",       "secondary", self.action_test_toast),
+            ("Install Splash",   "secondary", self.action_install_splash),
         ]
 
         pad = dp(8)
@@ -309,6 +310,123 @@ class DevTools(PiHomeScreen):
 
     def action_test_toast(self):
         get_app().show_toast("Hello world", level="info", timeout=5)
+
+    def action_install_splash(self):
+        import threading
+
+        def do_install():
+            PIHOME_LOGGER.info("DevTools: Installing boot splash...")
+            pihome_dir = "/usr/local/PiHome"
+            errors = []
+
+            # 1. Install fbi
+            try:
+                subprocess.run(
+                    ["sudo", "apt-get", "-y", "install", "fbi"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60,
+                )
+            except Exception as e:
+                errors.append("fbi install: {}".format(e))
+
+            # 2. Install splash service
+            try:
+                subprocess.run(
+                    ["sudo", "cp",
+                     "{}/setup/pihome-splash.service".format(pihome_dir),
+                     "/etc/systemd/system/"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                )
+                subprocess.run(
+                    ["sudo", "systemctl", "daemon-reload"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                )
+                subprocess.run(
+                    ["sudo", "systemctl", "enable", "pihome-splash.service"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                )
+            except Exception as e:
+                errors.append("splash service: {}".format(e))
+
+            # 3. Update PiHome service (adds splash kill before start)
+            try:
+                subprocess.run(
+                    ["sudo", "cp",
+                     "{}/setup/pihome.service".format(pihome_dir),
+                     "/etc/systemd/system/"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                )
+                subprocess.run(
+                    ["sudo", "systemctl", "daemon-reload"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                )
+            except Exception as e:
+                errors.append("pihome service: {}".format(e))
+
+            # 4. Quiet boot console
+            try:
+                cmdline = "/boot/cmdline.txt"
+                import os
+                if not os.path.isfile(cmdline) and os.path.isfile("/boot/firmware/cmdline.txt"):
+                    cmdline = "/boot/firmware/cmdline.txt"
+
+                if os.path.isfile(cmdline):
+                    with open(cmdline, "r") as f:
+                        current = f.read().strip()
+
+                    quiet_opts = ["quiet", "splash", "loglevel=0", "logo.nologo",
+                                  "vt.global_cursor_default=0", "consoleblank=0"]
+                    for opt in quiet_opts:
+                        if opt not in current:
+                            current += " " + opt
+
+                    subprocess.run(
+                        ["sudo", "bash", "-c",
+                         "cp {0} {0}.bak && echo '{1}' > {0}".format(cmdline, current)],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                    )
+            except Exception as e:
+                errors.append("cmdline.txt: {}".format(e))
+
+            # 5. Disable rainbow splash
+            try:
+                config = "/boot/config.txt"
+                import os
+                if not os.path.isfile(config) and os.path.isfile("/boot/firmware/config.txt"):
+                    config = "/boot/firmware/config.txt"
+
+                if os.path.isfile(config):
+                    with open(config, "r") as f:
+                        contents = f.read()
+                    if "disable_splash=1" not in contents:
+                        subprocess.run(
+                            ["sudo", "bash", "-c",
+                             "echo 'disable_splash=1' >> {}".format(config)],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+                        )
+            except Exception as e:
+                errors.append("config.txt: {}".format(e))
+
+            if errors:
+                msg = "Completed with errors:\n" + "\n".join(errors)
+                PIHOME_LOGGER.error("DevTools: Splash install errors: {}".format(errors))
+            else:
+                msg = "Boot splash installed. Reboot to see it."
+                PIHOME_LOGGER.info("DevTools: Boot splash installed successfully")
+
+            Clock.schedule_once(
+                lambda dt: MSGBOX_FACTORY.show("Install Splash", msg, 10, 2, 0), 0
+            )
+
+        def run_install():
+            thread = threading.Thread(target=do_install, daemon=True, name="splash-install")
+            thread.start()
+
+        MSGBOX_FACTORY.show(
+            "Install Boot Splash",
+            "Install the boot splash screen, quiet the boot console, and update the PiHome service? A reboot will be required.",
+            0, 1, MSGBOX_BUTTONS["YES_NO"],
+            on_yes=lambda: run_install(),
+        )
 
     def on_config_update(self, config):
         self.log_level = CONFIG.get("logging", "level", "INFO").upper()
