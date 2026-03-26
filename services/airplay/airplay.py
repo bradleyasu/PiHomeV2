@@ -27,6 +27,8 @@ _CODE_MAP = {
     ("ssnc", "pend"): "play_end",
     ("ssnc", "pfls"): "pause",
     ("ssnc", "prsm"): "resume",
+    ("ssnc", "mdst"): "metadata_start",
+    ("ssnc", "mden"): "metadata_end",
 }
 
 def _hex_to_ascii(hex_str):
@@ -51,6 +53,7 @@ class AirPlay:
         self._stop_event = threading.Event()
         self._cover_hash = None
         self._pend_time = None  # monotonic timestamp of last play_end
+        self._last_activity = None  # monotonic timestamp of last metadata received
 
         self._thread = threading.Thread(
             target=self._worker, daemon=True, name="airplay-metadata"
@@ -139,13 +142,23 @@ class AirPlay:
             os.close(fd)
 
     def _check_pend_timeout(self):
-        """If play_end was received >10s ago with no play_begin, mark stopped."""
+        """Mark stopped if play_end received >10s ago, or no metadata for >15s."""
+        now = time.monotonic()
         if self._pend_time is not None:
-            if time.monotonic() - self._pend_time > 10:
+            if now - self._pend_time > 10:
                 self._pend_time = None
                 if self.is_playing:
+                    PIHOME_LOGGER.info("AirPlay: playback stopped (play_end timeout)")
                     self.is_playing = False
                     self._notify()
+                return
+        # No explicit play_end — check for activity silence
+        if self.is_playing and self._last_activity is not None:
+            if now - self._last_activity > 15:
+                PIHOME_LOGGER.info("AirPlay: playback stopped (no metadata for 15s)")
+                self.is_playing = False
+                self._last_activity = None
+                self._notify()
 
     # ── Metadata parsing ──────────────────────────────────────────────
 
@@ -160,10 +173,10 @@ class AirPlay:
         code_ascii = _hex_to_ascii(code_hex)
         key = _CODE_MAP.get((type_ascii, code_ascii))
 
-        PIHOME_LOGGER.info("AirPlay: item type={} code={} key={}".format(type_ascii, code_ascii, key))
-
         if key is None:
             return
+
+        self._last_activity = time.monotonic()
 
         # Extract data payload (may be absent for signal-only items)
         data_b64 = self._extract_tag(item_str, "data")
@@ -207,9 +220,10 @@ class AirPlay:
                     self._cover_hash = None
                     changed = True
 
-        elif key == "play_begin" or key == "resume":
+        elif key in ("play_begin", "resume", "metadata_start"):
             self._pend_time = None
             if not self.is_playing:
+                PIHOME_LOGGER.info("AirPlay: playback started (via {})".format(key))
                 self.is_playing = True
                 changed = True
 
@@ -217,6 +231,10 @@ class AirPlay:
             self._pend_time = time.monotonic()
             # Don't mark stopped yet — wait for timeout
             return
+
+        elif key == "metadata_end":
+            # End of a metadata batch, not end of playback — ignore
+            pass
 
         elif key == "pause":
             # Keep is_playing True for pause (card stays visible)
