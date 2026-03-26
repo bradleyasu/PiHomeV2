@@ -529,6 +529,26 @@ phase_build_airplay() {
                 sudo sed -i "s|^//.*output_device = .*|        output_device = \"hw:1,0\";|" "$CONF"
                 sudo sed -i "s|^[[:space:]]*output_device = .*|        output_device = \"hw:1,0\";|" "$CONF"
             fi
+
+            # Enable metadata pipe for Now Playing display
+            # The default config has a metadata block with all lines commented out (// prefix).
+            # Uncomment and set the values we need. If no metadata block exists, append one.
+            if grep -q "^metadata" "$CONF"; then
+                sudo sed -i "s|^//[[:space:]]*enabled = .*|        enabled = \"yes\";|" "$CONF"
+                sudo sed -i "s|^//[[:space:]]*include_cover_art = .*|        include_cover_art = \"yes\";|" "$CONF"
+                sudo sed -i "s|^//[[:space:]]*pipe_name = .*|        pipe_name = \"/tmp/shairport-sync-metadata\";|" "$CONF"
+                sudo sed -i "s|^//[[:space:]]*pipe_timeout = .*|        pipe_timeout = 5000;|" "$CONF"
+            else
+                sudo tee -a "$CONF" > /dev/null <<MDEOF
+
+metadata = {
+        enabled = "yes";
+        include_cover_art = "yes";
+        pipe_name = "/tmp/shairport-sync-metadata";
+        pipe_timeout = 5000;
+};
+MDEOF
+            fi
         else
             # Config file missing — write a minimal one
             sudo tee "$CONF" > /dev/null <<SPSEOF
@@ -538,6 +558,13 @@ general = {
 
 alsa = {
         output_device = "hw:1,0";
+};
+
+metadata = {
+        enabled = "yes";
+        include_cover_art = "yes";
+        pipe_name = "/tmp/shairport-sync-metadata";
+        pipe_timeout = 5000;
 };
 SPSEOF
         fi

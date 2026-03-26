@@ -10,7 +10,7 @@ from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
-from kivy.metrics import dp
+from kivy.metrics import dp, sp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty,ListProperty, BooleanProperty
 
 from components.Button.circlebutton import CircleButton
@@ -20,9 +20,11 @@ from composites.WaveVisualizer.wavevisualizer import WaveVisualizer
 from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
+from services.airplay.airplay import AIRPLAY
 from services.audio.sfx import SFX
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from services.weather.weather import WEATHER
+from composites.NowPlaying.nowplaying import NowPlayingWidget
 from theme.theme import Theme
 from kivy.factory import Factory
 from util.helpers import appmenu_open, get_app
@@ -54,12 +56,22 @@ class HomeScreen(PiHomeScreen):
 
     weather_code = StringProperty("--")
 
+    # ── Clock sizing (animated for Now Playing) ────────────────────────────────
+    clock_font_size = NumericProperty(sp(80))
+    clock_y = NumericProperty(dp(16))
+    date_font_size = NumericProperty(sp(18))
+    date_y = NumericProperty(dp(122))
+
     is_first_run = True
 
     # ── HA favorites panel state ──────────────────────────────────────────────
     _ha_card      = None   # currently displayed HADeviceCard widget, or None
     _ha_favorites = []     # ordered list of favorited entity_ids
     _ha_idx       = -1     # index into _ha_favorites of the displayed card (-1 = none shown)
+
+    # ── Now Playing state ─────────────────────────────────────────────────────
+    _now_playing = None          # NowPlayingWidget instance, or None
+    _now_playing_art_hash = None # track cover art changes
 
 
     def __init__(self, **kwargs):
@@ -86,6 +98,7 @@ class HomeScreen(PiHomeScreen):
             self.is_first_run = False
 
         self._start_wave_visualizer()
+        AIRPLAY.register_listener(self._on_airplay_update)
         return super().on_enter(*args)
 
     def _logo_intro(self):
@@ -102,6 +115,7 @@ class HomeScreen(PiHomeScreen):
 
     def on_pre_leave(self, *args):
         self._stop_wave_visualizer()
+        AIRPLAY.unregister_listener(self._on_airplay_update)
         return super().on_pre_leave(*args)
 
     def _start_wave_visualizer(self):
@@ -338,11 +352,87 @@ class HomeScreen(PiHomeScreen):
 
         Animation(x=target_x, opacity=1, t='out_quad', d=0.28).start(card)
 
+    # ── Now Playing ─────────────────────────────────────────────────────────
+
+    def _on_airplay_update(self, airplay):
+        """Listener callback from AIRPLAY service (runs on main thread)."""
+        if airplay.is_playing and airplay.title:
+            if self._now_playing is None:
+                self._show_now_playing(airplay)
+            else:
+                self._update_now_playing(airplay)
+        else:
+            if self._now_playing is not None:
+                self._hide_now_playing()
+
+    def _show_now_playing(self, airplay):
+        """Create the Now Playing card and animate it in, shrinking the clock."""
+        card = NowPlayingWidget()
+        card.update_data(airplay)
+        card.set_cover_art(airplay.cover_art_bytes)
+        self._now_playing_art_hash = id(airplay.cover_art_bytes)
+
+        card.pos = (dp(16), dp(16))
+        card.opacity = 0
+        self._now_playing = card
+        self.add_widget(card)
+
+        # Shrink clock and slide it up
+        clock_anim = Animation(
+            clock_font_size=sp(50), clock_y=dp(110),
+            date_font_size=sp(13), date_y=dp(170),
+            t='out_cubic', d=0.3,
+        )
+        clock_anim.start(self)
+
+        # Fade card in with slight upward slide
+        card.y = dp(6)
+        Animation(y=dp(16), opacity=1, t='out_cubic', d=0.3).start(card)
+
+    def _update_now_playing(self, airplay):
+        """Update the existing Now Playing card with new metadata."""
+        if self._now_playing is None:
+            return
+        self._now_playing.update_data(airplay)
+        # Only rebuild texture if cover art actually changed
+        art_id = id(airplay.cover_art_bytes)
+        if art_id != self._now_playing_art_hash:
+            self._now_playing_art_hash = art_id
+            self._now_playing.set_cover_art(airplay.cover_art_bytes)
+
+    def _hide_now_playing(self):
+        """Fade out the Now Playing card and restore the clock."""
+        card = self._now_playing
+        if card is None:
+            return
+        self._now_playing = None
+        self._now_playing_art_hash = None
+
+        # Restore clock size
+        clock_anim = Animation(
+            clock_font_size=sp(80), clock_y=dp(16),
+            date_font_size=sp(18), date_y=dp(122),
+            t='out_cubic', d=0.3,
+        )
+        clock_anim.start(self)
+
+        # Fade card out
+        fade = Animation(y=dp(6), opacity=0, t='in_cubic', d=0.3)
+
+        def _on_done(anim, widget):
+            if widget.parent:
+                self.remove_widget(widget)
+
+        fade.bind(on_complete=_on_done)
+        fade.start(card)
+
     # ── Config / lifecycle ────────────────────────────────────────────────────
 
     def on_config_update(self, config):
         self.ids.weather_widget.on_config_update(config)
         self.ids.reddit_widget.on_config_update(config)
+        if self._now_playing is not None:
+            self._now_playing.update_theme()
         if self.is_open:
             self._start_wave_visualizer()
         super().on_config_update(config)

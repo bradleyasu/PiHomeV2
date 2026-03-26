@@ -40,23 +40,23 @@
             id: home_date
             color: root.text_color[0], root.text_color[1], root.text_color[2], 0.6
             text: root.date
-            font_size: '18sp'
+            font_size: root.date_font_size
             font_name: 'Nunito'
             size_hint: None, None
             size: self.texture_size
-            pos: dp(16), dp(122) + root.date_time_y_offset
+            pos: dp(16), root.date_y + root.date_time_y_offset
             opacity: root.date_time_opacity
 
         Label:
             id: home_time
             color: root.text_color
             text: root.time
-            font_size: '80sp'
+            font_size: root.clock_font_size
             font_name: 'Nunito'
             bold: True
             size_hint: None, None
             size: self.texture_size
-            pos: dp(16), dp(16) + root.date_time_y_offset
+            pos: dp(16), root.clock_y + root.date_time_y_offset
             opacity: root.date_time_opacity
 
         # ── Reddit news card — lower-right corner ─────────────────────────

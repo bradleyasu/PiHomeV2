@@ -1,0 +1,100 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<NowPlayingWidget>:
+    size_hint: None, None
+    size: dp(340), dp(90)
+
+    canvas.before:
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [dp(12)]
+
+    # ── Album art ────────────────────────────────────────────────────
+    Widget:
+        id: art_container
+        size_hint: None, None
+        size: dp(90), dp(90)
+        pos: root.x, root.y
+        canvas:
+            Color:
+                rgba: root.art_bg_color
+            RoundedRectangle:
+                pos: self.x + dp(4), self.y + dp(4)
+                size: self.width - dp(8), self.height - dp(8)
+                radius: [dp(10)]
+            Color:
+                rgba: 1, 1, 1, 1 if root.art_texture else 0
+            RoundedRectangle:
+                texture: root.art_texture
+                pos: self.x + dp(4), self.y + dp(4)
+                size: self.width - dp(8), self.height - dp(8)
+                radius: [dp(10)]
+
+    # ── Placeholder music icon (shown when no art) ───────────────────
+    Label:
+        text: "\ue405"
+        font_name: "MaterialIcons"
+        font_size: sp(28)
+        color: root.muted_color
+        opacity: 0 if root.art_texture else 1
+        size_hint: None, None
+        size: dp(82), dp(82)
+        pos: root.x + dp(4), root.y + dp(4)
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
+
+    # ── Track info ───────────────────────────────────────────────────
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: None, None
+        size: root.width - dp(98), root.height - dp(16)
+        pos: root.x + dp(94), root.y + dp(8)
+        spacing: dp(2)
+
+        Label:
+            text: root.track_title
+            font_name: "Nunito"
+            font_size: sp(14)
+            bold: True
+            color: root.text_color
+            size_hint_y: None
+            height: self.texture_size[1]
+            halign: "left"
+            valign: "middle"
+            text_size: self.width, None
+            shorten: True
+            shorten_from: "right"
+
+        Label:
+            text: root.track_artist
+            font_name: "Nunito"
+            font_size: sp(12)
+            color: root.muted_color
+            size_hint_y: None
+            height: self.texture_size[1]
+            halign: "left"
+            valign: "middle"
+            text_size: self.width, None
+            shorten: True
+            shorten_from: "right"
+
+        Label:
+            text: root.track_album
+            font_name: "Nunito"
+            font_size: sp(11)
+            color: root.album_color
+            size_hint_y: None
+            height: self.texture_size[1]
+            halign: "left"
+            valign: "middle"
+            text_size: self.width, None
+            shorten: True
+            shorten_from: "right"
+
+        Widget:
