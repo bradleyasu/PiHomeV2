@@ -50,6 +50,8 @@ class CharmWidget(Widget):
     SLIDER_WIDTH = dp(14)
     SLIDER_HEIGHT = dp(160)
     CORNER_RADIUS = dp(12)
+    EDGE_ZONE = dp(5)       # right-edge touch zone for swipe-to-open
+    SWIPE_THRESHOLD = dp(40) # minimum horizontal swipe distance to trigger open
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -60,6 +62,7 @@ class CharmWidget(Widget):
         self._visible = False
         self._anim = None
         self._touch_active = False
+        self._edge_swipe_touch = None  # tracks an in-progress edge swipe
 
         # Start with drawer off-screen
         w = Window.size[0]
@@ -389,7 +392,13 @@ class CharmWidget(Widget):
     # ── Touch handling ─────────────────────────────────────────────────
 
     def on_touch_down(self, touch):
+        # ── Edge-swipe detection (drawer closed) ──
         if not self._visible:
+            w = Window.size[0]
+            if touch.x >= w - self.EDGE_ZONE:
+                self._edge_swipe_touch = touch.uid
+                touch.ud["charm_edge_ox"] = touch.x
+                return True  # grab the touch
             return False
 
         dx = self._drawer_x
@@ -423,12 +432,25 @@ class CharmWidget(Widget):
         return True
 
     def on_touch_move(self, touch):
+        # ── Edge-swipe tracking ──
+        if self._edge_swipe_touch == touch.uid:
+            ox = touch.ud.get("charm_edge_ox", touch.x)
+            if ox - touch.x >= self.SWIPE_THRESHOLD:
+                self._edge_swipe_touch = None
+                self.open()
+            return True
+
         if self._touch_active:
             self._set_brightness_from_touch(touch.y)
             return True
         return False
 
     def on_touch_up(self, touch):
+        # ── Edge-swipe cancel ──
+        if self._edge_swipe_touch == touch.uid:
+            self._edge_swipe_touch = None
+            return True
+
         if self._touch_active:
             self._touch_active = False
             return True
