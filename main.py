@@ -114,7 +114,7 @@ class PiHome(App):
         # Position hamburger at top-left; bind to Window size so it tracks
         # the actual coordinate system regardless of density or resize behavior.
         def _update_menu_pos(*_):
-            self.menu_button.pos = (dp(10), Window.height - self.menu_button.height - dp(10))
+            self.menu_button.pos = (dp(10), Window.height - self.menu_button.height - dp(5))
         self.menu_button.bind(size=_update_menu_pos)
         Window.bind(size=_update_menu_pos)
         _update_menu_pos()
