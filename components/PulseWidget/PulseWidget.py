@@ -162,8 +162,8 @@ class PulseWidget(Widget):
 
     def burst(self):
         """Trigger the glow: fade in quickly, color-shift, fade out."""
-        if self._anim:
-            self._anim.cancel(self)
+        # Cancel ALL animations on this widget (opacity + any orphaned hue anims)
+        Animation.cancel_all(self)
         if self._color_event:
             self._color_event.cancel()
             self._color_event = None
@@ -200,9 +200,9 @@ class PulseWidget(Widget):
         self._anim.bind(on_complete=_on_complete)
         self._anim.start(self)
 
-        # Animate the hue rotation alongside
-        hue_anim = Animation(_hue_phase=4.0, t="linear", d=1.55)
-        hue_anim.start(self)
+        # Animate the hue rotation alongside (parallel with opacity)
+        self._hue_anim = Animation(_hue_phase=4.0, t="linear", d=1.55)
+        self._hue_anim.start(self)
 
         # Tick color updates at 30fps during the effect
         self._color_event = Clock.schedule_interval(self._update_colors, 1 / 30.0)

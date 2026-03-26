@@ -58,6 +58,8 @@ class RotaryEncoder():
 
     
     def on_falling(self, channel):
+        if self._lock:
+            return
         self.press_time = time.time()
         self._lock = True
         self.button_on_down_callback()
@@ -66,15 +68,16 @@ class RotaryEncoder():
         # previous press (which would cause a short press to be misidentified
         # as a long press, or an AttributeError on the very first press).
         while GPIO.input(channel) == GPIO.LOW and time.time() - self.press_time < (self.LONG_PRESS_THRESHOLD + 0.1):
-            pass
+            sleep(0.01)
 
         duration = time.time() - self.press_time
         self.button_callback(long_press=(duration > self.LONG_PRESS_THRESHOLD))
 
         # Wait for full physical release before unlocking so the turn handler
         # doesn't pick up noise from the button spring-back.
-        while GPIO.input(channel) == GPIO.LOW:
-            pass
+        timeout = time.time() + 1.0
+        while GPIO.input(channel) == GPIO.LOW and time.time() < timeout:
+            sleep(0.01)
 
         self._lock = False
 
