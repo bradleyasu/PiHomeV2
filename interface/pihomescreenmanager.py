@@ -37,9 +37,9 @@ class PiHomeScreenManager(ScreenManager):
 
         self.rotary_encoder = ROTARY_ENCODER
         if self.rotary_encoder.is_initialized:
-            self.rotary_encoder.button_callback = lambda long_press: self._rotary_pressed(long_press)
-            self.rotary_encoder.update_callback = lambda direction, pressed: self._rotary_handler(direction, pressed)
-            self.rotary_encoder.button_on_down_callback = lambda: self._rotary_on_down()
+            self.rotary_encoder.button_callback = lambda long_press: Clock.schedule_once(lambda dt, lp=long_press: self._rotary_pressed(lp), 0)
+            self.rotary_encoder.update_callback = lambda direction, pressed: Clock.schedule_once(lambda dt, d=direction, p=pressed: self._rotary_handler(d, p), 0)
+            self.rotary_encoder.button_on_down_callback = lambda: Clock.schedule_once(lambda dt: self._rotary_on_down(), 0)
 
         # Keyboard bindings for local development (macOS / non-Pi)
         # Up/Down arrows simulate rotary turn; Space simulates rotary press
