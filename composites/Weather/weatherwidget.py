@@ -559,7 +559,7 @@ class WeatherWidget(Widget):
         # Color instruction ref for the border so we can update its alpha
         border_color_instr = [None]
 
-        border_width = 12 if is_extreme else 10
+        border_width = 1.5
         half_bw = border_width / 2.0
 
         def update_card_bg(widget, *args):
