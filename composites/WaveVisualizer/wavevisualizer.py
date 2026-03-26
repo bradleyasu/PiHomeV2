@@ -83,12 +83,10 @@ class WaveVisualizer(Widget):
     # ── Lifecycle ────────────────────────────────────────────────────────────
 
     def start(self):
-        """Begin polling for audio and animating."""
+        """Begin polling for audio. Animation clock starts on-demand when audio is detected."""
         if self._poll_clock is None:
             self._poll_clock = Clock.schedule_interval(self._poll_audio, 2.0)
             self._poll_audio(0)  # check immediately
-        if self._anim_clock is None:
-            self._anim_clock = Clock.schedule_interval(self._tick, 1 / 30.0)
 
     def stop(self):
         """Stop all clocks and clear visuals."""
@@ -116,6 +114,9 @@ class WaveVisualizer(Widget):
 
     def on_audio_playing(self, instance, value):
         self._target_amplitude = 1.0 if value else 0.0
+        # Start the animation clock on-demand; it will stop itself when faded out
+        if value and self._anim_clock is None and self._poll_clock is not None:
+            self._anim_clock = Clock.schedule_interval(self._tick, 1 / 20.0)
 
     # ── Animation tick ───────────────────────────────────────────────────────
 
@@ -129,9 +130,12 @@ class WaveVisualizer(Widget):
         else:
             self._current_amplitude = self._target_amplitude
 
-        # Skip drawing if fully faded out
+        # Fully faded out — stop the animation clock to save CPU
         if self._current_amplitude < 0.01:
             self._wave_group.clear()
+            if self._anim_clock is not None:
+                self._anim_clock.cancel()
+                self._anim_clock = None
             return
 
         self._draw_waves()
@@ -151,7 +155,7 @@ class WaveVisualizer(Widget):
         t = self._time
 
         # Number of horizontal segments
-        segments = max(20, int(w / dp(12)))
+        segments = max(12, int(w / dp(24)))
         dx = w / segments
 
         tex = self._get_gradient_texture()
