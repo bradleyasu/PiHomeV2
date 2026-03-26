@@ -188,7 +188,7 @@ class WeatherWidget(Widget):
             overlay.canvas.after.add(self._overlay_particle_group)
         self._overlay_particle_clock = Clock.schedule_interval(self._overlay_particle_tick, 1 / 20.0)
 
-def _stop_overlay_particles(self):
+    def _stop_overlay_particles(self):
         if self._overlay_particle_clock is not None:
             self._overlay_particle_clock.cancel()
             self._overlay_particle_clock = None
