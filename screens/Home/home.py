@@ -1,6 +1,4 @@
 import subprocess
-from components.Image.networkimage import NetworkImage
-from components.Slider.slidecontrol import SlideControl
 
 from composites.Reddit.redditwidget import RedditWidget
 from composites.HomeAssistant.hadevicecard import make_ha_card, load_ha_favorites  # noqa — also loads hadevicecard.kv
@@ -16,7 +14,6 @@ from kivy.metrics import dp
 from kivy.properties import ColorProperty, StringProperty,ObjectProperty, NumericProperty,ListProperty, BooleanProperty
 
 from components.Button.circlebutton import CircleButton
-from components.Button.simplebutton import SimpleButton
 from components.SmartLight.smartlight import SmartLight
 from composites.Weather.weatherwidget import WeatherWidget
 from composites.WaveVisualizer.wavevisualizer import WaveVisualizer
@@ -24,15 +21,11 @@ from interface.pihomescreen import PiHomeScreen
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from listeners.ConfigurationUpdateListener import ConfigurationUpdateListener
 from services.audio.sfx import SFX
-from services.qr.qr import QR
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE
 from services.weather.weather import WEATHER
-from system.brightness import get_brightness, set_brightness
-from theme.color import Color
 from theme.theme import Theme
 from kivy.factory import Factory
 from util.helpers import appmenu_open, get_app
-from util.tools import hex
 from kivy.clock import Clock
 from kivy.animation import Animation
 from util.const import (
@@ -62,11 +55,6 @@ class HomeScreen(PiHomeScreen):
     weather_code = StringProperty("--")
 
     is_first_run = True
-    brightness_slider = None
-    banButton = None
-    qr_img = None
-    _qr_poll_event = None
-    _qr_last_source = None
 
     # ── HA favorites panel state ──────────────────────────────────────────────
     _ha_card      = None   # currently displayed HADeviceCard widget, or None
@@ -134,9 +122,6 @@ class HomeScreen(PiHomeScreen):
         viz = self.ids.get('wave_visualizer')
         if viz:
             viz.stop()
-
-    def change_brightness(self, value):
-        set_brightness(value)
 
     def open_settings(self):
         PIHOME_SCREEN_MANAGER.goto(_SETTINGS_SCREEN)
@@ -353,26 +338,6 @@ class HomeScreen(PiHomeScreen):
 
         Animation(x=target_x, opacity=1, t='out_quad', d=0.28).start(card)
 
-    # ── QR sync ─────────────────────────────────────────────────────────────
-
-    def _update_qr(self):
-        source = WALLPAPER_SERVICE.source
-        self._qr_last_source = source
-        qr_path = QR().from_url(source)
-
-        if self.qr_img is not None:
-            self.remove_widget(self.qr_img)
-
-        self.qr_img = NetworkImage(qr_path, size=(dp(256), dp(256)), pos=(dp(10), dp(10)))
-        self.qr_img.pos = (dp(get_app().width - 320), dp(100))
-        self.add_widget(self.qr_img)
-
-    def _check_qr_source(self):
-        if self.qr_img is None:
-            return
-        if WALLPAPER_SERVICE.source != self._qr_last_source:
-            self._update_qr()
-
     # ── Config / lifecycle ────────────────────────────────────────────────────
 
     def on_config_update(self, config):
@@ -384,9 +349,6 @@ class HomeScreen(PiHomeScreen):
 
     # ── Rotary encoder ────────────────────────────────────────────────────────
 
-    def on_rotary_long_pressed(self):
-        self.toggle_controls()
-
     def on_rotary_pressed(self):
         if self._ha_card is not None:
             self._ha_card.do_toggle()
@@ -397,48 +359,8 @@ class HomeScreen(PiHomeScreen):
         if self._ha_card is not None:
             self._ha_card.adjust_brightness(direction * 5.0)
             return
-        if self.brightness_slider is None:
-            # default mode, scroll through wallpapers
-            if direction == 1:
-                WALLPAPER_SERVICE.next()
-            elif direction == -1:
-                WALLPAPER_SERVICE.previous()
-        else:
-            if direction == 1:
-                self.brightness_slider.set_value(self.brightness_slider.level + 5)
-            elif direction == -1:
-                self.brightness_slider.set_value(self.brightness_slider.level - 5)
+        if direction == 1:
+            WALLPAPER_SERVICE.next()
+        elif direction == -1:
+            WALLPAPER_SERVICE.previous()
 
-    # ── Controls panel ────────────────────────────────────────────────────────
-
-    def toggle_controls(self):
-        if self.brightness_slider is None and self.banButton is None:
-            self.brightness_slider = SlideControl(size=(dp(20), dp(200)), pos=(dp(get_app().width -30), dp(10)))
-            self.brightness_slider.add_listener(lambda value: self.change_brightness(value))
-            self.brightness_slider.background_color = hex(Color.CHARTREUSE_600, 0.1)
-            self.brightness_slider.active_color = hex(Color.DARK_CHARTREUSE_700)
-            self.brightness_slider.level = get_brightness()
-            self.add_widget(self.brightness_slider)
-
-            self.banButton = SimpleButton(type="danger")
-            self.banButton.text = "Ban Wallpaper"
-            self.banButton.size = (dp(200), dp(50))
-            self.banButton.pos = (dp(get_app().width - 270), dp(10))
-            self.banButton.bind(on_release=lambda x: WALLPAPER_SERVICE.ban())
-            self.add_widget(self.banButton)
-
-            self._update_qr()
-            self._qr_poll_event = Clock.schedule_interval(lambda _: self._check_qr_source(), 2)
-        else:
-            if self._qr_poll_event:
-                self._qr_poll_event.cancel()
-                self._qr_poll_event = None
-            self._qr_last_source = None
-
-            self.remove_widget(self.brightness_slider)
-            self.brightness_slider = None
-            self.remove_widget(self.banButton)
-            self.banButton = None
-
-            self.remove_widget(self.qr_img)
-            self.qr_img = None

@@ -6,6 +6,7 @@ from kivy.uix.screenmanager import SlideTransition
 from kivy.uix.screenmanager import SwapTransition, FadeTransition, NoTransition
 from kivy.graphics import Color, Rectangle
 from kivy.core.window import Window
+from components.CharmWidget.charmwidget import CHARM
 from components.PulseWidget.PulseWidget import PULSER
 from composites.PinPad.pinpad import PinPad
 from system.rotary import ROTARY_ENCODER
@@ -55,6 +56,8 @@ class PiHomeScreenManager(ScreenManager):
         elif key == 32:   # Spacebar  → encoder press
             self._rotary_on_down()
             self._rotary_pressed(long_press=False)
+        elif key == 108:  # L key → long press (opens charm)
+            self._rotary_pressed(long_press=True)
 
     def _update_bg(self, *args):
         """Update background rectangles to match widget size/position"""
@@ -101,12 +104,17 @@ class PiHomeScreenManager(ScreenManager):
 
 
     def _rotary_handler(self, direction, pressed):
+        if CHARM.is_open:
+            CHARM.adjust_brightness(direction * 5)
+            return
         try:
             self.current_screen.on_rotary_turn(direction, pressed)
         except AttributeError:
             PIHOME_LOGGER.error("No on_rotary_turn method found in current screen")
 
     def _rotary_on_down(self):
+        if CHARM.is_open or CHARM._qr_overlay is not None:
+            return
         try:
             if not self.current_screen.disable_rotary_press_animation:
                 PULSER.burst()
@@ -114,10 +122,17 @@ class PiHomeScreenManager(ScreenManager):
         except AttributeError:
             PIHOME_LOGGER.error("No on_rotary_down method found in current screen")
 
-    def _rotary_pressed(self, long_press = False):
+    def _rotary_pressed(self, long_press=False):
+        if CHARM._qr_overlay is not None:
+            CHARM._dismiss_qr_overlay()
+            return
+        if CHARM.is_open:
+            if not long_press:
+                CHARM.close()
+            return
         try:
-            if long_press is True:
-                self.current_screen.on_rotary_long_pressed()
+            if long_press:
+                CHARM.toggle()
             else:
                 self.current_screen.on_rotary_pressed()
         except AttributeError:
@@ -167,6 +182,7 @@ class PiHomeScreenManager(ScreenManager):
         # the app menu will be added to the parent before the screen manager is added to the parent
         Clock.schedule_once(lambda dt: parent.add_widget(self.app_menu, index=1), 1)
         Clock.schedule_once(lambda dt: parent.add_widget(PULSER), 2)
+        Clock.schedule_once(lambda dt: parent.add_widget(CHARM), 2)
 
 
     def load_screens(self):
