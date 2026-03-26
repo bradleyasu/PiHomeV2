@@ -175,10 +175,8 @@ class WeatherWidget(Widget):
         # Ambient overlay particles
         if opacity == 1:
             self._start_overlay_particles()
-            self._resume_alert_pulses()
         else:
             self._stop_overlay_particles()
-            self._pause_alert_pulses()
 
     # ── Ambient overlay precipitation ──
 
@@ -190,27 +188,7 @@ class WeatherWidget(Widget):
             overlay.canvas.after.add(self._overlay_particle_group)
         self._overlay_particle_clock = Clock.schedule_interval(self._overlay_particle_tick, 1 / 20.0)
 
-    def _pause_alert_pulses(self):
-        """Pause extreme-alert border pulse timers when overlay is hidden."""
-        carousel = self.ids.get("alert_carousel")
-        if not carousel:
-            return
-        for slide in carousel.slides:
-            for child in slide.children:
-                if hasattr(child, '_pulse_event') and child._pulse_event is not None:
-                    child._pulse_event.cancel()
-
-    def _resume_alert_pulses(self):
-        """Restart extreme-alert border pulse timers when overlay is shown."""
-        carousel = self.ids.get("alert_carousel")
-        if not carousel:
-            return
-        for slide in carousel.slides:
-            for child in slide.children:
-                if hasattr(child, '_pulse_border_fn'):
-                    child._pulse_event = Clock.schedule_interval(child._pulse_border_fn, 1 / 10.0)
-
-    def _stop_overlay_particles(self):
+def _stop_overlay_particles(self):
         if self._overlay_particle_clock is not None:
             self._overlay_particle_clock.cancel()
             self._overlay_particle_clock = None
@@ -560,26 +538,15 @@ class WeatherWidget(Widget):
         bg_color = [0.10, 0.12, 0.16, 0.95] if dark else [0.96, 0.96, 0.97, 0.95]
         border_color = sev_color[:3] + [1]
 
-        # For extreme alerts, store a mutable alpha ref for the pulsing border
-        border_alpha = [0.8] if is_extreme else [None]
-        # Color instruction ref for the border so we can update its alpha
-        border_color_instr = [None]
-
         border_width = 1.5
         half_bw = border_width / 2.0
 
         def update_card_bg(widget, *args):
             widget.canvas.before.clear()
             with widget.canvas.before:
-                # Fill
                 Color(*bg_color)
                 RoundedRectangle(pos=widget.pos, size=widget.size, radius=[dp(16)])
-                # Border — inset by half the stroke width so it stays on the edge
-                if is_extreme:
-                    c = Color(sev_color[0], sev_color[1], sev_color[2], border_alpha[0])
-                    border_color_instr[0] = c
-                else:
-                    Color(*border_color)
+                Color(*border_color)
                 Line(
                     rounded_rectangle=[
                         widget.pos[0] + half_bw,
@@ -591,25 +558,6 @@ class WeatherWidget(Widget):
                     width=border_width,
                 )
         card.bind(pos=update_card_bg, size=update_card_bg)
-
-        # Pulse the border for extreme severity
-        if is_extreme:
-            def _pulse_border(dt):
-                import math
-                t = Clock.get_boottime()
-                alpha = 0.15 + 0.70 * (0.5 + 0.5 * math.sin(t * 3.5))
-                border_alpha[0] = alpha
-                if border_color_instr[0] is not None:
-                    border_color_instr[0].a = alpha
-            card._pulse_border_fn = _pulse_border
-            card._border_color_instr = border_color_instr
-            card._pulse_event = Clock.schedule_interval(_pulse_border, 1 / 10.0)
-
-            # Clean up when card is removed from widget tree
-            def _on_parent(widget, parent):
-                if parent is None and hasattr(widget, '_pulse_event'):
-                    widget._pulse_event.cancel()
-            card.bind(parent=_on_parent)
 
         # -- Row 1: icon + title + severity badge --
         header = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(28), spacing=dp(8))
