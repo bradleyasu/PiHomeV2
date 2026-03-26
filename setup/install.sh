@@ -475,10 +475,14 @@ phase_build_airplay() {
     # AirPlay-specific dependencies
     run_logged "Installing AirPlay build dependencies" \
         sudo apt-get -y install --no-install-recommends \
-            libpopt-dev libconfig-dev avahi-daemon libavahi-client-dev \
-            libssl-dev libsoxr-dev libplist-dev libsodium-dev uuid-dev \
-            libgcrypt-dev xxd libplist-utils \
+            libpopt-dev libconfig-dev libasound2-dev avahi-daemon \
+            libavahi-client-dev libssl-dev libsoxr-dev libplist-dev \
+            libsodium-dev uuid-dev libgcrypt-dev xxd libplist-utils \
             libavutil-dev libavcodec-dev libavformat-dev
+
+    # systemd-dev is required on Debian 13+ / Ubuntu 24.10+
+    run_logged "Installing systemd-dev (if available)" \
+        bash -c 'sudo apt-get -y install systemd-dev 2>/dev/null || true'
 
     # nqptp
     run_logged "Building nqptp" bash -c '
@@ -509,8 +513,39 @@ phase_build_airplay() {
             --with-ssl=openssl --with-systemd-startup --with-airplay-2
         make
         sudo make install
-        sh user-service-install.sh
         rm -rf /tmp/shairport-sync
+    '
+
+    # Configure shairport-sync: name "PiHome", use DAC at hw:1,0 if available
+    run_logged "Configuring shairport-sync" bash -c '
+        CONF="/etc/shairport-sync.conf"
+        if [ -f "$CONF" ]; then
+            # Set the AirPlay name to "PiHome"
+            sudo sed -i "s|^//.*name = .*|        name = \"PiHome\";|" "$CONF"
+            sudo sed -i "s|^[[:space:]]*name = .*|        name = \"PiHome\";|" "$CONF"
+
+            # If hw:1,0 (RPi DAC Pro) is available, configure ALSA output
+            if aplay -l 2>/dev/null | grep -q "card 1"; then
+                sudo sed -i "s|^//.*output_device = .*|        output_device = \"hw:1,0\";|" "$CONF"
+                sudo sed -i "s|^[[:space:]]*output_device = .*|        output_device = \"hw:1,0\";|" "$CONF"
+            fi
+        else
+            # Config file missing — write a minimal one
+            sudo tee "$CONF" > /dev/null <<SPSEOF
+general = {
+        name = "PiHome";
+};
+
+alsa = {
+        output_device = "hw:1,0";
+};
+SPSEOF
+        fi
+    '
+
+    run_logged "Enabling shairport-sync service" bash -c '
+        sudo systemctl enable shairport-sync
+        sudo systemctl restart shairport-sync
     '
 
     # Add user to audio group
@@ -518,6 +553,17 @@ phase_build_airplay() {
     current_user=$(whoami)
     sudo usermod -aG audio "$current_user"
     print_success "Added $current_user to audio group"
+
+    # Disable WiFi power management to prevent AirPlay audio dropouts
+    if command -v iwconfig &>/dev/null && iwconfig wlan0 2>/dev/null | grep -q "Power Management:on"; then
+        sudo iwconfig wlan0 power off 2>/dev/null || true
+        # Make it persist across reboots via dhcpcd hook
+        local hook_file="/etc/dhcpcd.exit-hook"
+        if ! grep -q "iwconfig wlan0 power off" "$hook_file" 2>/dev/null; then
+            echo 'iwconfig wlan0 power off 2>/dev/null' | sudo tee -a "$hook_file" >/dev/null
+        fi
+        print_success "Disabled WiFi power management (prevents audio dropouts)"
+    fi
 
     mark_phase_complete "$phase_id"
 }
