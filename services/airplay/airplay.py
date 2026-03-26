@@ -53,7 +53,6 @@ class AirPlay:
         self._stop_event = threading.Event()
         self._cover_hash = None
         self._pend_time = None  # monotonic timestamp of last play_end
-        self._last_activity = None  # monotonic timestamp of last metadata received
 
         self._thread = threading.Thread(
             target=self._worker, daemon=True, name="airplay-metadata"
@@ -140,25 +139,22 @@ class AirPlay:
         finally:
             PIHOME_LOGGER.info("AirPlay: pipe closed")
             os.close(fd)
+            # Pipe closed — shairport-sync likely stopped
+            if self.is_playing:
+                PIHOME_LOGGER.info("AirPlay: playback stopped (pipe disconnected)")
+                self.is_playing = False
+                self._pend_time = None
+                self._notify()
 
     def _check_pend_timeout(self):
-        """Mark stopped if play_end received >10s ago, or no metadata for >15s."""
-        now = time.monotonic()
+        """Mark stopped if play_end received >10s ago with no new play_begin."""
         if self._pend_time is not None:
-            if now - self._pend_time > 10:
+            if time.monotonic() - self._pend_time > 10:
                 self._pend_time = None
                 if self.is_playing:
                     PIHOME_LOGGER.info("AirPlay: playback stopped (play_end timeout)")
                     self.is_playing = False
                     self._notify()
-                return
-        # No explicit play_end — check for activity silence
-        if self.is_playing and self._last_activity is not None:
-            if now - self._last_activity > 15:
-                PIHOME_LOGGER.info("AirPlay: playback stopped (no metadata for 15s)")
-                self.is_playing = False
-                self._last_activity = None
-                self._notify()
 
     # ── Metadata parsing ──────────────────────────────────────────────
 
@@ -175,8 +171,6 @@ class AirPlay:
 
         if key is None:
             return
-
-        self._last_activity = time.monotonic()
 
         # Extract data payload (may be absent for signal-only items)
         data_b64 = self._extract_tag(item_str, "data")
