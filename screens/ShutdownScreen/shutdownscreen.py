@@ -16,10 +16,10 @@ class ShutdownScreen(PiHomeScreen):
         super(ShutdownScreen, self).__init__(**kwargs)
 
 
-    def update():
+    def update(self):
         try:
             subprocess.run(
-                    ["git", "-C", "/usr/local/PiHome", "pull", "--ff-only"],
+                    ["sudo", "git", "-C", "/usr/local/PiHome", "pull", "--ff-only"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     timeout=30,
@@ -27,7 +27,7 @@ class ShutdownScreen(PiHomeScreen):
         except Exception as e:
             PIHOME_LOGGER.error("Shutdown: Failed to update: {}".format(e))
 
-    def restart():
+    def restart(self):
         try:
             subprocess.Popen(
                 ["sudo", "systemctl", "restart", "pihome"],
@@ -36,11 +36,12 @@ class ShutdownScreen(PiHomeScreen):
             )
         except Exception as e:
             PIHOME_LOGGER.error("Shutdown: Restart failed: {}".format(e))
-    
-    def on_enter(self):
+
+    def on_enter(self, *args):
         # Prevent changing screen
         PIHOME_LOGGER.warning("Shutdown screen entered and locked.  System will restart in 5 seconds.")
         SFX.play("shutdown")
         self.locked = True
-        Clock.schedule_once(lambda _: self.update, 5)
-        Clock.schedule_once(lambda _: self.restart, 15)
+        Clock.schedule_once(lambda _: self.update(), 5)
+        Clock.schedule_once(lambda _: self.restart(), 15)
+        return super().on_enter(*args)
