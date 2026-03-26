@@ -103,6 +103,8 @@ class AirPlay:
             self._stop_event.wait(30)
             return
 
+        PIHOME_LOGGER.info("AirPlay: opening pipe at {}".format(_PIPE_PATH))
+
         # Open non-blocking so we don't hang if no writer
         fd = os.open(_PIPE_PATH, os.O_RDONLY | os.O_NONBLOCK)
         try:
@@ -118,8 +120,11 @@ class AirPlay:
 
                 chunk = os.read(fd, 65536)
                 if not chunk:
-                    # Writer closed the pipe (shairport-sync stopped)
-                    break
+                    # No writer has the pipe open — wait and retry select
+                    # (on FIFOs with O_NONBLOCK, empty read means no writer,
+                    # not necessarily permanent EOF)
+                    self._stop_event.wait(1)
+                    continue
 
                 buf += chunk.decode("utf-8", errors="replace")
 
@@ -130,6 +135,7 @@ class AirPlay:
                     buf = buf[end_idx:]
                     self._parse_item(item_str)
         finally:
+            PIHOME_LOGGER.info("AirPlay: pipe closed")
             os.close(fd)
 
     def _check_pend_timeout(self):
@@ -153,6 +159,9 @@ class AirPlay:
         type_ascii = _hex_to_ascii(type_hex)
         code_ascii = _hex_to_ascii(code_hex)
         key = _CODE_MAP.get((type_ascii, code_ascii))
+
+        PIHOME_LOGGER.info("AirPlay: item type={} code={} key={}".format(type_ascii, code_ascii, key))
+
         if key is None:
             return
 

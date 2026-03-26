@@ -510,7 +510,8 @@ phase_build_airplay() {
         cd shairport-sync
         autoreconf -fi
         ./configure --sysconfdir=/etc --with-alsa --with-soxr --with-avahi \
-            --with-ssl=openssl --with-systemd-startup --with-airplay-2
+            --with-ssl=openssl --with-systemd-startup --with-airplay-2 \
+            --with-metadata
         make
         sudo make install
         rm -rf /tmp/shairport-sync
