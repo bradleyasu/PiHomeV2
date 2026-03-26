@@ -3,8 +3,8 @@
     "settingsIndex": 3,
     "name": "BusScreen",
     "id": "bus",
-    "label": "Bus",
-    "settingsLabel": "Transportation",
+    "label": "PRT",
+    "settingsLabel": "PRT/Bus",
     "description": "Bus Schedule",
     "hidden": false,
     "icon": "screens/Bus/icon.png",
@@ -35,13 +35,6 @@
             "desc": "Comma delimited bus stop numbers",
             "section": "prt",
             "key": "stops"
-        },
-        {
-            "type": "string",
-            "title": "Service Logo",
-            "desc": "URL to Bus/Transportation services logo",
-            "section": "prt",
-            "key": "logo"
         }
     ]
 }

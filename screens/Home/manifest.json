@@ -7,6 +7,7 @@
     "label": "PiHome",
     "settingsLabel": "General",
     "description": "PiHome Home Screen",
+    "icon": "./screens/Home/icon.png",
     "hidden": false,
     "requires_pin": false,
     "settings": [
