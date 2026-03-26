@@ -256,7 +256,7 @@ class HomeScreen(PiHomeScreen):
 
         self._ha_card = card
         self._ha_idx  = idx
-        self.add_widget(card)
+        self.add_widget(card, index=1)
 
         Animation(y=target_y, opacity=1, t='out_quad', d=0.35).start(card)
 
@@ -348,7 +348,7 @@ class HomeScreen(PiHomeScreen):
 
         self._ha_card = card
         self._ha_idx  = idx
-        self.add_widget(card)
+        self.add_widget(card, index=1)
 
         Animation(x=target_x, opacity=1, t='out_quad', d=0.28).start(card)
 
@@ -375,7 +375,7 @@ class HomeScreen(PiHomeScreen):
         card.pos = (dp(16), dp(16))
         card.opacity = 0
         self._now_playing = card
-        self.add_widget(card)
+        self.add_widget(card, index=1)
 
         # Shrink clock and slide it up
         clock_anim = Animation(
