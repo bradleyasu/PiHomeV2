@@ -1,128 +1,211 @@
-
+from kivy.uix.widget import Widget
+from kivy.properties import NumericProperty
+from kivy.graphics import Color, Rectangle
+from kivy.graphics.texture import Texture
+from kivy.animation import Animation
 from kivy.clock import Clock
-from kivy.app import App
-from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
-from kivy.graphics import RenderContext
-from kivy.properties import StringProperty, BooleanProperty, NumericProperty
-from kivy.uix.image import Image
-
-from interface.pihomescreen import PiHomeScreen
-from kivy.lang import Builder
-
-from services.audio.sfx import SFX
 
 
-# Plasma shader
-pulse_shader = '''
-$HEADER$
+class PulseWidget(Widget):
+    """Apple Intelligence-style border glow effect.
 
-uniform vec2 resolution;
-uniform float time;
+    Draws soft gradient strips along all four screen edges.  The glow
+    color rotates slowly through a palette and fades in/out on burst().
+    No shaders — pure canvas instructions, instant activation.
+    """
 
-vec3 hsb2rgb(in vec3 c)
-{
-    vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
-                             6.0)-3.0)-1.0,
-                     0.0,
-                     1.0 );
-    rgb = rgb*rgb*(3.0-2.0*rgb);
-    return c.z * mix( vec3(1.0), rgb, c.y);
-}
+    glow_opacity = NumericProperty(0.0)
+    _hue_phase = NumericProperty(0.0)
 
-void main(void)
-{
+    # Gradient depth from the edge inward
+    EDGE_DEPTH = 45
 
-    // if time is greater than 4 seconds, discard the pixel
-    if (time > 2.0) {
-        discard;
-    }
-
-    vec2 p=(2.0*gl_FragCoord.xy-resolution.xy)/resolution.y;
-
-    // move to bottom of screen
-    p.y += 1.5;
-
-    float r = length(p) * 0.15;
-
-    vec3 color = hsb2rgb(vec3(0, 0.2, 1.0));
-    float opacity = 1.0;
-
-    float a = pow(r, 2.0);
-    float b = sin(r * 0.1 - 1.6);
-    float c = asin(r - 0.010);
-    float s = sin(a - time * 3.0 + b) * c;
-
-    color *= abs(1.0 / (s * 10.8)) - 0.1;
-    opacity = 1.0 / (s * 10.8) - 0.1;
-
-    // Convert Black to Transparent
-    if (color.r < 0.1 && color.g < 0.1 && color.b < 0.1) {
-        color = vec3(0.0, 0.0, 0.0);
-        opacity = 0.0;
-    }
-
-    // if the radius is greater than 1, discard the pixel
-    if (r > 0.5) {
-        discard;
-    }
-
-
-    gl_FragColor = vec4(color, opacity);
-}
-'''
-
-
-Builder.load_file("./components/PulseWidget/PulseWidget.kv")
-class PluseWidget(FloatLayout):
-
-    # property to set the source code for fragment shader
-    fs = StringProperty()
-    time = NumericProperty(4.0)
+    # Color stops for the slow hue rotation (soft pastels)
+    _PALETTE = [
+        [0.45, 0.55, 1.0],   # soft blue
+        [0.65, 0.40, 1.0],   # lavender
+        [0.90, 0.45, 0.85],  # pink
+        [1.00, 0.55, 0.45],  # coral
+        [0.65, 0.40, 1.0],   # lavender (wrap)
+        [0.45, 0.55, 1.0],   # soft blue (wrap)
+    ]
 
     def __init__(self, **kwargs):
-        # Instead of using Canvas, we will use a RenderContext,
-        # and change the default shader used.
-        self.canvas = RenderContext()
+        super().__init__(**kwargs)
+        self.size_hint = (None, None)
+        self.size = Window.size
+        self.pos = (0, 0)
 
-        # call the constructor of parent
-        # if they are any graphics object, they will be added on our new canvas
-        super(PluseWidget, self).__init__(**kwargs)
-        self.run()
+        w, h = Window.size
+        d = self.EDGE_DEPTH
 
+        # Build gradient textures — each edge gets its own so the bright
+        # side always faces the screen edge.
+        #
+        # Horizontal textures (1 x depth):
+        #   bottom: bright at row 0 (bottom of texture = screen bottom edge)
+        #   top:    bright at row depth-1 (top of texture = screen top edge)
+        #
+        # Vertical textures (depth x 1):
+        #   left:  bright at col 0 (left of texture = screen left edge)
+        #   right: bright at col depth-1 (right of texture = screen right edge)
+
+        self._tex_bottom = self._make_gradient_texture(d, axis="y", flip=False)
+        self._tex_top = self._make_gradient_texture(d, axis="y", flip=True)
+        self._tex_left = self._make_gradient_texture(d, axis="x", flip=False)
+        self._tex_right = self._make_gradient_texture(d, axis="x", flip=True)
+
+        with self.canvas:
+            # Bottom edge
+            self._c_bottom = Color(1, 1, 1, 0)
+            self._r_bottom = Rectangle(
+                texture=self._tex_bottom,
+                pos=(0, 0),
+                size=(w, d),
+            )
+            # Top edge
+            self._c_top = Color(1, 1, 1, 0)
+            self._r_top = Rectangle(
+                texture=self._tex_top,
+                pos=(0, h - d),
+                size=(w, d),
+            )
+            # Left edge
+            self._c_left = Color(1, 1, 1, 0)
+            self._r_left = Rectangle(
+                texture=self._tex_left,
+                pos=(0, 0),
+                size=(d, h),
+            )
+            # Right edge
+            self._c_right = Color(1, 1, 1, 0)
+            self._r_right = Rectangle(
+                texture=self._tex_right,
+                pos=(w - d, 0),
+                size=(d, h),
+            )
+
+        self._anim = None
+        self._color_event = None
+        self.bind(glow_opacity=self._update_colors)
+        self.bind(_hue_phase=self._update_colors)
+        Window.bind(size=self._on_window_resize)
+
+    def _make_gradient_texture(self, depth, axis="y", flip=False):
+        """Create a gradient texture: opaque at the edge, transparent inward.
+
+        axis="y" → 1 x depth texture (for top/bottom edges)
+        axis="x" → depth x 1 texture (for left/right edges)
+        flip=False → bright at the start (row 0 / col 0)
+        flip=True  → bright at the end (row depth-1 / col depth-1)
+        """
+        pixels = []
+        for i in range(depth):
+            alpha = int(255 * (1.0 - i / depth) ** 2.0)
+            pixels.append(bytes([255, 255, 255, alpha]))
+
+        if flip:
+            pixels.reverse()
+
+        data = b"".join(pixels)
+
+        if axis == "y":
+            tex = Texture.create(size=(1, depth), colorfmt="rgba")
+        else:
+            tex = Texture.create(size=(depth, 1), colorfmt="rgba")
+
+        tex.blit_buffer(data, colorfmt="rgba", bufferfmt="ubyte")
+        tex.wrap = "clamp_to_edge"
+        tex.mag_filter = "linear"
+        return tex
+
+    def _lerp_color(self, phase):
+        """Interpolate through the palette based on phase (0..len-1)."""
+        palette = self._PALETTE
+        n = len(palette)
+        phase = phase % (n - 1)
+        idx = int(phase)
+        t = phase - idx
+        c0 = palette[idx]
+        c1 = palette[min(idx + 1, n - 1)]
+        return [c0[i] + (c1[i] - c0[i]) * t for i in range(3)]
+
+    def _update_colors(self, *_args):
+        """Apply current glow_opacity and hue_phase to all four edge colors."""
+        rgb = self._lerp_color(self._hue_phase)
+        a = self.glow_opacity
+
+        # Slightly different hue offsets per edge for a flowing look
+        rgb_top = self._lerp_color(self._hue_phase + 1.2)
+        rgb_left = self._lerp_color(self._hue_phase + 0.6)
+        rgb_right = self._lerp_color(self._hue_phase + 1.8)
+
+        self._c_bottom.rgba = [rgb[0], rgb[1], rgb[2], a]
+        self._c_top.rgba = [rgb_top[0], rgb_top[1], rgb_top[2], a]
+        self._c_left.rgba = [rgb_left[0], rgb_left[1], rgb_left[2], a * 0.7]
+        self._c_right.rgba = [rgb_right[0], rgb_right[1], rgb_right[2], a * 0.7]
+
+    def _on_window_resize(self, _win, size):
+        w, h = size
+        d = self.EDGE_DEPTH
+        self.size = (w, h)
+        self.pos = (0, 0)
+        self._r_bottom.pos = (0, 0)
+        self._r_bottom.size = (w, d)
+        self._r_top.pos = (0, h - d)
+        self._r_top.size = (w, d)
+        self._r_left.pos = (0, 0)
+        self._r_left.size = (d, h)
+        self._r_right.pos = (w - d, 0)
+        self._r_right.size = (d, h)
 
     def burst(self):
-        self.time = 0.0;
-        print("Burst")
+        """Trigger the glow: fade in quickly, color-shift, fade out."""
+        if self._anim:
+            self._anim.cancel(self)
+        if self._color_event:
+            self._color_event.cancel()
+            self._color_event = None
+
+        # Ensure we're positioned correctly (parent layout may have moved us)
+        w, h = Window.size
+        d = self.EDGE_DEPTH
+        self.pos = (0, 0)
+        self.size = (w, h)
+        self._r_bottom.pos = (0, 0)
+        self._r_bottom.size = (w, d)
+        self._r_top.pos = (0, h - d)
+        self._r_top.size = (w, d)
+        self._r_left.pos = (0, 0)
+        self._r_left.size = (d, h)
+        self._r_right.pos = (w - d, 0)
+        self._r_right.size = (d, h)
+
+        self.glow_opacity = 0.0
+        self._hue_phase = 0.0
+
+        # Fade in fast, hold briefly, fade out smooth
+        fade_in = Animation(glow_opacity=0.85, t="out_cubic", d=0.15)
+        hold = Animation(glow_opacity=0.75, t="linear", d=0.6)
+        fade_out = Animation(glow_opacity=0.0, t="in_cubic", d=0.8)
+
+        self._anim = fade_in + hold + fade_out
+
+        def _on_complete(*_args):
+            if self._color_event:
+                self._color_event.cancel()
+                self._color_event = None
+
+        self._anim.bind(on_complete=_on_complete)
+        self._anim.start(self)
+
+        # Animate the hue rotation alongside
+        hue_anim = Animation(_hue_phase=4.0, t="linear", d=1.55)
+        hue_anim.start(self)
+
+        # Tick color updates at 30fps during the effect
+        self._color_event = Clock.schedule_interval(self._update_colors, 1 / 30.0)
 
 
-    def run(self, *args):
-        # We'll update our glsl variables in a clock
-        Clock.schedule_interval(self.update_glsl, 1 / 60.)
-
-
-    def on_fs(self, instance, value):
-        # set the fragment shader to our source code
-        shader = self.canvas.shader
-        old_value = shader.fs
-        shader.fs = value
-        if not shader.success:
-            shader.fs = old_value
-            raise Exception('failed')
-
-    def update_glsl(self, *largs):
-        self.time = self.time + (1/15.)
-        self.canvas['time'] = self.time #Clock.get_boottime()
-        self.canvas['resolution'] = list(map(float, self.size))
-        
-        self.canvas['audioTexture'] = 1
-
-
-        # This is needed for the default vertex shader.
-        win_rc = Window.render_context
-        self.canvas['projection_mat'] = win_rc['projection_mat']
-        self.canvas['modelview_mat'] = win_rc['modelview_mat']
-        self.canvas['frag_modelview_mat'] = win_rc['frag_modelview_mat']
-
-
-PULSER = PluseWidget(fs=pulse_shader)
+PULSER = PulseWidget()
