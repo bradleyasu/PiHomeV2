@@ -488,7 +488,7 @@ phase_build_airplay() {
     run_logged "Building nqptp" bash -c '
         cd /tmp
         rm -rf nqptp
-        git clone https://github.com/mikebrady/nqptp.git
+        git clone https://github.com/bradleyasu/nqptp.git
         cd nqptp
         autoreconf -fi
         ./configure --with-systemd-startup
@@ -506,7 +506,7 @@ phase_build_airplay() {
     run_logged "Building shairport-sync" bash -c '
         cd /tmp
         rm -rf shairport-sync
-        git clone https://github.com/mikebrady/shairport-sync.git
+        git clone https://github.com/bradleyasu/shairport-sync.git
         cd shairport-sync
         autoreconf -fi
         ./configure --sysconfdir=/etc --with-alsa --with-soxr --with-avahi \
