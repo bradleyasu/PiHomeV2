@@ -24,6 +24,12 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             self._get_status(self.path.replace("/status", "").replace("/", ""))
         elif self.path.startswith("/wallpaper/"):
             self._get_wallpaper(self.path[len("/wallpaper/"):])
+        elif self.path == "/airplay/artwork":
+            self._get_airplay_artwork()
+        elif self.path == "/settings/manifest":
+            self._get_settings_manifest()
+        elif self.path.startswith("/settings"):
+            self._get_settings(self.path)
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
             self._get_index()
         else:
@@ -124,11 +130,35 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             PIHOME_LOGGER.error("Failed to process GET request.  Fetching index page")
             PIHOME_LOGGER.error(e)
 
+    def do_PUT(self):
+        """Handle PUT requests for updating settings."""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            put_data = self.rfile.read(content_length)
+            payload = json.loads(put_data.decode('utf-8'))
+
+            if self.path.startswith("/settings/"):
+                self._put_settings(self.path, payload)
+            else:
+                self._set_response(404, {"status": "error", "message": "Not found"})
+        except Exception as e:
+            PIHOME_LOGGER.error("Server: PUT Request Failed: {}".format(e))
+            self._set_response(500, {"status": "error", "message": str(e)})
+
+    def do_DELETE(self):
+        """Placeholder — no DELETE routes yet."""
+        self._set_response(404, {"status": "error", "message": "Not found"})
+
     def do_OPTIONS(self):
         self._set_response()
-    
+
     def do_POST(self):
         try:
+            # Handle reload endpoint (no body required)
+            if self.path == "/settings/reload":
+                self._post_settings_reload()
+                return
+
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             payload = json.loads(post_data.decode('utf-8'))
@@ -163,6 +193,116 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 PIHOME_LOGGER.error(readable)
                 stack_trace = stack_trace.tb_next
             # PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(post_data.decode('utf-8')))
+
+    def _get_airplay_artwork(self):
+        """Serve the current AirPlay cover art as a binary image."""
+        from services.airplay.airplay import AIRPLAY
+        if AIRPLAY.cover_art_bytes is None:
+            self.send_error(404, "No artwork available")
+            return
+        try:
+            data = AIRPLAY.cover_art_bytes
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            PIHOME_LOGGER.error("Server: failed to serve airplay artwork: {}".format(e))
+            self.send_error(500, "Failed to read artwork")
+
+    def _get_settings_manifest(self):
+        """Serve the combined settings manifest from all screen manifest.json files.
+
+        Returns an ordered array of settings panels, each with a label
+        and an array of field definitions (type, title, desc, section, key, options).
+        This lets the web UI render typed inputs (bool switches, option dropdowns, etc.)
+        instead of plain text fields for every setting.
+        """
+        import glob as _glob
+        panels = []
+        for manifest_path in sorted(_glob.glob('./screens/*/manifest.json')):
+            try:
+                with open(manifest_path, 'r') as f:
+                    manifest = json.load(f)
+                if 'settings' not in manifest:
+                    continue
+                panels.append({
+                    "label": manifest.get('settingsLabel', manifest.get('label', 'Unknown')),
+                    "sortIndex": manifest.get('settingsIndex', 9999),
+                    "fields": manifest['settings'],
+                })
+            except Exception as e:
+                PIHOME_LOGGER.error("Server: failed to read manifest {}: {}".format(manifest_path, e))
+        panels.sort(key=lambda p: p['sortIndex'])
+        self._set_response(200, {"panels": panels})
+
+    def _post_settings_reload(self):
+        """Trigger the full configuration reload cascade.
+
+        Calls the app's reload_configuration() which:
+          1. Re-reads base.ini into memory (CONFIG.reload)
+          2. Restarts the wallpaper service
+          3. Broadcasts on_config_update to all screens
+        """
+        try:
+            from kivy.clock import Clock
+            from util.helpers import get_app
+            # Schedule on the Kivy main thread to avoid cross-thread issues
+            Clock.schedule_once(lambda dt: get_app().reload_configuration(), 0)
+            self._set_response(200, {"status": "success", "message": "Configuration reload triggered"})
+        except Exception as e:
+            PIHOME_LOGGER.error("Server: failed to trigger config reload: {}".format(e))
+            self._set_response(500, {"status": "error", "message": str(e)})
+
+    def _get_settings(self, path):
+        """Serve configuration settings as JSON.
+
+        Routes:
+            GET /settings          → all sections and their key/value pairs
+            GET /settings/{section} → keys for a specific section
+        """
+        from util.configuration import CONFIG
+        parts = path.strip("/").split("/")  # ["settings"] or ["settings", "section"]
+
+        if len(parts) == 1:
+            # Return all sections
+            result = {}
+            for section in CONFIG.c.sections():
+                result[section] = dict(CONFIG.c[section])
+            self._set_response(200, result)
+        elif len(parts) == 2:
+            section = parts[1]
+            if CONFIG.c.has_section(section):
+                self._set_response(200, dict(CONFIG.c[section]))
+            else:
+                self._set_response(404, {"status": "error", "message": "Section '{}' not found".format(section)})
+        else:
+            self._set_response(400, {"status": "error", "message": "Invalid settings path"})
+
+    def _put_settings(self, path, payload):
+        """Update configuration settings.
+
+        Routes:
+            PUT /settings/{section}  → update multiple keys in a section
+                Body: {"key1": "value1", "key2": "value2"}
+        """
+        from util.configuration import CONFIG
+        parts = path.strip("/").split("/")  # ["settings", "section"]
+
+        if len(parts) == 2:
+            section = parts[1]
+            if not isinstance(payload, dict):
+                self._set_response(400, {"status": "error", "message": "Body must be a JSON object of key/value pairs"})
+                return
+            for key, value in payload.items():
+                CONFIG.set(section, key, str(value))
+            CONFIG.reload()
+            self._set_response(200, {"status": "success", "section": section, "updated": list(payload.keys())})
+        else:
+            self._set_response(400, {"status": "error", "message": "Invalid settings path. Use PUT /settings/{section}"})
 
     def _set_response(self, code = 200, response_data = {"status": "success"}):
         self.send_response(code)

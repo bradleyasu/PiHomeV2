@@ -31,6 +31,7 @@ class StatusEvent(PihomeEvent):
         from services.taskmanager.taskmanager import TASK_MANAGER
         from services.weather.weather import WEATHER
         from services.wallpaper.wallpaper import WALLPAPER_SERVICE
+        from services.airplay.airplay import AIRPLAY
         # TODO: Eventually have each service have a get_status method (or to_json)
         return {
             "type": "status",
@@ -48,7 +49,14 @@ class StatusEvent(PihomeEvent):
                 "wind_speed": WEATHER.wind_speed,
                 "precip_propability": WEATHER.precip_propability,
                 "future": WEATHER.future
-            }, 
+            },
+            "now_playing": {
+                "is_playing": AIRPLAY.is_playing,
+                "title": AIRPLAY.title,
+                "artist": AIRPLAY.artist,
+                "album": AIRPLAY.album,
+                "has_artwork": AIRPLAY.cover_art_bytes is not None
+            },
             "timers":
                 list(map(lambda t: {
                     "label": t.timer.label,
