@@ -221,8 +221,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception as e:
                     PIHOME_LOGGER.error("Failed to execute event: {}".format(e))
                     self._set_response(500, {"status": "error", "message": "Failed to execute event", "error": str(e)})
-
-            self._set_response()
+                return
             # self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
         except Exception as e:
             toast("An error occurred processing the server request", "warn", 10)
