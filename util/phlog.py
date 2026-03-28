@@ -7,6 +7,7 @@ class phlog:
         'INFO': logging.INFO,
         'DEBUG': logging.DEBUG,
         'WARN': logging.WARNING,
+        'WARNING': logging.WARNING,
         'ERROR': logging.ERROR
     }
     def __init__(self):
