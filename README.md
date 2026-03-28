@@ -142,6 +142,7 @@ PiHome uses a manifest-driven screen discovery system. Each screen lives in its 
 1. Create a directory under `screens/` (e.g., `screens/MyScreen/`)
 2. Add a `manifest.json` file
 3. Create your Python module and Kivy layout file
+4. Optionally add an `audio/` subdirectory with `.mp3`, `.wav`, or `.ogg` sound effects (auto-discovered as `myscreen.<filename>`)
 
 #### manifest.json
 
@@ -573,6 +574,19 @@ Play a sound effect.
 | `name` | Yes | Sound effect name (use `introspect` to list available) |
 | `state` | No | `play` or `stop` (default: `play`) |
 | `loop` | No | Loop the sound (default: `false`) |
+
+**Sound effect sources:**
+
+Global sound effects are loaded from `assets/audio/sfx/` and keyed by filename (e.g., `alert.mp3` → `"alert"`).
+
+Screens can also bundle their own sound effects by adding an `audio/` subdirectory. Screen-specific sounds are namespaced as `screendir.filename` (lowercase directory name, no extension):
+
+```
+screens/MyScreen/audio/alarm.mp3  →  "myscreen.alarm"
+screens/MyScreen/audio/done.wav   →  "myscreen.done"
+```
+
+Supported formats: `.mp3`, `.wav`, `.ogg`
 
 #### wallpaper
 

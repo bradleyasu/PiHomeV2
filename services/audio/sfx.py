@@ -76,15 +76,38 @@ class PihomeSfx:
             return True
         return False
 
+    SUPPORTED_EXTENSIONS = (".mp3", ".wav", ".ogg")
+
     def populate_sources(self):
         """
-        SOURCES is a diction of sound effects.  This function will populate the SOURCES dictionary with the correct paths by reading 
-        all the files in the sfx directory.
+        Populate the SOURCES dictionary with sound effect paths.
+        Scans the global sfx directory and each screen's audio/ subdirectory.
+        Screen-specific sounds are namespaced as 'screendir.filename' to avoid collisions.
         """
-        path = "assets/audio/sfx/"
-        files = os.listdir(path)
-        for file in files:
-            if file.endswith(".mp3"):
-                self.SOURCES[file.split(".")[0]] = "{}/{}".format(path, file)
+        # Global sound effects
+        self._scan_directory("assets/audio/sfx/")
+        # Screen-specific sound effects
+        self._scan_screen_audio()
+
+    def _scan_directory(self, path, prefix=None):
+        """Scan a directory for compatible audio files and add them to SOURCES."""
+        if not os.path.isdir(path):
+            return
+        for file in os.listdir(path):
+            if file.endswith(self.SUPPORTED_EXTENSIONS):
+                key = os.path.splitext(file)[0]
+                if prefix:
+                    key = f"{prefix}.{key}"
+                self.SOURCES[key] = os.path.join(path, file)
+
+    def _scan_screen_audio(self):
+        """Scan all screen directories for audio/ subdirectories."""
+        screens_dir = "screens/"
+        if not os.path.isdir(screens_dir):
+            return
+        for screen in os.listdir(screens_dir):
+            audio_dir = os.path.join(screens_dir, screen, "audio")
+            if os.path.isdir(audio_dir):
+                self._scan_directory(audio_dir, prefix=screen.lower())
 
 SFX = PihomeSfx()

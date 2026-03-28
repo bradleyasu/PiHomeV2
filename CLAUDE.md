@@ -48,7 +48,9 @@ screens/
     ├── manifest.json      # Screen metadata & settings definitions
     ├── myscreen.py        # Python class (lowercase filename)
     ├── myscreen.kv        # Kivy layout (lowercase filename)
-    └── icon.png           # Screen icon (user replaces this)
+    ├── icon.png           # Screen icon (user replaces this)
+    └── audio/             # Optional: screen-specific sound effects
+        └── example.mp3
 ```
 
 **Naming conventions:**
@@ -336,6 +338,24 @@ def _on_data(self, result):
 from util.helpers import toast
 toast("Data updated!", "info", 3)   # levels: "info", "warning", "error", "success"
 ```
+
+**Screen-specific sound effects:**
+
+Screens can include custom audio by adding an `audio/` subdirectory with `.mp3`, `.wav`, or `.ogg` files. These are automatically discovered at startup and namespaced as `screendir.filename` (lowercase directory name, no extension).
+
+```
+screens/MyScreen/audio/alarm.mp3  →  key: "myscreen.alarm"
+screens/MyScreen/audio/done.wav   →  key: "myscreen.done"
+```
+
+```python
+from services.audio.sfx import SFX
+SFX.play("myscreen.alarm")     # Play once
+SFX.loop("myscreen.alarm")     # Loop until stopped
+SFX.stop("myscreen.alarm")     # Stop playback
+```
+
+Global sound effects in `assets/audio/sfx/` are available without a prefix (e.g., `SFX.play("alert")`).
 
 **Boolean config values** are stored as strings in `base.ini`:
 ```python
