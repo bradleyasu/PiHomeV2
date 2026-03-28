@@ -41,21 +41,25 @@ class WheelMenu(Widget):
     options = ListProperty([])
     selected_index = NumericProperty(0)
 
+    _anim_event = None
+
     def __init__(self, **kwargs):
         super(WheelMenu, self).__init__(**kwargs)
         self.drag_x = self.center_x
         self.drag_y = self.center_y
-        Clock.schedule_interval(lambda _: self.run(), 0.05)
 
 
     def on_is_open(self, instance, value):
         if value:
-            # self.radius = self.max_radius
             self.open_animation()
             self.display_pies()
+            if self._anim_event is None:
+                self._anim_event = Clock.schedule_interval(lambda _: self.run(), 0.05)
         else:
-            # self.radius = self.min_radius
             self.close_animation()
+            if self._anim_event is not None:
+                self._anim_event.cancel()
+                self._anim_event = None
 
     def set_selected(self, item, index):
         self.display_text = item['text']

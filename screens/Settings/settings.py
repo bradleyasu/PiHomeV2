@@ -319,7 +319,10 @@ class SettingsScreen(PiHomeScreen):
         config.read(CONF_FILE)
         self.config = config
 
-        self._panels = []         # [(label, settings_data)]
+        if hasattr(self, '_panels'):
+            self._panels.clear()
+        else:
+            self._panels = []
         self._sidebar_items = []
 
         # Collect all manifests that have settings, then sort by settingsIndex.

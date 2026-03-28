@@ -74,13 +74,14 @@ class HomeScreen(PiHomeScreen):
     _now_playing_art_hash = None # track cover art changes
 
 
+    _run_event = None
+
     def __init__(self, **kwargs):
         super(HomeScreen, self).__init__(**kwargs)
         self.disable_rotary_press_animation = True
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.4)
         self.size = App.get_running_app().get_size()
-        Clock.schedule_interval(lambda _: self.run(), 1)
         self.on_gesture = self.handle_gesture
 
 
@@ -97,6 +98,8 @@ class HomeScreen(PiHomeScreen):
             Clock.schedule_once(lambda _: self.startup_animation(), 10)
             self.is_first_run = False
 
+        if self._run_event is None:
+            self._run_event = Clock.schedule_interval(lambda _: self.run(), 1)
         self._start_wave_visualizer()
         AIRPLAY.register_listener(self._on_airplay_update)
         return super().on_enter(*args)
@@ -114,6 +117,9 @@ class HomeScreen(PiHomeScreen):
         intro.start(self)
 
     def on_pre_leave(self, *args):
+        if self._run_event is not None:
+            self._run_event.cancel()
+            self._run_event = None
         self._stop_wave_visualizer()
         AIRPLAY.unregister_listener(self._on_airplay_update)
         return super().on_pre_leave(*args)

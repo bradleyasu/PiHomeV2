@@ -173,6 +173,9 @@ class SpotifyScreen(PiHomeScreen):
 
     def on_leave(self, *args):
         self._stop_poll()
+        if self._refresh_event:
+            self._refresh_event.cancel()
+            self._refresh_event = None
         from server.callbacks import unregister_callback
         unregister_callback("/spotify/callback")
         return super().on_leave(*args)

@@ -13,18 +13,25 @@ class LongPressRing(Widget):
     radius = NumericProperty(-45)
     opacity = NumericProperty(0)
     visible = False
+    _anim_event = None
+
     def __init__(self, pos=(dp(30), dp(30)), **kwargs):
         super(LongPressRing, self).__init__(**kwargs)
         self.size = (dp(100), dp(100))
         self.pos = pos
-        Clock.schedule_interval(lambda _: self.update(), 0.000001)
-        
+
     def set_visible(self, visible, pos = (dp(10), dp(10))):
         self.pos = pos
         self.visible = visible
-        if not visible:
+        if visible:
+            if self._anim_event is None:
+                self._anim_event = Clock.schedule_interval(lambda _: self.update(), 1 / 60.0)
+        else:
             self.opacity = 0
             self.radius = -45
+            if self._anim_event is not None:
+                self._anim_event.cancel()
+                self._anim_event = None
 
     def update(self):
         if self.radius >= 0:
