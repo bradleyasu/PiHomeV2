@@ -1,6 +1,8 @@
 import os
+import sys
 
-os.environ["KIVY_AUDIO"] = "ffpyplayer"
+if sys.platform == "linux":
+    os.environ["KIVY_AUDIO"] = "ffpyplayer"
 os.environ["KIVY_VIDEO"] = "video_ffpyplayer"
 
 # CONFIG has no Kivy dependency — safe to import before Window creation.

@@ -34,5 +34,7 @@ class CommandEvent(PihomeEvent):
     def to_definition(self):
         return {
             "type": self.type,
-            "execute": self.type_def("string")
+            "execute": self.type_def(
+                "option", True, "PiHome Command to execute", list(MQTT_COMMANDS.keys())
+            )
         }

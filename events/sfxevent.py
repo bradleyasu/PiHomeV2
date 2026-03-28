@@ -45,7 +45,7 @@ class SfxEvent(PihomeEvent):
     def to_definition(self):
         return {
             "type": self.type,
-            "name": self.type_def("string"),
-            "state": self.type_def("string"),
+            "name": self.type_def("option", True, None, list(SFX.SOURCES.keys())),
+            "state": self.type_def("option", True, None, ["play", "stop"]),
             "loop": self.type_def("boolean", False)
         }

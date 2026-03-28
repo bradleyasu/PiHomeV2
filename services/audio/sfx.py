@@ -62,7 +62,6 @@ class PihomeSfx:
             self.SOUND_EFFECTS[key].loop = True
             self.SOUND_EFFECTS[key].play()
             self.SOUND_EFFECTS[key].seek(0)
-            self.SOUND_EFFECTS[key].bind(on_stop=lambda _: self.SOUND_EFFECTS[key].unload())
             return self.SOUND_EFFECTS[key]
         return None
 
@@ -73,7 +72,7 @@ class PihomeSfx:
             self.SOUND_EFFECTS[key].unload()
 
     def has(self, key):
-        if key in self.SOUND_EFFECTS:
+        if key in self.SOUND_EFFECTS or key in self.SOURCES:
             return True
         return False
 

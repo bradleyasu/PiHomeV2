@@ -27,11 +27,12 @@ class PihomeEvent():
     def to_definition(self):
         None
     
-    def type_def(self, type, required = True, description = None):
+    def type_def(self, type, required = True, description = None, options = []):
         return {
             "type": type,
             "required": required,
-            "description": description
+            "description": description,
+            "options": options,
         }
 
     def to_webhook(self):
