@@ -5,14 +5,13 @@
 
 PiHome is an open-source home kiosk and control panel for the Raspberry Pi. It replaces products like Amazon Echo Show and Google Nest Hub without any microphones, cameras pointed at you, or big-tech backends collecting your data. Everything runs locally on your Pi.
 
-PiHome provides a touch-friendly interface on the official 7" Raspberry Pi display with weather, news, wallpapers, music playback, Home Assistant integration, 3D printer monitoring, and more. It's extensible through a manifest-driven screen system and a powerful event/webhook API.
+PiHome provides a touch-friendly interface on the official 7" Raspberry Pi display with weather, news, wallpapers, Home Assistant integration, 3D printer monitoring, and more. It's extensible through a manifest-driven screen system and a powerful event/webhook API.
 
 ## Features
 
 - **Weather** - Real-time conditions and forecast via Tomorrow.io
 - **Dynamic Wallpapers** - Rotate backgrounds from Reddit, Wallhaven, custom URLs, or the PiHome CDN
 - **News** - Headlines from configurable Reddit sources
-- **Music Player** - Stream audio from URLs, local files, and saved radio stations with album art
 - **AirPlay** - Receive audio from Apple devices via shairport-sync
 - **Home Assistant** - Monitor and control entities, set up reactive automations
 - **3D Printer Monitoring** - BambuLab printer status with live camera feed
@@ -102,7 +101,6 @@ PiHome is configured through the Settings screen (PIN-protected) or by editing `
 | `[news]` | News source and subreddits |
 | `[mqtt]` | Broker host, port, credentials, topic |
 | `[audio]` | Audio device selection |
-| `[music]` | Discogs API token for album art |
 | `[lofi]` | Local audio folder paths and labels |
 | `[controlcenter]` | 8 configurable buttons (icon, label, shell command each) |
 | `[homeassistant]` | Host URL and long-lived access token |
@@ -128,7 +126,6 @@ PiHome uses a manifest-driven screen discovery system. Each screen lives in its 
 | **Task Manager** | View and manage scheduled/event-driven tasks |
 | **BambuLab** | 3D printer status, temperatures, and live camera feed |
 | **Spotify** | Playback control and now-playing display |
-| **Music Player** | Local audio playback with playlists and album art |
 | **Pi-hole** | DNS ad-blocker statistics and controls |
 | **Bus** | Real-time transit departures (Pittsburgh Regional Transit) |
 | **Uber Eats** | Live order tracking |
@@ -785,7 +782,7 @@ pihome/
 │   └── ...
 ├── events/                  # Event types (auto-discovered)
 ├── services/                # Background services
-│   ├── audio/               # Music player, sound effects
+│   ├── audio/               # Sound effects
 │   ├── homeassistant/       # Home Assistant integration
 │   ├── wallpaper/           # Wallpaper rotation
 │   ├── weather/             # Weather polling
