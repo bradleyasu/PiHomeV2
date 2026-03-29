@@ -511,6 +511,9 @@ class HexGameScreen(PiHomeScreen):
         self._cancel_events()
         self._particles.clear_particles()
         self._game.save()
+        # Clear texture caches to free GPU memory
+        if hasattr(self, '_board_widget') and self._board_widget:
+            self._board_widget._tex_cache.clear()
         return super().on_pre_leave(*args)
 
     # ── Scheduling ───────────────────────────────────────────────────────

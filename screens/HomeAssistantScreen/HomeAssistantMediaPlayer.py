@@ -40,6 +40,12 @@ class HomeAssistantMediaPlayer(BoxLayout):
         self.HA_TOKEN = CONFIG.get("homeassistant", "token", "")
         self.API_URL = f"{self.HA_URL}"
 
+    def cleanup(self):
+        """Remove HA listener. Call before discarding this widget."""
+        if self.listener:
+            HOME_ASSISTANT.remove_listener(self.listener)
+            self.listener = None
+
     
     def increase_volume(self):
         HOME_ASSISTANT.update_service("media_player", "volume_up", self.entity_id, {})

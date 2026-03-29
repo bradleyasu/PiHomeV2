@@ -171,6 +171,8 @@ class NanoleafScreen(PiHomeScreen):
         container = self.ids.get("ctrl_tabs")
         if container is None:
             return
+        for tab in self._tab_widgets:
+            tab.unbind(pos=self._update_tab_visuals, size=self._update_tab_visuals)
         container.clear_widgets()
         self._tab_widgets = []
 
@@ -774,7 +776,9 @@ class NanoleafScreen(PiHomeScreen):
 
     def _do_pair(self, ctrl_idx, ip, slot):
         # Give the user time to press the button
-        time.sleep(2)
+        self._stop_event.wait(2)
+        if self._stop_event.is_set():
+            return
         api = NanoleafAPI(ip)
         attempts = 0
         while attempts < 15 and not self._stop_event.is_set():

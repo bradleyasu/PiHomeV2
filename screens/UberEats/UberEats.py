@@ -96,8 +96,6 @@ class UberEatsScreen(PiHomeScreen):
         self._load_config()
         # Build empty content on first frame once ids are available
         Clock.schedule_once(self._initial_build, 0)
-        # Poll every 60 s; _maybe_poll guards against off-hours
-        self._poll_event = Clock.schedule_interval(lambda _: self._maybe_poll(), 60)
 
     # ── Config ────────────────────────────────────────────────────
 
@@ -121,11 +119,16 @@ class UberEatsScreen(PiHomeScreen):
 
     def on_enter(self, *args):
         self.is_visible = True
+        if not self._poll_event:
+            self._poll_event = Clock.schedule_interval(lambda _: self._maybe_poll(), 60)
         self._poll()
         return super().on_enter(*args)
 
     def on_leave(self, *args):
         self.is_visible = False
+        if self._poll_event:
+            self._poll_event.cancel()
+            self._poll_event = None
         return super().on_leave(*args)
 
     # ── Polling ───────────────────────────────────────────────────
@@ -144,7 +147,7 @@ class UberEatsScreen(PiHomeScreen):
 
         def _fetch():
             try:
-                resp = requests.post(
+                with requests.post(
                     _API_URL,
                     params={'localeCode': self._locale},
                     headers={
@@ -155,13 +158,14 @@ class UberEatsScreen(PiHomeScreen):
                         'content-type':  'application/json',
                     },
                     timeout=15,
-                )
-                if resp.status_code == 200:
-                    Clock.schedule_once(lambda dt: self._apply(resp.json()), 0)
-                else:
-                    PIHOME_LOGGER.error(
-                        "UberEats: HTTP {} — session cookie may have expired".format(
-                            resp.status_code))
+                ) as resp:
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        Clock.schedule_once(lambda dt, d=data: self._apply(d), 0)
+                    else:
+                        PIHOME_LOGGER.error(
+                            "UberEats: HTTP {} — session cookie may have expired".format(
+                                resp.status_code))
             except Exception as e:
                 PIHOME_LOGGER.error("UberEats: request failed: {}".format(e))
 

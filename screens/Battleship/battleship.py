@@ -987,6 +987,12 @@ class BattleshipScreen(PiHomeScreen):
         self._cancel_events()
         self._particles.clear_particles()
         self._game.save()
+        # Clear texture caches to free GPU memory
+        for grid in (getattr(self, '_grid', None),
+                     getattr(self, '_fleet_grid', None),
+                     getattr(self, '_attack_grid', None)):
+            if grid and hasattr(grid, '_tex_cache'):
+                grid._tex_cache.clear()
         return super().on_pre_leave(*args)
 
     # ── Scheduling helpers ───────────────────────────────────────────────

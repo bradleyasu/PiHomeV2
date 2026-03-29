@@ -67,7 +67,7 @@ class WeatherDetails(Widget):
             self.card_border_color = [0.0, 0.0, 0.0, 0.07]
         self.details = details
         self.parseDetails()
-        Clock.schedule_interval(lambda _: self.parseDetails(), 1)
+        self._parse_event = Clock.schedule_interval(lambda _: self.parseDetails(), 1)
 
         # Temperature trend line + gradient
         self._trend_group = InstructionGroup()
@@ -78,6 +78,12 @@ class WeatherDetails(Widget):
         self.bind(pos=self._draw_trend, size=self._draw_trend,
                   temp_value=self._draw_trend, next_temp_value=self._draw_trend,
                   rain_accum=self._draw_trend, snow_accum=self._draw_trend)
+
+    def cleanup(self):
+        """Cancel the periodic parse clock. Call when removing this widget."""
+        if self._parse_event:
+            self._parse_event.cancel()
+            self._parse_event = None
 
     def on_config_update(self, config=None):
         t = Theme()

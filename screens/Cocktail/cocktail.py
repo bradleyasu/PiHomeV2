@@ -188,8 +188,8 @@ class CocktailAPI:
                 Clock.schedule_once(lambda dt: callback(None), 0)
                 return
             try:
-                r = _requests.get(url, timeout=8)
-                data = r.json()
+                with _requests.get(url, timeout=8) as r:
+                    data = r.json()
                 # Only cache responses that actually contain drinks.
                 # Caching null/empty responses would permanently poison the
                 # cache key, causing every subsequent identical search to

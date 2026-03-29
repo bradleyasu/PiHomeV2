@@ -16,6 +16,7 @@ class Timer:
         self.is_running = False
         self.listeners = []
         self.timer_thread = None
+        self._stop_event = threading.Event()
         if label is None:
             label = "{} second timer".format(duration)
         self.label = label
@@ -54,7 +55,7 @@ class Timer:
                 self.elapsed_time = time.time() - self.start_time
                 if self.elapsed_time >= self.end_time:
                     self.stop(notify=True)
-            time.sleep(0.1)
+            self._stop_event.wait(0.1)
 
 
     def add_listener(self, listener):
@@ -76,6 +77,7 @@ class Timer:
             return
         self.start_time = time.time()
         self.is_running = True
+        self._stop_event.clear()
         self.timer_thread = threading.Thread(target=self.update, daemon=True)
         self.timer_thread.start()
 
@@ -87,6 +89,7 @@ class Timer:
         self.end_time = time.time()
         self.elapsed_time = self.end_time - self.start_time
         self.is_running = False
+        self._stop_event.set()
         if notify:
             self.notify_listeners()
 

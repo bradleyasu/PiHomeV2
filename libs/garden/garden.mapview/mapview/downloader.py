@@ -69,7 +69,10 @@ class Downloader(object):
         if DEBUG:
             print("Downloader: download(url) {}".format(url))
         r = requests.get(url, **kwargs)
-        return callback, (url, r, )
+        try:
+            return callback, (url, r, )
+        finally:
+            r.close()
 
     def _load_tile(self, tile):
         if tile.state == "done":
@@ -95,6 +98,8 @@ class Downloader(object):
             return tile.set_source, (cache_fn, )
         except Exception as e:
             print("Downloader error: {!r}".format(e))
+        finally:
+            req.close()
 
     def _check_executor(self, dt):
         start = time()

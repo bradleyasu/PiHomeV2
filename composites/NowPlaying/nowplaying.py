@@ -43,6 +43,7 @@ class NowPlayingWidget(Widget):
         if not raw_bytes:
             self.art_texture = None
             return
+        buf = None
         try:
             buf = BytesIO(raw_bytes)
             core_img = CoreImage(buf, ext="jpg")
@@ -50,6 +51,9 @@ class NowPlayingWidget(Widget):
         except Exception as e:
             PIHOME_LOGGER.error("NowPlaying: cover art decode failed: {}".format(e))
             self.art_texture = None
+        finally:
+            if buf:
+                buf.close()
 
     def update_theme(self):
         """Refresh colors from the current theme."""

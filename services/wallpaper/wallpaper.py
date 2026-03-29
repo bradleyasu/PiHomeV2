@@ -246,11 +246,12 @@ class Wallpaper:
         new_image = PILImage.new("RGB", (get_app().width, get_app().height), average_color)
         # stretch pilImage to fit screen and add to new image
         new_image.paste(pilImage, (0, 0))
+        pilImage.close()
 
-        # blur image 
+        # blur image
         new_image = new_image.filter(PILImageFilter.GaussianBlur(radius=5))
         new_image.save(fp="{}/{}".format(TEMP_DIR, colored), format="png")
-        # self.current_color = "{}/{}".format(TEMP_DIR, colored)
+        new_image.close()
 
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
@@ -258,8 +259,10 @@ class Wallpaper:
     def _average_color_from_bytes(self, img_bytes):
         """Compute the average color from raw image bytes (no extra download)."""
         pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg"))
-        pilImage = pilImage.resize((1, 1), PIL.Image.LANCZOS)
-        color = pilImage.getpixel((0, 0))
+        small = pilImage.resize((1, 1), PIL.Image.LANCZOS)
+        pilImage.close()
+        color = small.getpixel((0, 0))
+        small.close()
         PIHOME_LOGGER.info("Wallpaper Service: average color is {}".format(color))
         return color
 

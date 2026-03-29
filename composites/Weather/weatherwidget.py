@@ -386,6 +386,9 @@ class WeatherWidget(Widget):
             self._hourly_start = hourly_start
             container = self.ids.get("hourly_container")
             if container:
+                for child in container.children:
+                    if hasattr(child, "cleanup"):
+                        child.cleanup()
                 container.clear_widgets()
                 widgets = []
                 for item in hourly_data:
@@ -400,6 +403,9 @@ class WeatherWidget(Widget):
             self._daily_start = daily_start
             container = self.ids.get("daily_container")
             if container:
+                for child in container.children:
+                    if hasattr(child, "cleanup"):
+                        child.cleanup()
                 container.clear_widgets()
                 widgets = []
                 for item in daily_data:
