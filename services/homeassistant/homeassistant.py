@@ -60,7 +60,6 @@ class HomeAssistant:
 
     current_states = {}
     websocket = None
-    listeners = []
     ha_react_listeners = []
     event_thread = None
     event_loop = None
@@ -68,6 +67,7 @@ class HomeAssistant:
 
     def __init__(self, **kwargs):
         super(HomeAssistant, self).__init__(**kwargs)
+        self.listeners = []  # instance list — avoids class-level sharing
         self.ha_react_listeners = []  # instance list — avoids class-level sharing
         atexit.register(self._serialize_react_listeners)
 
@@ -185,6 +185,12 @@ class HomeAssistant:
 
     def add_listener(self, listener):
         self.listeners.append(listener)
+
+    def remove_listener(self, listener):
+        try:
+            self.listeners.remove(listener)
+        except ValueError:
+            pass
 
     # ── HA React Listeners ─────────────────────────────────────────────────
 
