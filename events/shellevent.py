@@ -49,7 +49,8 @@ class ShellEvent(PihomeEvent):
         Event is a dict.  This function will iterate over all the values in the dict and replace any instance of $1 with the data value
         """
         # convert data from bytes to string
-        data = data.decode("utf-8")
+        if isinstance(data, bytes):
+            data = data.decode("utf-8")
         for key in event:
             if isinstance(event[key], dict):
                 self.replace_vars(event[key], data)
