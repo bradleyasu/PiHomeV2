@@ -220,18 +220,21 @@ class Wallpaper:
         self.url_cache.append(url)
         while len(self.url_cache) > self.cache_size:
             evicted = self.url_cache.pop(0)
-            try:
-                os.remove("{}/_rsz_{}.png".format(TEMP_DIR, url_hash(evicted)))
-                os.remove("{}/_color_{}.png".format(TEMP_DIR, url_hash(evicted)))
-            except Exception as e:
-                break
+            evicted_hash = url_hash(evicted)
+            for prefix in ("_rsz_", "_color_"):
+                try:
+                    os.remove("{}/{}{}.png".format(TEMP_DIR, prefix, evicted_hash))
+                except OSError:
+                    pass
 
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
         r = requests.get(url)
-        pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
+        img_bytes = r.content
+        r.close()
+        pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg"))
 
         # replace background with average color
-        average_color = self.find_average_color(url)
+        average_color = self._average_color_from_bytes(img_bytes)
 
         # resize image to fit screen and set background color to average color
 
@@ -252,14 +255,22 @@ class Wallpaper:
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
+    def _average_color_from_bytes(self, img_bytes):
+        """Compute the average color from raw image bytes (no extra download)."""
+        pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg"))
+        pilImage = pilImage.resize((1, 1), PIL.Image.LANCZOS)
+        color = pilImage.getpixel((0, 0))
+        PIHOME_LOGGER.info("Wallpaper Service: average color is {}".format(color))
+        return color
+
     def find_average_color(self, url):
         PIHOME_LOGGER.info("Wallpaper Service: finding average color for {}".format(url))
         r = requests.get(url)
-        pilImage = PILImage.open(BytesIO(r.content), formats=("png", "jpeg"))
-        pilImage = pilImage.resize((1, 1), PIL.Image.LANCZOS)
+        img_bytes = r.content
+        r.close()
+        color = self._average_color_from_bytes(img_bytes)
         PIHOME_LOGGER.info("Wallpaper Service: finding average color for {} complete".format(url))
-        PIHOME_LOGGER.info("Wallpaper Service: average color is {}".format(pilImage.getpixel((0, 0))))
-        return pilImage.getpixel((0, 0))
+        return color
 
     def _cleanup(self):
         # remove any tmp file with _rsz or _color in the name
@@ -268,8 +279,13 @@ class Wallpaper:
                 os.remove("{}/{}".format(TEMP_DIR, file))
         self.url_cache = []
 
+    MAX_BAN_LIST = 500
+
     def ban_url(self, url, shuffle = False):
         self.ban_list.append(url)
+        # Prune oldest entries if the ban list grows too large
+        while len(self.ban_list) > self.MAX_BAN_LIST:
+            self.ban_list.pop(0)
         if shuffle:
             self.shuffle()
         self.serialize_ban_list()

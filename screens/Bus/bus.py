@@ -52,7 +52,7 @@ class BusScreen(PiHomeScreen):
         
         # Register API to be polled every 60 seconds
         self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
-        Clock.schedule_interval(self._update, 1)
+        self._update_event = None
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.8)
         self.build()
@@ -175,6 +175,16 @@ class BusScreen(PiHomeScreen):
 
         self.add_widget(outer)
 
+
+    def on_enter(self, *args):
+        self._update_event = Clock.schedule_interval(self._update, 1)
+        return super().on_enter(*args)
+
+    def on_pre_leave(self, *args):
+        if self._update_event:
+            self._update_event.cancel()
+            self._update_event = None
+        return super().on_pre_leave(*args)
 
     def scroll_y(self, amount):
         # 1 is top and 0 is bottom of scroll view

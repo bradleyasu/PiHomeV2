@@ -232,7 +232,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
                 readable = "File: {} | Line: {} | Function: {}".format(stack_trace.tb_frame.f_code.co_filename, stack_trace.tb_lineno, stack_trace.tb_frame.f_code.co_name)
                 PIHOME_LOGGER.error(readable)
                 stack_trace = stack_trace.tb_next
-            # PIHOME_LOGGER.error("Server: POST Request Failed: {}".format(post_data.decode('utf-8')))
+            # Break traceback reference cycle to allow GC of frame objects
+            del stack_trace
+            e.__traceback__ = None
 
     def _get_airplay_artwork(self):
         """Serve the current AirPlay cover art as a binary image."""

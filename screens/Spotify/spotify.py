@@ -141,6 +141,9 @@ class SpotifyScreen(PiHomeScreen):
         self._repeat_btn  = None
         self._art         = None
 
+        # Track property bindings so they can be unbound on rebuild
+        self._player_bindings = []
+
         self._load_config()
 
     # ── Config ────────────────────────────────────────────────────────────────
@@ -173,6 +176,7 @@ class SpotifyScreen(PiHomeScreen):
 
     def on_leave(self, *args):
         self._stop_poll()
+        self._unbind_player()
         if self._refresh_event:
             self._refresh_event.cancel()
             self._refresh_event = None
@@ -469,11 +473,18 @@ class SpotifyScreen(PiHomeScreen):
 
     # ── UI panels ─────────────────────────────────────────────────────────────
 
+    def _unbind_player(self):
+        """Remove all property bindings registered by the previous player panel."""
+        for prop, cb in self._player_bindings:
+            self.unbind(**{prop: cb})
+        self._player_bindings.clear()
+
     def _rebuild_content(self):
         """Swap between auth-QR panel and player panel depending on state."""
         container = self.ids.get("content_area")
         if container is None:
             return
+        self._unbind_player()
         container.clear_widgets()
 
         if not self._cid or not self._csec:
@@ -581,6 +592,12 @@ class SpotifyScreen(PiHomeScreen):
         panel.add_widget(Widget())
         return panel
 
+    def _track_bind(self, **kwargs):
+        """Bind a property on self and record it for later unbinding."""
+        for prop, cb in kwargs.items():
+            self.bind(**{prop: cb})
+            self._player_bindings.append((prop, cb))
+
     def _build_player_panel(self) -> BoxLayout:
         from screens.Spotify.sp_widgets import (
             SpotifyIconButton, SpotifySlider, SpotifyTextButton,
@@ -619,7 +636,7 @@ class SpotifyScreen(PiHomeScreen):
             dev_lbl.text = v
             dev_icon.opacity = 1 if v else 0
             dev_lbl.opacity  = 1 if v else 0
-        self.bind(device_name=lambda i, v: _update_dev(v))
+        self._track_bind(device_name=lambda i, v: _update_dev(v))
         _update_dev(self.device_name)
 
         device_bar.add_widget(Widget())
@@ -649,7 +666,7 @@ class SpotifyScreen(PiHomeScreen):
             allow_stretch=True, keep_ratio=True,
             size_hint=(None, None), size=(dp(210), dp(210)),
         )
-        self.bind(
+        self._track_bind(
             album_art_url=lambda i, v: setattr(
                 self._art, "source", v or "assets/images/audio_vinyl.png"
             )
@@ -671,7 +688,7 @@ class SpotifyScreen(PiHomeScreen):
             size_hint_y=None, height=dp(34),
         )
         track_lbl.bind(size=lambda w, s: setattr(w, "text_size", (s[0], None)))
-        self.bind(track_name=lambda i, v: setattr(track_lbl, "text", v))
+        self._track_bind(track_name=lambda i, v: setattr(track_lbl, "text", v))
 
         artist_lbl = Label(
             text=self.artist_name, font_name="Nunito", font_size="16sp",
@@ -679,7 +696,7 @@ class SpotifyScreen(PiHomeScreen):
             size_hint_y=None, height=dp(26),
         )
         artist_lbl.bind(size=lambda w, s: setattr(w, "text_size", (s[0], None)))
-        self.bind(artist_name=lambda i, v: setattr(artist_lbl, "text", v))
+        self._track_bind(artist_name=lambda i, v: setattr(artist_lbl, "text", v))
 
         album_lbl = Label(
             text=self.album_name, font_name="Nunito", font_size="12sp",
@@ -687,7 +704,7 @@ class SpotifyScreen(PiHomeScreen):
             size_hint_y=None, height=dp(18),
         )
         album_lbl.bind(size=lambda w, s: setattr(w, "text_size", (s[0], None)))
-        self.bind(album_name=lambda i, v: setattr(album_lbl, "text", v))
+        self._track_bind(album_name=lambda i, v: setattr(album_lbl, "text", v))
 
         info.add_widget(track_lbl)
         info.add_widget(artist_lbl)
@@ -714,7 +731,7 @@ class SpotifyScreen(PiHomeScreen):
             if not _dragging[0]:
                 prog_slider.value = v
 
-        self.bind(progress=_prog_to_slider)
+        self._track_bind(progress=_prog_to_slider)
 
         # Suppress poll overwrite as soon as the drag starts so the thumb
         # doesn't snap back mid-gesture.  Seek fires once on release.
@@ -739,14 +756,14 @@ class SpotifyScreen(PiHomeScreen):
             color=[1, 1, 1, 0.40], halign="left", valign="middle",
         )
         elapsed_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
-        self.bind(elapsed_text=lambda i, v: setattr(elapsed_lbl, "text", v))
+        self._track_bind(elapsed_text=lambda i, v: setattr(elapsed_lbl, "text", v))
 
         dur_lbl = Label(
             text=self.duration_text, font_name="Nunito", font_size="11sp",
             color=[1, 1, 1, 0.40], halign="right", valign="middle",
         )
         dur_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
-        self.bind(duration_text=lambda i, v: setattr(dur_lbl, "text", v))
+        self._track_bind(duration_text=lambda i, v: setattr(dur_lbl, "text", v))
 
         time_row.add_widget(elapsed_lbl)
         time_row.add_widget(dur_lbl)
@@ -771,7 +788,7 @@ class SpotifyScreen(PiHomeScreen):
             pos_hint={"center_y": 0.5},
         )
         self._shuffle_btn.bind(on_press=lambda *_: self.toggle_shuffle())
-        self.bind(shuffle_state=self._update_shuffle_color)
+        self._track_bind(shuffle_state=self._update_shuffle_color)
 
         # Previous
         prev_btn = SpotifyIconButton(
@@ -790,7 +807,7 @@ class SpotifyScreen(PiHomeScreen):
             pos_hint={"center_y": 0.5},
         )
         self._play_btn.bind(on_press=lambda *_: self.toggle_play_pause())
-        self.bind(is_playing=self._update_play_icon)
+        self._track_bind(is_playing=self._update_play_icon)
 
         # Next
         next_btn = SpotifyIconButton(
@@ -810,7 +827,7 @@ class SpotifyScreen(PiHomeScreen):
             pos_hint={"center_y": 0.5},
         )
         self._repeat_btn.bind(on_press=lambda *_: self.cycle_repeat())
-        self.bind(repeat_state=self._update_repeat_color)
+        self._track_bind(repeat_state=self._update_repeat_color)
 
         ctrl_row.add_widget(Widget())
         ctrl_row.add_widget(self._shuffle_btn)
@@ -857,7 +874,7 @@ class SpotifyScreen(PiHomeScreen):
                 )
 
         vol_slider.bind(value=_on_vol_change)
-        self.bind(volume=lambda i, v: setattr(vol_slider, "value", v))
+        self._track_bind(volume=lambda i, v: setattr(vol_slider, "value", v))
 
         vol_hi = Label(
             text="\ue050",        # Material Icons: volume_up
@@ -877,7 +894,7 @@ class SpotifyScreen(PiHomeScreen):
         def _on_supports_vol(inst, supported):
             vol_row.height   = dp(44) if supported else 0
             vol_row.opacity  = 1 if supported else 0
-        self.bind(supports_volume=_on_supports_vol)
+        self._track_bind(supports_volume=_on_supports_vol)
         _on_supports_vol(None, self.supports_volume)
 
         root.add_widget(vol_row)
