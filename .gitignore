@@ -22,3 +22,6 @@ game_state.json
 /game_state.json
 ./game_state.json
 */game_state.json
+
+# Personal screens
+/screens/Speakers/
