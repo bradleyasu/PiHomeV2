@@ -4,13 +4,16 @@ Parses track title, artist, album, and cover art from the metadata FIFO
 and notifies registered listeners on the Kivy main thread.
 """
 
+import atexit
 import base64
 import hashlib
+import json
 import os
 import platform
 import select
 import threading
 import time
+import uuid
 
 from kivy.clock import Clock
 from util.phlog import PIHOME_LOGGER
@@ -39,8 +42,35 @@ def _hex_to_ascii(hex_str):
         return hex_str
 
 
+class AirPlayReactListener:
+    """A persistent AirPlay state-change listener that fires a PiHome event.
+    Serialised to / from airplay_listeners.pihome as plain JSON."""
+
+    def __init__(self, trigger, action, id=None):
+        self.id      = id or str(uuid.uuid4())
+        self.trigger = trigger  # "on_start" or "on_stop"
+        self.action  = action   # dict — executed via PihomeEventFactory
+
+    def to_dict(self):
+        return {
+            "id":      self.id,
+            "trigger": self.trigger,
+            "action":  self.action,
+        }
+
+    @staticmethod
+    def from_dict(d):
+        return AirPlayReactListener(
+            trigger = d["trigger"],
+            action  = d["action"],
+            id      = d["id"],
+        )
+
+
 class AirPlay:
     """Singleton service that reads shairport-sync metadata from a named pipe."""
+
+    REACT_LISTENERS_FILE = "airplay_listeners.pihome"
 
     def __init__(self):
         self.title = ""
@@ -53,6 +83,10 @@ class AirPlay:
         self._stop_event = threading.Event()
         self._cover_hash = None
         self._pend_time = None  # monotonic timestamp of last play_end
+
+        self.react_listeners = []
+        self._deserialize_react_listeners()
+        atexit.register(self._serialize_react_listeners)
 
         self._thread = threading.Thread(
             target=self._worker, daemon=True, name="airplay-metadata"
@@ -83,6 +117,78 @@ class AirPlay:
                 cb(self)
             except Exception as e:
                 PIHOME_LOGGER.error("AirPlay: listener error: {}".format(e))
+
+    # ── React Listener API ──────────────────────────────────────────────
+
+    def add_react_listener(self, listener: AirPlayReactListener):
+        """Register a persistent react listener and persist to disk."""
+        self.react_listeners.append(listener)
+        self._serialize_react_listeners()
+        PIHOME_LOGGER.info(
+            f"AirPlayReactListener added: {listener.id} "
+            f"(trigger={listener.trigger})"
+        )
+        return listener.id
+
+    def remove_react_listener(self, listener_id: str) -> bool:
+        """Remove a react listener by ID and persist the change."""
+        before = len(self.react_listeners)
+        self.react_listeners = [
+            l for l in self.react_listeners if l.id != listener_id
+        ]
+        removed = len(self.react_listeners) < before
+        if removed:
+            self._serialize_react_listeners()
+            PIHOME_LOGGER.info(f"AirPlayReactListener removed: {listener_id}")
+        else:
+            PIHOME_LOGGER.warn(f"AirPlayReactListener not found for removal: {listener_id}")
+        return removed
+
+    def _fire_react_listeners(self, trigger):
+        """Fire all react listeners matching the given trigger."""
+        from events.pihomeevent import PihomeEventFactory
+
+        for listener in list(self.react_listeners):
+            if listener.trigger == trigger:
+                try:
+                    PIHOME_LOGGER.info(
+                        f"AirPlayReactListener {listener.id}: firing for {trigger}"
+                    )
+                    Clock.schedule_once(
+                        lambda _dt, a=listener.action:
+                            PihomeEventFactory.create_event_from_dict(a).execute(),
+                        0
+                    )
+                except Exception as e:
+                    PIHOME_LOGGER.error(
+                        f"AirPlayReactListener {listener.id}: failed to fire: {e}"
+                    )
+
+    def _serialize_react_listeners(self):
+        data = [l.to_dict() for l in self.react_listeners]
+        try:
+            with open(self.REACT_LISTENERS_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+            PIHOME_LOGGER.info(
+                f"Serialized {len(data)} AirPlay react listener(s) to "
+                f"{self.REACT_LISTENERS_FILE}"
+            )
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to serialize AirPlay react listeners: {e}")
+
+    def _deserialize_react_listeners(self):
+        if not os.path.exists(self.REACT_LISTENERS_FILE):
+            return
+        try:
+            with open(self.REACT_LISTENERS_FILE, "r") as f:
+                data = json.load(f)
+            self.react_listeners = [AirPlayReactListener.from_dict(d) for d in data]
+            PIHOME_LOGGER.info(
+                f"Loaded {len(self.react_listeners)} AirPlay react listener(s) "
+                f"from {self.REACT_LISTENERS_FILE}"
+            )
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Failed to deserialize AirPlay react listeners: {e}")
 
     # ── Background worker ─────────────────────────────────────────────
 
@@ -144,6 +250,7 @@ class AirPlay:
                 PIHOME_LOGGER.info("AirPlay: playback stopped (pipe disconnected)")
                 self.is_playing = False
                 self._pend_time = None
+                self._fire_react_listeners("on_stop")
                 self._notify()
 
     def _check_pend_timeout(self):
@@ -154,6 +261,7 @@ class AirPlay:
                 if self.is_playing:
                     PIHOME_LOGGER.info("AirPlay: playback stopped (play_end timeout)")
                     self.is_playing = False
+                    self._fire_react_listeners("on_stop")
                     self._notify()
 
     # ── Metadata parsing ──────────────────────────────────────────────
@@ -219,6 +327,7 @@ class AirPlay:
             if not self.is_playing:
                 PIHOME_LOGGER.info("AirPlay: playback started (via {})".format(key))
                 self.is_playing = True
+                self._fire_react_listeners("on_start")
                 changed = True
 
         elif key == "play_end":
