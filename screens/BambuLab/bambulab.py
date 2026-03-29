@@ -495,6 +495,10 @@ class BambuLabScreen(PiHomeScreen):
                     "rtsp_transport": "tcp",
                     "an": True,   # no audio
                     "sn": False,
+                    "fflags": "nobuffer",
+                    "flags": "low_delay",
+                    "framedrop": True,
+                    "max_delay": "500000",
                 },
                 out_fmt="rgb24",
             )
@@ -509,17 +513,14 @@ class BambuLabScreen(PiHomeScreen):
                     break
                 if frame is not None:
                     now = time.monotonic()
-                    elapsed = now - last_upload
-                    if elapsed >= frame_interval:
+                    if now - last_upload >= frame_interval:
                         last_upload = now
                         if first_frame:
                             first_frame = False
                             Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
                         img, _pts = frame
                         Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
-                    else:
-                        # Sleep the remaining interval — avoids busy-looping between uploads
-                        self._camera_stop.wait(frame_interval - elapsed)
+                    # else: drop frame and drain buffer — don't sleep
                 else:
                     self._camera_stop.wait(frame_interval)
 
