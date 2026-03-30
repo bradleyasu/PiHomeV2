@@ -163,7 +163,6 @@ class BambuLabScreen(PiHomeScreen):
         self._camera_stop   = threading.Event()
         self._camera_player = None
         self._camera_tex    = None   # reused texture to avoid per-frame allocation
-        self._frame_pending = False  # guards against queuing multiple texture blits
         self._device_serial = None   # auto-detected from MQTT topic
         self._load_config()
 
@@ -482,7 +481,6 @@ class BambuLabScreen(PiHomeScreen):
                 pass
         self._camera_player = None
         self._camera_tex    = None
-        self._frame_pending = False
         self.camera_texture = None
 
     def _camera_run(self):
@@ -522,11 +520,8 @@ class BambuLabScreen(PiHomeScreen):
                         if first_frame:
                             first_frame = False
                             Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
-                        # Only schedule if the previous blit has been consumed
-                        if not self._frame_pending:
-                            self._frame_pending = True
-                            img, _pts = frame
-                            Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
+                        img, _pts = frame
+                        Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
                     # else: frame dropped — loop immediately to drain buffer
                 else:
                     no_frame_count += 1
@@ -557,8 +552,6 @@ class BambuLabScreen(PiHomeScreen):
             self.camera_texture = self._camera_tex
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: texture update error: {e}")
-        finally:
-            self._frame_pending = False
 
     # ── Rotary encoder ─────────────────────────────────────────────────────────
 
