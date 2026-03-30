@@ -11,27 +11,27 @@ _FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
 class Theme():
     ''' ENUM VALUES, KEY, DEFAULT_LIGHT, SECTION'''
     COLOR_PRIMARY             = ['primary', Color.GRAY_100, Color.DARK_GRAY_100, 'colors']
-    COLOR_SECONDARY           = ['secondary', Color.GRAY_75, Color.DARK_GRAY_75, 'colors']
+    COLOR_SECONDARY           = ['secondary', Color.GRAY_200, Color.DARK_GRAY_75, 'colors']
 
     BACKGROUND_PRIMARY        = ['primary',Color.GRAY_100, Color.DARK_GRAY_100,  'backgrounds']
-    BACKGROUND_SECONDARY      = ['secondary', Color.GRAY_75, Color.DARK_GRAY_75, 'backgrounds']
+    BACKGROUND_SECONDARY      = ['secondary', Color.GRAY_200, Color.DARK_GRAY_75, 'backgrounds']
 
     TEXT_PRIMARY              = ['primary', Color.GRAY_900, Color.DARK_GRAY_900, 'text']
-    TEXT_SECONDARY            = ['secondary', Color.GRAY_800, Color.DARK_GRAY_800, 'text']
+    TEXT_SECONDARY            = ['secondary', Color.GRAY_700, Color.DARK_GRAY_800, 'text']
     TEXT_DANGER               = ['danger', Color.RED_400, Color.DARK_RED_400, 'text']
     TEXT_SUCCESS              = ['success', Color.GREEN_400, Color.DARK_GREEN_400, 'text']
 
 
     BUTTON_PRIMARY            = ['primary', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
-    BUTTON_SECONDARY          = ['secondary', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
+    BUTTON_SECONDARY          = ['secondary', Color.GRAY_200, Color.DARK_GRAY_50, 'buttons']
     BUTTON_DANGER             = ['danger', Color.RED_400, Color.DARK_RED_400, 'buttons']
     BUTTON_SUCCESS            = ['success', Color.CELERY_400, Color.DARK_CELERY_400, 'buttons']
 
     SWITCH_ACTIVE             = ['active', Color.CELERY_400, Color.DARK_CELERY_400, 'switch']
-    SWITCH_INACTIVE             = ['inactive', Color.GRAY_400, Color.DARK_GRAY_400, 'switch']
+    SWITCH_INACTIVE             = ['inactive', Color.GRAY_500, Color.DARK_GRAY_400, 'switch']
     
     BUTTON_PRIMARY_ACCENT     = ['primary_accent', Color.BLUE_700, Color.DARK_BLUE_700, 'buttons']
-    BUTTON_SECONDARY_ACCENT   = ['secondary_accent', Color.GRAY_200, Color.DARK_GRAY_200, 'buttons']
+    BUTTON_SECONDARY_ACCENT   = ['secondary_accent', Color.GRAY_300, Color.DARK_GRAY_200, 'buttons']
 
     BUTTON_PRIMARY_TEXT       = ['primary_accent', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
     BUTTON_SECONDARY_TEXT     = ['secondary_accent', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
