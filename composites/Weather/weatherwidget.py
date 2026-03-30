@@ -75,6 +75,7 @@ class WeatherWidget(Widget):
 
     is_loaded = False
     show_hourly = BooleanProperty(True)
+    trend_metric = StringProperty("temp")  # "temp", "uv", "wind"
     future_daily = ListProperty([])
 
     y_offset = NumericProperty(50)
@@ -88,6 +89,15 @@ class WeatherWidget(Widget):
     # ── Alert carousel state ──
     alert_count = NumericProperty(0)
     alert_opacity = NumericProperty(0)
+
+    def on_trend_metric(self, instance, value):
+        """Propagate the active trend metric to all WeatherDetails cards."""
+        for container_id in ("hourly_container", "daily_container"):
+            container = self.ids.get(container_id)
+            if container:
+                for child in container.children:
+                    if hasattr(child, "trend_metric"):
+                        child.trend_metric = value
 
     def _apply_theme_colors(self):
         dark = Theme().mode == 1
@@ -393,9 +403,10 @@ class WeatherWidget(Widget):
                 widgets = []
                 for item in hourly_data:
                     wd = WeatherDetails(details=item)
+                    wd.trend_metric = self.trend_metric
                     container.add_widget(wd)
                     widgets.append(wd)
-                self._set_next_temps(widgets, hourly_data)
+                self._set_next_values(widgets, hourly_data)
 
         daily_start = daily_data[0]["startTime"] if daily_data else None
         if len(daily_data) != self._daily_count or daily_start != self._daily_start:
@@ -410,19 +421,23 @@ class WeatherWidget(Widget):
                 widgets = []
                 for item in daily_data:
                     wd = WeatherDetails(details=item, is_daily=True)
+                    wd.trend_metric = self.trend_metric
                     container.add_widget(wd)
                     widgets.append(wd)
-                self._set_next_temps(widgets, daily_data)
+                self._set_next_values(widgets, daily_data)
 
     @staticmethod
-    def _set_next_temps(widgets, data):
-        """Set next_temp_value on each WeatherDetails for the trend line."""
+    def _set_next_values(widgets, data):
+        """Set next temp/uv/wind values on each WeatherDetails for the trend line."""
         for i, wd in enumerate(widgets):
             try:
                 if i < len(data) - 1:
-                    wd.next_temp_value = data[i + 1]["values"]["temperature"]
+                    nxt = data[i + 1]["values"]
                 else:
-                    wd.next_temp_value = data[i]["values"]["temperature"]
+                    nxt = data[i]["values"]
+                wd.next_temp_value = nxt.get("temperature", 0) or 0
+                wd.next_uv_value = nxt.get("uvIndex", 0) or 0
+                wd.next_wind_value = nxt.get("windSpeed", 0) or 0
             except (KeyError, TypeError):
                 pass
 

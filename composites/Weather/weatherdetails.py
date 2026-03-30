@@ -37,6 +37,18 @@ class WeatherDetails(Widget):
     temp_value = NumericProperty(0)
     next_temp_value = NumericProperty(0)
 
+    # ── UV trend ──
+    uv_value = NumericProperty(0)
+    next_uv_value = NumericProperty(0)
+
+    # ── Wind trend ──
+    wind_value = NumericProperty(0)
+    next_wind_value = NumericProperty(0)
+
+    # ── Active trend metric ──
+    trend_metric = StringProperty("temp")  # "temp", "uv", "wind"
+    metric_label = StringProperty("--")
+
     # ── Precipitation accumulation ──
     rain_accum = NumericProperty(0)
     snow_accum = NumericProperty(0)
@@ -77,6 +89,9 @@ class WeatherDetails(Widget):
         self.canvas.before.add(self._precip_group)
         self.bind(pos=self._draw_trend, size=self._draw_trend,
                   temp_value=self._draw_trend, next_temp_value=self._draw_trend,
+                  uv_value=self._draw_trend, next_uv_value=self._draw_trend,
+                  wind_value=self._draw_trend, next_wind_value=self._draw_trend,
+                  trend_metric=self._draw_trend,
                   rain_accum=self._draw_trend, snow_accum=self._draw_trend)
 
     def cleanup(self):
@@ -130,9 +145,12 @@ class WeatherDetails(Widget):
         raw_temp = details["values"]["temperature"]
         self.temp_value = raw_temp
         self.temp = "{}\u00B0F".format(round(raw_temp))
+        self.uv_value = details["values"].get("uvIndex", 0) or 0
+        self.wind_value = details["values"].get("windSpeed", 0) or 0
         self.precip = "{}%".format(round(details["values"]["precipitationProbability"]))
         self.rain_accum = details["values"].get("rainAccumulation", 0) or 0
         self.snow_accum = details["values"].get("snowAccumulation", 0) or 0
+        self._update_metric_label()
 
         conf = get_app().web_conf
         if conf != None:
@@ -148,7 +166,19 @@ class WeatherDetails(Widget):
                 self.icon = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), day_code)
                 self.icon_fallback = "{}{}{}{}.png".format(host, path, str(details["values"]["weatherCode"]), 0)
 
-    # ── Temperature trend rendering ──
+    def _update_metric_label(self):
+        """Update the display label based on the active trend metric."""
+        if self.trend_metric == "uv":
+            self.metric_label = "UV {}".format(round(self.uv_value))
+        elif self.trend_metric == "wind":
+            self.metric_label = "{} mph".format(round(self.wind_value))
+        else:
+            self.metric_label = self.temp
+
+    def on_trend_metric(self, instance, value):
+        self._update_metric_label()
+
+    # ── Trend rendering ──
 
     @staticmethod
     def _temp_to_color(temp_f):
@@ -184,26 +214,101 @@ class WeatherDetails(Widget):
         t = max(0.0, min(110.0, temp))
         return y_min + (t / 110.0) * (y_max - y_min)
 
+    @staticmethod
+    def _uv_to_color(uv):
+        """Map UV index (0–11+) to an RGB color list."""
+        u = max(0.0, min(11.0, uv))
+        norm = u / 11.0
+        if norm < 0.27:       # 0–3: green (low)
+            return [0.30, 0.75, 0.30]
+        elif norm < 0.55:     # 3–6: yellow (moderate)
+            f = (norm - 0.27) / 0.28
+            return [0.30 + 0.70 * f,
+                    0.75 + 0.15 * f,
+                    0.30 * (1 - f)]
+        elif norm < 0.73:     # 6–8: orange (high)
+            f = (norm - 0.55) / 0.18
+            return [1.0,
+                    0.90 * (1 - f) + 0.50 * f,
+                    0.10 * f]
+        else:                 # 8–11: red/violet (very high)
+            f = min(1.0, (norm - 0.73) / 0.27)
+            return [1.0 * (1 - f) + 0.70 * f,
+                    0.50 * (1 - f) + 0.15 * f,
+                    0.10 + 0.55 * f]
+
+    @staticmethod
+    def _uv_to_y(uv, y_min, y_max):
+        """Map UV index (0–11) to a y coordinate within a range."""
+        u = max(0.0, min(11.0, uv))
+        return y_min + (u / 11.0) * (y_max - y_min)
+
+    @staticmethod
+    def _wind_to_color(speed):
+        """Map wind speed (mph, 0–60+) to an RGB color list."""
+        s = max(0.0, min(60.0, speed))
+        norm = s / 60.0
+        if norm < 0.17:       # 0–10 mph: light teal (calm)
+            return [0.45, 0.80, 0.85]
+        elif norm < 0.42:     # 10–25 mph: teal → blue
+            f = (norm - 0.17) / 0.25
+            return [0.45 * (1 - f) + 0.25 * f,
+                    0.80 * (1 - f) + 0.55 * f,
+                    0.85 + 0.15 * f]
+        elif norm < 0.67:     # 25–40 mph: blue → yellow
+            f = (norm - 0.42) / 0.25
+            return [0.25 + 0.75 * f,
+                    0.55 * (1 - f) + 0.85 * f,
+                    1.0 * (1 - f) + 0.20 * f]
+        else:                 # 40–60 mph: yellow → red (severe)
+            f = min(1.0, (norm - 0.67) / 0.33)
+            return [1.0,
+                    0.85 * (1 - f) + 0.20 * f,
+                    0.20 * (1 - f)]
+
+    @staticmethod
+    def _wind_to_y(speed, y_min, y_max):
+        """Map wind speed (mph, 0–60) to a y coordinate within a range."""
+        s = max(0.0, min(60.0, speed))
+        return y_min + (s / 60.0) * (y_max - y_min)
+
     def _draw_trend(self, *args):
-        """Redraw the temperature trend line and gradient fill."""
+        """Redraw the trend line and gradient fill for the active metric."""
         self._trend_group.clear()
-        if self.temp_value == 0:
+
+        metric = self.trend_metric
+        if metric == "uv":
+            cur_val = self.uv_value
+            nxt_val = self.next_uv_value if self.next_uv_value != 0 else cur_val
+            to_y = self._uv_to_y
+            to_color = self._uv_to_color
+        elif metric == "wind":
+            cur_val = self.wind_value
+            nxt_val = self.next_wind_value if self.next_wind_value != 0 else cur_val
+            to_y = self._wind_to_y
+            to_color = self._wind_to_color
+        else:
+            cur_val = self.temp_value
+            nxt_val = self.next_temp_value if self.next_temp_value != 0 else cur_val
+            to_y = self._temp_to_y
+            to_color = self._temp_to_color
+
+        if cur_val == 0 and metric == "temp":
             return
 
         # Vertical range for the trend (leave room for label at top, text at bottom)
         y_min = self.y + dp(8)
         y_max = self.y + self.height - dp(22)
 
-        y_start = self._temp_to_y(self.temp_value, y_min, y_max)
-        next_val = self.next_temp_value if self.next_temp_value != 0 else self.temp_value
-        y_end = self._temp_to_y(next_val, y_min, y_max)
+        y_start = to_y(cur_val, y_min, y_max)
+        y_end = to_y(nxt_val, y_min, y_max)
 
         left = self.x
         right = self.x + self.width
         bottom = self.y
 
-        avg_temp = (self.temp_value + next_val) / 2.0
-        color = self._temp_to_color(avg_temp)
+        avg_val = (cur_val + nxt_val) / 2.0
+        color = to_color(avg_val)
 
         # Gradient fill: trapezoid from line down to card bottom
         # Opaque at bottom, fading to transparent at the trend line

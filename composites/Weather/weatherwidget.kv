@@ -63,21 +63,21 @@
             orientation: 'vertical'
             size_hint: 1, 1
             pos_hint: {'x': 0, 'y': 0}
-            padding: dp(20), dp(14)
-            spacing: dp(10)
+            padding: dp(20), dp(10)
+            spacing: dp(6)
 
             # ── Hero: icon + temp + feels like ───────────────────────────────
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
-                height: dp(96)
-                spacing: dp(14)
+                height: dp(80)
+                spacing: dp(12)
 
                 NetworkImage:
                     url: root.icon_large
                     fallback_url: root.icon_fallback_large
                     size_hint: None, None
-                    size: dp(92), dp(92)
+                    size: dp(76), dp(76)
                     enable_stretch: True
 
                 BoxLayout:
@@ -88,25 +88,25 @@
                     Label:
                         text: root.temp + '\u00B0F'
                         color: root.text_color
-                        font_size: '40sp'
+                        font_size: '36sp'
                         font_name: 'Nunito'
                         bold: True
                         halign: 'left'
                         valign: 'middle'
                         text_size: self.width, None
                         size_hint_y: None
-                        height: dp(56)
+                        height: dp(46)
 
                     Label:
                         text: 'Feels like ' + root.feelsLike + '\u00B0F'
                         color: root.text_color[0], root.text_color[1], root.text_color[2], 0.55
-                        font_size: '13sp'
+                        font_size: '12sp'
                         font_name: 'Nunito'
                         halign: 'left'
                         valign: 'middle'
                         text_size: self.width, None
                         size_hint_y: None
-                        height: dp(20)
+                        height: dp(18)
 
                 # Hourly / Daily toggle — vertically centered in hero
                 AnchorLayout:
@@ -189,7 +189,7 @@
                 cols: 3
                 spacing: dp(6)
                 size_hint_y: None
-                height: dp(110)
+                height: dp(96)
 
                 UVChip:
                     id: chip_uv
@@ -231,6 +231,98 @@
                     Line:
                         points: [self.x, self.y, self.right, self.y]
                         width: 1
+
+            # ── Trend metric toggle (Temp / UV / Wind) ─────────────────────
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: dp(24)
+                padding: dp(6), 0
+
+                Widget:
+
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint: None, None
+                    size: dp(168), dp(26)
+                    pos_hint: {'center_y': 0.5}
+                    spacing: 0
+
+                    canvas.before:
+                        Color:
+                            rgba: root.chip_bg_color
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(13)]
+
+                    # Temp segment
+                    BoxLayout:
+                        size_hint_x: None
+                        width: dp(56)
+                        on_touch_down: if self.collide_point(*args[1].pos): root.trend_metric = "temp"
+                        canvas.before:
+                            Color:
+                                rgba: (root.text_color[0], root.text_color[1], root.text_color[2], 0.18) if root.trend_metric == "temp" else (0, 0, 0, 0)
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(13), dp(0), dp(0), dp(13)]
+                        Label:
+                            text: 'Temp'
+                            font_size: '10sp'
+                            font_name: 'Nunito'
+                            bold: root.trend_metric == "temp"
+                            color: root.text_color if root.trend_metric == "temp" else (root.text_color[0], root.text_color[1], root.text_color[2], 0.4)
+                            halign: 'center'
+                            valign: 'middle'
+                            text_size: self.size
+
+                    # UV segment
+                    BoxLayout:
+                        size_hint_x: None
+                        width: dp(56)
+                        on_touch_down: if self.collide_point(*args[1].pos): root.trend_metric = "uv"
+                        canvas.before:
+                            Color:
+                                rgba: (root.text_color[0], root.text_color[1], root.text_color[2], 0.18) if root.trend_metric == "uv" else (0, 0, 0, 0)
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(0)]
+                        Label:
+                            text: 'UV'
+                            font_size: '10sp'
+                            font_name: 'Nunito'
+                            bold: root.trend_metric == "uv"
+                            color: root.text_color if root.trend_metric == "uv" else (root.text_color[0], root.text_color[1], root.text_color[2], 0.4)
+                            halign: 'center'
+                            valign: 'middle'
+                            text_size: self.size
+
+                    # Wind segment
+                    BoxLayout:
+                        size_hint_x: None
+                        width: dp(56)
+                        on_touch_down: if self.collide_point(*args[1].pos): root.trend_metric = "wind"
+                        canvas.before:
+                            Color:
+                                rgba: (root.text_color[0], root.text_color[1], root.text_color[2], 0.18) if root.trend_metric == "wind" else (0, 0, 0, 0)
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(0), dp(13), dp(13), dp(0)]
+                        Label:
+                            text: 'Wind'
+                            font_size: '10sp'
+                            font_name: 'Nunito'
+                            bold: root.trend_metric == "wind"
+                            color: root.text_color if root.trend_metric == "wind" else (root.text_color[0], root.text_color[1], root.text_color[2], 0.4)
+                            halign: 'center'
+                            valign: 'middle'
+                            text_size: self.size
+
+                Widget:
 
             # ── Hourly / Daily forecast (scrollable) ───────────────────────
             RelativeLayout:
