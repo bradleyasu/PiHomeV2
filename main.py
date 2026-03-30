@@ -267,12 +267,13 @@ class PiHome(App):
     def show_toast(self, label, level = "info", timeout = 5):
         if self.toast is None:
             print("Failed to show toast: {}".format(label))
-            return
+            return False
         if self.toast_open is True:
             self.remove_toast()
         self.toast_open = True
         self.layout.add_widget(self.toast)
         self.toast.pop(label=label, level=level, timeout=timeout)
+        return True
 
 
     def update_conf(self, json):

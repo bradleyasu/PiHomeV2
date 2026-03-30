@@ -13,7 +13,16 @@ class ToastEvent(PihomeEvent):
         self.timeout = timeout
 
     def execute(self):
-        get_app().show_toast(self.message, self.level, self.timeout)
+        success = get_app().show_toast(self.message, self.level, self.timeout)
+        if not success:
+            return {
+                "code": 400,
+                "body": {"status": "error", "message": "Failed to display toast"}
+            }
+        return {
+            "code": 200,
+            "body": {"status": "success", "message": "Toast displayed"}
+        }
 
     def to_json(self):
         return json.dumps({
