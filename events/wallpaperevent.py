@@ -43,6 +43,6 @@ class WallpaperEvent(PihomeEvent):
     def to_definition(self):
         return {
             "type": self.type,
-            "action": self.type_def("option", True, "Action to perform on wallpaper", "shuffle", "ban"),
+            "action": self.type_def("option", True, "Action to perform on wallpaper", ["shuffle", "ban"]),
             "value": self.type_def("string", False)
         }
