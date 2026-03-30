@@ -550,6 +550,10 @@ class BambuLabScreen(PiHomeScreen):
                 self._camera_tex = tex
             self._camera_tex.blit_buffer(data, colorfmt="rgb", bufferfmt="ubyte")
             self.camera_texture = self._camera_tex
+            # blit_buffer updates pixels in-place on the same texture object,
+            # so ObjectProperty won't detect a change and KV bindings won't
+            # trigger a canvas redraw. Force-dispatch to repaint.
+            self.property("camera_texture").dispatch(self)
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: texture update error: {e}")
 
