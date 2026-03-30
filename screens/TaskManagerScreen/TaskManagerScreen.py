@@ -5,6 +5,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.properties import ColorProperty, NumericProperty
 
+from components.Msgbox.msgbox import MSGBOX_FACTORY, MSGBOX_TYPES, MSGBOX_BUTTONS
 from interface.pihomescreen import PiHomeScreen
 from screens.TaskManagerScreen.taskrow import TaskRow
 from services.taskmanager.taskmanager import TASK_MANAGER, TaskPriority, TaskStatus
@@ -181,6 +182,15 @@ class TaskManagerScreen(PiHomeScreen):
         return row
 
     def _delete_task(self, task_id):
+        MSGBOX_FACTORY.show(
+            title="Delete Task",
+            message="Are you sure you want to delete this task?",
+            type=MSGBOX_TYPES["WARNING"],
+            buttons=MSGBOX_BUTTONS["YES_NO"],
+            on_yes=lambda: self._confirm_delete(task_id),
+        )
+
+    def _confirm_delete(self, task_id):
         TASK_MANAGER.remove_task_by_id(task_id)
         self.refresh_tasks()
 
