@@ -511,24 +511,10 @@ class BambuLabScreen(PiHomeScreen):
             no_frame_count = 0
 
             while not self._camera_stop.is_set():
-                # Drain the buffer — always read the latest available frame
-                # so we never display stale data after a pause.
-                latest_img = None
-                drain_count = 0
-                while drain_count < 30:
-                    frame, val = player.get_frame()
-                    if val == "eof":
-                        break
-                    if frame is not None:
-                        latest_img = frame[0]  # keep only the image, discard pts
-                        drain_count += 1
-                    else:
-                        break
-
+                frame, val = player.get_frame()
                 if val == "eof" or self._camera_stop.is_set():
                     break
-
-                if latest_img is not None:
+                if frame is not None:
                     no_frame_count = 0
                     now = time.monotonic()
                     if now - last_upload >= frame_interval:
@@ -536,15 +522,14 @@ class BambuLabScreen(PiHomeScreen):
                         if first_frame:
                             first_frame = False
                             Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
-                        # Only schedule if the previous frame has been consumed
+                        # Only schedule if the previous blit has been consumed
                         if not self._frame_pending:
                             self._frame_pending = True
-                            Clock.schedule_once(lambda dt, i=latest_img: self._update_texture(i), 0)
+                            img, _pts = frame
+                            Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
+                    # else: frame dropped — loop immediately to drain buffer
                 else:
                     no_frame_count += 1
-                    # If no frames received for an extended period, the stream
-                    # has likely stalled — break out and let the finally block
-                    # clean up so a reconnect can be attempted.
                     if no_frame_count > 150:  # ~15s at 10 checks/sec
                         PIHOME_LOGGER.warn("BambuLab: camera stream stalled, reconnecting")
                         Clock.schedule_once(lambda dt: setattr(self, "camera_status", "Reconnecting..."), 0)
