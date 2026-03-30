@@ -163,6 +163,7 @@ class BambuLabScreen(PiHomeScreen):
         self._camera_stop   = threading.Event()
         self._camera_player = None
         self._camera_tex    = None   # reused texture to avoid per-frame allocation
+        self._frame_pending = False  # guards against queuing multiple texture blits
         self._device_serial = None   # auto-detected from MQTT topic
         self._load_config()
 
@@ -481,6 +482,7 @@ class BambuLabScreen(PiHomeScreen):
                 pass
         self._camera_player = None
         self._camera_tex    = None
+        self._frame_pending = False
         self.camera_texture = None
 
     def _camera_run(self):
@@ -506,29 +508,57 @@ class BambuLabScreen(PiHomeScreen):
             first_frame = True
             frame_interval = 1.0 / self._camera_fps
             last_upload = 0.0
+            no_frame_count = 0
 
             while not self._camera_stop.is_set():
-                frame, val = player.get_frame()
+                # Drain the buffer — always read the latest available frame
+                # so we never display stale data after a pause.
+                latest_img = None
+                drain_count = 0
+                while drain_count < 30:
+                    frame, val = player.get_frame()
+                    if val == "eof":
+                        break
+                    if frame is not None:
+                        latest_img = frame[0]  # keep only the image, discard pts
+                        drain_count += 1
+                    else:
+                        break
+
                 if val == "eof" or self._camera_stop.is_set():
                     break
-                if frame is not None:
+
+                if latest_img is not None:
+                    no_frame_count = 0
                     now = time.monotonic()
                     if now - last_upload >= frame_interval:
                         last_upload = now
                         if first_frame:
                             first_frame = False
                             Clock.schedule_once(lambda dt: setattr(self, "camera_status", ""), 0)
-                        img, _pts = frame
-                        Clock.schedule_once(lambda dt, i=img: self._update_texture(i), 0)
-                    # else: drop frame and drain buffer — don't sleep
+                        # Only schedule if the previous frame has been consumed
+                        if not self._frame_pending:
+                            self._frame_pending = True
+                            Clock.schedule_once(lambda dt, i=latest_img: self._update_texture(i), 0)
                 else:
-                    self._camera_stop.wait(frame_interval)
+                    no_frame_count += 1
+                    # If no frames received for an extended period, the stream
+                    # has likely stalled — break out and let the finally block
+                    # clean up so a reconnect can be attempted.
+                    if no_frame_count > 150:  # ~15s at 10 checks/sec
+                        PIHOME_LOGGER.warn("BambuLab: camera stream stalled, reconnecting")
+                        Clock.schedule_once(lambda dt: setattr(self, "camera_status", "Reconnecting..."), 0)
+                        break
+                    self._camera_stop.wait(0.1)
 
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: camera error: {e}")
             Clock.schedule_once(lambda dt: setattr(self, "camera_status", "Stream Unavailable"), 0)
         finally:
             self._camera_player = None
+            # Auto-reconnect if we broke out due to stall (not user-initiated stop)
+            if not self._camera_stop.is_set() and self.camera_enabled:
+                Clock.schedule_once(lambda dt: self._start_camera(), 3.0)
 
     def _update_texture(self, img):
         try:
@@ -542,6 +572,8 @@ class BambuLabScreen(PiHomeScreen):
             self.camera_texture = self._camera_tex
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: texture update error: {e}")
+        finally:
+            self._frame_pending = False
 
     # ── Rotary encoder ─────────────────────────────────────────────────────────
 
