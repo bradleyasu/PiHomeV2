@@ -15,11 +15,12 @@ class BusNotifyEvent(PihomeEvent):
 
     PRT_API = "https://realtime.portauthority.org/bustime/api/v3/getpredictions?rtpidatafeed=Port Authority Bus&key={}&format=json&rt={}&stpid={}"
 
-    def __init__(self, route, minutes, on_trigger, **kwargs):
+    def __init__(self, route, minutes, on_trigger, direction=None, **kwargs):
         super().__init__()
         self.route = str(route) if route is not None else None
         self.minutes = int(minutes) if minutes is not None else None
         self.on_trigger = on_trigger
+        self.direction = direction.upper() if direction else None
         self._poller_key = None
         self._first_poll = True
 
@@ -65,6 +66,8 @@ class BusNotifyEvent(PihomeEvent):
             for pred in predictions:
                 if pred.get("rt") != self.route:
                     continue
+                if self.direction and pred.get("rtdir") != self.direction:
+                    continue
                 prdtm = pred.get("prdtm")
                 if not prdtm:
                     continue
@@ -106,6 +109,7 @@ class BusNotifyEvent(PihomeEvent):
             "route": self.route,
             "minutes": self.minutes,
             "on_trigger": self.on_trigger,
+            "direction": self.direction,
         })
 
     def to_definition(self):
@@ -114,4 +118,5 @@ class BusNotifyEvent(PihomeEvent):
             "route": self.type_def("string", True, "Bus route number to monitor (e.g. '51')"),
             "minutes": self.type_def("integer", True, "ETA threshold in minutes — triggers when a bus is this close or closer"),
             "on_trigger": self.type_def("event", True, "PiHome event to execute when the ETA threshold is reached"),
+            "direction": self.type_def("option", False, "Filter by bus direction (omit for either)", ["INBOUND", "OUTBOUND"]),
         }
