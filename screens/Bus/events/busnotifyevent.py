@@ -100,7 +100,6 @@ class BusNotifyEvent(PihomeEvent):
     def to_definition(self):
         return {
             "type": self.type,
-            "comment": "Monitor a bus route and fire an event when a bus ETA reaches the specified threshold in minutes. One-shot: the listener is removed after firing.",
             "route": self.type_def("string", True, "Bus route number to monitor (e.g. '51')"),
             "minutes": self.type_def("integer", True, "ETA threshold in minutes — triggers when a bus is this close or closer"),
             "on_trigger": self.type_def("event", True, "PiHome event to execute when the ETA threshold is reached"),
