@@ -174,6 +174,13 @@ class BusScreen(PiHomeScreen):
 
 
     def on_enter(self, *args):
+        self.data = None
+        self.grid.clear_widgets()
+        self.stop_lbl.text = ""
+        self.empty_state.icon = "\u231B"
+        self.empty_state.message = "Loading bus arrivals..."
+        self.empty_state.subtitle = ""
+        self.empty_state.opacity = 1
         self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
         self._update_event = Clock.schedule_interval(self._update, 1)
         return super().on_enter(*args)
@@ -219,9 +226,11 @@ class BusScreen(PiHomeScreen):
         self.pending_updates = True
 
 
-    def _update(self, param): 
-        if self.pending_updates: 
+    def _update(self, param):
+        if self.pending_updates:
             self.pending_updates = False
+            if self.data is None:
+                return
             self.grid.clear_widgets()
             self.stop_lbl.text = ""   # reset; gets filled from first prediction
             visible_count = 0
