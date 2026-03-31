@@ -49,9 +49,6 @@ class BusScreen(PiHomeScreen):
         self.stops =  CONFIG.get('prt', 'stops', '')
         
         self.api = self.PRT_API.format(self.api_key, self.routes, self.stops)
-        
-        # Register API to be polled every 60 seconds
-        self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
         self._update_event = None
 
         self.color = self.theme.get_color(self.theme.BACKGROUND_PRIMARY, 0.8)
@@ -177,10 +174,14 @@ class BusScreen(PiHomeScreen):
 
 
     def on_enter(self, *args):
+        self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
         self._update_event = Clock.schedule_interval(self._update, 1)
         return super().on_enter(*args)
 
     def on_pre_leave(self, *args):
+        if self._poller_key is not None:
+            POLLER.unregister_api(self._poller_key)
+            self._poller_key = None
         if self._update_event:
             self._update_event.cancel()
             self._update_event = None
@@ -276,6 +277,7 @@ class BusScreen(PiHomeScreen):
             self.routes  = new_routes
             self.stops   = new_stops
             self.api = self.PRT_API.format(new_key, new_routes, new_stops)
-            self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
+            if self.is_open:
+                self._poller_key = POLLER.register_api(self.api, 60, lambda json: self.update(json))
 
         super().on_config_update(config)

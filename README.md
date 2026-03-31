@@ -140,6 +140,7 @@ PiHome uses a manifest-driven screen discovery system. Each screen lives in its 
 2. Add a `manifest.json` file
 3. Create your Python module and Kivy layout file
 4. Optionally add an `audio/` subdirectory with `.mp3`, `.wav`, or `.ogg` sound effects (auto-discovered as `myscreen.<filename>`)
+5. Optionally add an `events/` subdirectory with custom `PihomeEvent` subclasses (auto-discovered and available via MQTT, HTTP, and WebSocket)
 
 #### manifest.json
 
@@ -672,7 +673,12 @@ Or for a specific event:
 
 ## Creating Custom Events
 
-Events live in the `events/` directory. Each event is a Python file that extends `PihomeEvent`:
+Events can live in two places:
+
+1. **Global events** in the `events/` directory — available to all of PiHome
+2. **Screen-specific events** in `screens/<ScreenName>/events/` — bundled with a custom screen
+
+Both locations are automatically discovered by the event factory. Each event is a Python file that extends `PihomeEvent`:
 
 ```python
 from events.pihomeevent import PihomeEvent
@@ -691,7 +697,15 @@ class MyCustomEvent(PihomeEvent):
         }
 ```
 
-Events are automatically discovered by the event factory. Once added, they can be triggered via MQTT, HTTP, or WebSocket using `{"type": "my_custom", "message": "hello"}`.
+Once added, events can be triggered via MQTT, HTTP, or WebSocket using `{"type": "my_custom", "message": "hello"}`.
+
+**Screen-specific events** allow screen developers to keep their events co-located with their screen code. For example, a BambuLab screen might include a custom event:
+
+```
+screens/BambuLab/events/pauseprintevent.py  →  type: "bambulab_pause"
+```
+
+To avoid type collisions, screen developers should prefix their event types with the screen name (e.g., `bambulab_pause` instead of `pause`). If a screen event's type conflicts with a global event, the global event takes precedence and a warning is logged.
 
 ## API Endpoints
 
@@ -780,7 +794,8 @@ pihome/
 │   ├── BambuLab/
 │   ├── Settings/
 │   └── ...
-├── events/                  # Event types (auto-discovered)
+├── events/                  # Global event types (auto-discovered)
+│   │                        # Screens can also have events/ subdirectories
 ├── services/                # Background services
 │   ├── audio/               # Sound effects
 │   ├── homeassistant/       # Home Assistant integration

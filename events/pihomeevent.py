@@ -61,6 +61,7 @@ class PihomeEventFactory():
     def _load_event_objects():
         """
         This function will read all the events in this directory and load them into the event_objects dictionary.
+        It also scans each screen's optional events/ subdirectory for screen-specific events.
         """
         events_dir = "./events/"
         event_objects = {}
@@ -80,6 +81,37 @@ class PihomeEventFactory():
                             class_name = getattr(obj, "type", None)
                             if class_name is not None and class_name != "event" and class_name != "PihomeEvent":
                                 event_objects[class_name] = obj
+
+        # Scan screen-specific events/ subdirectories
+        screens_dir = "./screens/"
+        if os.path.isdir(screens_dir):
+            for screen in os.listdir(screens_dir):
+                screen_events_dir = os.path.join(screens_dir, screen, "events")
+                if not os.path.isdir(screen_events_dir):
+                    continue
+                for file in os.listdir(screen_events_dir):
+                    if not file.endswith(".py") or file == "__init__.py":
+                        continue
+                    module_name = os.path.splitext(file)[0]
+                    module_path = os.path.join(screen_events_dir, file)
+                    try:
+                        spec = importlib.util.spec_from_file_location(module_name, os.path.abspath(module_path))
+                        module = importlib.util.module_from_spec(spec)
+                        spec.loader.exec_module(module)
+                        for _, obj in inspect.getmembers(module):
+                            if inspect.isclass(obj):
+                                class_name = getattr(obj, "type", None)
+                                if class_name is not None and class_name != "event" and class_name != "PihomeEvent":
+                                    if class_name in event_objects:
+                                        PIHOME_LOGGER.warning(
+                                            f"Screen event type '{class_name}' from {module_path} "
+                                            f"conflicts with existing event — skipping"
+                                        )
+                                    else:
+                                        event_objects[class_name] = obj
+                    except Exception as e:
+                        PIHOME_LOGGER.error(f"Error loading screen event from {module_path}: {e}")
+
         return event_objects
 
     def create_event_from_dict(event_dict):

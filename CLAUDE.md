@@ -49,8 +49,10 @@ screens/
     ├── myscreen.py        # Python class (lowercase filename)
     ├── myscreen.kv        # Kivy layout (lowercase filename)
     ├── icon.png           # Screen icon (user replaces this)
-    └── audio/             # Optional: screen-specific sound effects
-        └── example.mp3
+    ├── audio/             # Optional: screen-specific sound effects
+    │   └── example.mp3
+    └── events/            # Optional: screen-specific PihomeEvent subclasses
+        └── myevent.py
 ```
 
 **Naming conventions:**
@@ -357,6 +359,32 @@ SFX.stop("myscreen.alarm")     # Stop playback
 
 Global sound effects in `assets/audio/sfx/` are available without a prefix (e.g., `SFX.play("alert")`).
 
+**Screen-specific events:**
+
+Screens can include custom PiHome events by adding an `events/` subdirectory with `.py` files that extend `PihomeEvent`. These are automatically discovered by the event factory and become available via all entry points (MQTT, HTTP, WebSocket).
+
+```
+screens/MyScreen/events/myevent.py
+```
+
+```python
+from events.pihomeevent import PihomeEvent
+
+class MyScreenEvent(PihomeEvent):
+    type = "myscreen_action"  # Prefix with screen name to avoid collisions
+
+    def __init__(self, **kwargs):
+        super().__init__()
+
+    def execute(self):
+        return {"code": 200, "body": {"status": "success", "message": "Done"}}
+```
+
+- Screen events use the same `PihomeEvent` base class and contract as global events
+- No manifest changes are needed — events are discovered by class introspection (the `type` attribute)
+- Global events take precedence on type conflicts (a warning is logged and the screen event is skipped)
+- Prefix event types with the screen name (e.g., `myscreen_action`) to avoid collisions with global or other screen events
+
 **Boolean config values** are stored as strings in `base.ini`:
 ```python
 enabled = CONFIG.get("section", "key", "0").strip().lower() in ("1", "true")
@@ -644,4 +672,5 @@ Use these as examples when building new screens:
 | Helpers (toast, get_app) | `util/helpers.py` |
 | Poller | `networking/poller.py` |
 | Virtual keyboard | `components/Keyboard/keyboard.py` |
+| Event base class & factory | `events/pihomeevent.py` |
 | Main app | `main.py` |
