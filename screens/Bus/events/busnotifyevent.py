@@ -21,6 +21,7 @@ class BusNotifyEvent(PihomeEvent):
         self.minutes = int(minutes) if minutes is not None else None
         self.on_trigger = on_trigger
         self._poller_key = None
+        self._first_poll = True
 
     def execute(self):
         if not self.route or self.minutes is None or not self.on_trigger:
@@ -72,6 +73,14 @@ class BusNotifyEvent(PihomeEvent):
                 eta_minutes = math.floor((eta_time - now).total_seconds() / 60.0)
 
                 if eta_minutes <= self.minutes:
+                    if self._first_poll:
+                        PIHOME_LOGGER.info(
+                            "BusNotify: route {} already at {} min on first poll — skipping".format(
+                                self.route, eta_minutes
+                            )
+                        )
+                        continue
+
                     PIHOME_LOGGER.info(
                         "BusNotify: route {} ETA {} min (<= {} min) — firing event".format(
                             self.route, eta_minutes, self.minutes
@@ -80,6 +89,8 @@ class BusNotifyEvent(PihomeEvent):
                     self._cleanup()
                     PihomeEventFactory.create_event_from_dict(self.on_trigger).execute()
                     return
+
+            self._first_poll = False
 
         except Exception as e:
             PIHOME_LOGGER.error("BusNotify: poll error: {}".format(e))
