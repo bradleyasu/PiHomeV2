@@ -1,4 +1,3 @@
-from cmath import inf
 import http.server
 import json
 import os
@@ -346,10 +345,12 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self._set_response(400, {"status": "error", "message": "Invalid settings path. Use PUT /settings/{section}"})
 
-    def _set_response(self, code = 200, response_data = {"status": "success"}):
+    def _set_response(self, code=200, response_data=None):
+        if response_data is None:
+            response_data = {"status": "success"}
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")  
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.end_headers()
@@ -370,8 +371,9 @@ _IGNORED_SOCKET_ERRNOS = {
     104, # ECONNRESET (Linux)
 }
 
-class PiHomeTCPServer(socketserver.TCPServer):
+class PiHomeTCPServer(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
+    daemon_threads = True
 
     def handle_error(self, request, client_address):
         import sys
@@ -494,42 +496,42 @@ class PiHomeServer():
             self.SOCKET_LOOP = None
 
     def _run(self):
-        try:
-            with PiHomeTCPServer(("", self.PORT), MyHttpRequestHandler) as h:
-                PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTP)".format(self.PORT))
-                self.httpd = h
-                while not self.shutting_down:
+        while not self.shutting_down:
+            try:
+                with PiHomeTCPServer(("", self.PORT), MyHttpRequestHandler) as h:
+                    PIHOME_LOGGER.info("Server: PiHome Server Listening on port: {} (HTTP)".format(self.PORT))
+                    self.httpd = h
                     h.serve_forever()
-        except Exception as e:
-            PIHOME_LOGGER.error("Server: PiHome Server failed to start: {}".format(e))
-            time.sleep(20)
-            self._run()
+            except Exception as e:
+                PIHOME_LOGGER.error("Server: PiHome Server failed to start: {}".format(e))
+                if not self.shutting_down:
+                    time.sleep(20)
 
     def _run_callback(self):
         """Run the HTTPS-only callback server on HTTPS_CALLBACK_PORT.
         Uses the same self-signed cert as before — callers must accept it once
         in the browser, but the main app stays on plain HTTP.
         """
-        try:
-            from server.ssl_cert import make_ssl_context
-            ssl_ctx = make_ssl_context()
-            with PiHomeTCPServer(("", HTTPS_CALLBACK_PORT), CallbackRequestHandler) as h:
-                if ssl_ctx:
-                    h.socket = ssl_ctx.wrap_socket(h.socket, server_side=True)
-                    PIHOME_LOGGER.info(
-                        f"Server: Callback Server Listening on port: {HTTPS_CALLBACK_PORT} (HTTPS)"
-                    )
-                else:
-                    PIHOME_LOGGER.warning(
-                        f"Server: SSL unavailable — Callback Server on port: {HTTPS_CALLBACK_PORT} (HTTP)"
-                    )
-                self.callback_httpd = h
-                while not self.shutting_down:
+        while not self.shutting_down:
+            try:
+                from server.ssl_cert import make_ssl_context
+                ssl_ctx = make_ssl_context()
+                with PiHomeTCPServer(("", HTTPS_CALLBACK_PORT), CallbackRequestHandler) as h:
+                    if ssl_ctx:
+                        h.socket = ssl_ctx.wrap_socket(h.socket, server_side=True)
+                        PIHOME_LOGGER.info(
+                            f"Server: Callback Server Listening on port: {HTTPS_CALLBACK_PORT} (HTTPS)"
+                        )
+                    else:
+                        PIHOME_LOGGER.warning(
+                            f"Server: SSL unavailable — Callback Server on port: {HTTPS_CALLBACK_PORT} (HTTP)"
+                        )
+                    self.callback_httpd = h
                     h.serve_forever()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Server: Callback Server failed to start: {e}")
-            time.sleep(20)
-            self._run_callback()
+            except Exception as e:
+                PIHOME_LOGGER.error(f"Server: Callback Server failed to start: {e}")
+                if not self.shutting_down:
+                    time.sleep(20)
                 
     
     async def websocket_server(self, websocket):
