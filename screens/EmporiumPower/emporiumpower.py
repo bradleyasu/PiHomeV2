@@ -1,7 +1,4 @@
-import json
-import os
 import threading
-from datetime import datetime, timedelta, timezone
 
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -12,39 +9,28 @@ from kivy.properties import (
 from components.NumberStepper.numberstepper import NumberStepper
 from interface.pihomescreen import PiHomeScreen
 from util.configuration import CONFIG
-from util.helpers import toast
 from util.phlog import PIHOME_LOGGER
 
+from services.emporia.emporia_service import EMPORIA_SERVICE
 from screens.EmporiumPower.barchart import BarChart  # noqa: F401  (registers with Factory for KV)
 from screens.EmporiumPower.devicerow import DeviceRow
 
-# pyemvue is an optional dependency — import lazily so the screen still loads
-# (showing a helpful message) when the package isn't installed.
-try:
-    from pyemvue import PyEmVue
-    from pyemvue.enums import Scale, Unit
-except Exception:  # ImportError or any transitive import error
-    PyEmVue = None
-    Scale = None
-    Unit = None
-
 Builder.load_file("./screens/EmporiumPower/emporiumpower.kv")
 
-# Cognito tokens are cached in the shared cache/ dir (same place as cocktail_cache.json,
-# ha_favorites.json, etc.) so we don't re-login each launch.
-_TOKEN_FILE = "cache/emporia_tokens.json"
-# Channel numbers the Emporia API uses for the whole-home (summed mains) total.
-_MAIN_CHANNELS = ("1,2,3", "1,2,3,4")
 _HOME_KEY = "__home__"
 
-_STATUS_OK    = [0.30, 0.80, 0.45, 1]
-_STATUS_ERR   = [0.90, 0.32, 0.32, 1]
-_STATUS_IDLE  = [0.45, 0.45, 0.45, 1]
+_STATUS_OK   = [0.30, 0.80, 0.45, 1]
+_STATUS_ERR  = [0.90, 0.32, 0.32, 1]
+_STATUS_IDLE = [0.45, 0.45, 0.45, 1]
 
 
 class EmporiumPowerScreen(PiHomeScreen):
     """Live home power usage from an Emporia Vue monitor, with a per-circuit
-    ranking (ordered by live watts) and a daily usage-trend chart."""
+    ranking (ordered by live watts) and a daily usage-trend chart.
+
+    Live data and chart fetches come from the always-on EMPORIA_SERVICE so a
+    single PyEmVue session is shared and monitoring keeps running off-screen.
+    """
 
     # ── Theme colors ──
     bg_color     = ColorProperty([0.10, 0.10, 0.12, 1])
@@ -65,19 +51,11 @@ class EmporiumPowerScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._stop_event = threading.Event()
-        self._thread = None
-        self._vue = None
-        self._vue_lock = threading.Lock()
-
-        self._devices = []
-        self._all_gids = []
-        self._channels = {}              # (gid, channel_num) -> VueDeviceChannel (from get_devices)
-        self._whole_home_channel = None  # main channel from get_devices (used for first chart)
-        self._channel_objs = {}          # key -> VueDeviceChannelUsage (live, from get_device_list_usage)
-        self._home_channel = None        # main channel object from live usage
-        self._chart_cache = {}           # (selected_key, days) -> (vals, labels)
+        self._channel_objs = {}     # (gid, channel_num) -> usage channel object (from snapshot)
+        self._home_channel = None   # main channel object (from snapshot)
+        self._chart_cache = {}      # (selected_key, days) -> (vals, labels)
         self._selected_key = _HOME_KEY
+        self._charted = False
 
         self._rows = []
         self._home_row = None
@@ -111,7 +89,6 @@ class EmporiumPowerScreen(PiHomeScreen):
     def _load_config(self):
         self._email = CONFIG.get("emporiumpower", "email", "").strip()
         self._password = CONFIG.get("emporiumpower", "password", "").strip()
-        self._refresh = max(15, CONFIG.get_int("emporiumpower", "refresh_interval", 30))
         self._default_days = min(30, max(1, CONFIG.get_int("emporiumpower", "default_days", 7)))
         self._enabled = CONFIG.get("emporiumpower", "enabled", "0").strip().lower() in ("1", "true")
 
@@ -120,8 +97,9 @@ class EmporiumPowerScreen(PiHomeScreen):
         self._load_config()
         if self.is_open and (self._email, self._password, self._enabled) != old:
             self._chart_cache.clear()
-            self._stop_work()
-            Clock.schedule_once(lambda dt: self._enter(), 0.5)
+            self._charted = False
+            EMPORIA_SERVICE.remove_listener(self._on_snapshot)
+            Clock.schedule_once(lambda dt: self._enter(), 0.3)
         super().on_config_update(config)
         self._apply_theme_to_children()
 
@@ -133,153 +111,49 @@ class EmporiumPowerScreen(PiHomeScreen):
         return super().on_enter(*args)
 
     def on_pre_leave(self, *args):
-        self._stop_work()
+        EMPORIA_SERVICE.remove_listener(self._on_snapshot)
         return super().on_pre_leave(*args)
 
     def _enter(self):
+        if not EMPORIA_SERVICE.available:
+            self._set_status(_STATUS_ERR)
+            self._set_message("The 'pyemvue' package is not installed.\nRun:  pip install pyemvue")
+            return
         if not self._enabled or not self._email or not self._password:
             self._set_status(_STATUS_IDLE)
             self._set_message("Add your Emporia email & password in\nSettings > Emporia Power, then enable it.")
             return
-        if PyEmVue is None:
-            self._set_status(_STATUS_ERR)
-            self._set_message("The 'pyemvue' package is not installed.\nRun:  pip install pyemvue")
+
+        EMPORIA_SERVICE.add_listener(self._on_snapshot)
+        snap = EMPORIA_SERVICE.get_snapshot()
+        if snap and snap.get("ok"):
+            self._on_snapshot(snap)
+        else:
+            self._set_status(_STATUS_IDLE)
+            self._set_message("Connecting to Emporia...")
+
+    # ── Snapshot from the service (main thread) ──
+
+    def _on_snapshot(self, snap):
+        if not snap or not snap.get("ok"):
             return
-        self._set_message("")
-        self._set_status(_STATUS_IDLE)
-        self._start_work()
+        self._channel_objs = dict(snap.get("channels", {}))
+        self._home_channel = snap.get("home_channel")
 
-    # ── Background work ──
-
-    def _start_work(self):
-        if self._thread and self._thread.is_alive():
-            return
-        self._stop_event.clear()
-        self._thread = threading.Thread(
-            target=self._worker, daemon=True, name="emporia-worker"
-        )
-        self._thread.start()
-
-    def _stop_work(self):
-        self._stop_event.set()
-
-    def _authenticate(self):
-        """Login using cached tokens for a fast start, always passing the
-        username/password so pyemvue can auto re-authenticate when the Cognito
-        refresh token eventually expires. Returns True on success."""
-        try:
-            vue = PyEmVue()
-            os.makedirs(os.path.dirname(_TOKEN_FILE), exist_ok=True)
-            cached = {}
-            if os.path.exists(_TOKEN_FILE):
-                try:
-                    with open(_TOKEN_FILE) as f:
-                        cached = json.load(f) or {}
-                except Exception:
-                    cached = {}
-            try:
-                vue.login(
-                    username=self._email, password=self._password,
-                    id_token=cached.get("id_token"),
-                    access_token=cached.get("access_token"),
-                    refresh_token=cached.get("refresh_token"),
-                    token_storage_file=_TOKEN_FILE,
-                )
-            except Exception as e:
-                # Stale/corrupt token cache — fall back to a clean credential login.
-                PIHOME_LOGGER.warn(f"EmporiumPower: token login failed ({e}); retrying with credentials")
-                vue.login(
-                    username=self._email, password=self._password,
-                    token_storage_file=_TOKEN_FILE,
-                )
-            self._vue = vue
-            return True
-        except Exception as e:
-            PIHOME_LOGGER.error(f"EmporiumPower: authentication failed: {e}")
-            return False
-
-    def _worker(self):
-        if not self._authenticate():
-            Clock.schedule_once(lambda dt: (
-                self._set_status(_STATUS_ERR),
-                toast("Emporia login failed", "error", 4),
-                self._set_message("Login failed. Check your Emporia\nemail & password in Settings."),
-            ), 0)
-            return
-
-        try:
-            with self._vue_lock:
-                devices = self._vue.get_devices()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"EmporiumPower: get_devices failed: {e}")
-            Clock.schedule_once(lambda dt: self._set_status(_STATUS_ERR), 0)
-            return
-
-        Clock.schedule_once(lambda dt, d=devices: self._apply_devices(d), 0)
-
-        while not self._stop_event.is_set():
-            try:
-                with self._vue_lock:
-                    usage = self._vue.get_device_list_usage(
-                        deviceGids=self._all_gids,
-                        instant=datetime.now(timezone.utc),
-                        scale=Scale.MINUTE.value, unit=Unit.KWH.value,
-                    )
-                Clock.schedule_once(lambda dt, u=usage: self._apply_usage(u), 0)
-                Clock.schedule_once(lambda dt: self._set_status(_STATUS_OK), 0)
-            except Exception as e:
-                PIHOME_LOGGER.error(f"EmporiumPower: usage poll failed: {e}")
-                Clock.schedule_once(lambda dt: self._set_status(_STATUS_ERR), 0)
-            self._stop_event.wait(self._refresh)
-
-    # ── Apply data (main thread) ──
-
-    def _apply_devices(self, devices):
-        self._devices = devices
-        self._all_gids = [d.device_gid for d in devices]
-        self._channels = {}
-        self._whole_home_channel = None
-        for d in devices:
-            for ch in getattr(d, "channels", []) or []:
-                self._channels[(str(d.device_gid), str(ch.channel_num))] = ch
-                if str(ch.channel_num) in _MAIN_CHANNELS and self._whole_home_channel is None:
-                    self._whole_home_channel = ch
-        if self._whole_home_channel is None and devices and getattr(devices[0], "channels", None):
-            self._whole_home_channel = devices[0].channels[0]
-        self._refresh_chart()
-
-    def _apply_usage(self, usage):
-        rows = []
-        home_watts = None
-        self._channel_objs = {}
-        for gid, udev in (usage or {}).items():
-            for chnum, chu in (getattr(udev, "channels", {}) or {}).items():
-                watts = (getattr(chu, "usage", None) or 0.0) * 60000.0
-                if str(chnum) in _MAIN_CHANNELS:
-                    home_watts = watts
-                    self._home_channel = chu  # live main-channel object for charting
-                    continue
-                name = (getattr(chu, "name", "") or "").strip()
-                if not name or name.lower() == "main":
-                    name = f"Circuit {chnum}"
-                key = (str(gid), str(chnum))
-                # The usage object IS a VueDeviceChannel (has device_gid + channel_num),
-                # so keep it to pass straight to get_chart_usage — no fragile key matching.
-                self._channel_objs[key] = chu
-                rows.append({"key": key, "name": name, "watts": watts, "channel": chu})
-
-        if home_watts is None:
-            home_watts = sum(r["watts"] for r in rows)
-        rows.sort(key=lambda r: r["watts"], reverse=True)
-
+        home_watts = snap.get("home_watts", 0.0)
         self.total_watts_text = self._fmt_watts(home_watts)
         if self._home_row is not None:
             self._home_row.watts = home_watts
             self._home_row.watts_text = self._fmt_watts(home_watts)
             self._home_row.selected = (self._selected_key == _HOME_KEY)
 
-        self._rebuild_rows(rows)
+        self._rebuild_rows(snap.get("rows", []))
+        self._set_status(_STATUS_OK)
         self._set_message("")
+
+        if not self._charted:
+            self._charted = True
+            self._refresh_chart()
 
     def _rebuild_rows(self, rows):
         box = self.ids.list_box
@@ -301,7 +175,7 @@ class EmporiumPowerScreen(PiHomeScreen):
             # Assign after construction — see note in _build (on_pressed as kwarg won't set).
             row.on_pressed = self._on_row_selected
             row._key = r["key"]
-            row._channel = r["channel"]
+            row._channel = r.get("channel")
             box.add_widget(row)
             self._rows.append(row)
 
@@ -316,14 +190,13 @@ class EmporiumPowerScreen(PiHomeScreen):
         self._refresh_chart()
 
     def _refresh_chart(self, force=False):
-        if not self._devices or Scale is None:
+        if not EMPORIA_SERVICE.available:
             return
         if self._selected_key == _HOME_KEY:
-            channel = self._home_channel or self._whole_home_channel
+            channel = self._home_channel
             title = "Whole Home"
         else:
-            # Prefer the live usage channel object; fall back to the get_devices registry.
-            channel = self._channel_objs.get(self._selected_key) or self._channels.get(self._selected_key)
+            channel = self._channel_objs.get(self._selected_key)
             row = next((r for r in self._rows if getattr(r, "_key", None) == self._selected_key), None)
             if channel is None and row is not None:
                 channel = getattr(row, "_channel", None)
@@ -348,25 +221,12 @@ class EmporiumPowerScreen(PiHomeScreen):
         ).start()
 
     def _chart_worker(self, channel, days, key, title):
-        try:
-            now = datetime.now(timezone.utc)
-            with self._vue_lock:
-                usage, start = self._vue.get_chart_usage(
-                    channel, start=now - timedelta(days=days), end=now,
-                    scale=Scale.DAY.value, unit=Unit.KWH.value,
-                )
-        except Exception as e:
-            PIHOME_LOGGER.error(f"EmporiumPower: chart fetch failed: {e}")
+        vals, labels = EMPORIA_SERVICE.get_chart_usage(channel, days)
+        if vals is None:
             Clock.schedule_once(lambda dt: self._set_status(_STATUS_ERR), 0)
             return
-
-        vals = [float(v) if v is not None else 0.0 for v in (usage or [])]
-        base = start or (datetime.now(timezone.utc) - timedelta(days=days))
-        labels = [(base + timedelta(days=i)).strftime("%m/%d") for i in range(len(vals))]
         self._chart_cache[(key, days)] = (vals, labels)
-        Clock.schedule_once(
-            lambda dt: self._apply_chart(vals, labels, title, key, days), 0
-        )
+        Clock.schedule_once(lambda dt: self._apply_chart(vals, labels, title, key, days), 0)
 
     def _apply_chart(self, vals, labels, title, key, days):
         # Ignore stale results if the user has since changed selection/range.

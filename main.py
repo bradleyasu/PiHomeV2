@@ -31,7 +31,8 @@ from util.const import _TASK_SCREEN, GESTURE_CHECK, GESTURE_DATABASE, GESTURE_TR
 from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
-from services.wallpaper.wallpaper import WALLPAPER_SERVICE 
+from services.wallpaper.wallpaper import WALLPAPER_SERVICE
+from services.emporia.emporia_service import EMPORIA_SERVICE
 import sys
 import kivy
 import platform
