@@ -493,8 +493,13 @@ enabled = CONFIG.get("section", "key", "0").strip().lower() in ("1", "true")
 3. **Header left padding: `dp(54)`** — clears the hamburger menu overlay (40dp icon + padding at top-left)
 4. **Use `dp()` for all sizes/positions**, `sp()` for all font sizes
 5. **Fonts:** `Nunito` (body text), `MaterialIcons` (icon glyphs), `ArialUnicode` (extended characters)
+   - **Watch non-ASCII punctuation in text strings.** `Nunito` only covers basic Latin/ASCII. Any non-ASCII character — including punctuation that *looks* harmless inside a sentence — renders as a **tofu square (□)** in a `Nunito` label. This applies to Python message/`StringProperty` strings too, not just KV. Common offenders: arrows `→ ← ↑ ↓`, em/en dashes `— –`, bullets `•`, check/cross `✓ ✗ ×`, degree `°`, ellipsis `…`, curly quotes `" " ' '`.
+   - **Fix:** use plain ASCII (`->`, `-`, `*`, `x`, `deg`, `...`, straight quotes) for body text, OR set that label's `font_name: "ArialUnicode"` if you genuinely need the symbol, OR use a real `MaterialIcons` glyph (with `font_name: "MaterialIcons"`) when it's an icon.
 6. **Background colors** — use `canvas.before` with `Color` + `Rectangle`, not widget `background_color`
 7. **Text alignment** — `halign`/`valign` require `text_size: self.size` to take effect
+   - **NEVER combine `text_size: self.size` with `width: self.texture_size[0]` on the same Label.** This is circular: the width depends on the texture, but the texture is constrained by `text_size` (the width). The width collapses to ~one character, so the text **wraps vertically (one letter per line) and runs off-screen** — this is the #1 cause of broken header/title bars.
+   - **For a fixed-size label** (header titles, value readouts, toolbar labels): set an explicit `size_hint_x: None` + `width: dp(N)` AND `text_size: self.size`. This is the proven pattern in existing headers (e.g. `screens/DevTools/devtools.kv`: `width: dp(80)` + `text_size: self.size`).
+   - **For a label that must hug its text width** (auto-size): use `size_hint_x: None` + `width: self.texture_size[0]` and **omit `text_size`** (do not set it). The label then sizes to the glyphs; `halign` is moot because the box already hugs the text.
 8. **Reference screen properties** with `root.property_name`
 
 ### Common UI Patterns
@@ -643,7 +648,25 @@ PiHome must run on Raspberry Pi 3+ (quad-core ARM, 1GB RAM). Keep these rules in
 6. **Boolean configs are strings** — check with `.strip().lower() in ("1", "true")`.
 7. **Don't use `time.sleep()` in threads** — use `self._stop_event.wait(seconds)` for interruptible waits.
 8. **`text_size: self.size`** is required in KV for `halign`/`valign` to work on Labels.
-9. **MaterialIcons** Always make sure that icons are used correctly and fonts are not mixed. Attempting to reference a MaterialIcon from a label with a different font will not work. 
+9. **MaterialIcons** Always make sure that icons are used correctly and fonts are not mixed. Attempting to reference a MaterialIcon from a label with a different font will not work. Also **verify the codepoint actually exists in the bundled font** before using it — a missing glyph renders as a tofu square (□). Check with:
+   ```bash
+   python3 -c "from fontTools.ttLib import TTFont; f=TTFont('theme/fonts/MaterialIcons-Regular.ttf'); g=f.getBestCmap().get(0xe3e7); print('present' if g else 'MISSING')"
+   ```
+10. **Disabled / full-screen widgets swallow touches** — Kivy's `Widget.on_touch_down` returns `True` (consuming the event) for any **`disabled`** widget the touch collides with. So a `disabled`, full-screen overlay (e.g. an empty/error-state `Label` left on top with default `size_hint: (1, 1)`) silently eats **every** touch beneath it — scrolling and taps appear completely dead even though the widgets below are fine. For hidden overlays, toggle `opacity` only (do **not** also set `disabled`), size the overlay to its content, or remove it from the tree when inactive. Remember the **last child of a `FloatLayout` is topmost**, so overlays sit above everything.
+11. **Never pass an `on_*` custom-callback property in a widget's constructor** — Kivy's `EventDispatcher.__init__` treats **any** kwarg starting with `on_` as an *event binding* (`self.bind(on_x=...)`), NOT as setting a property value. So `MyRow(on_pressed=cb)` binds `cb` to the `on_pressed` property-change event and leaves `self.on_pressed == None` — your tap/select callback silently never fires. **Assign it after construction instead:** `row = MyRow(...); row.on_pressed = cb`. (This is why existing tappable rows like `Cocktail`'s `DrinkListItem` set `on_pressed` post-construction.) Tip: avoid naming a plain callback property `on_*` at all — but if you do, never set it via kwarg.
+12. **Write persistent files to `cache/`, never the project root.** Any file a screen persists across launches — JSON state, response caches, **auth tokens / secrets** — goes in the shared `cache/` directory (relative to cwd, e.g. `_FILE = "cache/myscreen_state.json"`), matching `cocktail_cache.json`, `ha_favorites.json`, `favorite_events.json`. This directory is **gitignored** (`/cache/`), so writing secrets anywhere else (like next to `base.ini` in the root) risks committing them. Before searching for *where* to put a persistent file, grep existing screens (`grep -rn "cache/" --include="*.py"`) instead of assuming. Call `os.makedirs(os.path.dirname(path), exist_ok=True)` before writing so a fresh checkout works. (Small per-screen save files in the screen's own dir, like HexGame's `game_state.json`, also exist — but use `cache/` for caches, tokens, and shared/secret state.)
+
+---
+
+## Verifying a Screen
+
+The Kivy GUI **cannot be launched headlessly on macOS** (SDL2 needs a real display + OpenGL; the `dummy` video driver has no GL and there is no mock window provider — attempting it aborts with "Unable to get a Window"). Don't burn time trying. What you *can* check without the GUI:
+
+- **Syntax:** `python3 -m py_compile screens/<Dir>/*.py`
+- **Manifest:** validate it is parseable JSON.
+- **KV parse + widget registration + imports:** import the screen module with the interpreter that has Kivy installed, e.g. `python3 -c "import screens.<Dir>.<file>; print('OK')"`. This catches KV syntax errors, bad sibling imports, and unregistered custom widgets — but note that **instantiating** widgets or rendering canvas/text needs a real GL context, so it will fail headlessly. Don't try to instantiate the screen or call canvas/`CoreLabel` rendering in a headless check.
+
+Leave actual visual and interaction testing to the user running the real app (Pi or Mac desktop). Confirm the non-visual checks above, then hand off.
 
 ---
 
@@ -674,3 +697,4 @@ Use these as examples when building new screens:
 | Virtual keyboard | `components/Keyboard/keyboard.py` |
 | Event base class & factory | `events/pihomeevent.py` |
 | Main app | `main.py` |
+| Persistent state / cache / token files | `cache/` (project root, gitignored) |

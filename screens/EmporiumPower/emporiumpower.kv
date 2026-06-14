@@ -1,0 +1,225 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<EmporiumPowerScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        size_hint: 1, 1
+
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: 1, 1
+
+            # ── Header ──────────────────────────────────────────────
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(44)
+                padding: dp(54), 0, dp(12), 0
+                spacing: dp(8)
+                canvas.before:
+                    Color:
+                        rgba: root.header_color
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                    Color:
+                        rgba: 1, 1, 1, 0.06
+                    Rectangle:
+                        size: self.width, dp(1)
+                        pos: self.x, self.y
+
+                Label:
+                    text: ""
+                    font_name: "MaterialIcons"
+                    font_size: sp(20)
+                    color: root.accent_color
+                    size_hint_x: None
+                    width: dp(26)
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
+
+                Label:
+                    text: "POWER"
+                    font_name: "Nunito"
+                    font_size: sp(12)
+                    bold: True
+                    color: root.text_color
+                    size_hint_x: None
+                    width: dp(70)
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                Widget:
+
+                Label:
+                    text: root.total_watts_text
+                    font_name: "Nunito"
+                    font_size: sp(15)
+                    bold: True
+                    color: root.accent_color
+                    size_hint_x: None
+                    width: dp(120)
+                    halign: "right"
+                    valign: "middle"
+                    text_size: self.size
+
+                Widget:
+                    size_hint: None, None
+                    size: dp(8), dp(8)
+                    pos_hint: {"center_y": 0.5}
+                    canvas:
+                        Color:
+                            rgba: root.status_color
+                        Ellipse:
+                            pos: self.pos
+                            size: self.size
+
+            # ── Body ────────────────────────────────────────────────
+            BoxLayout:
+                orientation: "horizontal"
+                padding: dp(10)
+                spacing: dp(10)
+
+                # ── Left: ranked circuit list ──
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_x: 0.42
+                    spacing: dp(4)
+
+                    Label:
+                        text: "CIRCUITS  (live)"
+                        font_name: "Nunito"
+                        font_size: sp(10)
+                        bold: True
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(16)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    BoxLayout:
+                        id: home_holder
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: dp(46)
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(1)
+                        canvas:
+                            Color:
+                                rgba: 1, 1, 1, 0.07
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+
+                    ScrollView:
+                        do_scroll_x: False
+                        bar_width: dp(3)
+                        bar_color: root.accent_color
+                        scroll_type: ['bars', 'content']
+
+                        BoxLayout:
+                            id: list_box
+                            orientation: "vertical"
+                            size_hint_y: None
+                            height: self.minimum_height
+                            spacing: 0
+
+                # ── Vertical divider ──
+                Widget:
+                    size_hint_x: None
+                    width: dp(1)
+                    canvas:
+                        Color:
+                            rgba: 1, 1, 1, 0.07
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+                # ── Right: trend chart ──
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_x: 0.58
+                    spacing: dp(6)
+                    padding: dp(6), 0, 0, 0
+
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(34)
+                        spacing: dp(8)
+
+                        Label:
+                            text: root.chart_title_text
+                            font_name: "Nunito"
+                            font_size: sp(14)
+                            bold: True
+                            color: root.text_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+
+                        Label:
+                            text: "DAYS"
+                            font_name: "Nunito"
+                            font_size: sp(10)
+                            bold: True
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(40)
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+                        AnchorLayout:
+                            id: stepper_holder
+                            size_hint_x: None
+                            width: dp(118)
+
+                    Label:
+                        text: root.chart_total_text
+                        font_name: "Nunito"
+                        font_size: sp(11)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(16)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    BoxLayout:
+                        padding: dp(8)
+                        canvas.before:
+                            Color:
+                                rgba: root.card_color
+                            RoundedRectangle:
+                                size: self.size
+                                pos: self.pos
+                                radius: [dp(8)]
+
+                        BarChart:
+                            id: chart
+
+        # ── Message overlay (empty / error states) ──
+        Label:
+            text: root.message_text
+            font_name: "Nunito"
+            font_size: sp(15)
+            color: root.text_color
+            opacity: 1 if root.show_message else 0
+            halign: "center"
+            valign: "middle"
+            text_size: self.width * 0.8, None
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}

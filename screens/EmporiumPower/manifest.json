@@ -1,0 +1,58 @@
+{
+    "module": "EmporiumPower.emporiumpower",
+    "name": "EmporiumPowerScreen",
+    "id": "_emporiumpower",
+    "label": "Power",
+    "settingsLabel": "Emporia Power",
+    "settingsIndex": 35,
+    "description": "Live home power usage from an Emporia Vue monitor, with per-circuit ranking and a daily usage trend chart",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 35,
+    "icon": "screens/EmporiumPower/icon.png",
+    "settings": [
+        {
+            "type": "title",
+            "title": "Emporia Account"
+        },
+        {
+            "type": "string",
+            "title": "Email",
+            "desc": "The email address for your Emporia (emporiaenergy.com) account",
+            "section": "emporiumpower",
+            "key": "email"
+        },
+        {
+            "type": "string",
+            "title": "Password",
+            "desc": "Your Emporia account password. Used to authenticate; tokens are cached locally afterward",
+            "section": "emporiumpower",
+            "key": "password"
+        },
+        {
+            "type": "title",
+            "title": "Display"
+        },
+        {
+            "type": "numeric",
+            "title": "Refresh Interval",
+            "desc": "How often to refresh live power draw while the screen is open (seconds, min 15)",
+            "section": "emporiumpower",
+            "key": "refresh_interval"
+        },
+        {
+            "type": "numeric",
+            "title": "Default Chart Days",
+            "desc": "Default number of days shown in the usage trend chart (1-30)",
+            "section": "emporiumpower",
+            "key": "default_days"
+        },
+        {
+            "type": "bool",
+            "title": "Enabled",
+            "desc": "Enable the Emporia Power screen integration",
+            "section": "emporiumpower",
+            "key": "enabled"
+        }
+    ]
+}
