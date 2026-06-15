@@ -39,6 +39,10 @@ _MAIN_CHANNELS = ("1,2,3", "1,2,3,4")
 # Names a rule may use to target the whole-home total.
 _HOME_ALIASES = ("whole home", "wholehome", "home", "total", "mains", "main")
 
+# Emporia "virtual" channels that report live usage but are rejected (HTTP 400) by
+# the historical getChartUsage endpoint.
+_NON_CHARTABLE = {"balance", "totalusage", "mainsfromgrid", "mainstogrid"}
+
 
 class EmporiaService:
     def __init__(self):
@@ -333,6 +337,9 @@ class EmporiaService:
         """
         if self._vue is None or Scale is None or channel is None:
             return None, None
+        if str(getattr(channel, "channel_num", "")).lower() in _NON_CHARTABLE:
+            # e.g. "Balance" — getChartUsage 400s for these virtual channels.
+            return [], []
         try:
             # Align the request to LOCAL calendar days (so buckets match the wall
             # calendar) and extend the end to the start of tomorrow so today's

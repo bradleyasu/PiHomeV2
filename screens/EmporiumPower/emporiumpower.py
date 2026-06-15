@@ -19,6 +19,10 @@ Builder.load_file("./screens/EmporiumPower/emporiumpower.kv")
 
 _HOME_KEY = "__home__"
 
+# Emporia "virtual" channels that report live usage but are rejected (HTTP 400) by
+# the historical getChartUsage endpoint, so we don't try to chart them.
+_NON_CHARTABLE = {"balance", "totalusage", "mainsfromgrid", "mainstogrid"}
+
 _STATUS_OK   = [0.30, 0.80, 0.45, 1]
 _STATUS_ERR  = [0.90, 0.32, 0.32, 1]
 _STATUS_IDLE = [0.45, 0.45, 0.45, 1]
@@ -203,6 +207,14 @@ class EmporiumPowerScreen(PiHomeScreen):
             title = row.device_name if row else "Circuit"
         if channel is None:
             PIHOME_LOGGER.warn(f"EmporiumPower: no channel object for {self._selected_key}; cannot chart")
+            return
+
+        if str(getattr(channel, "channel_num", "")).lower() in _NON_CHARTABLE:
+            # e.g. the "Balance" pseudo-channel — live watts exist but no daily history.
+            self.chart_title_text = title
+            self.ids.chart.data = []
+            self.ids.chart.labels = []
+            self.chart_total_text = "Daily trend not available for this channel"
             return
 
         days = int(self.range_days)
