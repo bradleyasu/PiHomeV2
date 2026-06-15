@@ -321,19 +321,48 @@ class EmporiaService:
             PIHOME_LOGGER.error(f"Emporia listener error: {e}")
 
     def get_chart_usage(self, channel, days):
-        """Blocking — call from a background thread. Returns (vals, labels) or (None, None)."""
+        """Blocking — call from a background thread. Returns (vals, labels) or (None, None).
+
+        Normalizes the API result onto a fixed axis of ``days`` local-calendar days
+        ENDING TODAY. Emporia returns each channel's daily list starting at that
+        channel's own first-data instant, so raw lists vary in length and end date
+        between circuits. We instead map every returned daily value onto its real
+        calendar date and lay it on a today-anchored axis, padding any missing day
+        (including today) with 0. This keeps the x-axis identical across circuits and
+        always ends on today's date.
+        """
         if self._vue is None or Scale is None or channel is None:
             return None, None
         try:
-            now = datetime.now(timezone.utc)
+            # Align the request to LOCAL calendar days (so buckets match the wall
+            # calendar) and extend the end to the start of tomorrow so today's
+            # partial bucket is included in the response.
+            local_now = datetime.now().astimezone()
+            today = local_now.date()
+            midnight = datetime.min.time()
+            start_dt = datetime.combine(today - timedelta(days=days - 1), midnight).astimezone()
+            end_dt = datetime.combine(today + timedelta(days=1), midnight).astimezone()
+
             with self._vue_lock:
-                usage, start = self._vue.get_chart_usage(
-                    channel, start=now - timedelta(days=days), end=now,
+                usage, first = self._vue.get_chart_usage(
+                    channel, start=start_dt, end=end_dt,
                     scale=Scale.DAY.value, unit=Unit.KWH.value,
                 )
-            vals = [float(v) if v is not None else 0.0 for v in (usage or [])]
-            base = start or (now - timedelta(days=days))
-            labels = [(base + timedelta(days=i)).strftime("%m/%d") for i in range(len(vals))]
+            usage = usage or []
+
+            # Map each returned daily value onto its local calendar date.
+            by_date = {}
+            if first is not None:
+                if first.tzinfo is None:
+                    first = first.replace(tzinfo=timezone.utc)
+                first_local = first.astimezone()
+                for i, v in enumerate(usage):
+                    d = (first_local + timedelta(days=i)).date()
+                    by_date[d] = float(v) if v is not None else 0.0
+
+            axis = [today - timedelta(days=days - 1 - i) for i in range(days)]
+            vals = [by_date.get(d, 0.0) for d in axis]
+            labels = [d.strftime("%m/%d") for d in axis]
             return vals, labels
         except Exception as e:
             PIHOME_LOGGER.error(f"Emporia: chart fetch failed: {e}")
