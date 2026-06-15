@@ -6,9 +6,9 @@ from util.const import _DISPLAY_IMAGE_SCREEN, _HOME_SCREEN
 
 class ImageEvent(PihomeEvent):
     type = "image"
-    def __init__(self, image_url, timeout = 0, reload_interval = 0, **kwargs):
+    def __init__(self, image, timeout = 0, reload_interval = 0, **kwargs):
         super().__init__()
-        self.image_url = image_url
+        self.image_url = image
 
         if  isinstance(timeout, str):
             timeout = int(timeout)
