@@ -1,4 +1,5 @@
 import threading
+import time
 
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -22,6 +23,11 @@ _HOME_KEY = "__home__"
 # Emporia "virtual" channels that report live usage but are rejected (HTTP 400) by
 # the historical getChartUsage endpoint, so we don't try to chart them.
 _NON_CHARTABLE = {"balance", "totalusage", "mainsfromgrid", "mainstogrid"}
+
+# Chart results are cached only briefly. PiHome runs for days/weeks without restart,
+# so a permanent cache would keep serving an old "today" after the date rolls over.
+# A short TTL also lets today's (growing) bar refresh on its own.
+_CHART_TTL = 300  # seconds
 
 _STATUS_OK   = [0.30, 0.80, 0.45, 1]
 _STATUS_ERR  = [0.90, 0.32, 0.32, 1]
@@ -154,9 +160,18 @@ class EmporiumPowerScreen(PiHomeScreen):
         self._rebuild_rows(snap.get("rows", []))
         self._set_status(_STATUS_OK)
         self._set_message("")
+        self._maybe_refresh_chart()
 
+    def _maybe_refresh_chart(self):
+        """Render the chart on first data, and thereafter only refetch when our
+        cached entry for the current view has expired (e.g. the day rolled over)."""
         if not self._charted:
             self._charted = True
+            self._refresh_chart()
+            return
+        cache_key = (self._selected_key, int(self.range_days))
+        cached = self._chart_cache.get(cache_key)
+        if not cached or (time.time() - cached[0] >= _CHART_TTL):
             self._refresh_chart()
 
     def _rebuild_rows(self, rows):
@@ -221,10 +236,12 @@ class EmporiumPowerScreen(PiHomeScreen):
         cache_key = (self._selected_key, days)
         if force:
             self._chart_cache.pop(cache_key, None)
-        elif cache_key in self._chart_cache:
-            vals, labels = self._chart_cache[cache_key]
-            self._apply_chart(vals, labels, title, self._selected_key, days)
-            return
+        else:
+            cached = self._chart_cache.get(cache_key)
+            if cached and (time.time() - cached[0] < _CHART_TTL):
+                _ts, vals, labels = cached
+                self._apply_chart(vals, labels, title, self._selected_key, days)
+                return
 
         self.chart_title_text = title
         threading.Thread(
@@ -237,7 +254,7 @@ class EmporiumPowerScreen(PiHomeScreen):
         if vals is None:
             Clock.schedule_once(lambda dt: self._set_status(_STATUS_ERR), 0)
             return
-        self._chart_cache[(key, days)] = (vals, labels)
+        self._chart_cache[(key, days)] = (time.time(), vals, labels)
         Clock.schedule_once(lambda dt: self._apply_chart(vals, labels, title, key, days), 0)
 
     def _apply_chart(self, vals, labels, title, key, days):
