@@ -29,6 +29,7 @@ from server.server import SERVER
 from services.qr.qr import QR
 from services.taskmanager.taskmanager import TASK_MANAGER
 from system.brightness import get_brightness, set_brightness
+from system.leds import set_leds
 from theme.theme import Theme
 from util.configuration import CONFIG
 from util.const import SERVER_PORT
@@ -110,6 +111,7 @@ class DevTools(PiHomeScreen):
             ("Shutdown",         "danger",    self.action_shutdown),
             ("Toggle Theme",     "secondary", self.action_toggle_theme),
             ("Toggle Server",    "secondary", self.action_toggle_server),
+            ("Toggle LEDs",      "secondary", self.action_toggle_leds),
             ("Reload Config",    "secondary", self.action_reload_config),
             ("Clear Task Cache", "secondary", self.action_clear_task_cache),
             ("Test Toast",       "secondary", self.action_test_toast),
@@ -271,6 +273,16 @@ class DevTools(PiHomeScreen):
         else:
             SERVER.start_server()
         Clock.schedule_once(lambda dt: self._refresh_metrics(), 0.5)
+
+    def action_toggle_leds(self):
+        enabled = CONFIG.get("devtools", "leds_enabled", "1").strip().lower() in ("1", "true")
+        new_state = not enabled
+        CONFIG.set("devtools", "leds_enabled", "1" if new_state else "0")
+        set_leds(new_state)
+        get_app().show_toast(
+            "Board LEDs {}".format("enabled" if new_state else "disabled"),
+            level="info", timeout=3,
+        )
 
     def action_update_pihome(self):
         def do_update():

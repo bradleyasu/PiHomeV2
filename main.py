@@ -334,7 +334,12 @@ class PiHome(App):
         """
         self._init_mqtt()
 
-        # Make temporary dir 
+        # Re-apply saved onboard LED state (sysfs does not persist across reboot)
+        from system.leds import set_leds
+        leds_on = CONFIG.get("devtools", "leds_enabled", "1").strip().lower() in ("1", "true")
+        set_leds(leds_on)
+
+        # Make temporary dir
         if not os.path.exists(TEMP_DIR):
             os.makedirs(TEMP_DIR)
         # self.profile = cProfile.Profile()
