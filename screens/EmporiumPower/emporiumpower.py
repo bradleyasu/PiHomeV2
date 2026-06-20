@@ -53,6 +53,9 @@ class EmporiumPowerScreen(PiHomeScreen):
 
     # ── Display properties ──
     total_watts_text = StringProperty("-- W")
+    cost_today_text  = StringProperty("$--")
+    cost_month_text  = StringProperty("$--")
+    cost_proj_text   = StringProperty("$--")
     chart_title_text = StringProperty("Whole Home")
     chart_total_text = StringProperty("")
     range_days       = NumericProperty(7)
@@ -66,6 +69,8 @@ class EmporiumPowerScreen(PiHomeScreen):
         self._chart_cache = {}      # (selected_key, days) -> (vals, labels)
         self._selected_key = _HOME_KEY
         self._charted = False
+        self._rate = 0.0            # $/kWh, from the service snapshot
+        self._today_by_key = {}     # key -> {"kwh": float, "cost": float}
 
         self._rows = []
         self._home_row = None
@@ -150,12 +155,24 @@ class EmporiumPowerScreen(PiHomeScreen):
         self._channel_objs = dict(snap.get("channels", {}))
         self._home_channel = snap.get("home_channel")
 
+        cost = snap.get("cost") or {}
+        self._rate = (cost.get("rate_cents") or 0.0) / 100.0
+        self._today_by_key = snap.get("today_by_key") or {}
+        if cost.get("today") is not None:
+            self.cost_today_text = self._fmt_money(cost.get("today"))
+            self.cost_month_text = self._fmt_money(cost.get("month"))
+            self.cost_proj_text  = self._fmt_money(cost.get("projected"), approx=True)
+
         home_watts = snap.get("home_watts", 0.0)
         self.total_watts_text = self._fmt_watts(home_watts)
         if self._home_row is not None:
             self._home_row.watts = home_watts
             self._home_row.watts_text = self._fmt_watts(home_watts)
             self._home_row.selected = (self._selected_key == _HOME_KEY)
+            self._home_row.sub_text = (
+                self._fmt_money(cost.get("today")) + " today"
+                if cost.get("today") is not None else ""
+            )
 
         self._rebuild_rows(snap.get("rows", []))
         self._set_status(_STATUS_OK)
@@ -180,10 +197,13 @@ class EmporiumPowerScreen(PiHomeScreen):
         self._rows = []
         max_w = max((r["watts"] for r in rows), default=0.0) or 1.0
         for r in rows:
+            tk = self._today_by_key.get(r["key"]) or {}
+            sub = (self._fmt_money(tk["cost"]) + " today") if "cost" in tk else ""
             row = DeviceRow(
                 device_name=r["name"],
                 watts=r["watts"],
                 watts_text=self._fmt_watts(r["watts"]),
+                sub_text=sub,
                 fraction=r["watts"] / max_w,
                 selected=(r["key"] == self._selected_key),
                 text_color=self.text_color,
@@ -265,7 +285,10 @@ class EmporiumPowerScreen(PiHomeScreen):
         self.ids.chart.labels = labels
         self.chart_title_text = title
         total = sum(vals)
-        self.chart_total_text = f"{total:.1f} kWh over {days}d"
+        if self._rate:
+            self.chart_total_text = f"{total:.1f} kWh  |  ~${total * self._rate:,.2f}  over {days}d"
+        else:
+            self.chart_total_text = f"{total:.1f} kWh over {days}d"
 
     def _on_range_changed(self, value):
         self.range_days = int(value)
@@ -298,6 +321,13 @@ class EmporiumPowerScreen(PiHomeScreen):
         if watts >= 1000:
             return f"{watts / 1000:.2f} kW"
         return f"{watts:.0f} W"
+
+    @staticmethod
+    def _fmt_money(v, approx=False):
+        if v is None:
+            return "$--"
+        s = f"${v:,.2f}" if v < 100 else f"${v:,.0f}"
+        return ("~" + s) if approx else s
 
     # ── Rotary encoder ──
 

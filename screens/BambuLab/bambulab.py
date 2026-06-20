@@ -24,6 +24,7 @@ Rotary Encoder
   Long press  → go back to previous screen
 """
 
+import datetime
 import json
 import ssl
 import threading
@@ -123,14 +124,20 @@ class BambuLabScreen(PiHomeScreen):
     layer_total    = NumericProperty(0)
     eta_minutes    = NumericProperty(0)
 
-    # Temperatures
-    temp_nozzle  = NumericProperty(0.0)
-    temp_bed     = NumericProperty(0.0)
-    temp_chamber = NumericProperty(0.0)
+    # Temperatures (current + target)
+    temp_nozzle         = NumericProperty(0.0)
+    temp_bed            = NumericProperty(0.0)
+    temp_chamber        = NumericProperty(0.0)
+    temp_nozzle_target  = NumericProperty(0.0)
+    temp_bed_target     = NumericProperty(0.0)
 
     # Speed & material
-    print_speed   = NumericProperty(100)
-    filament_type = StringProperty("—")
+    # Default is -1 (not a real speed) so the first genuine value — often 100% —
+    # differs from the default and reliably triggers on_print_speed.
+    print_speed       = NumericProperty(-1)
+    filament_type     = StringProperty("—")        # human-readable name (e.g. "PLA Matte")
+    filament_color    = ColorProperty([0, 0, 0, 0])  # swatch color from active tray
+    filament_has_color = BooleanProperty(False)      # whether a swatch should be shown
 
     # Camera
     camera_texture  = ObjectProperty(None, allownone=True)
@@ -148,9 +155,15 @@ class BambuLabScreen(PiHomeScreen):
     progress_text    = StringProperty("0%")
     layer_text       = StringProperty("—")
     eta_text         = StringProperty("—")
+    finish_text      = StringProperty("")          # estimated wall-clock finish time
     speed_text       = StringProperty("—%")
     connection_label = StringProperty("DISCONNECTED")
     camera_label     = StringProperty("No Camera Feed")
+
+    # Printer alerts (HMS health-management + print errors)
+    has_alert   = BooleanProperty(False)
+    alert_text  = StringProperty("")
+    alert_color = ColorProperty([0.85, 0.25, 0.25, 1])
 
     # ──────────────────────────────────────────────────────────────────────────
 
@@ -169,13 +182,32 @@ class BambuLabScreen(PiHomeScreen):
     # ── Property observers (keep formatted strings in sync) ────────────────────
 
     def on_temp_nozzle(self, inst, val):
-        self.nozzle_text = f"{val:.1f}\u00b0C"
+        self._update_nozzle_text()
+
+    def on_temp_nozzle_target(self, inst, val):
+        self._update_nozzle_text()
 
     def on_temp_bed(self, inst, val):
-        self.bed_text = f"{val:.1f}\u00b0C"
+        self._update_bed_text()
+
+    def on_temp_bed_target(self, inst, val):
+        self._update_bed_text()
 
     def on_temp_chamber(self, inst, val):
         self.chamber_text = f"{val:.1f}\u00b0C"
+
+    def _update_nozzle_text(self):
+        self.nozzle_text = self._format_temp(self.temp_nozzle, self.temp_nozzle_target)
+
+    def _update_bed_text(self):
+        self.bed_text = self._format_temp(self.temp_bed, self.temp_bed_target)
+
+    @staticmethod
+    def _format_temp(current, target) -> str:
+        """Show 'current / target' when actively heating to a setpoint, else just current."""
+        if target and target > 0:
+            return f"{current:.0f}\u00b0 / {target:.0f}\u00b0C"
+        return f"{current:.1f}\u00b0C"
 
     def on_print_progress(self, inst, val):
         self.progress_text = f"{int(val)}%"
@@ -184,7 +216,31 @@ class BambuLabScreen(PiHomeScreen):
         self.speed_text = f"{int(val)}%"
 
     def on_eta_minutes(self, inst, val):
-        self.eta_text = f"ETA  {int(val)} min" if val > 0 else "\u2014"
+        self.eta_text = self._format_eta(val)
+        self._update_finish_text(val)
+
+    @staticmethod
+    def _format_eta(minutes) -> str:
+        """Format remaining minutes as 'ETA  Xh Ym' for long prints, 'ETA  N min' otherwise."""
+        m = int(minutes)
+        if m <= 0:
+            return "\u2014"
+        if m < 60:
+            return f"ETA  {m} min"
+        hours, mins = divmod(m, 60)
+        if mins == 0:
+            return f"ETA  {hours}h"
+        return f"ETA  {hours}h {mins}m"
+
+    def _update_finish_text(self, minutes):
+        """Compute the estimated wall-clock finish time, e.g. 'Done 3:42 PM'."""
+        m = int(minutes)
+        if m <= 0 or self.gcode_state != "RUNNING":
+            self.finish_text = ""
+            return
+        finish = datetime.datetime.now() + datetime.timedelta(minutes=m)
+        # %-I strips the leading zero from the hour (Linux/macOS). Pi runs Linux.
+        self.finish_text = "Done " + finish.strftime("%-I:%M %p")
 
     def on_layer_current(self, inst, val):
         self.layer_text = (
@@ -411,16 +467,22 @@ class BambuLabScreen(PiHomeScreen):
         try:
             state = p.get("gcode_state")
             if state is not None:
+                state_changed = state != self.gcode_state
                 self.gcode_state = state
                 self.state_label = _STATE_LABELS.get(state, state)
                 self.state_color = self._resolve_state_color(state)
+                # Finish time depends on whether we're RUNNING — refresh on change
+                if state_changed:
+                    self._update_finish_text(self.eta_minutes)
 
             self.print_progress = self._safe_int(p.get("mc_percent"), self.print_progress)
             self.layer_current  = self._safe_int(p.get("layer_num"), self.layer_current)
             self.layer_total    = self._safe_int(p.get("total_layer_num"), self.layer_total)
             self.eta_minutes    = self._safe_int(p.get("mc_remaining_time"), self.eta_minutes)
-            self.temp_nozzle    = self._safe_float(p.get("nozzle_temper"), self.temp_nozzle)
-            self.temp_bed       = self._safe_float(p.get("bed_temper"), self.temp_bed)
+            self.temp_nozzle        = self._safe_float(p.get("nozzle_temper"), self.temp_nozzle)
+            self.temp_bed           = self._safe_float(p.get("bed_temper"), self.temp_bed)
+            self.temp_nozzle_target = self._safe_float(p.get("nozzle_target_temper"), self.temp_nozzle_target)
+            self.temp_bed_target    = self._safe_float(p.get("bed_target_temper"), self.temp_bed_target)
             # chamber_temper was removed in recent firmware; fall back to
             # the nested device → ctc → info → temp path used by X1C.
             chamber = p.get("chamber_temper")
@@ -436,21 +498,133 @@ class BambuLabScreen(PiHomeScreen):
             if job:
                 self.job_name = job
 
-            # Filament from AMS tray data
+            # Filament from the currently active tray
             ams_data = p.get("ams")
             if isinstance(ams_data, dict):
-                for ams_unit in ams_data.get("ams", []):
-                    for tray in ams_unit.get("tray", []):
-                        tray_type = tray.get("tray_type", "")
-                        tray_color = tray.get("tray_color", "")
-                        if tray_type:
-                            self.filament_type = f"{tray_type} {tray_color}".strip()
-                            break
-                    else:
-                        continue
-                    break
+                self._apply_filament(ams_data, p.get("vt_tray"))
+
+            # Health-management (HMS) alerts + print errors. Only update when the
+            # printer included these keys in this report (P1 sends deltas).
+            if "hms" in p or "print_error" in p:
+                self._apply_alerts(p.get("hms"), p.get("print_error", 0))
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: error applying print data: {e}")
+
+    def _apply_alerts(self, hms, print_error):
+        """Surface printer health alerts as a banner.
+
+        HMS entries are pairs of 32-bit ints (``attr``, ``code``). We format the
+        canonical ``XXXX_XXXX_XXXX_XXXX`` code (lookup-able on the Bambu wiki) and
+        derive a severity from the high word of ``code`` to color the banner.
+        Exact human-readable text isn't in the payload, so we show the code.
+        """
+        severity_rank = {1: 3, 2: 2, 3: 1, 4: 0}  # fatal > serious > common > info
+        codes = []
+        worst = -1
+        if isinstance(hms, list):
+            for item in hms:
+                if not isinstance(item, dict):
+                    continue
+                attr = self._safe_int(item.get("attr"), 0)
+                code = self._safe_int(item.get("code"), 0)
+                if attr == 0 and code == 0:
+                    continue
+                sev = (code >> 16) & 0xFFFF
+                worst = max(worst, severity_rank.get(sev, 1))
+                codes.append(
+                    "{:04X}_{:04X}_{:04X}_{:04X}".format(
+                        (attr >> 16) & 0xFFFF, attr & 0xFFFF,
+                        (code >> 16) & 0xFFFF, code & 0xFFFF,
+                    )
+                )
+
+        perr = self._safe_int(print_error, 0)
+
+        if not codes and perr == 0:
+            self.has_alert = False
+            self.alert_text = ""
+            return
+
+        if perr != 0 and not codes:
+            self.alert_text = f"Print Error  0x{perr:08X}"
+            self.alert_color = list(_COLOR_ERROR)
+        else:
+            first = codes[0]
+            extra = f"  (+{len(codes) - 1} more)" if len(codes) > 1 else ""
+            self.alert_text = f"HMS  {first}{extra}"
+            # Serious/fatal -> red, common/info -> amber
+            self.alert_color = list(_COLOR_ERROR if worst >= 2 else _COLOR_PAUSE)
+        self.has_alert = True
+
+    def _apply_filament(self, ams_data: dict, vt_tray):
+        """Resolve the active spool to a human-readable name and color swatch.
+
+        The printer reports the loaded slot in ``tray_now`` (0-3 for AMS slots,
+        254/255 for the external spool). We select that tray rather than the
+        first non-empty one so the display matches what is actually printing.
+        """
+        tray_now = str(ams_data.get("tray_now", "255"))
+        active = None
+
+        if tray_now in ("254", "255"):
+            # External (vt_tray) spool
+            if isinstance(vt_tray, dict) and vt_tray.get("tray_type"):
+                active = vt_tray
+        else:
+            for ams_unit in ams_data.get("ams", []):
+                for tray in ams_unit.get("tray", []):
+                    if str(tray.get("id")) == tray_now and tray.get("tray_type"):
+                        active = tray
+                        break
+                if active:
+                    break
+
+        # Fallback: first loaded tray if the active slot couldn't be resolved
+        if active is None:
+            for ams_unit in ams_data.get("ams", []):
+                for tray in ams_unit.get("tray", []):
+                    if tray.get("tray_type"):
+                        active = tray
+                        break
+                if active:
+                    break
+
+        if active is None:
+            return
+
+        # Prefer the descriptive sub-brand ("PLA Matte"), fall back to type ("PLA")
+        name = (active.get("tray_sub_brands") or active.get("tray_type") or "").strip()
+        if name:
+            self.filament_type = name
+
+        rgba = self._hex_to_rgba(active.get("tray_color", ""))
+        if rgba:
+            self.filament_color = rgba
+            self.filament_has_color = True
+        else:
+            self.filament_has_color = False
+
+    @staticmethod
+    def _hex_to_rgba(hexstr: str):
+        """Convert a Bambu 'RRGGBBAA' hex string to an opaque [r,g,b,1] list.
+
+        Returns None for empty/transparent values (e.g. an unloaded slot) so the
+        swatch can be hidden.
+        """
+        hexstr = (hexstr or "").strip()
+        if len(hexstr) < 6:
+            return None
+        try:
+            r = int(hexstr[0:2], 16) / 255.0
+            g = int(hexstr[2:4], 16) / 255.0
+            b = int(hexstr[4:6], 16) / 255.0
+            a = int(hexstr[6:8], 16) / 255.0 if len(hexstr) >= 8 else 1.0
+        except ValueError:
+            return None
+        if a == 0:
+            return None  # fully transparent — treat as "no color"
+        # Force opaque so the swatch is always visible regardless of source alpha
+        return [r, g, b, 1.0]
 
     def _resolve_state_color(self, state: str) -> list:
         return _STATE_COLORS.get(state, _COLOR_IDLE)

@@ -43,6 +43,10 @@ _HOME_ALIASES = ("whole home", "wholehome", "home", "total", "mains", "main")
 # the historical getChartUsage endpoint.
 _NON_CHARTABLE = {"balance", "totalusage", "mainsfromgrid", "mainstogrid"}
 
+# Cost/energy totals change slowly, so we refresh them on their own (slower)
+# cadence rather than on every live-watts poll.
+_COST_INTERVAL = 300  # seconds
+
 
 class EmporiaService:
     def __init__(self):
@@ -52,8 +56,14 @@ class EmporiaService:
         self._stop = threading.Event()
 
         self._all_gids = []
+        self._cost = {"today": None, "month": None, "projected": None, "rate_cents": 0.0}
+        self._today_by_key = {}        # (gid, chnum) -> {"kwh": float, "cost": float}
+        self._last_cost_fetch = 0.0
+        self._rate_cents = 0.0
+        self._billing_start_day = 1
         self._snapshot = {"ok": False, "rows": [], "home_watts": 0.0,
-                          "channels": {}, "home_channel": None, "ts": 0}
+                          "channels": {}, "home_channel": None, "ts": 0,
+                          "cost": self._cost, "today_by_key": self._today_by_key}
         self._listeners = []
 
         self._rules = self._load_json(_RULES_FILE, {})    # id -> rule dict
@@ -139,6 +149,7 @@ class EmporiaService:
                     with self._vue_lock:
                         devices = self._vue.get_devices()
                     self._all_gids = [d.device_gid for d in devices]
+                    self._capture_meta(devices)
                 except Exception as e:
                     PIHOME_LOGGER.error(f"Emporia: get_devices failed: {e}")
                     self._vue = None
@@ -155,6 +166,8 @@ class EmporiaService:
             except Exception as e:
                 PIHOME_LOGGER.error(f"Emporia: usage poll failed: {e}")
                 self._vue = None  # force re-auth / re-fetch next cycle
+            if self._vue is not None and time.time() - self._last_cost_fetch >= _COST_INTERVAL:
+                self._fetch_costs()
             self._stop.wait(interval)
 
     def _apply_usage(self, usage):
@@ -188,9 +201,97 @@ class EmporiaService:
         self._snapshot = {
             "ok": True, "rows": rows, "home_watts": home_watts,
             "channels": channels, "home_channel": home_channel, "ts": time.time(),
+            "cost": self._cost, "today_by_key": self._today_by_key,
         }
         self._evaluate_rules(watts_by_name)
         self._notify()
+
+    # ── Cost / energy totals (slow cadence) ──
+
+    def _capture_meta(self, devices):
+        """Capture the utility rate and billing-cycle start day from device metadata."""
+        for d in devices or []:
+            rate = getattr(d, "usage_cent_per_kw_hour", None) or 0.0
+            if rate > 0:
+                self._rate_cents = float(rate)
+            start = getattr(d, "billing_cycle_start_day", None) or 0
+            if start:
+                self._billing_start_day = int(start)
+
+    def _main_value(self, usage):
+        """Return the whole-home (summed mains) value from a usage response."""
+        for _gid, udev in (usage or {}).items():
+            for chnum, chu in (getattr(udev, "channels", {}) or {}).items():
+                if str(chnum) in _MAIN_CHANNELS:
+                    return getattr(chu, "usage", None) or 0.0
+        return 0.0
+
+    def _fetch_costs(self):
+        """Fetch slow-changing totals (today/month cost, per-circuit today cost & kWh)
+        and merge them into the snapshot. Runs in the service poll thread."""
+        try:
+            now = datetime.now(timezone.utc)
+            with self._vue_lock:
+                day_usd = self._vue.get_device_list_usage(
+                    deviceGids=self._all_gids, instant=now,
+                    scale=Scale.DAY.value, unit=Unit.USD.value)
+                mon_usd = self._vue.get_device_list_usage(
+                    deviceGids=self._all_gids, instant=now,
+                    scale=Scale.MONTH.value, unit=Unit.USD.value)
+                day_kwh = self._vue.get_device_list_usage(
+                    deviceGids=self._all_gids, instant=now,
+                    scale=Scale.DAY.value, unit=Unit.KWH.value)
+
+            today_cost = self._main_value(day_usd)
+            month_cost = self._main_value(mon_usd)
+
+            by_key = {}
+            for gid, udev in (day_usd or {}).items():
+                for chnum, chu in (getattr(udev, "channels", {}) or {}).items():
+                    if str(chnum) in _MAIN_CHANNELS:
+                        continue
+                    by_key.setdefault((str(gid), str(chnum)), {})["cost"] = \
+                        getattr(chu, "usage", None) or 0.0
+            for gid, udev in (day_kwh or {}).items():
+                for chnum, chu in (getattr(udev, "channels", {}) or {}).items():
+                    if str(chnum) in _MAIN_CHANNELS:
+                        continue
+                    by_key.setdefault((str(gid), str(chnum)), {})["kwh"] = \
+                        getattr(chu, "usage", None) or 0.0
+
+            self._cost = {
+                "today": today_cost, "month": month_cost,
+                "projected": self._project_month(month_cost),
+                "rate_cents": self._rate_cents,
+            }
+            self._today_by_key = by_key
+            self._last_cost_fetch = time.time()
+            self._snapshot = {**self._snapshot, "cost": self._cost,
+                              "today_by_key": self._today_by_key}
+            self._notify()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Emporia: cost fetch failed: {e}")
+
+    def _project_month(self, mtd_cost):
+        """Extrapolate the month-to-date cost across the full billing cycle."""
+        if not mtd_cost:
+            return mtd_cost or 0.0
+        today = datetime.now().astimezone().date()
+        sd = min(max(1, self._billing_start_day), 28)
+        if today.day >= sd:
+            cycle_start = today.replace(day=sd)
+        else:
+            first = today.replace(day=1)
+            cycle_start = (first - timedelta(days=1)).replace(day=sd)
+        if cycle_start.month == 12:
+            nxt = cycle_start.replace(year=cycle_start.year + 1, month=1)
+        else:
+            nxt = cycle_start.replace(month=cycle_start.month + 1)
+        total_days = (nxt - cycle_start).days
+        elapsed = (today - cycle_start).days + 1
+        if elapsed <= 0:
+            return mtd_cost
+        return mtd_cost / elapsed * total_days
 
     # ── Rule evaluation (rising/falling edge + cooldown) ──
 

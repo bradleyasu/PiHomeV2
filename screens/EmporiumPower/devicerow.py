@@ -17,6 +17,7 @@ class DeviceRow(Widget):
     device_name  = StringProperty("")
     watts        = NumericProperty(0.0)
     watts_text   = StringProperty("0 W")
+    sub_text     = StringProperty("")     # optional secondary line (e.g. today's cost)
     fraction     = NumericProperty(0.0)   # 0..1 of the largest consumer
     selected     = BooleanProperty(False)
     on_pressed   = ObjectProperty(None)
@@ -43,20 +44,30 @@ class DeviceRow(Widget):
         )
         self._watts_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
 
+        self._sub_lbl = Label(
+            font_name="Nunito", font_size="10sp",
+            halign="right", valign="middle",
+        )
+        self._sub_lbl.bind(size=lambda w, s: setattr(w, "text_size", s))
+
         self.add_widget(self._name_lbl)
         self.add_widget(self._watts_lbl)
+        self.add_widget(self._sub_lbl)
 
         self.bind(
             pos=self._redraw, size=self._redraw,
             selected=self._redraw, fraction=self._redraw,
             device_name=lambda _, v: setattr(self._name_lbl, "text", v),
             watts_text=lambda _, v: setattr(self._watts_lbl, "text", v),
+            sub_text=lambda _, v: (setattr(self._sub_lbl, "text", v), self._redraw()),
             text_color=lambda _, v: setattr(self._name_lbl, "color", v),
+            muted_color=lambda _, v: setattr(self._sub_lbl, "color", v),
             accent_color=self._redraw,
         )
         Clock.schedule_once(lambda dt: (
             setattr(self._name_lbl, "text", self.device_name),
             setattr(self._watts_lbl, "text", self.watts_text),
+            setattr(self._sub_lbl, "text", self.sub_text),
             self._redraw(),
         ), 0)
 
@@ -64,12 +75,23 @@ class DeviceRow(Widget):
         pad = dp(12)
         self._name_lbl.color = self.text_color
         self._watts_lbl.color = self.accent_color if self.selected else self.text_color
+        self._sub_lbl.color = self.muted_color
 
         self._name_lbl.pos = (self.x + pad, self.y + dp(6))
-        self._name_lbl.size = (self.width * 0.6 - pad, self.height - dp(12))
+        self._name_lbl.size = (self.width * 0.55 - pad, self.height - dp(12))
 
-        self._watts_lbl.pos = (self.x + self.width * 0.6, self.y + dp(6))
-        self._watts_lbl.size = (self.width * 0.4 - pad, self.height - dp(12))
+        right_x = self.x + self.width * 0.55
+        right_w = self.width * 0.45 - pad
+        if self.sub_text:
+            self._watts_lbl.pos = (right_x, self.y + self.height * 0.46)
+            self._watts_lbl.size = (right_w, self.height * 0.5 - dp(4))
+            self._sub_lbl.pos = (right_x, self.y + dp(4))
+            self._sub_lbl.size = (right_w, self.height * 0.46 - dp(2))
+            self._sub_lbl.opacity = 1
+        else:
+            self._watts_lbl.pos = (right_x, self.y + dp(6))
+            self._watts_lbl.size = (right_w, self.height - dp(12))
+            self._sub_lbl.opacity = 0
 
         self.canvas.before.clear()
         with self.canvas.before:

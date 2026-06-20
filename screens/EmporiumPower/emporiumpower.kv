@@ -84,6 +84,107 @@
                             pos: self.pos
                             size: self.size
 
+            # ── Cost summary strip ──────────────────────────────────
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(60)
+                padding: dp(10), dp(6)
+                spacing: dp(8)
+
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(10), dp(5)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(8)]
+                    Label:
+                        text: "TODAY"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        bold: True
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.size
+                    Label:
+                        text: root.cost_today_text
+                        font_name: "Nunito"
+                        font_size: sp(17)
+                        bold: True
+                        color: root.text_color
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(10), dp(5)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(8)]
+                    Label:
+                        text: "THIS MONTH"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        bold: True
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.size
+                    Label:
+                        text: root.cost_month_text
+                        font_name: "Nunito"
+                        font_size: sp(17)
+                        bold: True
+                        color: root.text_color
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(10), dp(5)
+                    canvas.before:
+                        Color:
+                            rgba: root.card_color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(8)]
+                    Label:
+                        text: "PROJECTED"
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        bold: True
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(14)
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.size
+                    Label:
+                        text: root.cost_proj_text
+                        font_name: "Nunito"
+                        font_size: sp(17)
+                        bold: True
+                        color: root.accent_color
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
             # ── Body ────────────────────────────────────────────────
             BoxLayout:
                 orientation: "horizontal"
