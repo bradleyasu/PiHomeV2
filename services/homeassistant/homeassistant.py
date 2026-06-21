@@ -69,6 +69,12 @@ class HomeAssistant:
         super(HomeAssistant, self).__init__(**kwargs)
         self.listeners = []  # instance list — avoids class-level sharing
         self.ha_react_listeners = []  # instance list — avoids class-level sharing
+        self._listeners_loaded = False
+        # Load persisted react listeners immediately, independent of the HA
+        # network connection.  This must happen before any path that can
+        # serialize (e.g. the atexit handler) so an unreachable HA server at
+        # startup cannot leave the in-memory list empty and clobber the file.
+        self._deserialize_react_listeners()
         atexit.register(self._serialize_react_listeners)
 
     def __del__(self):
@@ -104,7 +110,6 @@ class HomeAssistant:
             self.event_thread = Thread(target=self._start_loop, daemon=True)
             self.event_thread.start()
             self.current_states = self.get_all_states()
-            self._deserialize_react_listeners()
         except Exception as e:
             PIHOME_LOGGER.error(f"Error connecting to Home Assistant: {e}")
             self.ha_is_available = False
@@ -219,6 +224,16 @@ class HomeAssistant:
         return removed
 
     def _serialize_react_listeners(self):
+        # Never overwrite a previously-saved file with an empty list unless we
+        # actually loaded it first.  Without this guard, a failed/early startup
+        # (in-memory list still empty, load never succeeded) could wipe the
+        # persisted listeners on shutdown.
+        if not self.ha_react_listeners and not self._listeners_loaded:
+            PIHOME_LOGGER.warn(
+                "Skipping HA react listener serialization: nothing loaded "
+                "and in-memory list is empty (refusing to clobber file)."
+            )
+            return
         data = [l.to_dict() for l in self.ha_react_listeners]
         try:
             with open(self.REACT_LISTENERS_FILE, "w") as f:
@@ -232,16 +247,22 @@ class HomeAssistant:
 
     def _deserialize_react_listeners(self):
         if not os.path.exists(self.REACT_LISTENERS_FILE):
+            # No file yet is a valid "loaded" state — there is nothing to lose,
+            # so future serializations are safe to write.
+            self._listeners_loaded = True
             return
         try:
             with open(self.REACT_LISTENERS_FILE, "r") as f:
                 data = json.load(f)
             self.ha_react_listeners = [HaReactListener.from_dict(d) for d in data]
+            self._listeners_loaded = True
             PIHOME_LOGGER.info(
                 f"Loaded {len(self.ha_react_listeners)} HA react listener(s) "
                 f"from {self.REACT_LISTENERS_FILE}"
             )
         except Exception as e:
+            # Leave _listeners_loaded False so a corrupt/unreadable file is not
+            # subsequently overwritten with an empty list.
             PIHOME_LOGGER.error(f"Failed to deserialize HA react listeners: {e}")
 
     # ── Connection ─────────────────────────────────────────────────────────
