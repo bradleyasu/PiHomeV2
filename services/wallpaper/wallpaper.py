@@ -265,6 +265,9 @@ class Wallpaper:
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
         img_bytes = self._read_image_bytes(url)
         pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg", "webp"))
+        # Apply EXIF orientation so phone photos (which store landscape pixels
+        # plus an orientation flag) display upright instead of sideways.
+        pilImage = ImageOps.exif_transpose(pilImage)
 
         # replace background with average color
         average_color = self._average_color_from_bytes(img_bytes)
@@ -275,10 +278,12 @@ class Wallpaper:
         pilImage = ImageOps.contain(pilImage, (width, height))
         pilImage.save(fp="{}/{}".format(TEMP_DIR, resized), format="png")
 
-        # create a new image with the average color as the background color and the pilImage centered in the foreground
-        new_image = PILImage.new("RGB", (get_app().width, get_app().height), average_color)
-        # stretch pilImage to fit screen and add to new image
-        new_image.paste(pilImage, (0, 0))
+        # create a new image with the average color as the background color and
+        # the fitted image centered in the foreground
+        canvas_w, canvas_h = get_app().width, get_app().height
+        new_image = PILImage.new("RGB", (canvas_w, canvas_h), average_color)
+        offset = ((canvas_w - pilImage.width) // 2, (canvas_h - pilImage.height) // 2)
+        new_image.paste(pilImage, offset)
         pilImage.close()
 
         # blur image
