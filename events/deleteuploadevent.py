@@ -15,9 +15,10 @@ class DeleteUploadEvent(PihomeEvent):
 
     type = "delete_upload"
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(self, name=None, album="Default", **kwargs):
         super().__init__()
         self.name = name
+        self.album = album or "Default"
 
     def execute(self):
         if not self.name:
@@ -26,9 +27,9 @@ class DeleteUploadEvent(PihomeEvent):
         # Capture the resolved path before deletion so we can tell whether the
         # current wallpaper pointed at this image.
         from services.wallpaper.wallpaper import WALLPAPER_SERVICE
-        target_path = UPLOADS.path_for(self.name)
+        target_path = UPLOADS.path_for(self.album, self.name)
 
-        deleted = UPLOADS.delete_image(self.name)
+        deleted = UPLOADS.delete_image(self.album, self.name)
         if not deleted:
             return {"code": 404, "body": {"status": "error", "message": "not found"}}
 
@@ -43,7 +44,7 @@ class DeleteUploadEvent(PihomeEvent):
         except Exception as e:
             PIHOME_LOGGER.error("DeleteUploadEvent: reshuffle check failed: {}".format(e))
 
-        return {"code": 200, "body": {"status": "success", "name": self.name}}
+        return {"code": 200, "body": {"status": "success", "name": self.name, "album": self.album}}
 
     def to_json(self):
-        return json.dumps({"type": self.type, "name": self.name})
+        return json.dumps({"type": self.type, "name": self.name, "album": self.album})

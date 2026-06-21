@@ -48,12 +48,14 @@ class Wallpaper:
     # "My Uploads" source: local rotation timer + position (no POLLER URL)
     _uploads_timer = None
     _uploads_index = 0
+    _uploads_album = "Default"   # active album currently being rotated
     # Snapshotted at _start() time; compared in restart() to detect real source changes
     _active_source = None
     _active_subs   = None
     _active_top    = None
     _active_wh     = None
     _active_custom = None
+    _active_album  = None
 
     def __init__(self, **kwargs):
         super(Wallpaper, self).__init__(**kwargs)
@@ -98,6 +100,7 @@ class Wallpaper:
         new_top     = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
         new_wh      = CONFIG.get("wallpaper", "whsearch", "landscape")
         new_custom  = CONFIG.get("wallpaper", "custom_url", self.default)
+        new_album   = CONFIG.get("wallpaper", "uploads_album", "Default")
 
         # Compare against values that were active when _start() last ran
         source_changed = (
@@ -106,6 +109,7 @@ class Wallpaper:
             or new_top     != self._active_top
             or new_wh      != self._active_wh
             or new_custom  != self._active_custom
+            or new_album   != self._active_album
         )
 
         # allow_stretch can be applied immediately without invalidating the cache
@@ -132,7 +136,8 @@ class Wallpaper:
         self._active_subs   = CONFIG.get("wallpaper", "subreddits", "wallpaper")
         self._active_top    = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
         self._active_wh     = CONFIG.get("wallpaper", "whsearch", "landscape")
-        self._active_custom = CONFIG.get("wallpaper", "custom_url", self.default) 
+        self._active_custom = CONFIG.get("wallpaper", "custom_url", self.default)
+        self._active_album  = CONFIG.get("wallpaper", "uploads_album", "Default")
         PIHOME_LOGGER.info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
         if repo == "Reddit":
             subs = CONFIG.get("wallpaper", "subreddits", "wallpaper")
@@ -153,8 +158,9 @@ class Wallpaper:
             custom_url = CONFIG.get("wallpaper", "custom_url", self.default)
             self.poller_key = POLLER.register_api(custom_url, 60 * 5, lambda json: self.parse_custom(json));
         elif repo == "My Uploads":
-            # Local images — no POLLER URL.  Rotate through the user's uploads.
+            # Local images — no POLLER URL.  Rotate through the active album.
             self.poller_key = None
+            self._uploads_album = CONFIG.get("wallpaper", "uploads_album", "Default")
             self._start_uploads_rotation()
         else:
             self.poller_key = POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
@@ -230,13 +236,14 @@ class Wallpaper:
         """Advance to the next uploaded image (skips animated gifs)."""
         if self.paused:
             return
-        names = [n for n in UPLOADS.list_images() if not n.lower().endswith(".gif")]
+        album = self._uploads_album
+        names = [n for n in UPLOADS.list_images(album) if not n.lower().endswith(".gif")]
         if not names:
             return
         self._uploads_index %= len(names)
         name = names[self._uploads_index]
         self._uploads_index += 1
-        path = UPLOADS.path_for(name)
+        path = UPLOADS.path_for(album, name)
         if path:
             self._apply_wallpaper(path)
 
@@ -395,7 +402,7 @@ class Wallpaper:
             elif self.repo == "Custom" and self.cache:
                 return self.cache.get("img", None)
             elif self.repo == "My Uploads":
-                return UPLOADS.random_image()
+                return UPLOADS.random_image(self._uploads_album)
         except Exception as e:
             PIHOME_LOGGER.error(f"Wallpaper Service: error picking random url from source: {e}")
         return None

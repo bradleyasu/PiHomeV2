@@ -9,21 +9,23 @@ class ListUploadsEvent(PihomeEvent):
 
     type = "list_uploads"
 
-    def __init__(self, offset=0, limit=24, **kwargs):
+    def __init__(self, album="Default", offset=0, limit=24, **kwargs):
         super().__init__()
+        self.album = album or "Default"
         self.offset = offset
         self.limit = limit
 
     def execute(self):
-        page = UPLOADS.list_page(self.offset, self.limit)
+        page = UPLOADS.list_page(self.album, self.offset, self.limit)
         uploads = [
-            {"name": name, "url": "/uploads/{}".format(name)}
+            {"name": name, "url": "/uploads/{}/{}".format(self.album, name)}
             for name in page["names"]
         ]
         return {
             "code": 200,
             "body": {
                 "status": "success",
+                "album": self.album,
                 "uploads": uploads,
                 "total": page["total"],
                 "offset": page["offset"],
@@ -32,4 +34,7 @@ class ListUploadsEvent(PihomeEvent):
         }
 
     def to_json(self):
-        return json.dumps({"type": self.type, "offset": self.offset, "limit": self.limit})
+        return json.dumps({
+            "type": self.type, "album": self.album,
+            "offset": self.offset, "limit": self.limit,
+        })

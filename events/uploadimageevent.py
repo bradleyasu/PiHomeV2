@@ -17,10 +17,11 @@ class UploadImageEvent(PihomeEvent):
 
     type = "upload_image"
 
-    def __init__(self, filename=None, data=None, **kwargs):
+    def __init__(self, filename=None, data=None, album="Default", **kwargs):
         super().__init__()
         self.filename = filename
         self.data = data
+        self.album = album or "Default"
 
     def execute(self):
         if not self.data:
@@ -37,7 +38,7 @@ class UploadImageEvent(PihomeEvent):
             return {"code": 400, "body": {"status": "error", "message": "invalid base64: {}".format(e)}}
 
         try:
-            name = UPLOADS.save_image(self.filename, decoded)
+            name = UPLOADS.save_image(self.filename, decoded, self.album)
         except ValueError as e:
             return {"code": 400, "body": {"status": "error", "message": str(e)}}
         except Exception as e:
@@ -46,7 +47,8 @@ class UploadImageEvent(PihomeEvent):
 
         return {
             "code": 200,
-            "body": {"status": "success", "name": name, "url": "/uploads/{}".format(name)},
+            "body": {"status": "success", "name": name, "album": self.album,
+                     "url": "/uploads/{}/{}".format(self.album, name)},
         }
 
     def to_json(self):
@@ -54,4 +56,5 @@ class UploadImageEvent(PihomeEvent):
             "type": self.type,
             "filename": self.filename,
             "data": self.data,
+            "album": self.album,
         })

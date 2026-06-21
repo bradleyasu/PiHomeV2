@@ -142,19 +142,25 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             PIHOME_LOGGER.error(f"Server: failed to serve screen asset {file_path!r}: {e}")
             self.send_error(500, "Failed to read asset")
 
-    def _get_upload(self, name: str):
-        """Serve a user-uploaded image from the uploads directory.
+    def _get_upload(self, subpath: str):
+        """Serve a user-uploaded image from an album.
 
-        *name* is everything after ``/uploads/`` (may carry a query string,
-        which is ignored).  Only image files inside the uploads directory are
-        served; traversal is blocked by ``UPLOADS.path_for``.
+        *subpath* is everything after ``/uploads/`` — ``<album>/<name>`` (it may
+        carry a query string, which is ignored).  Only image files inside the
+        album are served; traversal is blocked by ``UPLOADS.path_for``.
         """
         import mimetypes
         from urllib.parse import unquote
         from services.uploads.uploads import UPLOADS
 
-        name = unquote(name).split("?", 1)[0]
-        file_path = UPLOADS.path_for(name)
+        subpath = subpath.split("?", 1)[0]
+        parts = subpath.split("/", 1)
+        if len(parts) != 2:
+            self.send_error(404, "Upload not found")
+            return
+        album = unquote(parts[0])
+        name = unquote(parts[1])
+        file_path = UPLOADS.path_for(album, name)
         if file_path is None:
             self.send_error(404, "Upload not found")
             return
