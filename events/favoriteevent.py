@@ -27,7 +27,7 @@ class FavoriteEvent(PihomeEvent):
             }
 
         PIHOME_LOGGER.info("Executing favorite event: {}".format(self.name))
-        return PihomeEventFactory.create_event_from_dict(favorites[self.name]).execute()
+        return PihomeEventFactory.create_event_from_dict(favorites[self.name]["event"]).execute()
 
     def to_json(self):
         return json.dumps({
