@@ -29,6 +29,8 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             self._get_settings_manifest()
         elif self.path.startswith("/settings"):
             self._get_settings(self.path)
+        elif self.path.startswith("/uploads/"):
+            self._get_upload(self.path[len("/uploads/"):])
         elif self.path.startswith("/screens/"):
             self._get_screen_asset(self.path[len("/screens/"):])
         elif self.path == "/" or self.path == "" or self.path == "/index.html":
@@ -139,6 +141,42 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             PIHOME_LOGGER.error(f"Server: failed to serve screen asset {file_path!r}: {e}")
             self.send_error(500, "Failed to read asset")
+
+    def _get_upload(self, name: str):
+        """Serve a user-uploaded image from the uploads directory.
+
+        *name* is everything after ``/uploads/`` (may carry a query string,
+        which is ignored).  Only image files inside the uploads directory are
+        served; traversal is blocked by ``UPLOADS.path_for``.
+        """
+        import mimetypes
+        from urllib.parse import unquote
+        from services.uploads.uploads import UPLOADS
+
+        name = unquote(name).split("?", 1)[0]
+        file_path = UPLOADS.path_for(name)
+        if file_path is None:
+            self.send_error(404, "Upload not found")
+            return
+
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not (mime_type and mime_type.startswith("image/")):
+            self.send_error(415, "Not an image file")
+            return
+
+        try:
+            with open(file_path, "rb") as f:
+                data = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", mime_type)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Server: failed to serve upload {file_path!r}: {e}")
+            self.send_error(500, "Failed to read image")
 
     def _send_html_response(self, code: int, html: str):
         body = html.encode("utf-8")

@@ -86,7 +86,7 @@
             "desc": "Set your preferred wallpaper source",
             "section": "wallpaper",
             "key": "source",
-            "options": ["PiHome CDN", "Reddit", "Wallhaven", "Custom"]
+            "options": ["PiHome CDN", "Reddit", "Wallhaven", "Custom", "My Uploads"]
         },
         {
             "type": "bool",

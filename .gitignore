@@ -16,6 +16,7 @@ timers.pihome
 *.pihome
 
 /cache/
+/uploads/
 orders.sh
 
 game_state.json

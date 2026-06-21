@@ -8,6 +8,7 @@ from PIL import Image as PILImage, ImageOps
 from PIL import ImageFilter as PILImageFilter
 from networking.poller import POLLER
 from services.audio.sfx import SFX
+from services.uploads.uploads import UPLOADS
 from util.configuration import CONFIG
 from util.const import TEMP_DIR
 from util.helpers import get_app, toast, url_hash
@@ -44,6 +45,9 @@ class Wallpaper:
     cache_size = 100
     ban_list = [] # URLs that are not allowed to be used as wallpapers
     paused = False
+    # "My Uploads" source: local rotation timer + position (no POLLER URL)
+    _uploads_timer = None
+    _uploads_index = 0
     # Snapshotted at _start() time; compared in restart() to detect real source changes
     _active_source = None
     _active_subs   = None
@@ -118,6 +122,8 @@ class Wallpaper:
 
     def _start(self):
         self._cleanup()
+        # Stop any prior local uploads rotation; re-armed below only if selected
+        self._stop_uploads_rotation()
         repo = CONFIG.get("wallpaper", "source", "PiHome CDN")
         self.allow_stretch = CONFIG.get_int("wallpaper", "allow_stretch", 1)
         self.repo = repo
@@ -146,6 +152,10 @@ class Wallpaper:
         elif repo == "Custom":
             custom_url = CONFIG.get("wallpaper", "custom_url", self.default)
             self.poller_key = POLLER.register_api(custom_url, 60 * 5, lambda json: self.parse_custom(json));
+        elif repo == "My Uploads":
+            # Local images — no POLLER URL.  Rotate through the user's uploads.
+            self.poller_key = None
+            self._start_uploads_rotation()
         else:
             self.poller_key = POLLER.register_api("https://cdn.pihome.io/conf.json", 60 * 5, lambda json: self.parse_cdn(json));
 
@@ -205,6 +215,31 @@ class Wallpaper:
         get_app()._reload_background()
 
 
+    def _start_uploads_rotation(self):
+        """Apply an uploaded image immediately, then rotate every 5 minutes."""
+        self._uploads_index = 0
+        self._rotate_uploads(0)
+        self._uploads_timer = Clock.schedule_interval(self._rotate_uploads, 60 * 5)
+
+    def _stop_uploads_rotation(self):
+        if self._uploads_timer is not None:
+            self._uploads_timer.cancel()
+            self._uploads_timer = None
+
+    def _rotate_uploads(self, dt):
+        """Advance to the next uploaded image (skips animated gifs)."""
+        if self.paused:
+            return
+        names = [n for n in UPLOADS.list_images() if not n.lower().endswith(".gif")]
+        if not names:
+            return
+        self._uploads_index %= len(names)
+        name = names[self._uploads_index]
+        self._uploads_index += 1
+        path = UPLOADS.path_for(name)
+        if path:
+            self._apply_wallpaper(path)
+
     def resize_image(self, url, width, height):
         hash = url_hash(url)
         resized = "_rsz_{}.png".format(hash)
@@ -228,10 +263,8 @@ class Wallpaper:
                     pass
 
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} to fit in {}x{}".format(url, width, height))
-        r = requests.get(url)
-        img_bytes = r.content
-        r.close()
-        pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg"))
+        img_bytes = self._read_image_bytes(url)
+        pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg", "webp"))
 
         # replace background with average color
         average_color = self._average_color_from_bytes(img_bytes)
@@ -256,9 +289,23 @@ class Wallpaper:
         PIHOME_LOGGER.info("Wallpaper Service: resizing wallpaper {} complete and located in {}".format(url, TEMP_DIR))
         return "{}/{}".format(TEMP_DIR, resized), "{}/{}".format(TEMP_DIR, colored)
 
+    def _read_image_bytes(self, src):
+        """Return the raw bytes for *src*, whether it's a local file or a URL.
+
+        Local uploaded wallpapers are passed as filesystem paths (e.g.
+        ``./uploads/foo.png``); remote sources are http(s) URLs.
+        """
+        if os.path.isfile(src):
+            with open(src, "rb") as f:
+                return f.read()
+        r = requests.get(src)
+        img_bytes = r.content
+        r.close()
+        return img_bytes
+
     def _average_color_from_bytes(self, img_bytes):
         """Compute the average color from raw image bytes (no extra download)."""
-        pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg"))
+        pilImage = PILImage.open(BytesIO(img_bytes), formats=("png", "jpeg", "webp"))
         small = pilImage.resize((1, 1), PIL.Image.LANCZOS)
         pilImage.close()
         color = small.getpixel((0, 0))
@@ -342,6 +389,8 @@ class Wallpaper:
                     attempts += 1
             elif self.repo == "Custom" and self.cache:
                 return self.cache.get("img", None)
+            elif self.repo == "My Uploads":
+                return UPLOADS.random_image()
         except Exception as e:
             PIHOME_LOGGER.error(f"Wallpaper Service: error picking random url from source: {e}")
         return None
