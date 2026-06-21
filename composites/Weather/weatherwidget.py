@@ -57,6 +57,11 @@ class WeatherWidget(Widget):
     overlay_y_offset = NumericProperty(10)
     overlay_active = False
     overlay_size = ListProperty([100, 100])
+    # Anchor position of the expanded overlay. Computed from the live Window
+    # size so the card always appears top-right, just below the pill, on any
+    # display — not pinned to the bottom-left corner.
+    overlay_x = NumericProperty(dp(20))
+    overlay_y = NumericProperty(dp(20))
 
     pill_stat = StringProperty("")
     pill_stat_color = ColorProperty([1.0, 1.0, 1.0, 1.0])
@@ -129,6 +134,10 @@ class WeatherWidget(Widget):
         self.size = size
         self.pos = pos
         self.overlay_size = [Window.width - dp(40), Window.height - dp(80)]
+        self._position_overlay()
+        # Re-anchor the overlay whenever the window is resized so it stays
+        # below the pill in the top-right on larger displays.
+        Window.bind(size=self._position_overlay)
         self._apply_theme_colors()
         self._clock_event = None
         self._last_alert_keys = []
@@ -163,6 +172,18 @@ class WeatherWidget(Widget):
         # Allow touches through to child widgets (e.g. Hourly/Daily toggle)
         return super(WeatherWidget, self).on_touch_down(touch)
     
+    def _position_overlay(self, *args):
+        """Anchor the expanded overlay to the top-right, below the pill.
+
+        Uses the live Window size so the card tracks the actual display rather
+        than the resolution that was active when the widget was first built.
+        The formula reproduces the original (dp(20), dp(20)) anchor on an
+        800x480 Pi display, so that case is unchanged.
+        """
+        w, h = self.overlay_size
+        self.overlay_x = max(dp(20), Window.width - dp(20) - w)
+        self.overlay_y = max(dp(20), Window.height - dp(60) - h)
+
     def overlay_animate(self, opacity = 1, offset = 0):
         # Bring overlay to the top of the z-order so it renders above alerts
         overlay = self.ids.get('overlay_card')
