@@ -23,6 +23,10 @@ class TaskPriority(Enum):
     MEDIUM = 2
     HIGH = 3
 
+# Tasks in a terminal state are eligible for cleanup once they age out.
+_TERMINAL_STATES = (TaskStatus.COMPLETED, TaskStatus.CANCELED)
+FINISHED_TASK_TTL = timedelta(hours=12)
+
 class TaskManager():
     task_store = "tasks.pihome"
     is_running = False
@@ -169,13 +173,31 @@ class TaskManager():
         return self.task_screen.task.id
 
     def run_service(self):
+        last_cleanup = datetime.now()
         while True:
             self.process_tasks()
             for task in self.tasks:
                 if task.status == TaskStatus.PRE_IN_PROGRESS:
                     task.status = TaskStatus.IN_PROGRESS
                     task.run()
+            if datetime.now() - last_cleanup >= timedelta(minutes=1):
+                self.cleanup_finished_tasks()
+                last_cleanup = datetime.now()
             sleep(1)
+
+    def cleanup_finished_tasks(self):
+        """Purge tasks that reached a terminal state more than FINISHED_TASK_TTL ago."""
+        cutoff = datetime.now() - FINISHED_TASK_TTL
+        before = len(self.tasks)
+        self.tasks = [
+            t for t in self.tasks
+            if not (t.status in _TERMINAL_STATES
+                    and getattr(t, "terminated_at", None) is not None
+                    and t.terminated_at <= cutoff)
+        ]
+        removed = before - len(self.tasks)
+        if removed:
+            PIHOME_LOGGER.info(f"Cleaned up {removed} finished task(s) older than 12h")
 
     def delete_task_cache(self):
         if os.path.exists(self.task_store):
@@ -223,6 +245,8 @@ class Task():
         self.on_cancel = on_cancel
         self.background_image = background_image
         self.cacheable = cacheable
+        # Timestamp set when the task enters a terminal state; used for cleanup.
+        self.terminated_at = None
 
         # create an md5 hash based on the task name, description, and start time
         trigger_key = self.start_time if hasattr(self, "start_time") else datetime.now()
@@ -234,6 +258,8 @@ class Task():
 
     def set_status(self, status: TaskStatus):
         self.status = status
+        if status in _TERMINAL_STATES and self.terminated_at is None:
+            self.terminated_at = datetime.now()
         TASK_MANAGER.serialize_tasks()
 
     
@@ -258,7 +284,7 @@ class ScheduledTask(Task):
             # If the tasks restarts the pihome (etc), the task will be marked as completed
             # and the task will not be run again
             if self.is_passive:
-                self.status = TaskStatus.COMPLETED
+                self.set_status(TaskStatus.COMPLETED)
 
             if self.on_run is not None:
                 PihomeEventFactory.create_event_from_dict(self.on_run).execute()
