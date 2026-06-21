@@ -30,31 +30,42 @@ class AppMenu(FloatLayout):
     background_color = ColorProperty((0,0,0, 0.8))
     _menu_active = False
 
+    # Layout constants
+    _PAD_X    = dp(14)
+    _SPACING  = dp(16)
+    _MIN_ICON = dp(100)
+
     def __init__(self, screens, **kwargs):
         super(AppMenu, self).__init__(**kwargs)
         self.screens = screens
         self.build()
         self.show_apps()
         self.hide()
+        # Recompute the grid whenever the window size changes so the icons
+        # always span the full width on any display, not just the resolution
+        # that happened to be active when the menu was first built.
+        Window.bind(size=self._on_window_resize)
 
-
+    def _compute_metrics(self):
+        """Return (cols, icon_w, icon_h) for the current Window width."""
+        screen_w = Window.width
+        # How many columns fit if each icon is at least _MIN_ICON wide?
+        cols = max(3, int((screen_w - self._PAD_X * 2 + self._SPACING) /
+                          (self._MIN_ICON + self._SPACING)))
+        icon_w = (screen_w - self._PAD_X * 2 - self._SPACING * (cols - 1)) / cols
+        icon_h = round(icon_w * 1.20)
+        return cols, icon_w, icon_h
 
     def build(self):
-        pad_x   = dp(14)
-        spacing = dp(16)
-        screen_w = Window.width
-        # How many columns fit if each icon is at least dp(100) wide?
-        cols = max(3, int((screen_w - pad_x * 2 + spacing) / (dp(100) + spacing)))
-        icon_w = (screen_w - pad_x * 2 - spacing * (cols - 1)) / cols
-        icon_h = round(icon_w * 1.20)
+        cols, icon_w, icon_h = self._compute_metrics()
         self.icon_w = icon_w
         self.icon_h = icon_h
 
         view = ScrollView(size_hint=(1, 1), pos_hint={'center_x': 0.5, 'center_y': 0.5}, do_scroll_x=False, do_scroll_y=True, bar_width=0)
         self.grid = GridLayout(
             cols=cols,
-            padding=(pad_x, dp(60), pad_x, dp(20)),
-            spacing=spacing,
+            padding=(self._PAD_X, dp(60), self._PAD_X, dp(20)),
+            spacing=self._SPACING,
             size_hint=(1, None),
             col_default_width=icon_w,
             col_force_default=True,
@@ -66,6 +77,17 @@ class AppMenu(FloatLayout):
         view.add_widget(self.grid)
         self.add_widget(view)
         self.view = view
+
+    def _on_window_resize(self, *args):
+        """Re-fit the grid columns/icons to the new window width."""
+        cols, icon_w, icon_h = self._compute_metrics()
+        self.icon_w = icon_w
+        self.icon_h = icon_h
+        self.grid.cols = cols
+        self.grid.col_default_width = icon_w
+        self.grid.row_default_height = icon_h
+        for icon in self.grid.children:
+            icon.size = (icon_w, icon_h)
 
 
     def open_app(self, key):
