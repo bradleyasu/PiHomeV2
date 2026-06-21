@@ -1,8 +1,8 @@
 import json
 from events.pihomeevent import PihomeEvent
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
-from services.uploads.uploads import UPLOADS
 from util.const import _DISPLAY_IMAGE_SCREEN, _HOME_SCREEN
+from util.helpers import prepare_display_image
 
 
 class ImageEvent(PihomeEvent):
@@ -21,7 +21,7 @@ class ImageEvent(PihomeEvent):
 
     def execute(self):
         screen = PIHOME_SCREEN_MANAGER.get_screen(_DISPLAY_IMAGE_SCREEN)
-        screen.image = UPLOADS.resolve_url(self.image_url)
+        screen.image = prepare_display_image(self.image_url)
         screen.reload_interval = self.reload_interval
         if self.timeout > 0:
             screen.set_timeout(self.timeout, _HOME_SCREEN)
