@@ -1,6 +1,5 @@
 import subprocess
 
-from composites.Reddit.redditwidget import RedditWidget
 from composites.HomeAssistant.hadevicecard import make_ha_card, load_ha_favorites  # noqa — also loads hadevicecard.kv
 from services.homeassistant.homeassistant import HOME_ASSISTANT
 import requests
@@ -436,7 +435,6 @@ class HomeScreen(PiHomeScreen):
 
     def on_config_update(self, config):
         self.ids.weather_widget.on_config_update(config)
-        self.ids.reddit_widget.on_config_update(config)
         if self._now_playing is not None:
             self._now_playing.update_theme()
         if self.is_open:

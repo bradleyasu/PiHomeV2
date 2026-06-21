@@ -86,21 +86,7 @@
             "desc": "Set your preferred wallpaper source",
             "section": "wallpaper",
             "key": "source",
-            "options": ["PiHome CDN", "Reddit", "Wallhaven", "Custom", "My Uploads"]
-        },
-        {
-            "type": "bool",
-            "title": "Use Top of All Time?",
-            "desc": "For reddit wallpaper only, if enabled a random wallpaper will be selected from the top of all time.  Disabled will be a random wallpaper from the hot section",
-            "section": "wallpaper",
-            "key": "top_of_all_time"
-        },
-        {
-            "type": "string",
-            "title": "Subreddits",
-            "desc": "Use + to combine multiple subreddits",
-            "section": "wallpaper",
-            "key": "subreddits"
+            "options": ["PiHome CDN", "Wallhaven", "Custom", "My Uploads"]
         },
         {
             "type": "string",
@@ -122,25 +108,6 @@
             "desc": "Default True.  If enabled, wallpaper will fit the screen.  If False, wallpaper will be scaled, but there may be a black border",
             "section": "wallpaper",
             "key": "allow_stretch"
-        },
-        {
-            "type": "title",
-            "title": "News/Feed"
-        },
-        {
-            "type": "options",
-            "title": "News Source",
-            "desc": "Set the source you would like to use for your news feed",
-            "section": "news",
-            "key": "source",
-            "options": ["Reddit", "Disabled News"]
-        },
-        {
-            "type": "string",
-            "title": "Subreddits",
-            "desc": "Use + to combine multiple subreddits",
-            "section": "news",
-            "key": "subreddits"
         },
         {
             "type": "title",

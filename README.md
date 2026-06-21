@@ -10,8 +10,7 @@ PiHome provides a touch-friendly interface on the official 7" Raspberry Pi displ
 ## Features
 
 - **Weather** - Real-time conditions and forecast via Tomorrow.io
-- **Dynamic Wallpapers** - Rotate backgrounds from Reddit, Wallhaven, custom URLs, or the PiHome CDN
-- **News** - Headlines from configurable Reddit sources
+- **Dynamic Wallpapers** - Rotate backgrounds from Wallhaven, custom URLs, or the PiHome CDN
 - **AirPlay** - Receive audio from Apple devices via shairport-sync
 - **Home Assistant** - Monitor and control entities, set up reactive automations
 - **3D Printer Monitoring** - BambuLab printer status with live camera feed
@@ -97,8 +96,7 @@ PiHome is configured through the Settings screen (PIN-protected) or by editing `
 | `[security]` | PIN code for Settings access |
 | `[theme]` | Dark/light mode toggle |
 | `[weather]` | Tomorrow.io API key, coordinates |
-| `[wallpaper]` | Source (Reddit, Wallhaven, Custom, CDN), subreddits, search terms |
-| `[news]` | News source and subreddits |
+| `[wallpaper]` | Source (Wallhaven, Custom, CDN), search terms |
 | `[mqtt]` | Broker host, port, credentials, topic |
 | `[audio]` | Audio device selection |
 | `[lofi]` | Local audio folder paths and labels |

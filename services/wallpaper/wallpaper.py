@@ -26,9 +26,10 @@ class Wallpaper:
     on user configuations.  The 'current' property will have the currently selected
     wallpaper which can be set from the following services:
         1: PiHome CDN
-        2: Reddit/Subreddit configurations
+        2: Wallhaven
         3: Custom URL
-        4: {Add additional services}
+        4: My Uploads
+        5: {Add additional services}
     """
 
     current = "https://cdn.pihome.io/assets/background.jpg"
@@ -51,8 +52,6 @@ class Wallpaper:
     _uploads_album = "Default"   # active album currently being rotated
     # Snapshotted at _start() time; compared in restart() to detect real source changes
     _active_source = None
-    _active_subs   = None
-    _active_top    = None
     _active_wh     = None
     _active_custom = None
     _active_album  = None
@@ -96,8 +95,6 @@ class Wallpaper:
         """
         new_source  = CONFIG.get("wallpaper", "source", "PiHome CDN")
         new_stretch = CONFIG.get_int("wallpaper", "allow_stretch", 1)
-        new_subs    = CONFIG.get("wallpaper", "subreddits", "wallpaper")
-        new_top     = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
         new_wh      = CONFIG.get("wallpaper", "whsearch", "landscape")
         new_custom  = CONFIG.get("wallpaper", "custom_url", self.default)
         new_album   = CONFIG.get("wallpaper", "uploads_album", "Default")
@@ -105,8 +102,6 @@ class Wallpaper:
         # Compare against values that were active when _start() last ran
         source_changed = (
             new_source != self._active_source
-            or new_subs    != self._active_subs
-            or new_top     != self._active_top
             or new_wh      != self._active_wh
             or new_custom  != self._active_custom
             or new_album   != self._active_album
@@ -133,22 +128,11 @@ class Wallpaper:
         self.repo = repo
         # Snapshot the active sub-settings so restart() can detect real changes
         self._active_source = repo
-        self._active_subs   = CONFIG.get("wallpaper", "subreddits", "wallpaper")
-        self._active_top    = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
         self._active_wh     = CONFIG.get("wallpaper", "whsearch", "landscape")
         self._active_custom = CONFIG.get("wallpaper", "custom_url", self.default)
         self._active_album  = CONFIG.get("wallpaper", "uploads_album", "Default")
         PIHOME_LOGGER.info("Wallpaper service starting with source set to {} and allow stretch mode is set to {}".format(repo, self.allow_stretch))
-        if repo == "Reddit":
-            subs = CONFIG.get("wallpaper", "subreddits", "wallpaper")
-            is_top = CONFIG.get_int("wallpaper", "top_of_all_time", 0)
-            if subs == "":
-                subs = "wallpaper"
-            reddit_url = "https://www.reddit.com/r/{}.json?limit=100".format(subs)
-            if is_top == 1:
-                reddit_url = "https://www.reddit.com/r/{}/top/.json?limit=100&t=all".format(subs)
-            self.poller_key = POLLER.register_api(reddit_url, 60 * 5, lambda json: self.parse_reddit(json));
-        elif repo == "Wallhaven":
+        if repo == "Wallhaven":
             search = CONFIG.get("wallpaper", "whsearch", "landscape")
             if search == "":
                 search = "landscape"
@@ -173,21 +157,6 @@ class Wallpaper:
         source = json.get("img", self.default)
         self.current, self.current_color = self.resize_image(source, 1024, 1024)
         self.source = source
-        get_app()._reload_background()
-
-    def parse_reddit(self, json):
-        if self.paused:
-            return
-        self.cache = json
-        random_child = None
-        while random_child == None or random_child["data"]["url"].endswith(".gif") or random_child["data"]["url"] in self.ban_list:
-            # select random child from json
-            rand_idx = random.randint(0, len(json["data"]["children"])) - 1
-            random_child = json["data"]["children"][rand_idx]
-
-
-        self.current, self.current_color = self.resize_image(random_child["data"]["url"], 1024, 1024)
-        self.source = random_child["data"]["url"]
         get_app()._reload_background()
 
     async def create_cache(self, urls):
@@ -379,17 +348,7 @@ class Wallpaper:
         making shuffle() functional from the very first press.
         """
         try:
-            if self.repo == "Reddit" and self.cache:
-                children = self.cache["data"]["children"]
-                url = None
-                attempts = 0
-                while attempts < 20:
-                    rand_idx = random.randint(0, len(children) - 1)
-                    url = children[rand_idx]["data"]["url"]
-                    if not url.endswith(".gif") and url not in self.ban_list:
-                        return url
-                    attempts += 1
-            elif self.repo == "Wallhaven" and self.cache:
+            if self.repo == "Wallhaven" and self.cache:
                 data = self.cache["data"]
                 url = None
                 attempts = 0
