@@ -61,12 +61,46 @@ class HomeAssistantEvent(PihomeEvent):
             "method": self.method
         })
 
+    def _entity_options(self):
+        """Build an {entity_id: friendly_name} map from Home Assistant's cached
+        states, sorted by the human-readable label.
+
+        The event-builder UI renders a dict-valued `options` field as a Select
+        where the dict key is the submitted value (entity_id) and the dict value
+        is the displayed label (friendly name).  Returns an empty dict if HA has
+        no states available (e.g. not configured / not yet connected)."""
+        states = HOME_ASSISTANT.current_states or {}
+        # If the cache is empty but HA is configured, try a one-off live fetch
+        # so the dropdown is populated even right after startup.
+        if not states and getattr(HOME_ASSISTANT, "ha_is_available", False):
+            try:
+                states = HOME_ASSISTANT.get_all_states() or {}
+            except Exception:
+                states = {}
+
+        options = {}
+        for entity_id, st in states.items():
+            label = entity_id
+            if isinstance(st, dict):
+                label = st.get("attributes", {}).get("friendly_name") or entity_id
+            options[entity_id] = label
+
+        # Sort by label (case-insensitive) for a usable dropdown.
+        return dict(sorted(options.items(), key=lambda kv: kv[1].lower()))
+
     def to_definition(self):
+        entity_options = self._entity_options()
+        if entity_options:
+            entity_field = self.type_def("option", True, "Entity to target", entity_options)
+        else:
+            # Fall back to free-text entry when no entities are cached, so the
+            # event can still be built while HA is offline.
+            entity_field = self.type_def("string", True, "Entity to target.  Example: light.living_room_light")
+
         return {
-            "comment": "Refer to entities in home assistant by their entity_id.  Example: light.living_room_light",
             "type": self.type,
-            "entity_id": self.type_def("string"),
+            "entity_id": entity_field,
             "state": self.type_def("string", False, "State to set the entity to.  Example: turn_on, turn_off"),
-            "method": self.type_def("string", True, "Method to use.  Options: set, get"),
+            "method": self.type_def("option", True, "Method to use: 'set' to call a service, 'get' to read state", ["set", "get"]),
             "data": self.type_def("json", False, "JSON data to send to Home Assistant.  Example: {\"brightness\": 255}"),
         }
