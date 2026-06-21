@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 from events.pihomeevent import PihomeEvent
 from services.taskmanager.taskmanager import TASK_MANAGER, EventTask, ScheduledTask, Task, TaskPriority, TaskStatus
+from services.uploads.uploads import UPLOADS
 
 
 class TaskEvent(PihomeEvent):
@@ -36,7 +37,7 @@ class TaskEvent(PihomeEvent):
         self.is_passive = is_passive
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
-        self.background_image = background_image
+        self.background_image = UPLOADS.resolve_url(background_image)
 
     def str_to_date(self, date_str):
         if date_str == None:

@@ -256,6 +256,36 @@ class Uploads:
             PIHOME_LOGGER.error("Uploads: failed to delete {}/{}: {}".format(album, name, e))
             return False
 
+    def resolve_url(self, src):
+        """Map a PiHome ``/uploads/<album>/<name>`` URL to its local file path.
+
+        Image-capable events historically take an external URL and let a Kivy
+        ``AsyncImage`` fetch it over HTTP.  When the URL points at *this* server's
+        uploads route, fetching it would force the device to resolve its own
+        hostname (e.g. ``http://pihome:8989``) and round-trip over the network —
+        which is unreliable.  Instead, resolve it straight to the local file so
+        the image loads directly.  Returns *src* unchanged for anything that
+        isn't a local upload (external URLs, missing files, non-strings).
+        """
+        if not src or not isinstance(src, str):
+            return src
+        try:
+            from urllib.parse import urlparse, unquote
+            parsed = urlparse(src)
+            path = parsed.path if parsed.scheme in ("http", "https") else src
+            marker = "/uploads/"
+            idx = path.find(marker)
+            if idx == -1:
+                return src
+            rest = path[idx + len(marker):]
+            parts = rest.split("/", 1)
+            if len(parts) != 2:
+                return src
+            local = self.path_for(unquote(parts[0]), unquote(parts[1]))
+            return local if local else src
+        except Exception:
+            return src
+
     def random_image(self, album=DEFAULT_ALBUM):
         """Return the absolute path of a random (non-gif) image in *album*, or None."""
         album_dir = self._album_dir(album)

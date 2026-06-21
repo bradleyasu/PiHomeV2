@@ -3,6 +3,7 @@
 import json
 from events.pihomeevent import PihomeEvent
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
+from services.uploads.uploads import UPLOADS
 from util.const import _DISPLAY_SCREEN
 
 
@@ -20,7 +21,7 @@ class DisplayEvent(PihomeEvent):
         screen = PIHOME_SCREEN_MANAGER.get_screen(_DISPLAY_SCREEN)
         screen.title = self.title
         screen.message = self.message
-        screen.image = self.image
+        screen.image = UPLOADS.resolve_url(self.image)
         if self.background is not None:
             screen.background = self.background
         if self.timeout is not None:
