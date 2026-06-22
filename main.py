@@ -133,9 +133,9 @@ class PiHome(App):
         except Exception as e:
             PIHOME_LOGGER.error(f"Failed to load default background: {e}")
 
+        self.layout.add_widget(NOTIFICATION_CENTER)
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.add_widget(TIMER_DRAWER)
-        self.layout.add_widget(NOTIFICATION_CENTER)
         self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager
