@@ -79,6 +79,19 @@
             opacity: 1 if root.description else 0
             text_size: self.width, None
 
+        # When the notification was issued (e.g. "5m ago", "Jun 15")
+        Label:
+            text: root.timestamp_text
+            font_name: "Nunito"
+            font_size: sp(10)
+            color: root.muted_color
+            halign: "left"
+            valign: "top"
+            size_hint_y: None
+            height: self.texture_size[1] if root.timestamp_text else 0
+            opacity: 0.75 if root.timestamp_text else 0
+            text_size: self.width, None
+
     # ── Clear (x) button — grabs its own touch so the row tap won't fire ───────
     Button:
         id: clear_btn

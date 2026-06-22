@@ -1,3 +1,6 @@
+import time
+from datetime import datetime
+
 from kivy.lang import Builder
 from kivy.properties import (BooleanProperty, ColorProperty, StringProperty)
 from kivy.uix.behaviors import ButtonBehavior
@@ -28,6 +31,31 @@ _LEVEL_TOKENS = {
 }
 
 
+def _format_ts(ts):
+    """Format an epoch timestamp as a short, ASCII-only 'when issued' string.
+
+    Relative for recent notifications ('just now', '5m ago', '3h ago',
+    '2d ago'); absolute date for anything older than a week ('Jun 15').
+    Computed when the row is built (rows rebuild whenever the list changes).
+    """
+    try:
+        ts = float(ts)
+    except (TypeError, ValueError):
+        return ""
+    delta = time.time() - ts
+    if delta < 0:
+        delta = 0
+    if delta < 60:
+        return "just now"
+    if delta < 3600:
+        return f"{int(delta // 60)}m ago"
+    if delta < 86400:
+        return f"{int(delta // 3600)}h ago"
+    if delta < 7 * 86400:
+        return f"{int(delta // 86400)}d ago"
+    return datetime.fromtimestamp(ts).strftime("%b %d")
+
+
 class NotificationRow(ButtonBehavior, BoxLayout):
     """A single notification row: icon, title, description, and a clear button.
 
@@ -37,11 +65,12 @@ class NotificationRow(ButtonBehavior, BoxLayout):
     CLAUDE.md gotcha #11).
     """
 
-    title       = StringProperty("")
-    description = StringProperty("")
-    icon_url    = StringProperty("")
-    glyph       = StringProperty(_DEFAULT_GLYPH)
-    has_icon    = BooleanProperty(False)
+    title          = StringProperty("")
+    description    = StringProperty("")
+    timestamp_text = StringProperty("")
+    icon_url       = StringProperty("")
+    glyph          = StringProperty(_DEFAULT_GLYPH)
+    has_icon       = BooleanProperty(False)
 
     # Defaults derived from the active theme; the parent center also passes
     # live colors at construction (and rebuilds rows on theme change).
@@ -69,6 +98,7 @@ class NotificationRow(ButtonBehavior, BoxLayout):
 
         self.title = notification.get("title", "") or ""
         self.description = notification.get("description", "") or ""
+        self.timestamp_text = _format_ts(notification.get("ts"))
 
         level = notification.get("level", "info")
         theme = Theme()
