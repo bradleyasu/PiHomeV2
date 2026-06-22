@@ -258,7 +258,9 @@ class Task():
 
     def set_status(self, status: TaskStatus):
         self.status = status
-        if status in _TERMINAL_STATES and self.terminated_at is None:
+        # getattr guard: tasks deserialized from a pickle written before
+        # terminated_at existed won't have the attribute set.
+        if status in _TERMINAL_STATES and getattr(self, "terminated_at", None) is None:
             self.terminated_at = datetime.now()
         TASK_MANAGER.serialize_tasks()
 

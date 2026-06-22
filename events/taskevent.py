@@ -110,6 +110,7 @@ class TaskEvent(PihomeEvent):
             "status": self.type_def("string"),
             "priority": self.type_def("integer", True, "1 = Low, 2 = Medium, 3 = High"),
             "repeat_days": self.type_def("integer", False),
+            "background_image": self.type_def("string", False, "URL of image to show on TaskScreen background when task is active"),
             "on_run": self.type_def("event", False),
             "on_confirm": self.type_def("event", False),
             "on_cancel": self.type_def("event", False)
