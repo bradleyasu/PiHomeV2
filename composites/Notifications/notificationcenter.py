@@ -60,16 +60,16 @@ class NotificationCenter(FloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.size_hint = (1, 1)
-        # self.pos = (0, 0)
-        # self._notifications = []          # list of notification dicts
-        # # The badge stays hidden until the Home startup animation finishes
-        # # (signalled via on_startup_complete), then pops in.
-        # self._startup_done = False
-        # self._apply_theme()
-        # self.panel_width = self._compute_panel_width()
-        # self.panel_x = Window.width       # start off-screen (right)
-        # Window.bind(size=self._on_window_size)
+        self.size_hint = (1, 1)
+        self.pos = (0, 0)
+        self._notifications = []          # list of notification dicts
+        # The badge stays hidden until the Home startup animation finishes
+        # (signalled via on_startup_complete), then pops in.
+        self._startup_done = False
+        self._apply_theme()
+        self.panel_width = self._compute_panel_width()
+        self.panel_x = Window.width       # start off-screen (right)
+        Window.bind(size=self._on_window_size)
 
     # ── theme ───────────────────────────────────────────────────────────────────
 
@@ -114,17 +114,17 @@ class NotificationCenter(FloatLayout):
             PIHOME_LOGGER.error(f"NotificationCenter: save failed: {e}")
 
     def on_parent(self, instance, value):
-        if value is None:
-            return
-        self._load()
-        # ids are available once the KV rule has been applied.
-        Clock.schedule_once(lambda dt: self._refresh(), 0)
-        # Defensive last-resort only: the badge reveal is normally driven by the
-        # Home startup hook (HomeScreen._after_logo -> on_startup_complete). This
-        # timer is deliberately long so it can NEVER race with / fire during the
-        # ~11s logo intro; on_startup_complete is idempotent so if the hook
-        # already ran this is a no-op.
-        Clock.schedule_once(lambda dt: self._startup_fallback(), 30)
+        # if value is None:
+        #     return
+        # self._load()
+        # # ids are available once the KV rule has been applied.
+        # Clock.schedule_once(lambda dt: self._refresh(), 0)
+        # # Defensive last-resort only: the badge reveal is normally driven by the
+        # # Home startup hook (HomeScreen._after_logo -> on_startup_complete). This
+        # # timer is deliberately long so it can NEVER race with / fire during the
+        # # ~11s logo intro; on_startup_complete is idempotent so if the hook
+        # # already ran this is a no-op.
+        # Clock.schedule_once(lambda dt: self._startup_fallback(), 30)
 
     # ── public API (called by NotificationEvent) ────────────────────────────────
 
