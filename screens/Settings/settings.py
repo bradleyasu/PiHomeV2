@@ -33,7 +33,7 @@ class SettingsSidebarItem(BoxLayout):
     is_selected  = BooleanProperty(False)
     tap_callback = ObjectProperty(lambda: None)
     text_color   = ColorProperty([1, 1, 1, 1])
-    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    accent_color = ColorProperty([0.737, 0.384, 0.251, 1.0])
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
@@ -48,7 +48,7 @@ class SettingsSidebarItem(BoxLayout):
 class SettingsTitleRow(BoxLayout):
     title      = StringProperty('')
     text_color = ColorProperty([1, 1, 1, 1])
-    line_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    line_color = ColorProperty([0.737, 0.384, 0.251, 1.0])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ class SettingsRowBase(BoxLayout):
     key          = StringProperty('')
     text_color   = ColorProperty([1, 1, 1, 1])
     muted_color  = ColorProperty([0.5, 0.5, 0.5, 1])
-    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    accent_color = ColorProperty([0.737, 0.384, 0.251, 1.0])
     bg_color     = ColorProperty([0, 0, 0, 0])
 
 
@@ -115,7 +115,7 @@ class OptionsDropdown(ModalView):
     options      = ListProperty([])
     text_color   = ColorProperty([1, 1, 1, 1])
     muted_color  = ColorProperty([0.5, 0.5, 0.5, 1])
-    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    accent_color = ColorProperty([0.737, 0.384, 0.251, 1.0])
     card_color   = ColorProperty([0.12, 0.12, 0.14, 1])
     on_pick      = ObjectProperty(lambda val: None)
 
@@ -297,7 +297,7 @@ class SettingsScreen(PiHomeScreen):
     divider_color = ColorProperty([0.2, 0.2, 0.2, 1])
     text_color    = ColorProperty([1, 1, 1, 1])
     muted_color   = ColorProperty([0.5, 0.5, 0.5, 1])
-    accent_color  = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    accent_color  = ColorProperty([0.737, 0.384, 0.251, 1.0])
     row_bg_color  = ColorProperty([0, 0, 0, 0.35])
 
     def __init__(self, callback=None, **kwargs):

@@ -1,36 +1,46 @@
 class Color():
-    ''' LIGHT TOKENS '''
+    ''' LIGHT TOKENS — warm/cozy neutral ramp (sand/taupe tinted) '''
     GRAY_50 = '#FFFFFF'
-    GRAY_75 = '#FAFAFA'
-    GRAY_100 = '#F5F5F5'
-    GRAY_200 = '#EAEAEA'
-    GRAY_300 = '#E1E1E1'
-    GRAY_400 = '#CACACA'
-    GRAY_500 = '#B3B3B3'
-    GRAY_600 = '#8E8E8E'
-    GRAY_700 = '#6E6E6E'
-    GRAY_800 = '#4B4B4B'
-    GRAY_900 = '#2C2C2C'
+    GRAY_75 = '#FBF8F3'
+    GRAY_100 = '#F4EFE8'   # page background
+    GRAY_200 = '#E7DFD3'   # header band / secondary surface
+    GRAY_300 = '#DCD2C4'   # border / divider
+    GRAY_400 = '#CFC6B6'   # switch inactive
+    GRAY_500 = '#AFA28D'
+    GRAY_600 = '#8A7C68'
+    GRAY_700 = '#6E6354'   # text secondary
+    GRAY_800 = '#443D34'
+    GRAY_900 = '#2D2823'   # text primary (warm near-black)
 
-    BLUE_400 = '#2680EB'
-    BLUE_500 = '#1473e6'
-    BLUE_600 = '#0d66d0'
-    BLUE_700 = '#095aba'
-    
-    RED_400 = '#e34850'
-    RED_500 = '#d7373f'
-    RED_600 = '#c9252d'
-    RED_700 = '#bb121a'
+    # Warm explicit surfaces (new)
+    SURFACE = '#FFFFFF'    # raised card on cream page
+    BORDER  = '#DCD2C4'
 
-    ORANGE_400 = '#e68619'
-    ORANGE_500 = '#da7b11'
-    ORANGE_600 = '#cb6f10'
-    ORANGE_700 = '#bd640d'
+    # Clay / terracotta accent (new)
+    CLAY_400 = '#BC6240'   # primary accent
+    CLAY_500 = '#A8522F'   # pressed / darker accent
+    CLAY_600 = '#954820'
 
-    GREEN_400 = '#2d9d78'
-    GREEN_500 = '#268e6c'
-    GREEN_600 = '#12805c'
-    GREEN_700 = '#107154'
+    # Muted slate-blue kept for semantic "info"
+    BLUE_400 = '#4F7CA6'
+    BLUE_500 = '#446F97'
+    BLUE_600 = '#3A6188'
+    BLUE_700 = '#A8522F'   # legacy alias -> clay pressed (button primary_accent)
+
+    RED_400 = '#C0473D'    # brick red
+    RED_500 = '#AE3E35'
+    RED_600 = '#9C352D'
+    RED_700 = '#8A2C25'
+
+    ORANGE_400 = '#D08A2E'  # amber
+    ORANGE_500 = '#C07E27'
+    ORANGE_600 = '#B07220'
+    ORANGE_700 = '#A06619'
+
+    GREEN_400 = '#5E8C5A'   # sage
+    GREEN_500 = '#527E4F'
+    GREEN_600 = '#477044'
+    GREEN_700 = '#3C6239'
 
     INDIGO_400 = '#6767ec'
     INDIGO_500 = '#5c5ce0'
@@ -73,38 +83,48 @@ class Color():
     PURPLE_700 = '#6f38b1'
 
 
-    ''' DARK TOKENS '''
-    DARK_GRAY_50 = '#252525'
-    DARK_GRAY_75 = '#2f2f2f'
-    DARK_GRAY_100 = '#323232'
-    DARK_GRAY_200 = '#3e3e3e'
-    DARK_GRAY_300 = '#4a4a4a'
-    DARK_GRAY_400 = '#5a5a5a'
-    DARK_GRAY_500 = '#6e6e6e'
-    DARK_GRAY_600 = '#909090'
-    DARK_GRAY_700 = '#b9b9b9'
-    DARK_GRAY_800 = '#e3e3e3'
-    DARK_GRAY_900 = '#ffffff'
+    ''' DARK TOKENS — warm charcoal ramp (brown-tinted, not blue-black) '''
+    DARK_GRAY_50 = '#322E28'   # raised surface / secondary button bg
+    DARK_GRAY_75 = '#2B2722'   # header band (elevated above page)
+    DARK_GRAY_100 = '#221F1B'  # page background (deepest)
+    DARK_GRAY_200 = '#3E3933'  # border
+    DARK_GRAY_300 = '#4A443C'  # switch inactive
+    DARK_GRAY_400 = '#4A443C'
+    DARK_GRAY_500 = '#6E6354'
+    DARK_GRAY_600 = '#8A7C68'
+    DARK_GRAY_700 = '#B5AA9A'
+    DARK_GRAY_800 = '#B5AA9A'  # text secondary
+    DARK_GRAY_900 = '#F5F0E8'  # text primary (warm white)
 
-    DARK_BLUE_400 = '#2680eb'
-    DARK_BLUE_500 = '#378ef0'
-    DARK_BLUE_600 = '#4b9cf5'
-    DARK_BLUE_700 = '#5aa9fa'
-    
-    DARK_RED_400 = '#e34850'
-    DARK_RED_500 = '#ec5b62'
-    DARK_RED_600 = '#f76d74'
-    DARK_RED_700 = '#ff7b82'
+    # Warm explicit surfaces (new)
+    DARK_SURFACE = '#322E28'
+    DARK_BORDER  = '#3E3933'
 
-    DARK_ORANGE_400 = '#e68619'
-    DARK_ORANGE_500 = '#f29423'
-    DARK_ORANGE_600 = '#f9a43f'
-    DARK_ORANGE_700 = '#ffb55b'
+    # Clay / terracotta accent (new)
+    DARK_CLAY_400 = '#DB8A63'
+    DARK_CLAY_500 = '#C77A54'
+    DARK_CLAY_600 = '#B36A46'
 
-    DARK_GREEN_400 = '#2d9d78'
-    DARK_GREEN_500 = '#33ab84'
-    DARK_GREEN_600 = '#39b990'
-    DARK_GREEN_700 = '#3fc89c'
+    # Muted slate-blue kept for semantic "info"
+    DARK_BLUE_400 = '#6FA0CB'
+    DARK_BLUE_500 = '#7FACD3'
+    DARK_BLUE_600 = '#8FB8DB'
+    DARK_BLUE_700 = '#221F1B'  # legacy alias -> warm near-black (text on primary)
+
+    DARK_RED_400 = '#E0685E'
+    DARK_RED_500 = '#E87A71'
+    DARK_RED_600 = '#F08C84'
+    DARK_RED_700 = '#F89E97'
+
+    DARK_ORANGE_400 = '#E9A94A'
+    DARK_ORANGE_500 = '#EEB661'
+    DARK_ORANGE_600 = '#F3C378'
+    DARK_ORANGE_700 = '#F8D08F'
+
+    DARK_GREEN_400 = '#82B07C'
+    DARK_GREEN_500 = '#91BB8B'
+    DARK_GREEN_600 = '#A0C69A'
+    DARK_GREEN_700 = '#AFD1A9'
 
     DARK_INDIGO_400 = '#6767ec'
     DARK_INDIGO_500 = '#7575f1'

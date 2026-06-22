@@ -57,7 +57,7 @@ class TimerScreen(PiHomeScreen):
     card_color   = ColorProperty([0, 0, 0, 0.4])
     text_color   = ColorProperty([1, 1, 1, 1])
     muted_color  = ColorProperty([0.5, 0.5, 0.5, 1])
-    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    accent_color = ColorProperty([0.737, 0.384, 0.251, 1.0])
 
     # ── state ──────────────────────────────────────────────────────────────────
     total_seconds   = NumericProperty(0)

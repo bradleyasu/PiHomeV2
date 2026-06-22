@@ -15,6 +15,11 @@ class Theme():
 
     BACKGROUND_PRIMARY        = ['primary',Color.GRAY_100, Color.DARK_GRAY_100,  'backgrounds']
     BACKGROUND_SECONDARY      = ['secondary', Color.GRAY_200, Color.DARK_GRAY_75, 'backgrounds']
+    BACKGROUND_SURFACE        = ['surface', Color.SURFACE, Color.DARK_SURFACE, 'backgrounds']
+    BACKGROUND_BORDER         = ['border', Color.BORDER, Color.DARK_BORDER, 'backgrounds']
+
+    # Dedicated warm accent (decoupled from semantic ALERT_INFO)
+    ACCENT_PRIMARY            = ['primary', Color.CLAY_400, Color.DARK_CLAY_400, 'accent']
 
     TEXT_PRIMARY              = ['primary', Color.GRAY_900, Color.DARK_GRAY_900, 'text']
     TEXT_SECONDARY            = ['secondary', Color.GRAY_700, Color.DARK_GRAY_800, 'text']
@@ -22,19 +27,19 @@ class Theme():
     TEXT_SUCCESS              = ['success', Color.GREEN_400, Color.DARK_GREEN_400, 'text']
 
 
-    BUTTON_PRIMARY            = ['primary', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
+    BUTTON_PRIMARY            = ['primary', Color.CLAY_400, Color.DARK_CLAY_400, 'buttons']
     BUTTON_SECONDARY          = ['secondary', Color.GRAY_200, Color.DARK_GRAY_50, 'buttons']
     BUTTON_DANGER             = ['danger', Color.RED_400, Color.DARK_RED_400, 'buttons']
-    BUTTON_SUCCESS            = ['success', Color.CELERY_400, Color.DARK_CELERY_400, 'buttons']
+    BUTTON_SUCCESS            = ['success', Color.GREEN_400, Color.DARK_GREEN_400, 'buttons']
 
-    SWITCH_ACTIVE             = ['active', Color.CELERY_400, Color.DARK_CELERY_400, 'switch']
-    SWITCH_INACTIVE             = ['inactive', Color.GRAY_500, Color.DARK_GRAY_400, 'switch']
-    
-    BUTTON_PRIMARY_ACCENT     = ['primary_accent', Color.BLUE_700, Color.DARK_BLUE_700, 'buttons']
-    BUTTON_SECONDARY_ACCENT   = ['secondary_accent', Color.GRAY_300, Color.DARK_GRAY_200, 'buttons']
+    SWITCH_ACTIVE             = ['active', Color.CLAY_400, Color.DARK_CLAY_400, 'switch']
+    SWITCH_INACTIVE             = ['inactive', Color.GRAY_400, Color.DARK_GRAY_400, 'switch']
 
-    BUTTON_PRIMARY_TEXT       = ['primary_accent', Color.GRAY_50, Color.DARK_GRAY_50, 'buttons']
-    BUTTON_SECONDARY_TEXT     = ['secondary_accent', Color.BLUE_400, Color.DARK_BLUE_400, 'buttons']
+    BUTTON_PRIMARY_ACCENT     = ['primary_accent', Color.CLAY_500, Color.DARK_GRAY_100, 'buttons']
+    BUTTON_SECONDARY_ACCENT   = ['secondary_accent', Color.CLAY_400, Color.DARK_CLAY_400, 'buttons']
+
+    BUTTON_PRIMARY_TEXT       = ['primary_accent', Color.GRAY_50, Color.DARK_GRAY_100, 'buttons']
+    BUTTON_SECONDARY_TEXT     = ['secondary_accent', Color.CLAY_400, Color.DARK_CLAY_400, 'buttons']
 
     ALERT_DANGER              = ['danger', Color.RED_400, Color.DARK_RED_400, 'alerts']
     ALERT_WARNING             = ['warning', Color.ORANGE_400, Color.DARK_ORANGE_400,'alerts']

@@ -106,30 +106,31 @@ class PiHomeScreen(Screen):
             from theme.theme import Theme
             th = Theme()
             _standard = [
-                ('bg_color',     th.BACKGROUND_PRIMARY),
-                ('header_color', th.BACKGROUND_SECONDARY),
-                ('text_color',   th.TEXT_PRIMARY),
-                ('muted_color',  th.TEXT_SECONDARY),
-                ('accent_color', th.ALERT_INFO),
-                ('status_color', th.TEXT_SECONDARY),
+                ('bg_color',      th.BACKGROUND_PRIMARY),
+                ('header_color',  th.BACKGROUND_SECONDARY),
+                ('surface_color', th.BACKGROUND_SURFACE),
+                ('border_color',  th.BACKGROUND_BORDER),
+                ('text_color',    th.TEXT_PRIMARY),
+                ('muted_color',   th.TEXT_SECONDARY),
+                ('accent_color',  th.ACCENT_PRIMARY),
+                ('status_color',  th.TEXT_SECONDARY),
             ]
             for prop, token in _standard:
                 if hasattr(self, prop):
                     setattr(self, prop, th.get_color(token))
-            # card_color is conventionally derived from header_color
-            if hasattr(self, 'card_color') and hasattr(self, 'header_color'):
-                hc = self.header_color
-                self.card_color = (hc[0], hc[1], hc[2], 0.85)
-            # sidebar / divider variants used in Settings screen
-            if hasattr(self, 'sidebar_color') and hasattr(self, 'header_color'):
-                hc = self.header_color
-                self.sidebar_color = (hc[0] * 0.80, hc[1] * 0.80, hc[2] * 0.80, 1.0)
-            if hasattr(self, 'divider_color') and hasattr(self, 'header_color'):
-                hc = self.header_color
-                self.divider_color = (hc[0] * 0.60, hc[1] * 0.60, hc[2] * 0.60, 1.0)
-            if hasattr(self, 'row_bg_color') and hasattr(self, 'header_color'):
-                hc = self.header_color
-                self.row_bg_color = (hc[0], hc[1], hc[2], 0.7)
+            # Elevation now uses explicit surface/border tokens (mode-correct in
+            # both light and dark) instead of multiplying the header color, which
+            # only elevated correctly on dark backgrounds.
+            surface = th.get_color(th.BACKGROUND_SURFACE)
+            border  = th.get_color(th.BACKGROUND_BORDER)
+            if hasattr(self, 'card_color'):
+                self.card_color = (surface[0], surface[1], surface[2], 1.0)
+            if hasattr(self, 'sidebar_color'):
+                self.sidebar_color = th.get_color(th.BACKGROUND_SECONDARY)
+            if hasattr(self, 'divider_color'):
+                self.divider_color = (border[0], border[1], border[2], 1.0)
+            if hasattr(self, 'row_bg_color'):
+                self.row_bg_color = (surface[0], surface[1], surface[2], 0.7)
         except Exception as e:
             pass
         self._trigger_layout()
