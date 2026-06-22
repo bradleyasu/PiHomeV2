@@ -60,16 +60,16 @@ class NotificationCenter(FloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.size_hint = (1, 1)
-        self.pos = (0, 0)
-        self._notifications = []          # list of notification dicts
-        # The badge stays hidden until the Home startup animation finishes
-        # (signalled via on_startup_complete), then pops in.
-        self._startup_done = False
-        self._apply_theme()
-        self.panel_width = self._compute_panel_width()
-        self.panel_x = Window.width       # start off-screen (right)
-        Window.bind(size=self._on_window_size)
+        # self.size_hint = (1, 1)
+        # self.pos = (0, 0)
+        # self._notifications = []          # list of notification dicts
+        # # The badge stays hidden until the Home startup animation finishes
+        # # (signalled via on_startup_complete), then pops in.
+        # self._startup_done = False
+        # self._apply_theme()
+        # self.panel_width = self._compute_panel_width()
+        # self.panel_x = Window.width       # start off-screen (right)
+        # Window.bind(size=self._on_window_size)
 
     # ── theme ───────────────────────────────────────────────────────────────────
 
