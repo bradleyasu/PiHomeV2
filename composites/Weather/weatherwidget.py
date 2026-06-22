@@ -69,14 +69,15 @@ class WeatherWidget(Widget):
     icon_fallback = StringProperty("")  # always the daytime variant; used when night icon is missing
     icon_fallback_large = StringProperty("")  # always the daytime variant; used when night icon is missing
 
-    # Theme-aware surface colors — set at runtime from Theme().mode
-    card_color         = ColorProperty([0.08, 0.10, 0.14, 1.0])
-    card_border_color  = ColorProperty([1.0, 1.0, 1.0, 0.10])
-    chip_bg_color      = ColorProperty([1.0, 1.0, 1.0, 0.07])
-    divider_color      = ColorProperty([1.0, 1.0, 1.0, 0.12])
-    pill_bg_color      = ColorProperty([0.08, 0.10, 0.14, 1.0])
-    pill_border_color  = ColorProperty([1.0, 1.0, 1.0, 0.10])
-    pill_divider_color = ColorProperty([1.0, 1.0, 1.0, 0.22])
+    # Theme-aware surface colors — applied in _apply_theme_colors() at init and
+    # on every theme change. Defaults derive from tokens for correct first paint.
+    card_color         = ColorProperty(theme.get_color(theme.BACKGROUND_SURFACE))
+    card_border_color  = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
+    chip_bg_color      = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
+    divider_color      = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
+    pill_bg_color      = ColorProperty(theme.get_color(theme.BACKGROUND_SURFACE))
+    pill_border_color  = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
+    pill_divider_color = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
 
     is_loaded = False
     show_hourly = BooleanProperty(True)
@@ -105,26 +106,21 @@ class WeatherWidget(Widget):
                         child.trend_metric = value
 
     def _apply_theme_colors(self):
-        dark = Theme().mode == 1
-        # Refresh text_color so light/dark switch is respected at runtime
+        # All surfaces derive from theme tokens so the widget tracks light/dark
+        # and any custom theme.ini. Subtle tints/dividers are built from
+        # text_color at low alpha so they invert correctly between modes.
         t = Theme()
         self.text_color = t.get_color(t.TEXT_PRIMARY)
-        if dark:
-            self.card_color         = [0.08, 0.10, 0.14, 1.0]
-            self.card_border_color  = [1.0, 1.0, 1.0, 0.10]
-            self.chip_bg_color      = [1.0, 1.0, 1.0, 0.07]
-            self.divider_color      = [1.0, 1.0, 1.0, 0.12]
-            self.pill_bg_color      = [0.08, 0.10, 0.14, 1.0]
-            self.pill_border_color  = [1.0, 1.0, 1.0, 0.10]
-            self.pill_divider_color = [1.0, 1.0, 1.0, 0.22]
-        else:
-            self.card_color         = [0.98, 0.98, 0.99, 1.0]
-            self.card_border_color  = [0.0,  0.0,  0.0,  0.10]
-            self.chip_bg_color      = [0.0,  0.0,  0.0,  0.05]
-            self.divider_color      = [0.0,  0.0,  0.0,  0.10]
-            self.pill_bg_color      = [0.98, 0.98, 0.99, 1.0]
-            self.pill_border_color  = [0.0,  0.0,  0.0,  0.12]
-            self.pill_divider_color = [0.0,  0.0,  0.0,  0.20]
+        surface = t.get_color(t.BACKGROUND_SURFACE)
+        border  = t.get_color(t.BACKGROUND_BORDER)
+        tc = self.text_color
+        self.card_color         = list(surface)
+        self.pill_bg_color       = list(surface)
+        self.card_border_color  = list(border)
+        self.pill_border_color  = list(border)
+        self.divider_color      = list(border)
+        self.chip_bg_color      = [tc[0], tc[1], tc[2], 0.06]
+        self.pill_divider_color = [tc[0], tc[1], tc[2], 0.22]
         # Default the pill stat to text_color so it's always readable before
         # the first weather update populates a real value
         self.pill_stat_color = list(self.text_color)
@@ -349,7 +345,7 @@ class WeatherWidget(Widget):
                     self.pill_stat = "UV {}".format(int(uv_val))
                     if uv_val > 7:
                         self.pill_icon = '\ue002'
-                        self.pill_stat_color = [0.96, 0.38, 0.32, 1.0]
+                        self.pill_stat_color = list(Theme().get_color(Theme().ALERT_DANGER))
                     else:
                         self.pill_icon = '\ue000'
                         self.pill_stat_color = list(self.text_color)
@@ -539,8 +535,9 @@ class WeatherWidget(Widget):
             is_active = (i == active_idx)
             dot = Widget(size_hint=(None, None), size=(dp(8), dp(8)))
             alpha = 0.9 if is_active else 0.3
+            tc = self.text_color
             with dot.canvas:
-                Color(1, 1, 1, alpha)
+                Color(tc[0], tc[1], tc[2], alpha)
                 Ellipse(pos=dot.pos, size=dot.size)
             # Bind pos so the ellipse follows layout changes (use default arg to capture)
             dot.bind(pos=lambda w, p, a=is_active: self._redraw_dot(w, a))
@@ -550,8 +547,9 @@ class WeatherWidget(Widget):
         """Redraw a single dot after layout."""
         widget.canvas.clear()
         alpha = 0.9 if is_active else 0.3
+        tc = self.text_color
         with widget.canvas:
-            Color(1, 1, 1, alpha)
+            Color(tc[0], tc[1], tc[2], alpha)
             Ellipse(pos=widget.pos, size=widget.size)
 
     def _build_alert_slide(self, insight):
@@ -575,9 +573,10 @@ class WeatherWidget(Widget):
             spacing=dp(6),
         )
 
-        # Card background
+        # Card background — themed surface so it reads in light and dark.
         is_extreme = (insight.severity == Severity.EXTREME)
-        bg_color = [0.10, 0.12, 0.16, 0.95] if dark else [0.96, 0.96, 0.97, 0.95]
+        surface = Theme().get_color(Theme().BACKGROUND_SURFACE)
+        bg_color = [surface[0], surface[1], surface[2], 0.95]
         border_color = sev_color[:3] + [1]
 
         border_width = 1.5

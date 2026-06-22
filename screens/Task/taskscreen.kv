@@ -112,7 +112,7 @@
                     height: dp(1)
                     canvas:
                         Color:
-                            rgba: 1, 1, 1, 0.10
+                            rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.10
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -133,13 +133,13 @@
                         on_release: root.snooze()
                         canvas.before:
                             Color:
-                                rgba: 1, 1, 1, 0.10
+                                rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.10
                             RoundedRectangle:
                                 size: self.size
                                 pos: self.pos
                                 radius: [dp(12)]
                             Color:
-                                rgba: 1, 1, 1, 0.25
+                                rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.25
                             Line:
                                 rounded_rectangle: [self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(12)]
                                 width: dp(1)

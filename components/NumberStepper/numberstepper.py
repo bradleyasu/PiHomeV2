@@ -1,6 +1,7 @@
 from kivy.lang import Builder
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from theme.theme import Theme
 
 Builder.load_file("./components/NumberStepper/numberstepper.kv")
 
@@ -15,7 +16,7 @@ class NumberStepper(BoxLayout):
     min_val      = NumericProperty(0)
     max_val      = NumericProperty(999)
     unit         = StringProperty("")
-    accent_color = ColorProperty([0.39, 0.71, 1.0, 1.0])
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     text_color   = ColorProperty([1.0,  1.0,  1.0, 0.9])
 
     def __init__(self, on_change=None, **kwargs):

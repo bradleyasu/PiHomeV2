@@ -133,4 +133,21 @@ class PiHomeScreen(Screen):
                 self.row_bg_color = (surface[0], surface[1], surface[2], 0.7)
         except Exception as e:
             pass
+        # Cascade the theme refresh to every descendant widget. reload_all()
+        # only calls on_config_update() on screens, so persistent composites
+        # (notification center, weather, timer drawer, ...) would otherwise stay
+        # on their startup colors after a runtime theme change.
+        try:
+            for w in self.walk(restrict=True):
+                if w is self:
+                    continue
+                try:
+                    if hasattr(w, 'on_config_update'):
+                        w.on_config_update(config)
+                    elif hasattr(w, '_apply_theme'):
+                        w._apply_theme()
+                except Exception:
+                    pass
+        except Exception:
+            pass
         self._trigger_layout()

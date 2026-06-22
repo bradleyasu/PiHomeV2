@@ -153,6 +153,18 @@ class PiHome(App):
         WALLPAPER_SERVICE.restart()
         # Notify all screens so they can react to config changes
         PIHOME_SCREEN_MANAGER.reload_all()
+        # App-root composites aren't under a screen, so reload_all()'s per-screen
+        # cascade can't reach them — refresh their theme explicitly.
+        for w in (TIMER_DRAWER, getattr(self, "menu_button", None)):
+            if w is None:
+                continue
+            try:
+                if hasattr(w, "on_config_update"):
+                    w.on_config_update(CONFIG)
+                elif hasattr(w, "_apply_theme"):
+                    w._apply_theme()
+            except Exception as e:
+                PIHOME_LOGGER.error(f"App-root theme refresh failed: {e}")
         PIHOME_LOGGER.info("Configuration reload complete.")
 
     def restart(self):

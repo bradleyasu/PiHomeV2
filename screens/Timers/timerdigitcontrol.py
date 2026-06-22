@@ -50,7 +50,7 @@ class TimerDigitControl(BoxLayout):
         super().__init__(**kwargs)
         theme = Theme()
         self.text_color   = theme.get_color(theme.TEXT_PRIMARY)
-        self.accent_color = theme.get_color(theme.ALERT_INFO)
+        self.accent_color = theme.get_color(theme.ACCENT_PRIMARY)
         sc = theme.get_color(theme.BACKGROUND_SECONDARY)
         # Slightly lighter card surface so it stands out from the page bg
         self.card_color = (

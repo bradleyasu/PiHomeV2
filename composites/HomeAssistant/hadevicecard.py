@@ -98,22 +98,26 @@ class HADeviceCard(BoxLayout):
     focused     = BooleanProperty(False)    # True when the rotary encoder targets this card
     is_favorite = BooleanProperty(False)    # True when starred by the user
 
-    card_color   = ColorProperty([0.10, 0.13, 0.19, 1.0])
-    text_color   = ColorProperty([1.0, 1.0, 1.0, 0.90])
-    accent_color = ColorProperty([0.36, 0.67, 1.0, 1.0])
+    # Defaults derive from tokens; _apply_theme() re-applies on init/theme change.
+    card_color   = ColorProperty(Theme().get_color(Theme().BACKGROUND_SURFACE))
+    text_color   = ColorProperty(Theme().get_color(Theme().TEXT_PRIMARY))
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
 
     _programmatic = False   # True while we're updating ids ourselves
     _focus_callback = None  # Assigned by the screen to propagate touch-focus
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._apply_theme()
+
+    def _apply_theme(self):
         t = Theme()
-        self.text_color  = t.get_color(t.TEXT_PRIMARY)
-        self.accent_color = t.get_color(t.ALERT_INFO)
-        if t.mode == 1:   # dark
-            self.card_color = [0.10, 0.13, 0.19, 1.0]
-        else:
-            self.card_color = [0.95, 0.96, 0.98, 1.0]
+        self.text_color   = t.get_color(t.TEXT_PRIMARY)
+        self.accent_color = t.get_color(t.ACCENT_PRIMARY)
+        self.card_color   = t.get_color(t.BACKGROUND_SURFACE)
+
+    def on_config_update(self, config=None):
+        self._apply_theme()
 
     # ── Public API ────────────────────────────────────────────────────────────
 

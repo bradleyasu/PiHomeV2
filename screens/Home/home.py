@@ -449,7 +449,8 @@ class HomeScreen(PiHomeScreen):
     # ── Config / lifecycle ────────────────────────────────────────────────────
 
     def on_config_update(self, config):
-        self.ids.weather_widget.on_config_update(config)
+        # weather_widget re-themes via the base-class child cascade in
+        # super().on_config_update(); only handle hooks the cascade can't reach.
         if self._now_playing is not None:
             self._now_playing.update_theme()
         if self.is_open:

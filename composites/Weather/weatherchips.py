@@ -21,6 +21,13 @@ from kivy.graphics import (
     Color, RoundedRectangle, Rectangle, Ellipse, Line,
     InstructionGroup, PushMatrix, PopMatrix, Rotate,
 )
+from theme.theme import Theme
+
+# Theme-derived defaults; the parent WeatherWidget also passes live
+# chip_bg_color/text_color and re-applies them on theme change.
+_theme = Theme()
+_DEFAULT_TEXT = _theme.get_color(_theme.TEXT_PRIMARY)
+_DEFAULT_CHIP_BG = [_DEFAULT_TEXT[0], _DEFAULT_TEXT[1], _DEFAULT_TEXT[2], 0.06]
 
 # ── KV rules for all chips ──────────────────────────────────────────────────
 
@@ -118,9 +125,9 @@ class WeatherChip(BoxLayout):
 
     title_text = StringProperty("")
     value_text = StringProperty("--")
-    value_color = ColorProperty([1, 1, 1, 1])
-    chip_bg_color = ColorProperty([1, 1, 1, 0.07])
-    text_color = ColorProperty([1, 1, 1, 1])
+    value_color = ColorProperty(_DEFAULT_TEXT)
+    chip_bg_color = ColorProperty(_DEFAULT_CHIP_BG)
+    text_color = ColorProperty(_DEFAULT_TEXT)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -188,7 +195,7 @@ class UVChip(WeatherChip):
         bar_x = self.x + inset
 
         # Dim track
-        self._viz_group.add(Color(1, 1, 1, 0.08))
+        self._viz_group.add(Color(self.text_color[0], self.text_color[1], self.text_color[2], 0.08))
         self._viz_group.add(RoundedRectangle(
             pos=(bar_x, bar_y), size=(bar_w, bar_h), radius=[dp(2)]))
 
@@ -265,7 +272,7 @@ class WindChip(WeatherChip):
         b2y = cy + math.sin(base_angle2) * r * 0.5
 
         # Compass circle (dim)
-        self._viz_group.add(Color(1, 1, 1, 0.10))
+        self._viz_group.add(Color(self.text_color[0], self.text_color[1], self.text_color[2], 0.10))
         self._viz_group.add(Line(circle=(cx, cy, r), width=1))
 
         # Arrow
@@ -392,10 +399,10 @@ class HumidityChip(BoxLayout):
 
     title_text = StringProperty("Humidity")
     value_text = StringProperty("--")
-    value_color = ColorProperty([1, 1, 1, 1])
+    value_color = ColorProperty(_DEFAULT_TEXT)
     sub_text = StringProperty("")
-    chip_bg_color = ColorProperty([1, 1, 1, 0.07])
-    text_color = ColorProperty([1, 1, 1, 1])
+    chip_bg_color = ColorProperty(_DEFAULT_CHIP_BG)
+    text_color = ColorProperty(_DEFAULT_TEXT)
 
     _humidity = NumericProperty(0)
 
@@ -427,7 +434,7 @@ class HumidityChip(BoxLayout):
         bar_y = self.y + dp(6)
 
         # Track
-        self._viz_group.add(Color(1, 1, 1, 0.08))
+        self._viz_group.add(Color(self.text_color[0], self.text_color[1], self.text_color[2], 0.08))
         self._viz_group.add(RoundedRectangle(
             pos=(bar_x, bar_y), size=(bar_w, bar_h), radius=[dp(3)]))
 
@@ -622,10 +629,10 @@ class SunMoonChip(WeatherChip):
             size=(overlay_r * 2, overlay_r * 2)))
 
     def _get_opaque_bg(self):
-        """Compute an opaque color approximation of chip_bg over a dark card."""
+        """Compute an opaque color approximation of chip_bg over the themed card
+        surface (light or dark)."""
         bg = self.chip_bg_color
-        # Assume dark card base of ~(0.08, 0.10, 0.14)
-        card = [0.08, 0.10, 0.14]
+        card = list(Theme().get_color(Theme().BACKGROUND_SURFACE))[:3]
         a = bg[3]
         r = card[0] * (1 - a) + bg[0] * a
         g = card[1] * (1 - a) + bg[1] * a

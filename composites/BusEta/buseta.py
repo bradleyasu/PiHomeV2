@@ -46,19 +46,24 @@ class BusEta(Widget):
     text_color        = ColorProperty(theme.get_color(theme.TEXT_PRIMARY))
 
     blinkOpacity = NumericProperty(1)
-    
+
+    def _apply_theme(self):
+        """Card tint from text_color (low alpha, inverts per mode); border from
+        the border token."""
+        t = Theme()
+        self.text_color = t.get_color(t.TEXT_PRIMARY)
+        tc = self.text_color
+        self.card_bg_color     = [tc[0], tc[1], tc[2], 0.06]
+        self.card_border_color = list(t.get_color(t.BACKGROUND_BORDER))
+
+    def on_config_update(self, config=None):
+        self._apply_theme()
+
     def __init__(self, stop="--", route="--", dest="BOUND", dest_loc="", eta="Unknown", **kwargs):
         super(BusEta, self).__init__(**kwargs)
 
-        t = Theme()
         # Refresh text_color and card surfaces for current theme mode
-        self.text_color = t.get_color(t.TEXT_PRIMARY)
-        if t.mode == 1:  # dark
-            self.card_bg_color     = [1.0, 1.0, 1.0, 0.07]
-            self.card_border_color = [1.0, 1.0, 1.0, 0.04]
-        else:            # light
-            self.card_bg_color     = [0.0, 0.0, 0.0, 0.04]
-            self.card_border_color = [0.0, 0.0, 0.0, 0.08]
+        self._apply_theme()
 
         self.size = (dp(get_app().width - 32), dp(72))
         self.route    = route

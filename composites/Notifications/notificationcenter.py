@@ -46,17 +46,18 @@ class NotificationCenter(FloatLayout):
     badge_scale = NumericProperty(1.0)   # drives the badge "pop" on reveal
 
     # ── palette (pulled from the active theme at init) ──────────────────────────
-    bg_color     = ColorProperty([0.08, 0.09, 0.13, 1])
-    header_color = ColorProperty([0.14, 0.14, 0.16, 1])
-    text_color   = ColorProperty([1, 1, 1, 1])
-    muted_color  = ColorProperty([1, 1, 1, 0.45])
-    accent_color = ColorProperty([0.25, 0.52, 1.0, 1])
-    danger_color = ColorProperty([0.90, 0.30, 0.30, 1])
-    row_bg_color = ColorProperty([1, 1, 1, 0.06])
+    bg_color     = ColorProperty(Theme().get_color(Theme().BACKGROUND_PRIMARY))
+    header_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_SECONDARY))
+    text_color   = ColorProperty(Theme().get_color(Theme().TEXT_PRIMARY))
+    muted_color  = ColorProperty(Theme().get_color(Theme().TEXT_SECONDARY))
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
+    danger_color = ColorProperty(Theme().get_color(Theme().BUTTON_DANGER))
+    row_bg_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_SURFACE))
     # Matches the Weather widget's card/pill surface so the bell badge is
-    # visually consistent with the rest of the UI (theme-adaptive).
-    card_color        = ColorProperty([0.08, 0.10, 0.14, 1.0])
-    card_border_color = ColorProperty([1.0, 1.0, 1.0, 0.10])
+    # visually consistent with the rest of the UI (theme-adaptive; applied in
+    # _apply_theme()).
+    card_color        = ColorProperty(Theme().get_color(Theme().BACKGROUND_SURFACE))
+    card_border_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_BORDER))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -79,17 +80,24 @@ class NotificationCenter(FloatLayout):
         self.header_color = th.get_color(th.BACKGROUND_SECONDARY)
         self.text_color   = th.get_color(th.TEXT_PRIMARY)
         self.muted_color  = th.get_color(th.TEXT_SECONDARY)
-        self.accent_color = th.get_color(th.ALERT_INFO)
+        self.accent_color = th.get_color(th.ACCENT_PRIMARY)
         self.danger_color = th.get_color(th.BUTTON_DANGER)
-        # A subtle row background derived from the secondary background.
-        self.row_bg_color = th.get_color(th.BACKGROUND_SECONDARY)
-        # Match the Weather widget's card/pill surface + border exactly.
-        if th.mode == 1:  # dark
-            self.card_color = [0.08, 0.10, 0.14, 1.0]
-            self.card_border_color = [1.0, 1.0, 1.0, 0.10]
-        else:             # light
-            self.card_color = [0.98, 0.98, 0.99, 1.0]
-            self.card_border_color = [0.0, 0.0, 0.0, 0.10]
+        # A subtle row background derived from the raised surface.
+        self.row_bg_color = th.get_color(th.BACKGROUND_SURFACE)
+        # Match the Weather widget's card/pill surface + border (theme tokens,
+        # so the bell badge tracks light/dark and any custom theme.ini).
+        self.card_color        = th.get_color(th.BACKGROUND_SURFACE)
+        self.card_border_color = th.get_color(th.BACKGROUND_BORDER)
+
+    def on_config_update(self, config):
+        """Re-theme on a live settings/theme change (cascaded from the host
+        screen's on_config_update). Rebuilds rows so existing notifications pick
+        up the new palette (rows receive colors at construction)."""
+        self._apply_theme()
+        try:
+            self._rebuild_rows()
+        except Exception:
+            pass
 
     # ── persistence ─────────────────────────────────────────────────────────────
 

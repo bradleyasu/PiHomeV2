@@ -53,7 +53,7 @@ class PiHoleScreen(PiHomeScreen):
         self.header_color = theme.get_color(theme.BACKGROUND_SECONDARY)
         self.text_color   = theme.get_color(theme.TEXT_PRIMARY)
         self.muted_color  = theme.get_color(theme.TEXT_SECONDARY)
-        self.accent_color = theme.get_color(theme.ALERT_INFO)
+        self.accent_color = theme.get_color(theme.ACCENT_PRIMARY)
         hc = self.header_color
         self.card_color   = (hc[0], hc[1], hc[2], 0.85)
 

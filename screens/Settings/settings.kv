@@ -9,8 +9,8 @@
 <PiTextInput>:
     background_normal: ''
     background_active: ''
-    cursor_color: 0.737, 0.384, 0.251, 1
-    foreground_color: 1, 1, 1, 1
+    # foreground/cursor colors are theme-driven in PiTextInput._apply_theme();
+    # instance bindings (e.g. a row's foreground_color: root.text_color) win.
     font_name: 'Nunito'
     font_size: '13sp'
     padding: [dp(10), dp(9)]
@@ -121,7 +121,7 @@
         font_name: 'Nunito'
         font_size: '13sp'
         foreground_color: root.text_color
-        background_color: root.muted_color[0]*0.15, root.muted_color[1]*0.15, root.muted_color[2]*0.15, 1
+        background_color: root.text_color[0], root.text_color[1], root.text_color[2], 0.10
         cursor_color: root.accent_color
         on_text: root.value = self.text
 
@@ -174,7 +174,7 @@
         font_name: 'Nunito'
         font_size: '13sp'
         foreground_color: root.text_color
-        background_color: root.muted_color[0]*0.15, root.muted_color[1]*0.15, root.muted_color[2]*0.15, 1
+        background_color: root.text_color[0], root.text_color[1], root.text_color[2], 0.10
         cursor_color: root.accent_color
         input_filter: 'float'
         on_text: root.value = self.text
@@ -352,7 +352,7 @@
                 pos_hint: {'center_y': 0.5}
                 canvas.before:
                     Color:
-                        rgba: 1, 1, 1, 0.07
+                        rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
                     RoundedRectangle:
                         pos:  self.pos
                         size: self.size

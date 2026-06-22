@@ -6,6 +6,7 @@ from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from theme.theme import Theme
 
 from components.Msgbox.msgbox import MSGBOX_FACTORY
 from services.timers.timer import Timer
@@ -13,7 +14,7 @@ from services.timers.timer import Timer
 Builder.load_file("./components/PihomeTimer/pihometimer.kv")
 
 # Cool-blue accent, shifts to amber / red as time runs out
-_ACCENT_NORMAL = [0.39, 0.71, 1.00, 1.0]
+_ACCENT_NORMAL = list(Theme().get_color(Theme().ACCENT_PRIMARY))
 _ACCENT_WARN   = [1.00, 0.60, 0.20, 1.0]   # < 60 s
 _ACCENT_URGENT = [1.00, 0.28, 0.28, 1.0]   # < 15 s
 

@@ -9,7 +9,7 @@
             angle: root.top_angle
             origin: (self.x + dp(20), self.y + dp(36.5) + root.top_y_offset, 0)
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: root.bar_color
         RoundedRectangle:
             pos: self.x + dp(6), self.y + dp(35) + root.top_y_offset
             size: dp(28), dp(3)
@@ -18,7 +18,7 @@
 
         # ── Middle bar — fades out when open
         Color:
-            rgba: 1, 1, 1, root.mid_opacity
+            rgba: root.bar_color[0], root.bar_color[1], root.bar_color[2], root.mid_opacity
         RoundedRectangle:
             pos: self.x + dp(6), self.y + dp(24)
             size: dp(28), dp(3)
@@ -30,7 +30,7 @@
             angle: root.bottom_angle
             origin: (self.x + dp(20), self.y + dp(14.5) + root.bottom_y_offset, 0)
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: root.bar_color
         RoundedRectangle:
             pos: self.x + dp(6), self.y + dp(13) + root.bottom_y_offset
             size: dp(28), dp(3)

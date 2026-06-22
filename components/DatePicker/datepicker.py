@@ -15,6 +15,7 @@ from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ColorProperty, NumericProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from theme.theme import Theme
 from util.phlog import PIHOME_LOGGER
 
 Builder.load_file("./components/DatePicker/datepicker.kv")
@@ -25,7 +26,7 @@ class DatePickerColumn(BoxLayout):
 
     col_label     = StringProperty("")
     display_value = StringProperty("01")
-    accent_color  = ColorProperty([0.39, 0.71, 1.0,  1.0])
+    accent_color  = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     text_color    = ColorProperty([1.0,  1.0,  1.0,  0.9])
     muted_color   = ColorProperty([1.0,  1.0,  1.0,  0.4])
 
@@ -85,7 +86,7 @@ class DatePicker(BoxLayout):
     Pi-safe: no KV canvas blocks, drawing is minimal (label-only).
     """
 
-    accent_color = ColorProperty([0.39, 0.71, 1.0,  1.0])
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     text_color   = ColorProperty([1.0,  1.0,  1.0,  0.9])
     muted_color  = ColorProperty([1.0,  1.0,  1.0,  0.4])
 

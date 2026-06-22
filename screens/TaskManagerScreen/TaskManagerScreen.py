@@ -4,6 +4,7 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.properties import ColorProperty, NumericProperty
+from theme.theme import Theme
 
 from components.Msgbox.msgbox import MSGBOX_FACTORY, MSGBOX_TYPES, MSGBOX_BUTTONS
 from interface.pihomescreen import PiHomeScreen
@@ -46,7 +47,7 @@ class TaskManagerScreen(PiHomeScreen):
     card_color   = ColorProperty([0.11, 0.14, 0.20, 1.0])
     text_color   = ColorProperty([1.0,  1.0,  1.0,  0.90])
     muted_color  = ColorProperty([1.0,  1.0,  1.0,  0.40])
-    accent_color = ColorProperty([0.39, 0.71, 1.00, 1.0])
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     task_count   = NumericProperty(0)
 
     _panel_open    = False

@@ -28,9 +28,9 @@ class NowPlayingWidget(Widget):
     # Theme colors
     text_color = ColorProperty(_theme.get_color(_theme.TEXT_PRIMARY))
     muted_color = ColorProperty(_theme.get_color(_theme.TEXT_SECONDARY))
-    album_color = ColorProperty([1, 1, 1, 0.3])
-    card_color = ColorProperty([0.10, 0.10, 0.14, 0.85])
-    art_bg_color = ColorProperty([1, 1, 1, 0.06])
+    album_color = ColorProperty(list(_theme.get_color(_theme.TEXT_SECONDARY))[:3] + [0.3])
+    card_color = ColorProperty(list(_theme.get_color(_theme.BACKGROUND_SECONDARY))[:3] + [0.85])
+    art_bg_color = ColorProperty(list(_theme.get_color(_theme.TEXT_PRIMARY))[:3] + [0.06])
 
     def update_data(self, airplay):
         """Update widget from an AirPlay service instance."""

@@ -40,7 +40,7 @@ class TaskScreen(PiHomeScreen):
         t = Theme()
         if task.priority == TaskPriority.LOW:
             self.background    = t.get_color(t.ALERT_INFO, 0.55)
-            self.accent_color  = t.get_color(t.ALERT_INFO)
+            self.accent_color  = t.get_color(t.ACCENT_PRIMARY)
             self.priority_label = "NOTIFICATION"
         elif task.priority == TaskPriority.MEDIUM:
             self.background    = t.get_color(t.ALERT_WARNING, 0.55)

@@ -309,11 +309,13 @@ class SettingsScreen(PiHomeScreen):
         self.header_color = theme.get_color(t.Theme.BACKGROUND_SECONDARY)
         self.text_color   = theme.get_color(t.Theme.TEXT_PRIMARY)
         self.muted_color  = theme.get_color(t.Theme.TEXT_SECONDARY)
-        self.accent_color = theme.get_color(t.Theme.ALERT_INFO)
-        hc = self.header_color
-        self.sidebar_color = (hc[0] * 0.80, hc[1] * 0.80, hc[2] * 0.80, 1.0)
-        self.divider_color = (hc[0] * 0.60, hc[1] * 0.60, hc[2] * 0.60, 1.0)
-        self.row_bg_color  = (hc[0], hc[1], hc[2], 0.7)
+        self.accent_color = theme.get_color(t.Theme.ACCENT_PRIMARY)
+        # Mode-correct elevation from explicit surface/border tokens (matches
+        # the base PiHomeScreen.on_config_update so reloads stay consistent).
+        surface = theme.get_color(t.Theme.BACKGROUND_SURFACE)
+        self.sidebar_color = theme.get_color(t.Theme.BACKGROUND_SECONDARY)
+        self.divider_color = theme.get_color(t.Theme.BACKGROUND_BORDER)
+        self.row_bg_color  = (surface[0], surface[1], surface[2], 0.7)
 
         config = ConfigParser()
         config.read(CONF_FILE)

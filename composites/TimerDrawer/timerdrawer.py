@@ -14,6 +14,7 @@ from kivy.uix.boxlayout import BoxLayout
 from components.PihomeTimer.pihometimer import PiHomeTimer
 from services.audio.sfx import SFX
 from services.timers.timer import Timer
+from theme.theme import Theme
 from util.phlog import PIHOME_LOGGER
 
 Builder.load_file("./composites/TimerDrawer/timerdrawer.kv")
@@ -35,15 +36,29 @@ class TimerDrawer(BoxLayout):
 
     expanded = BooleanProperty(False)
 
-    # ── palette ───────────────────────────────────────────────────────────────
-    bg_color     = ColorProperty([0.08, 0.09, 0.13, 0.94])
-    row_bg_color = ColorProperty([0.11, 0.13, 0.18, 0.97])
-    accent_color = ColorProperty([0.39, 0.71, 1.00, 1.00])
-    text_color   = ColorProperty([1.00, 1.00, 1.00, 0.90])
-    muted_color  = ColorProperty([1.00, 1.00, 1.00, 0.40])
+    # ── palette (applied from theme tokens in _apply_theme; defaults token-derived) ──
+    bg_color     = ColorProperty(Theme().get_color(Theme().BACKGROUND_PRIMARY))
+    row_bg_color = ColorProperty(Theme().get_color(Theme().BACKGROUND_SURFACE))
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
+    text_color   = ColorProperty(Theme().get_color(Theme().TEXT_PRIMARY))
+    muted_color  = ColorProperty(Theme().get_color(Theme().TEXT_SECONDARY))
+
+    def _apply_theme(self):
+        th = Theme()
+        # Drawer/pill sits over content, so keep a slight translucency.
+        bg = th.get_color(th.BACKGROUND_PRIMARY)
+        self.bg_color     = [bg[0], bg[1], bg[2], 0.94]
+        self.row_bg_color = th.get_color(th.BACKGROUND_SURFACE)
+        self.accent_color = th.get_color(th.ACCENT_PRIMARY)
+        self.text_color   = th.get_color(th.TEXT_PRIMARY)
+        self.muted_color  = th.get_color(th.TEXT_SECONDARY)
+
+    def on_config_update(self, config=None):
+        self._apply_theme()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._apply_theme()
         self.orientation = 'vertical'
         self.size_hint   = (None, None)
         self.width       = dp(360)

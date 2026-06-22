@@ -377,6 +377,22 @@ class PiTextInput(TextInput):
 
     _active_input = None   # class-level ref to the currently focused instance
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._apply_theme()
+
+    def _apply_theme(self):
+        """Theme-aware text/cursor colors so fields are readable in light and
+        dark. Instance-level KV (e.g. a row binding foreground_color to a theme
+        property) still overrides this."""
+        th = Theme()
+        self.foreground_color = th.get_color(th.TEXT_PRIMARY)
+        self.cursor_color = th.get_color(th.ACCENT_PRIMARY)
+        self.hint_text_color = th.get_color(th.TEXT_SECONDARY)
+
+    def on_config_update(self, config=None):
+        self._apply_theme()
+
     def _bind_keyboard(self):
         if _IS_PI:
             return   # suppress Kivy's keyboard on Pi

@@ -34,7 +34,7 @@ class HaListenerRow(BoxLayout):
     action_label  = StringProperty("")   # e.g. "→ execute alert"
     text_color    = ColorProperty([1, 1, 1, 0.9])
     muted_color   = ColorProperty([1, 1, 1, 0.4])
-    accent_color  = ColorProperty([0.39, 0.71, 1.0, 1.0])
+    accent_color  = ColorProperty([0.737, 0.384, 0.251, 1.0])
     on_delete_cb  = ObjectProperty(None, allownone=True)
 
     def __init__(self, **kwargs):
@@ -53,7 +53,8 @@ class HaListenerRow(BoxLayout):
         self.bind(accent_color=lambda *a: setattr(self._strip_color, 'rgba', self.accent_color))
 
         with self.canvas.after:
-            self._sep_color = Color(1, 1, 1, 0.06)
+            tc = self.text_color
+            self._sep_color = Color(tc[0], tc[1], tc[2], 0.06)
             self._sep_rect  = Rectangle(pos=(self.x, self.y), size=(self.width, dp(1)))
         self.bind(pos=self._update_sep, size=self._update_sep)
 
@@ -102,7 +103,7 @@ class HomeAssistantScreen(PiHomeScreen):
         self.bg_color     = theme.get_color(t.Theme.BACKGROUND_PRIMARY)
         self.header_color = theme.get_color(t.Theme.BACKGROUND_SECONDARY)
         self.text_color   = theme.get_color(t.Theme.TEXT_PRIMARY)
-        self.accent_color = theme.get_color(t.Theme.ALERT_INFO)
+        self.accent_color = theme.get_color(t.Theme.ACCENT_PRIMARY)
 
         self._card_registry: dict = {}
         self._focusable_cards: list = []   # ordered flat list for rotary navigation

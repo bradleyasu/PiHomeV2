@@ -3,6 +3,7 @@ import time
 
 from kivy.clock import Clock
 from kivy.lang import Builder
+from theme.theme import Theme
 from kivy.properties import (
     BooleanProperty, ColorProperty, NumericProperty, StringProperty,
 )
@@ -47,7 +48,7 @@ class EmporiumPowerScreen(PiHomeScreen):
     header_color = ColorProperty([0.14, 0.14, 0.16, 1])
     text_color   = ColorProperty([1, 1, 1, 1])
     muted_color  = ColorProperty([1, 1, 1, 0.45])
-    accent_color = ColorProperty([0.25, 0.52, 1.0, 1])
+    accent_color = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     status_color = ColorProperty(_STATUS_IDLE)
     card_color   = ColorProperty([0.14, 0.14, 0.16, 0.85])
 
@@ -299,7 +300,7 @@ class EmporiumPowerScreen(PiHomeScreen):
     def _apply_theme_to_children(self, *_):
         if self.ids.get("chart") is not None:
             self.ids.chart.bar_color = self.accent_color
-            self.ids.chart.axis_color = (1, 1, 1, 0.18)
+            self.ids.chart.axis_color = (self.text_color[0], self.text_color[1], self.text_color[2], 0.18)
             self.ids.chart.label_color = self.muted_color
         if self._stepper is not None:
             self._stepper.accent_color = self.accent_color

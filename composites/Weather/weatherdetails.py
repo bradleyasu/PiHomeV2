@@ -21,9 +21,10 @@ class WeatherDetails(Widget):
     background = ColorProperty(theme.get_color(theme.BACKGROUND_PRIMARY))
     blur = StringProperty(get_semi_transparent_gaussian_blur_png_from_color(theme.get_color(theme.BACKGROUND_PRIMARY), True))
 
-    # Theme-aware card surfaces
-    card_bg_color     = ColorProperty([1.0, 1.0, 1.0, 0.07] if theme.mode == 1 else [0.0, 0.0, 0.0, 0.05])
-    card_border_color = ColorProperty([1.0, 1.0, 1.0, 0.04] if theme.mode == 1 else [0.0, 0.0, 0.0, 0.07])
+    # Theme-aware card surfaces (proper values applied in __init__ /
+    # on_config_update via _apply_theme_colors).
+    card_bg_color     = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
+    card_border_color = ColorProperty(theme.get_color(theme.BACKGROUND_BORDER))
 
     day = StringProperty("--")
     temp = StringProperty("--")
@@ -69,14 +70,7 @@ class WeatherDetails(Widget):
     def __init__(self, details = {}, **kwargs):
         super(WeatherDetails, self).__init__(**kwargs)
         # Re-evaluate colors at instance creation so theme mode is current
-        t = Theme()
-        self.text_color = t.get_color(t.TEXT_PRIMARY)
-        if t.mode == 1:
-            self.card_bg_color     = [1.0, 1.0, 1.0, 0.07]
-            self.card_border_color = [1.0, 1.0, 1.0, 0.04]
-        else:
-            self.card_bg_color     = [0.0, 0.0, 0.0, 0.05]
-            self.card_border_color = [0.0, 0.0, 0.0, 0.07]
+        self._apply_theme_colors()
         self.details = details
         self.parseDetails()
         self._parse_event = Clock.schedule_interval(lambda _: self.parseDetails(), 1)
@@ -101,14 +95,16 @@ class WeatherDetails(Widget):
             self._parse_event = None
 
     def on_config_update(self, config=None):
+        self._apply_theme_colors()
+
+    def _apply_theme_colors(self):
+        """Surfaces from theme tokens; the card tint is built from text_color at
+        low alpha so it inverts correctly between light and dark."""
         t = Theme()
         self.text_color = t.get_color(t.TEXT_PRIMARY)
-        if t.mode == 1:
-            self.card_bg_color     = [1.0, 1.0, 1.0, 0.07]
-            self.card_border_color = [1.0, 1.0, 1.0, 0.04]
-        else:
-            self.card_bg_color     = [0.0, 0.0, 0.0, 0.05]
-            self.card_border_color = [0.0, 0.0, 0.0, 0.07]
+        tc = self.text_color
+        self.card_bg_color     = [tc[0], tc[1], tc[2], 0.06]
+        self.card_border_color = list(t.get_color(t.BACKGROUND_BORDER))
 
     
     def parseDetails(self):

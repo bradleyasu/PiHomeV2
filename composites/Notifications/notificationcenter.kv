@@ -52,7 +52,7 @@
             text: ""
             font_name: "MaterialIcons"
             font_size: sp(26)
-            color: 1, 1, 1, 1
+            color: root.text_color
             size_hint: None, None
             size: self.parent.size
             pos: self.parent.pos
@@ -123,7 +123,7 @@
                     pos: self.pos
                     size: self.size
                 Color:
-                    rgba: 1, 1, 1, 0.06
+                    rgba: root.card_border_color
                 Rectangle:
                     pos: self.x, self.y
                     size: self.width, dp(1)
@@ -154,7 +154,7 @@
                 on_release: root.close_panel()
                 canvas.before:
                     Color:
-                        rgba: 1, 1, 1, 0.07
+                        rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
                     Ellipse:
                         pos: self.x + dp(2), self.y + dp(2)
                         size: self.width - dp(4), self.height - dp(4)
@@ -197,7 +197,7 @@
             padding: dp(12), dp(8)
             canvas.before:
                 Color:
-                    rgba: 1, 1, 1, 0.06
+                    rgba: root.card_border_color
                 Rectangle:
                     pos: self.x, self.top - dp(1)
                     size: self.width, dp(1)

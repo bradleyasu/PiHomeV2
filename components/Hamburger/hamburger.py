@@ -1,8 +1,10 @@
 from kivy.lang import Builder
-from kivy.properties import BooleanProperty, NumericProperty
+from kivy.properties import BooleanProperty, ColorProperty, NumericProperty
 from kivy.animation import Animation
 from kivy.uix.widget import Widget
 from kivy.metrics import dp
+
+from theme.theme import Theme
 
 Builder.load_file("./components/Hamburger/hamburger.kv")
 
@@ -15,12 +17,23 @@ class Hamburger(Widget):
     bottom_y_offset = NumericProperty(0)
     mid_opacity     = NumericProperty(1)
 
+    # Bar color — theme text color so the button is visible over the themed
+    # header in both light and dark modes.
+    bar_color = ColorProperty(Theme().get_color(Theme().TEXT_PRIMARY))
+
     is_open = BooleanProperty(False)
     _disabled = BooleanProperty(False)
     event_handler = None
 
     def __init__(self, **kwargs):
         super(Hamburger, self).__init__(**kwargs)
+        self._apply_theme()
+
+    def _apply_theme(self):
+        self.bar_color = Theme().get_color(Theme().TEXT_PRIMARY)
+
+    def on_config_update(self, config=None):
+        self._apply_theme()
 
     def disable(self):
         """Hide and disable the hamburger button."""

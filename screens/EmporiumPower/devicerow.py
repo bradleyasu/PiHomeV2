@@ -6,6 +6,7 @@ from kivy.properties import (
 )
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
+from theme.theme import Theme
 
 _ROW_H = dp(46)
 
@@ -24,7 +25,7 @@ class DeviceRow(Widget):
 
     text_color    = ColorProperty([1, 1, 1, 0.92])
     muted_color   = ColorProperty([1, 1, 1, 0.45])
-    accent_color  = ColorProperty([0.25, 0.52, 1.0, 1])
+    accent_color  = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     divider_color = ColorProperty([1, 1, 1, 0.07])
 
     def __init__(self, **kwargs):

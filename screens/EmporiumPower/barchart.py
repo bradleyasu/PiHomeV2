@@ -3,6 +3,7 @@ from kivy.graphics import Color as KColor, Rectangle
 from kivy.metrics import dp, sp
 from kivy.properties import ColorProperty, ListProperty
 from kivy.uix.widget import Widget
+from theme.theme import Theme
 
 
 class BarChart(Widget):
@@ -15,7 +16,7 @@ class BarChart(Widget):
     data   = ListProperty([])   # list of floats (kWh per day)
     labels = ListProperty([])   # list of short x-axis date strings, same length as data
 
-    bar_color   = ColorProperty([0.25, 0.52, 1.0, 1])
+    bar_color   = ColorProperty(Theme().get_color(Theme().ACCENT_PRIMARY))
     axis_color  = ColorProperty([1, 1, 1, 0.18])
     label_color = ColorProperty([1, 1, 1, 0.45])
 

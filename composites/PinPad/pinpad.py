@@ -27,7 +27,7 @@ class PinPad(Widget):
     y_position = NumericProperty(0)
     code = StringProperty()
 
-    dot_empty_color  = ColorProperty([1, 1, 1, 0.25])
+    dot_empty_color  = ColorProperty(list(Theme().get_color(Theme().TEXT_PRIMARY))[:3] + [0.25])
     dot_filled_color = ColorProperty(Theme().get_color(Theme().BUTTON_PRIMARY))
 
     pin_one   = NumericProperty(0)

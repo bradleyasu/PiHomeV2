@@ -43,11 +43,14 @@ class NotificationRow(ButtonBehavior, BoxLayout):
     glyph       = StringProperty(_DEFAULT_GLYPH)
     has_icon    = BooleanProperty(False)
 
-    glyph_color = ColorProperty([0.25, 0.52, 1.0, 1])
-    text_color  = ColorProperty([1, 1, 1, 1])
-    muted_color = ColorProperty([1, 1, 1, 0.5])
-    row_bg_color = ColorProperty([1, 1, 1, 0.06])
-    danger_color = ColorProperty([0.90, 0.30, 0.30, 1])
+    # Defaults derived from the active theme; the parent center also passes
+    # live colors at construction (and rebuilds rows on theme change).
+    _theme = Theme()
+    glyph_color = ColorProperty(_theme.get_color(_theme.ALERT_INFO))
+    text_color  = ColorProperty(_theme.get_color(_theme.TEXT_PRIMARY))
+    muted_color = ColorProperty(_theme.get_color(_theme.TEXT_SECONDARY))
+    row_bg_color = ColorProperty(_theme.get_color(_theme.BACKGROUND_SURFACE))
+    danger_color = ColorProperty(_theme.get_color(_theme.BUTTON_DANGER))
 
     def __init__(self, notification, text_color=None, muted_color=None,
                  row_bg_color=None, danger_color=None, **kwargs):
