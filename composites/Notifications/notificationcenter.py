@@ -114,6 +114,7 @@ class NotificationCenter(FloatLayout):
             PIHOME_LOGGER.error(f"NotificationCenter: save failed: {e}")
 
     def on_parent(self, instance, value):
+        pass
         # if value is None:
         #     return
         # self._load()
