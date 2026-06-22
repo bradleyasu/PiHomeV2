@@ -60,7 +60,7 @@ class NotificationCenter(FloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.size_hint = (1, 1)
+        # self.size_hint = (1, 1)
         self.pos = (0, 0)
         self._notifications = []          # list of notification dicts
         # The badge stays hidden until the Home startup animation finishes
