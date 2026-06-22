@@ -114,18 +114,17 @@ class NotificationCenter(FloatLayout):
             PIHOME_LOGGER.error(f"NotificationCenter: save failed: {e}")
 
     def on_parent(self, instance, value):
-        pass
-        # if value is None:
-        #     return
-        # self._load()
-        # # ids are available once the KV rule has been applied.
-        # Clock.schedule_once(lambda dt: self._refresh(), 0)
-        # # Defensive last-resort only: the badge reveal is normally driven by the
-        # # Home startup hook (HomeScreen._after_logo -> on_startup_complete). This
-        # # timer is deliberately long so it can NEVER race with / fire during the
-        # # ~11s logo intro; on_startup_complete is idempotent so if the hook
-        # # already ran this is a no-op.
-        # Clock.schedule_once(lambda dt: self._startup_fallback(), 30)
+        if value is None:
+            return
+        self._load()
+        # ids are available once the KV rule has been applied.
+        Clock.schedule_once(lambda dt: self._refresh(), 0)
+        # Defensive last-resort only: the badge reveal is normally driven by the
+        # Home startup hook (HomeScreen._after_logo -> on_startup_complete). This
+        # timer is deliberately long so it can NEVER race with / fire during the
+        # ~11s logo intro; on_startup_complete is idempotent so if the hook
+        # already ran this is a no-op.
+        Clock.schedule_once(lambda dt: self._startup_fallback(), 30)
 
     # ── public API (called by NotificationEvent) ────────────────────────────────
 
