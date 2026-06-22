@@ -135,7 +135,9 @@ class PiHome(App):
 
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.add_widget(TIMER_DRAWER)
-        self.layout.add_widget(NOTIFICATION_CENTER)
+        # NOTIFICATION_CENTER is mounted INSIDE HomeScreen (see screens/Home/home.py),
+        # not at the app root — its ScrollView only renders correctly within a
+        # Screen's stencil-buffered Fbo on the Pi.
         self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager

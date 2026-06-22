@@ -23,29 +23,29 @@
         pos: root.width - self.width - dp(16), dp(16)
         opacity: 0
 
-        canvas.before:
-            # Scale the whole badge (incl. children) from its center for the
-            # reveal "pop"; PopMatrix is in canvas.after.
-            PushMatrix
-            Scale:
-                origin: self.center
-                x: root.badge_scale
-                y: root.badge_scale
-            Color:
-                rgba: root.card_color
-            Ellipse:
-                pos: self.pos
-                size: self.size
-            # Border matching the Weather widget card
-            Color:
-                rgba: root.card_border_color
-            Line:
-                ellipse: self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2)
-                width: 1.2
-            Color:
-                rgba: 1, 1, 1, 1
-        canvas.after:
-            PopMatrix
+        # canvas.before:
+        #     # Scale the whole badge (incl. children) from its center for the
+        #     # reveal "pop"; PopMatrix is in canvas.after.
+        #     PushMatrix
+        #     Scale:
+        #         origin: self.center
+        #         x: root.badge_scale
+        #         y: root.badge_scale
+        #     Color:
+        #         rgba: root.card_color
+        #     Ellipse:
+        #         pos: self.pos
+        #         size: self.size
+        #     # Border matching the Weather widget card
+        #     Color:
+        #         rgba: root.card_border_color
+        #     Line:
+        #         ellipse: self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2)
+        #         width: 1.2
+        #     Color:
+        #         rgba: 1, 1, 1, 1
+        # canvas.after:
+        #     PopMatrix
 
         # Bell glyph
         Label:

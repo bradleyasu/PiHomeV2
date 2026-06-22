@@ -83,6 +83,15 @@ class HomeScreen(PiHomeScreen):
         self.size = App.get_running_app().get_size()
         self.on_gesture = self.handle_gesture
 
+        # Mount the notification overlay INSIDE this screen (not at the app root).
+        # The ScreenManager renders each Screen through an Fbo created with
+        # `with_stencilbuffer=True`, so a ScrollView's stencil clipping works in
+        # here. At the app-root / window-framebuffer level the Pi's GL ES 2.0
+        # stencil path is broken and the whole screen renders black.
+        from composites.Notifications.notificationcenter import NOTIFICATION_CENTER
+        if NOTIFICATION_CENTER.parent is None:
+            self.add_widget(NOTIFICATION_CENTER)
+
 
     def on_enter(self, *args):
         if self.is_first_run is True:
