@@ -3,3 +3,85 @@
 #:import sp kivy.metrics.sp
 
 <NotificationCenter>:
+
+    # ── Dim backdrop (only visible while the panel is open) ─────────────────────
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, root.dim_opacity
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        # Reset GL color state for Pi's OpenGL ES 2.0 batcher.
+        Color:
+            rgba: 1, 1, 1, 1
+
+    # ── Bell badge (bottom-right, app-wide) ─────────────────────────────────────
+    FloatLayout:
+        id: badge
+        size_hint: None, None
+        size: dp(56), dp(56)
+        pos: root.width - self.width - dp(16), dp(16)
+        opacity: 0
+
+        canvas.before:
+            # Scale the whole badge (incl. children) from its center for the
+            # reveal "pop"; PopMatrix is in canvas.after.
+            PushMatrix
+            Scale:
+                origin: self.center
+                x: root.badge_scale
+                y: root.badge_scale
+            Color:
+                rgba: root.card_color
+            Ellipse:
+                pos: self.pos
+                size: self.size
+            # Border matching the Weather widget card
+            Color:
+                rgba: root.card_border_color
+            Line:
+                ellipse: self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2)
+                width: 1.2
+            Color:
+                rgba: 1, 1, 1, 1
+        canvas.after:
+            PopMatrix
+
+        # Bell glyph
+        Label:
+            text: ""
+            font_name: "MaterialIcons"
+            font_size: sp(26)
+            color: 1, 1, 1, 1
+            size_hint: None, None
+            size: self.parent.size
+            pos: self.parent.pos
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+        # Count bubble (top-right of the bell)
+        FloatLayout:
+            size_hint: None, None
+            size: dp(22), dp(22)
+            pos: self.parent.right - self.width + dp(2), self.parent.top - self.height + dp(2)
+            canvas.before:
+                Color:
+                    rgba: root.danger_color
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 1, 1, 1, 1
+            Label:
+                text: root.count_label
+                font_name: "Nunito"
+                bold: True
+                font_size: sp(11)
+                color: 1, 1, 1, 1
+                size_hint: None, None
+                size: self.parent.size
+                pos: self.parent.pos
+                halign: "center"
+                valign: "middle"
+                text_size: self.size
