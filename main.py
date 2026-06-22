@@ -21,6 +21,7 @@ from networking.poller import POLLER
 from services.homeassistant.homeassistant import HOME_ASSISTANT
 from kivy.graphics import Line
 from composites.TimerDrawer.timerdrawer import TIMER_DRAWER
+from composites.Notifications.notificationcenter import NOTIFICATION_CENTER
 from services.taskmanager.taskmanager import TASK_MANAGER
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from components.Hamburger.hamburger import Hamburger
@@ -134,6 +135,7 @@ class PiHome(App):
 
         self.layout.add_widget(PIHOME_SCREEN_MANAGER)
         self.layout.add_widget(TIMER_DRAWER)
+        self.layout.add_widget(NOTIFICATION_CENTER)
         self.layout.add_widget(self.menu_button)
 
         # Startup TaskManager

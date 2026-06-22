@@ -182,6 +182,12 @@ class HomeScreen(PiHomeScreen):
                 get_app().menu_button.enable()
             except Exception:
                 pass
+            # Pop the notification badge in alongside the other controls
+            try:
+                from composites.Notifications.notificationcenter import NOTIFICATION_CENTER
+                Clock.schedule_once(lambda _: NOTIFICATION_CENTER.on_startup_complete(), 0.6)
+            except Exception:
+                pass
 
         logo_exit.bind(on_complete=_after_logo)
         logo_exit.start(self)
