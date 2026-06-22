@@ -5,83 +5,221 @@
 <NotificationCenter>:
 
     # ── Dim backdrop (only visible while the panel is open) ─────────────────────
-    canvas.before:
-        Color:
-            rgba: 0, 0, 0, root.dim_opacity
-        Rectangle:
-            pos: self.pos
-            size: self.size
-        # Reset GL color state for Pi's OpenGL ES 2.0 batcher.
-        Color:
-            rgba: 1, 1, 1, 1
+    # canvas.before:
+    #     Color:
+    #         rgba: 0, 0, 0, root.dim_opacity
+    #     Rectangle:
+    #         pos: self.pos
+    #         size: self.size
+    #     # Reset GL color state for Pi's OpenGL ES 2.0 batcher.
+    #     Color:
+    #         rgba: 1, 1, 1, 1
 
     # ── Bell badge (bottom-right, app-wide) ─────────────────────────────────────
-    FloatLayout:
-        id: badge
-        size_hint: None, None
-        size: dp(56), dp(56)
-        pos: root.width - self.width - dp(16), dp(16)
-        opacity: 0
+    # FloatLayout:
+    #     id: badge
+    #     size_hint: None, None
+    #     size: dp(56), dp(56)
+    #     pos: root.width - self.width - dp(16), dp(16)
+    #     opacity: 0
+
+    #     canvas.before:
+    #         # Scale the whole badge (incl. children) from its center for the
+    #         # reveal "pop"; PopMatrix is in canvas.after.
+    #         PushMatrix
+    #         Scale:
+    #             origin: self.center
+    #             x: root.badge_scale
+    #             y: root.badge_scale
+    #         Color:
+    #             rgba: root.card_color
+    #         Ellipse:
+    #             pos: self.pos
+    #             size: self.size
+    #         # Border matching the Weather widget card
+    #         Color:
+    #             rgba: root.card_border_color
+    #         Line:
+    #             ellipse: self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2)
+    #             width: 1.2
+    #         Color:
+    #             rgba: 1, 1, 1, 1
+    #     canvas.after:
+    #         PopMatrix
+
+    #     # Bell glyph
+    #     Label:
+    #         text: ""
+    #         font_name: "MaterialIcons"
+    #         font_size: sp(26)
+    #         color: 1, 1, 1, 1
+    #         size_hint: None, None
+    #         size: self.parent.size
+    #         pos: self.parent.pos
+    #         halign: "center"
+    #         valign: "middle"
+    #         text_size: self.size
+
+    #     # Count bubble (top-right of the bell)
+    #     FloatLayout:
+    #         size_hint: None, None
+    #         size: dp(22), dp(22)
+    #         pos: self.parent.right - self.width + dp(2), self.parent.top - self.height + dp(2)
+    #         canvas.before:
+    #             Color:
+    #                 rgba: root.danger_color
+    #             Ellipse:
+    #                 pos: self.pos
+    #                 size: self.size
+    #             Color:
+    #                 rgba: 1, 1, 1, 1
+    #         Label:
+    #             text: root.count_label
+    #             font_name: "Nunito"
+    #             bold: True
+    #             font_size: sp(11)
+    #             color: 1, 1, 1, 1
+    #             size_hint: None, None
+    #             size: self.parent.size
+    #             pos: self.parent.pos
+    #             halign: "center"
+    #             valign: "middle"
+    #             text_size: self.size
+
+    # # ── Slide-in panel ──────────────────────────────────────────────────────────
+    BoxLayout:
+        id: panel
+        orientation: "vertical"
+        size_hint: None, 1
+        width: root.panel_width
+        x: root.panel_x
+        y: 0
 
         canvas.before:
-            # Scale the whole badge (incl. children) from its center for the
-            # reveal "pop"; PopMatrix is in canvas.after.
-            PushMatrix
-            Scale:
-                origin: self.center
-                x: root.badge_scale
-                y: root.badge_scale
             Color:
-                rgba: root.card_color
-            Ellipse:
+                rgba: root.bg_color
+            Rectangle:
                 pos: self.pos
                 size: self.size
-            # Border matching the Weather widget card
+            # Left edge accent line
             Color:
-                rgba: root.card_border_color
-            Line:
-                ellipse: self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2)
-                width: 1.2
+                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.5
+            Rectangle:
+                pos: self.x, self.y
+                size: dp(2), self.height
             Color:
                 rgba: 1, 1, 1, 1
-        canvas.after:
-            PopMatrix
 
-        # Bell glyph
-        Label:
-            text: ""
-            font_name: "MaterialIcons"
-            font_size: sp(26)
-            color: 1, 1, 1, 1
-            size_hint: None, None
-            size: self.parent.size
-            pos: self.parent.pos
-            halign: "center"
-            valign: "middle"
-            text_size: self.size
-
-        # Count bubble (top-right of the bell)
-        FloatLayout:
-            size_hint: None, None
-            size: dp(22), dp(22)
-            pos: self.parent.right - self.width + dp(2), self.parent.top - self.height + dp(2)
+        # Header
+        BoxLayout:
+            size_hint_y: None
+            height: dp(52)
+            padding: dp(16), 0, dp(8), 0
+            spacing: dp(8)
             canvas.before:
                 Color:
-                    rgba: root.danger_color
-                Ellipse:
+                    rgba: root.header_color
+                Rectangle:
                     pos: self.pos
                     size: self.size
                 Color:
+                    rgba: 1, 1, 1, 0.06
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, dp(1)
+                Color:
                     rgba: 1, 1, 1, 1
+
             Label:
-                text: root.count_label
+                text: "Notifications"
                 font_name: "Nunito"
                 bold: True
-                font_size: sp(11)
-                color: 1, 1, 1, 1
-                size_hint: None, None
-                size: self.parent.size
-                pos: self.parent.pos
-                halign: "center"
+                font_size: sp(15)
+                color: root.text_color
+                halign: "left"
                 valign: "middle"
                 text_size: self.size
+
+            Button:
+                size_hint: None, None
+                size: dp(38), dp(38)
+                pos_hint: {"center_y": 0.5}
+                text: ""
+                font_name: "MaterialIcons"
+                font_size: sp(20)
+                color: root.muted_color
+                background_normal: ""
+                background_down: ""
+                background_color: 0, 0, 0, 0
+                on_release: root.close_panel()
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 0.07
+                    Ellipse:
+                        pos: self.x + dp(2), self.y + dp(2)
+                        size: self.width - dp(4), self.height - dp(4)
+                    Color:
+                        rgba: 1, 1, 1, 1
+
+        # Body: scrollable list + empty-state overlay
+        FloatLayout:
+            ScrollView:
+                size_hint: 1, 1
+                pos: self.parent.pos
+                do_scroll_x: False
+                bar_width: dp(3)
+                bar_color: root.accent_color
+                scroll_type: ["bars", "content"]
+
+                BoxLayout:
+                    id: rows_box
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(8), dp(8)
+                    spacing: dp(6)
+
+            Label:
+                text: "No notifications"
+                font_name: "Nunito"
+                font_size: sp(14)
+                color: root.muted_color
+                opacity: 0 if root.count > 0 else 1
+                size_hint: None, None
+                size: self.texture_size
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+        # Footer: Clear all (only when there are notifications)
+        BoxLayout:
+            size_hint_y: None
+            height: dp(52) if root.count > 0 else 0
+            opacity: 1 if root.count > 0 else 0
+            padding: dp(12), dp(8)
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 0.06
+                Rectangle:
+                    pos: self.x, self.top - dp(1)
+                    size: self.width, dp(1)
+                Color:
+                    rgba: 1, 1, 1, 1
+
+            Button:
+                text: "Clear all"
+                font_name: "Nunito"
+                bold: True
+                font_size: sp(13)
+                color: root.danger_color
+                background_normal: ""
+                background_down: ""
+                background_color: 0, 0, 0, 0
+                on_release: root.clear_all()
+                canvas.before:
+                    Color:
+                        rgba: root.danger_color[0], root.danger_color[1], root.danger_color[2], 0.12
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(8)]
+                    Color:
+                        rgba: 1, 1, 1, 1
