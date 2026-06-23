@@ -10,6 +10,7 @@
     "requires_pin": false,
     "index": 20,
     "icon": "screens/Nanoleaf/icon.png",
+    "dependencies": ["zeroconf==0.132.2"],
     "settings": [
         {
             "type": "title",

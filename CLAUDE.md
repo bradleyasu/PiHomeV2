@@ -34,7 +34,8 @@ Create the complete screen directory with all required files (see structure belo
 After creating the screen, remind them to:
 - Replace `icon.png` in the screen directory with their own 100x100px PNG icon
 - Configure any required settings (API keys, etc.) in the PiHome Settings panel
-- Install any pip dependencies if needed
+- Declare any pip dependencies in the manifest's `dependencies` array (see below) —
+  PiHome auto-installs missing ones at startup; no manual `pip install` needed
 
 ---
 
@@ -101,6 +102,37 @@ screens/
 | `settingsLabel` | string | Alternate label for Settings panel (defaults to `label`) |
 | `settingsIndex` | int | Settings panel sort order (default 9999) |
 | `disabled` | bool | If `true`, screen is not loaded at all |
+| `dependencies` | array | pip requirement strings for this screen's extra Python packages (see below) |
+
+### Screen Dependencies (`dependencies`)
+
+Declare any pip packages a screen needs beyond the core `requirements.txt`:
+
+```json
+"dependencies": ["zeroconf", "paho-mqtt==1.6.1"]
+```
+
+Entries are standard pip requirement specifiers (name, optional version pin/extras).
+At startup PiHome scans every non-disabled manifest and **auto-installs any declared
+dependency that isn't already present** (`util/dependencies.py`), so a screen is
+drop-in: copy the directory in, restart, and its deps install themselves.
+
+- Progress surfaces in the Notification Center: an "Installing dependencies"
+  notification appears, then updates in place to success or failure.
+- On Linux/Pi, pip runs with `--break-system-packages` automatically (omitted on macOS).
+- **A restart is required to use a newly installed dependency.** A running process
+  can't adopt a freshly pip-installed package (modules have already bound their
+  import fallbacks, and startup-service singletons hold stale references). So after
+  any successful install, a single batched "Restart required" notification appears —
+  tapping it restarts PiHome (`reboot`/`restart_pihome` event). Set
+  `[dependencies] auto_restart = 1` in `base.ini` to restart automatically instead
+  of prompting (useful for unattended kiosks). The flow is self-terminating: after
+  the restart the deps are present, so nothing reinstalls and no further prompt fires.
+- Screens should still **degrade gracefully** when a dep is missing (lazy-import it
+  inside methods and show a friendly message), since the install + restart happen
+  after startup.
+- Missing-package detection uses the *distribution* name (via `importlib.metadata`),
+  so pip-name vs import-name mismatches (e.g. `paho-mqtt` → `paho.mqtt`) are fine.
 
 ### Settings Types
 

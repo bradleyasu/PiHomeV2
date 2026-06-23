@@ -362,6 +362,12 @@ class PiHome(App):
         # self.profile.enable()
         SERVER.start_server()
 
+        # Detect and install any missing per-screen pip dependencies declared in
+        # screen manifests. Non-blocking (runs on its own daemon thread) and
+        # reports progress via the Notification Center.
+        from util.dependencies import ensure_screen_dependencies
+        ensure_screen_dependencies()
+
     def _init_mqtt(self):
         h = CONFIG.get('mqtt', 'host', "")
         u = CONFIG.get('mqtt', 'user_id', "")
