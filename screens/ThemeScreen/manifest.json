@@ -1,0 +1,14 @@
+{
+    "module": "ThemeScreen.themescreen",
+    "name": "ThemeScreenScreen",
+    "id": "_theme",
+    "label": "Themes",
+    "settingsLabel": "Themes",
+    "settingsIndex": 60,
+    "description": "Browse and apply visual themes that recolor PiHome instantly",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 60,
+    "icon": "screens/ThemeScreen/icon.png",
+    "settings": []
+}
