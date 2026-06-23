@@ -33,7 +33,6 @@ from handlers.PiHomeErrorHandler import PiHomeErrorHandler
 from networking.mqtt import MQTT
 
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE
-from services.emporia.emporia_service import EMPORIA_SERVICE
 import sys
 import kivy
 import platform
@@ -368,6 +367,12 @@ class PiHome(App):
         from util.dependencies import ensure_screen_dependencies
         ensure_screen_dependencies()
 
+        # Discover and start any per-screen background services declared in
+        # screen manifests (screens/<Name>/services/). Always-on at boot,
+        # independent of whether the user navigates to the owning screen.
+        from util.screen_services import load_screen_services
+        load_screen_services()
+
     def _init_mqtt(self):
         h = CONFIG.get('mqtt', 'host', "")
         u = CONFIG.get('mqtt', 'user_id', "")
@@ -402,6 +407,11 @@ class PiHome(App):
             SERVER.shutting_down = True
             if SERVER.httpd:
                 SERVER.httpd.shutdown()
+        except:
+            pass
+        try:
+            from util.screen_services import shutdown_screen_services
+            shutdown_screen_services()
         except:
             pass
     #     self.profile.disable()

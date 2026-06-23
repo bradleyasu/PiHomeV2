@@ -13,7 +13,7 @@ from interface.pihomescreen import PiHomeScreen
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 
-from services.emporia.emporia_service import EMPORIA_SERVICE
+from screens.EmporiumPower.services.emporia_service import EMPORIA_SERVICE
 from screens.EmporiumPower.barchart import BarChart  # noqa: F401  (registers with Factory for KV)
 from screens.EmporiumPower.devicerow import DeviceRow
 

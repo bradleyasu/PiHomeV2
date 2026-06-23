@@ -417,6 +417,40 @@ class MyScreenEvent(PihomeEvent):
 - Global events take precedence on type conflicts (a warning is logged and the screen event is skipped)
 - Prefix event types with the screen name (e.g., `myscreen_action`) to avoid collisions with global or other screen events
 
+**Screen-specific services:**
+
+Some screens need an always-on background service that only that screen uses (e.g. a 24/7 power monitor that polls and fires alert events even when the screen isn't open). Such a service can live **inside the screen** under a `services/` subdirectory and be declared in the manifest, so it ships and is removed together with its screen — no `main.py` changes.
+
+```
+screens/MyScreen/services/myservice.py
+```
+
+Declare it in `manifest.json` with a `services` array of module names (no `.py`):
+
+```json
+"services": ["myservice"]
+```
+
+At startup PiHome imports each declared service module (`util/screen_services.py`, `load_screen_services()`), which starts it. A service is an informal **module-level singleton** that self-starts its work in `__init__` and exports a module-level instance:
+
+```python
+class MyService:
+    def __init__(self):
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True, name="myservice")
+        self._thread.start()
+
+    def shutdown(self):       # optional — called from the app's on_stop()
+        self._stop.set()
+
+MY_SERVICE = MyService()      # module-level singleton
+```
+
+- **Importing the module starts the service.** The screen and its event handlers reference the same instance by package path: `from screens.MyScreen.services.myservice import MY_SERVICE`. Because the loader imports by the **package path** (`importlib.import_module`), the loader and the screen share the **one** singleton — never load a service via `spec_from_file_location` (that creates a second instance/thread).
+- **Shutdown is optional.** If the instance exposes `shutdown()` or `stop()`, the loader calls it on app exit; otherwise the `daemon=True` thread dies with the process.
+- **Disabling/removing the screen removes the service** — disabled manifests are skipped, so the service never starts.
+- **Degrade gracefully when a pip dependency is missing.** Declare deps in the manifest's `dependencies` array; they auto-install but require a restart, so wrap the import (`try/except`) and expose an `available` flag, since the first boot may run before the dep is present.
+
 **Boolean config values** are stored as strings in `base.ini`:
 ```python
 enabled = CONFIG.get("section", "key", "0").strip().lower() in ("1", "true")

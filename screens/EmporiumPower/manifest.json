@@ -11,6 +11,7 @@
     "index": 35,
     "icon": "screens/EmporiumPower/icon.png",
     "dependencies": ["pyemvue==0.18.7"],
+    "services": ["emporia_service"],
     "settings": [
         {
             "type": "title",

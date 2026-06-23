@@ -1,5 +1,5 @@
 from events.pihomeevent import PihomeEvent
-from services.emporia.emporia_service import EMPORIA_SERVICE
+from screens.EmporiumPower.services.emporia_service import EMPORIA_SERVICE
 
 
 class EmporiaPowerAlertsListEvent(PihomeEvent):
