@@ -32,6 +32,7 @@ class StatusEvent(PihomeEvent):
         from services.weather.weather import WEATHER
         from services.wallpaper.wallpaper import WALLPAPER_SERVICE
         from services.airplay.airplay import AIRPLAY
+        from util.remote_input import REMOTE_INPUT
         # TODO: Eventually have each service have a get_status method (or to_json)
         return {
             "type": "status",
@@ -76,7 +77,8 @@ class StatusEvent(PihomeEvent):
                     }
                 }, PIHOME_SCREEN_MANAGER.loaded_screens))
             },
-            "tasks": TASK_MANAGER.tasks_to_json()
+            "tasks": TASK_MANAGER.tasks_to_json(),
+            "text_input": REMOTE_INPUT.to_status()
         }
             
 

@@ -411,7 +411,7 @@ class CalendarScreen(PiHomeScreen):
         self._name_input = PiTextInput(hint_text="Calendar name", multiline=False,
                                        size_hint_y=None, height=dp(34))
         self._url_input = PiTextInput(hint_text="Secret iCal URL (.ics)", multiline=False,
-                                      size_hint_y=None, height=dp(34))
+                                      secure=True, size_hint_y=None, height=dp(34))
         for ti in (self._name_input, self._url_input):
             ti.background_normal = ""
             ti.background_active = ""

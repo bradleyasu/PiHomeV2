@@ -6,6 +6,7 @@ CONF_FILE = "base.ini"
 THEME_FILE = "theme.ini"
 SERVER_PORT = 8989
 HTTPS_CALLBACK_PORT = 8990  # HTTPS-only server that handles OAuth/webhook callbacks
+TEXT_SOCKET_PORT = 8766  # Dedicated WebSocket for live remote text entry from the phone
 GESTURE_DATABASE = GestureDatabase()
 
 CDN_ASSET = "https://cdn.pihome.io/assets/{}"

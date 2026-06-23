@@ -377,6 +377,10 @@ class PiTextInput(TextInput):
 
     _active_input = None   # class-level ref to the currently focused instance
 
+    # When True, remote (phone) entry masks the field on the phone and the
+    # field's existing value is never echoed back in the status payload.
+    secure = BooleanProperty(False)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._apply_theme()
@@ -404,6 +408,7 @@ class PiTextInput(TextInput):
         super()._unbind_keyboard()
 
     def on_focus(self, instance, value):
+        from util.remote_input import REMOTE_INPUT
         if value:
             # Unfocus the previously active PiTextInput so only one field
             # is active at a time.  _bind_keyboard is suppressed on Pi so
@@ -412,12 +417,15 @@ class PiTextInput(TextInput):
             if prev is not None and prev is not self and prev.focus:
                 prev.focus = False
             PiTextInput._active_input = self
+            # Publish focus so the phone web client can offer remote entry.
+            REMOTE_INPUT.set_focus(self)
             if not _IS_PI:
                 return   # macOS uses Kivy's native keyboard
             Clock.schedule_once(lambda dt: _get_keyboard().show(self), 0)
         else:
             if PiTextInput._active_input is self:
                 PiTextInput._active_input = None
+            REMOTE_INPUT.clear_focus(self)
             if not _IS_PI:
                 return
             Clock.schedule_once(self._maybe_hide, 0.06)

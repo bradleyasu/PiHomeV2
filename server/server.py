@@ -6,12 +6,13 @@ import time
 from events.pihomeevent import PihomeEventFactory
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from server.socket_handler import SocketHandler
+from server.remote_input_handler import RemoteInputSocketHandler
 import websockets
 import asyncio
 from threading import Thread
 from services.wallpaper.wallpaper import WALLPAPER_SERVICE, Wallpaper
 
-from util.const import SERVER_PORT, HTTPS_CALLBACK_PORT, _MUSIC_SCREEN
+from util.const import SERVER_PORT, HTTPS_CALLBACK_PORT, TEXT_SOCKET_PORT, _MUSIC_SCREEN
 from util.helpers import get_app, process_webhook, toast
 from util.phlog import PIHOME_LOGGER
 
@@ -486,6 +487,8 @@ class PiHomeServer():
     callback_httpd = None
     shutting_down = False
     SOCKET_HANDLER = SocketHandler()
+    TEXT_SOCKET_HANDLER = RemoteInputSocketHandler()
+    TEXT_SOCKET_SERVER = None
     def __init__(self, **kwargs):
         super(PiHomeServer, self).__init__(**kwargs)
 
@@ -535,6 +538,9 @@ class PiHomeServer():
             # force socket server to close
             self.SOCKET_SERVER.close()
             self.SOCKET_SERVER = None
+        if self.TEXT_SOCKET_SERVER != None:
+            self.TEXT_SOCKET_SERVER.close()
+            self.TEXT_SOCKET_SERVER = None
         if self.SOCKET_LOOP != None:
             self.SOCKET_LOOP.stop()
             self.SOCKET_LOOP = None
@@ -587,9 +593,22 @@ class PiHomeServer():
         finally:
             print("WebSocket connection closed")
 
+    async def text_input_server(self, websocket):
+        """Dedicated channel for live remote text entry from the phone.
+
+        Opened by the web client only while a field is focused, closed on blur.
+        """
+        try:
+            async for message in websocket:
+                await self.TEXT_SOCKET_HANDLER.handle_message(message, websocket)
+        finally:
+            pass
+
     async def start_socket_server(self):
         self.SOCKET_SERVER = await websockets.serve(self.websocket_server, "0.0.0.0", 8765)
         PIHOME_LOGGER.info("Server: WebSocket Listening on port: 8765 (WS)")
+        self.TEXT_SOCKET_SERVER = await websockets.serve(self.text_input_server, "0.0.0.0", TEXT_SOCKET_PORT)
+        PIHOME_LOGGER.info("Server: Text-input WebSocket Listening on port: {} (WS)".format(TEXT_SOCKET_PORT))
         await asyncio.Future()  # Wait indefinitely
             
 
