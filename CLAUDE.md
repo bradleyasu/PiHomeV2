@@ -640,7 +640,7 @@ Screens automatically support dark/light mode via standard `ColorProperty` names
 | `header_color` | `BACKGROUND_SECONDARY` | Header/toolbar background |
 | `text_color` | `TEXT_PRIMARY` | Primary text |
 | `muted_color` | `TEXT_SECONDARY` | Secondary/dimmed text |
-| `accent_color` | `ALERT_INFO` | Accent highlights |
+| `accent_color` | `ACCENT_PRIMARY` | Accent highlights |
 | `status_color` | `TEXT_SECONDARY` | Status indicators |
 
 **Derived colors** (auto-calculated if the property exists on your class):
@@ -650,6 +650,34 @@ Screens automatically support dark/light mode via standard `ColorProperty` names
 | `sidebar_color` | `header_color` RGB * 0.80 |
 | `divider_color` | `header_color` RGB * 0.60 |
 | `row_bg_color` | `header_color` RGB with 0.70 alpha |
+
+**Theme the screen on first entry — don't rely on literal `ColorProperty` defaults.**
+Screens are **lazily instantiated** (created the first time they're navigated to), so
+the startup `reload_all()` that themes every screen (`main.py`) runs *before* your screen
+exists and never touches it. If your `ColorProperty` defaults are hardcoded literals, the
+screen paints those wrong colors on first open and only snaps to the real theme after some
+*later* `reload_all()` fires (e.g. the user visits Settings and comes back). The fix is two
+parts, both required:
+
+1. **Derive the defaults from the theme** at class scope, so even the first frame is correct:
+   ```python
+   from theme.theme import Theme
+   _th = Theme()
+   bg_color     = ColorProperty(_th.get_color(_th.BACKGROUND_PRIMARY))
+   accent_color = ColorProperty(_th.get_color(_th.ACCENT_PRIMARY))
+   # ...one line per standard color
+   ```
+2. **Apply the theme in `on_enter`** before you build/render any widgets, so a freshly
+   created screen themes itself immediately instead of waiting for a future `reload_all()`:
+   ```python
+   def on_enter(self, *args):
+       super().on_enter(*args)
+       super().on_config_update(CONFIG)   # applies theme colors to self + children
+       self._render()                      # build widgets AFTER colors are correct
+   ```
+   (`from util.configuration import CONFIG`.) If you build child widgets dynamically and pass
+   them `color=self.text_color` etc., they must be built *after* this call or they'll capture
+   the stale default. EmporiumPower (`screens/EmporiumPower/emporiumpower.py`) is the reference.
 
 **For custom colors beyond the standard set:**
 ```python
@@ -721,6 +749,8 @@ PiHome must run on Raspberry Pi 3+ (quad-core ARM, 1GB RAM). Keep these rules in
 10. **Disabled / full-screen widgets swallow touches** — Kivy's `Widget.on_touch_down` returns `True` (consuming the event) for any **`disabled`** widget the touch collides with. So a `disabled`, full-screen overlay (e.g. an empty/error-state `Label` left on top with default `size_hint: (1, 1)`) silently eats **every** touch beneath it — scrolling and taps appear completely dead even though the widgets below are fine. For hidden overlays, toggle `opacity` only (do **not** also set `disabled`), size the overlay to its content, or remove it from the tree when inactive. Remember the **last child of a `FloatLayout` is topmost**, so overlays sit above everything.
 11. **Never pass an `on_*` custom-callback property in a widget's constructor** — Kivy's `EventDispatcher.__init__` treats **any** kwarg starting with `on_` as an *event binding* (`self.bind(on_x=...)`), NOT as setting a property value. So `MyRow(on_pressed=cb)` binds `cb` to the `on_pressed` property-change event and leaves `self.on_pressed == None` — your tap/select callback silently never fires. **Assign it after construction instead:** `row = MyRow(...); row.on_pressed = cb`. (This is why existing tappable rows like `Cocktail`'s `DrinkListItem` set `on_pressed` post-construction.) Tip: avoid naming a plain callback property `on_*` at all — but if you do, never set it via kwarg.
 12. **Write persistent files to `cache/`, never the project root.** Any file a screen persists across launches — JSON state, response caches, **auth tokens / secrets** — goes in the shared `cache/` directory (relative to cwd, e.g. `_FILE = "cache/myscreen_state.json"`), matching `cocktail_cache.json`, `ha_favorites.json`, `favorite_events.json`. This directory is **gitignored** (`/cache/`), so writing secrets anywhere else (like next to `base.ini` in the root) risks committing them. Before searching for *where* to put a persistent file, grep existing screens (`grep -rn "cache/" --include="*.py"`) instead of assuming. Call `os.makedirs(os.path.dirname(path), exist_ok=True)` before writing so a fresh checkout works. (Small per-screen save files in the screen's own dir, like HexGame's `game_state.json`, also exist — but use `cache/` for caches, tokens, and shared/secret state.)
+13. **Lazily-created screens paint un-themed on first open** — hardcoded literal `ColorProperty` defaults show until a *later* theme refresh (e.g. visiting Settings) fixes them. Derive defaults from `Theme()` and apply the theme in `on_enter` (build dynamic child widgets only after). See **Theme System → "Theme the screen on first entry"** for the full pattern.
+14. **`PiTextInput` doesn't theme its own background — white-on-white in dark mode.** `PiTextInput._apply_theme()` sets only the text/cursor/hint colors; the app-wide `<PiTextInput>` rule strips the default 9-patch image, so the field falls back to a solid **white** `background_color`. Always set the background yourself: clear `background_normal`/`background_active` (`= ""`) and paint a theme-driven fill, e.g. `ti.background_color = list(self.text_color[:3]) + [0.10]` (a faint panel that works in both modes), matching `screens/Settings/settings.kv`. Add a little `padding` too.
 
 ---
 

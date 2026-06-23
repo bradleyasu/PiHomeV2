@@ -1,0 +1,129 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<CalendarScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        id: root_float
+
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: 1, 1
+
+            # ── Header / toolbar ──────────────────────────────────────────
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(44)
+                padding: dp(54), 0, dp(10), 0
+                spacing: dp(6)
+                canvas.before:
+                    Color:
+                        rgba: root.header_color
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                    Color:
+                        rgba: 1, 1, 1, 0.06
+                    Rectangle:
+                        size: self.width, dp(1)
+                        pos: self.x, self.y
+
+                Label:
+                    text: ""
+                    font_name: "MaterialIcons"
+                    font_size: sp(20)
+                    color: root.accent_color
+                    size_hint_x: None
+                    width: dp(26)
+                    halign: "center"
+                    valign: "middle"
+
+                Label:
+                    text: root.period_label
+                    font_name: "Nunito"
+                    font_size: sp(13)
+                    bold: True
+                    color: root.text_color
+                    size_hint_x: None
+                    width: dp(150)
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                Widget:
+
+                # Prev / Today / Next
+                SimpleButton:
+                    text: "<"
+                    type: "secondary"
+                    height: dp(30)
+                    width: dp(30)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.shift(-1)
+                SimpleButton:
+                    text: "Today"
+                    type: "secondary"
+                    height: dp(30)
+                    width: dp(52)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.go_today()
+                SimpleButton:
+                    text: ">"
+                    type: "secondary"
+                    height: dp(30)
+                    width: dp(30)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.shift(1)
+
+                Widget:
+                    size_hint_x: None
+                    width: dp(6)
+
+                # View toggle
+                SimpleButton:
+                    text: "Day"
+                    type: "primary" if root.current_view == "day" else "secondary"
+                    height: dp(30)
+                    width: dp(44)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.set_view("day")
+                SimpleButton:
+                    text: "Week"
+                    type: "primary" if root.current_view == "week" else "secondary"
+                    height: dp(30)
+                    width: dp(48)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.set_view("week")
+                SimpleButton:
+                    text: "Month"
+                    type: "primary" if root.current_view == "month" else "secondary"
+                    height: dp(30)
+                    width: dp(52)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.set_view("month")
+
+                Widget:
+                    size_hint_x: None
+                    width: dp(6)
+
+                SimpleButton:
+                    text: "Manage"
+                    type: "secondary"
+                    height: dp(30)
+                    width: dp(64)
+                    pos_hint: {"center_y": 0.5}
+                    on_release: root.open_manage()
+
+            # ── Content (filled by Python per current_view) ───────────────
+            BoxLayout:
+                id: content
+                orientation: "vertical"
+                size_hint: 1, 1

@@ -1,0 +1,60 @@
+{
+    "module": "Calendar.calendar",
+    "name": "CalendarScreen",
+    "id": "_calendar",
+    "label": "Calendar",
+    "settingsLabel": "Calendar",
+    "settingsIndex": 40,
+    "description": "Calendar month/week/day views from any iCal/ICS feed (e.g. a Google Calendar secret address), with approaching-event reminders",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 40,
+    "icon": "screens/Calendar/icon.png",
+    "dependencies": ["icalendar", "recurring-ical-events"],
+    "services": ["calendar_service"],
+    "settings": [
+        {
+            "type": "title",
+            "title": "Calendars"
+        },
+        {
+            "type": "bool",
+            "title": "Enabled",
+            "desc": "Enable the Calendar screen and its reminder service",
+            "section": "calendar",
+            "key": "enabled"
+        },
+        {
+            "type": "numeric",
+            "title": "Fetch Interval",
+            "desc": "How often to refresh calendar data (seconds, min 60)",
+            "section": "calendar",
+            "key": "fetch_interval"
+        },
+        {
+            "type": "title",
+            "title": "Reminders"
+        },
+        {
+            "type": "numeric",
+            "title": "First Reminder (min before)",
+            "desc": "Minutes before an event to show the first alert (0 to disable)",
+            "section": "calendar",
+            "key": "alert_lead_1"
+        },
+        {
+            "type": "numeric",
+            "title": "Second Reminder (min before)",
+            "desc": "Minutes before an event to show the second alert (0 to disable)",
+            "section": "calendar",
+            "key": "alert_lead_2"
+        },
+        {
+            "type": "numeric",
+            "title": "Alert Timeout (min)",
+            "desc": "How long each reminder modal stays before auto-dismissing",
+            "section": "calendar",
+            "key": "alert_timeout"
+        }
+    ]
+}
