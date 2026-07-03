@@ -289,7 +289,9 @@ class ScheduledTask(Task):
                 self.set_status(TaskStatus.COMPLETED)
 
             if self.on_run is not None:
-                PihomeEventFactory.create_event_from_dict(self.on_run).execute()
+                # execute_safe: tasks run on the task-manager service thread,
+                # but events touch Kivy state — marshal onto the main thread.
+                PihomeEventFactory.create_event_from_dict(self.on_run).execute_safe()
         except Exception as e:
             PIHOME_LOGGER.error(f"Failed to run task: {self.name} - {e}")
 
@@ -318,7 +320,9 @@ class EventTask(Task):
         PIHOME_LOGGER.info(f"Running Task: {self.name}")
         try:
             if self.on_run is not None:
-                PihomeEventFactory.create_event_from_dict(self.on_run).execute()
+                # execute_safe: tasks run on the task-manager service thread,
+                # but events touch Kivy state — marshal onto the main thread.
+                PihomeEventFactory.create_event_from_dict(self.on_run).execute_safe()
         except Exception as e:
             PIHOME_LOGGER.error(f"Failed to run task: {self.name} - {e}")
 

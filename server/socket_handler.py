@@ -27,7 +27,9 @@ class SocketHandler():
 
         event = PihomeEventFactory.create_event_from_dict(message)
         try:
-            response = event.execute()
+            # execute_safe: this coroutine runs on the WebSocket thread's event
+            # loop, but events touch Kivy state — marshal onto the main thread.
+            response = event.execute_safe()
             await socket.send(json.dumps(response["body"]))
         except Exception as e:
             await socket.send(json.dumps({"status": "error", "message": "Failed to execute event", "error": str(e)}))

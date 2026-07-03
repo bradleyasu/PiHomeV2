@@ -31,16 +31,18 @@ class ShellEvent(PihomeEvent):
 
         exit_code = process.returncode
 
+        # execute_safe: this runs on the shell worker thread, but follow-up
+        # events touch Kivy state — marshal onto the main thread.
         if exit_code == 0:
             if self.on_complete:
                 self.replace_vars(self.on_complete, output)
-                resp = PihomeEventFactory.create_event_from_dict(self.on_complete).execute()
+                resp = PihomeEventFactory.create_event_from_dict(self.on_complete).execute_safe()
                 PIHOME_LOGGER.info("on_complete event executed: {}".format(resp))
             PIHOME_LOGGER.info(f"Shell command output: {output}")
         if exit_code != 0:
             if self.on_error:
                 self.replace_vars(self.on_error, output)
-                resp = PihomeEventFactory.create_event_from_dict(self.on_error).execute()
+                resp = PihomeEventFactory.create_event_from_dict(self.on_error).execute_safe()
                 PIHOME_LOGGER.info("on_error event executed: {}".format(resp))
             PIHOME_LOGGER.error(f"Shell command error: {output}")
         

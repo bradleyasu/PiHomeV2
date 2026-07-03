@@ -272,7 +272,9 @@ class NotificationCenter(FloatLayout):
     def _fire_event(self, event):
         try:
             from events.pihomeevent import PihomeEventFactory
-            PihomeEventFactory.create_event_from_dict(event).execute()
+            # execute_safe: this runs on the notification-event worker thread,
+            # but events touch Kivy state — marshal onto the main thread.
+            PihomeEventFactory.create_event_from_dict(event).execute_safe()
         except Exception as e:
             PIHOME_LOGGER.error(f"NotificationCenter: event fire failed: {e}")
 

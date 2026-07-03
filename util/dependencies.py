@@ -114,9 +114,11 @@ def _notify(nid, title, description, level, event=None):
     """
     try:
         from events.notificationevent import NotificationEvent
+        # execute_safe: this runs on the dependency worker thread, but the
+        # notification center is a Kivy widget — marshal onto the main thread.
         NotificationEvent(
             title=title, description=description, level=level, id=nid, event=event
-        ).execute()
+        ).execute_safe()
     except Exception as e:
         PIHOME_LOGGER.error(f"Dependencies: notification failed: {e}")
 
@@ -137,7 +139,7 @@ def _request_restart():
         time.sleep(3)  # let the notification render/persist before we exit
         try:
             from events.rebootevent import RebootEvent
-            RebootEvent(action="restart_pihome").execute()
+            RebootEvent(action="restart_pihome").execute_safe()
         except Exception as e:
             PIHOME_LOGGER.error(f"Dependencies: auto-restart failed: {e}")
     else:

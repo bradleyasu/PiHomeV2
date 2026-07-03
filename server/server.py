@@ -196,7 +196,9 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def _get_status(self, service = ""):
         PIHOME_LOGGER.info("Server: Getting current status from multiple services")
         try:
-            response = PihomeEventFactory.create_event_from_dict({"type": "status", "depth": "advanced"}).execute()
+            # execute_safe: request handlers run on server threads, but events
+            # touch Kivy state — marshal onto the main thread.
+            response = PihomeEventFactory.create_event_from_dict({"type": "status", "depth": "advanced"}).execute_safe()
             if service != "" and service in response["body"]:
                 response["body"] = response["body"][service]
             self._set_response(response["code"], response["body"])
@@ -251,7 +253,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             if "webhook" in payload:
                 event = PihomeEventFactory.create_event_from_dict(payload["webhook"])
                 try:
-                    response = event.execute()
+                    response = event.execute_safe()
                     self._set_response(response["code"], response["body"])
                 except Exception as e:
                     PIHOME_LOGGER.error("Failed to execute webhook: {}".format(e))
@@ -260,7 +262,7 @@ class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 event = PihomeEventFactory.create_event_from_dict(payload)
                 try:
-                    response = event.execute()
+                    response = event.execute_safe()
                     self._set_response(response["code"], response["body"])
                 except Exception as e:
                     PIHOME_LOGGER.error("Failed to execute event: {}".format(e))

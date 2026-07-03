@@ -37,7 +37,9 @@ class Timer:
     def process_on_complete(self):
         event = self.generate_event(self.on_complete)
         if event is not None:
-            event.execute()
+            # execute_safe: listeners fire from the timer's update thread, but
+            # events touch Kivy state — marshal onto the main thread.
+            event.execute_safe()
     
     def generate_event(self, event_json):
         event = None

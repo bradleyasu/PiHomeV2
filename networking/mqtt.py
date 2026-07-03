@@ -3,7 +3,7 @@ from time import time
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
 from events.pihomeevent import PihomeEventFactory
-from util.helpers import get_app, toast
+from util.helpers import get_app, run_on_main_thread_async, toast
 import paho.mqtt.client as mqtt_client
 
 from util.phlog import PIHOME_LOGGER
@@ -49,9 +49,13 @@ class MQTT:
             PIHOME_LOGGER.error("Webhook does not contain a type")
 
     def on_message(self, client, userdata, msg):
-        try: 
+        try:
             PIHOME_LOGGER.info("[ MQTT ] Message Recieved: {} | {} | {}".format(str(client), str(userdata), str(msg.payload)))
-            PihomeEventFactory.create_event_from_json(msg.payload).execute()
+            # Events touch Kivy state, which is only safe on the main thread.
+            # Fire-and-forget so the paho network thread (which also services
+            # keepalives) is never blocked on the UI.
+            event = PihomeEventFactory.create_event_from_json(msg.payload)
+            run_on_main_thread_async(event.execute)
         except Exception as e:
             PIHOME_LOGGER.error("[ MQTT ] Failed to process and notify listeners. {}".format(str(e)))
 

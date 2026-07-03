@@ -1,8 +1,9 @@
 
-import importlib
+import importlib.util
 import inspect
 import json
 import os
+import threading
 
 from util.phlog import PIHOME_LOGGER
 
@@ -18,6 +19,18 @@ class PihomeEvent():
             "code": 500,
             "body": {"status": "error", "message": "Event Not Implemented"}
         }
+
+    def execute_safe(self, timeout=10):
+        """Execute this event on the Kivy main thread and return its response.
+
+        Most events mutate Kivy widgets (screens, toasts, notifications),
+        which is only safe on the main thread. Entry points that run on other
+        threads (HTTP server, WebSocket, MQTT, timers, background services)
+        must call this instead of execute(). Runs inline when already on the
+        main thread, so it is always safe to use.
+        """
+        from util.helpers import run_on_main_thread
+        return run_on_main_thread(self.execute, timeout=timeout)
 
     def to_json(self):
         return json.dumps({
@@ -41,24 +54,54 @@ class PihomeEvent():
         })
 
 class PihomeEventFactory():
+    # Event registry cache: scanning ./events/ and every screens/*/events/
+    # directory re-executes ~40 modules from disk, far too expensive to do on
+    # every event (the web client alone requests a status event every second).
+    # Events only change with a code update, which restarts PiHome, so the
+    # registry is built once and cached for the process lifetime.
+    _registry = None
+    _registry_lock = threading.Lock()
+
     @staticmethod
     def create_event(event_type, **kwargs):
+        from events.alertevent import AlertEvent
         event_objects = PihomeEventFactory._load_event_objects()
-        
-        try:
-            event = event_objects[event_type]
-            if event is None:
-                PIHOME_LOGGER.error("Event type {} not found".format(event_type))
-                return AlertEvent("Error", "Failed to process event \"{}\"".format(event_type), 20, 1)
 
+        event = event_objects.get(event_type)
+        if event is None:
+            PIHOME_LOGGER.error("Event type {} not found".format(event_type))
+            return AlertEvent("Error", "Failed to process event \"{}\"".format(event_type), 20, 1)
+        try:
             return event(**kwargs)
         except Exception as e:
             PIHOME_LOGGER.error("Error creating event: {}".format(event_type))
             PIHOME_LOGGER.error(e)
-            from events.alertevent import AlertEvent
             return AlertEvent("Error", "{}".format(e), 20, 0)
 
+    @staticmethod
     def _load_event_objects():
+        """Return the event-type -> class registry, building it on first use."""
+        registry = PihomeEventFactory._registry
+        if registry is not None:
+            return registry
+        with PihomeEventFactory._registry_lock:
+            if PihomeEventFactory._registry is None:
+                PihomeEventFactory._registry = PihomeEventFactory._build_event_registry()
+            return PihomeEventFactory._registry
+
+    @staticmethod
+    def reload_events():
+        """Drop the cached registry and rescan event modules from disk.
+
+        Only needed if event files change while PiHome is running (e.g. a
+        screen directory is dropped in without a restart).
+        """
+        with PihomeEventFactory._registry_lock:
+            PihomeEventFactory._registry = None
+        return PihomeEventFactory._load_event_objects()
+
+    @staticmethod
+    def _build_event_registry():
         """
         This function will read all the events in this directory and load them into the event_objects dictionary.
         It also scans each screen's optional events/ subdirectory for screen-specific events.

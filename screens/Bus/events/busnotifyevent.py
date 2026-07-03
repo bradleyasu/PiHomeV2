@@ -90,7 +90,9 @@ class BusNotifyEvent(PihomeEvent):
                         )
                     )
                     self._cleanup()
-                    PihomeEventFactory.create_event_from_dict(self.on_trigger).execute()
+                    # execute_safe: runs inline when the poller delivers on the
+                    # main thread, marshals if the delivery thread ever changes.
+                    PihomeEventFactory.create_event_from_dict(self.on_trigger).execute_safe()
                     return
 
             self._first_poll = False

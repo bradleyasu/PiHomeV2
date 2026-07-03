@@ -60,7 +60,9 @@ class MultiEvent(PihomeEvent):
         for i, event in enumerate(self.events):
             try:
                 e = PihomeEventFactory.create_event_from_dict(event)
-                e.execute()
+                # execute_safe: this loop runs on the delay worker thread, but
+                # events touch Kivy state — marshal onto the main thread.
+                e.execute_safe()
             except Exception as e:
                 PIHOME_LOGGER.error("MultiEvent: failed to execute event {}: {}".format(i, e))
             if i < len(self.events) - 1:

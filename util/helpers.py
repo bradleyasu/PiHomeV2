@@ -1,5 +1,6 @@
 import subprocess
 import socket
+import threading
 import uuid
 import math
 from kivy.app import App
@@ -13,6 +14,54 @@ from util.phlog import PIHOME_LOGGER
 
 def get_app():
     return App.get_running_app()
+
+
+def run_on_main_thread(func, timeout=10):
+    """Run *func* on the Kivy main thread and return its result.
+
+    Kivy properties and graphics instructions are not thread-safe, so events
+    arriving on HTTP/WebSocket/MQTT/worker threads must be marshaled onto the
+    main thread before touching any widget. Runs *func* inline when already on
+    the main thread; otherwise blocks the calling thread until the main thread
+    has run it, re-raising anything it raised. Raises TimeoutError if the main
+    thread doesn't get to it within *timeout* seconds (e.g. during shutdown).
+    """
+    if threading.current_thread() is threading.main_thread():
+        return func()
+
+    done = threading.Event()
+    outcome = {}
+
+    def _invoke(_dt):
+        try:
+            outcome["result"] = func()
+        except BaseException as e:  # transfer SystemExit etc. to the caller
+            outcome["error"] = e
+        finally:
+            done.set()
+
+    Clock.schedule_once(_invoke, 0)
+    if not done.wait(timeout):
+        raise TimeoutError(
+            "Main thread did not run scheduled work within {}s".format(timeout)
+        )
+    if "error" in outcome:
+        raise outcome["error"]
+    return outcome.get("result")
+
+
+def run_on_main_thread_async(func):
+    """Schedule *func* on the Kivy main thread without waiting for a result.
+
+    For callers that don't need the return value (e.g. MQTT messages) —
+    avoids blocking latency-sensitive network threads.
+    """
+    def _invoke(_dt):
+        try:
+            func()
+        except Exception as e:
+            PIHOME_LOGGER.error("run_on_main_thread_async: {}".format(e))
+    Clock.schedule_once(_invoke, 0)
 
 
 def appmenu_open(open = True):
