@@ -13,7 +13,7 @@ from kivy.uix.widget import Widget
 from composites.HomeAssistant.hadevicecard import (  # noqa — registers kv rules
     HACoverCard, HALightCard, HATriggerCard, HAToggleCard,
     HAClimateCard, HAMediaCard,
-    make_ha_card, load_ha_favorites,
+    make_ha_card, load_ha_favorites, SUPPORTED_DOMAINS,
 )
 from interface.pihomescreen import PiHomeScreen
 from services.homeassistant.homeassistant import HOME_ASSISTANT, HomeAssistantListener
@@ -86,6 +86,17 @@ GROUPS = [
     ("MEDIA PLAYERS",      ["media_player"],                    HAMediaCard,   dp(130)),
 ]
 
+# Favorites row height must fit a light card (switch row + brightness slider).
+_FAV_ROW_H = dp(108)
+# Cards created per Clock frame while (re)building the list. Small enough that
+# the first frame stays cheap (so the app-menu slide-out never hitches), large
+# enough that a full dashboard finishes streaming in well under a second.
+_BUILD_CHUNK = 5
+
+
+def _domain_of(entity_id: str) -> str:
+    return entity_id.split(".", 1)[0] if "." in entity_id else ""
+
 
 class HomeAssistantScreen(PiHomeScreen):
 
@@ -108,6 +119,9 @@ class HomeAssistantScreen(PiHomeScreen):
         self._card_registry: dict = {}
         self._focusable_cards: list = []   # ordered flat list for rotary navigation
         self._focus_idx: int = -1
+        self._built_signature = None       # detects when a rebuild is actually needed
+        self._build_queue: list = []       # pending incremental-build work items
+        self._build_token = 0              # bumped to cancel a superseded build
 
         # Register HA state listener
         self._listener = HomeAssistantListener(self._on_state_change)
@@ -119,15 +133,14 @@ class HomeAssistantScreen(PiHomeScreen):
         # Always return to the devices tab on each entry
         if self.view_mode != 'devices':
             self.view_mode = 'devices'
-        # Show loading state immediately, but delay the actual data build by
-        # ~0.4 s so the app-menu slide-out animation can finish without hitching.
-        self._show_loading()
+        # Build straight from the cached states — no artificial delay. The build
+        # streams cards in a few per frame, so the menu animation stays smooth,
+        # and if nothing changed since last visit it's a near-instant no-op.
         if HOME_ASSISTANT.current_states:
-            Clock.schedule_once(
-                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0.8
-            )
+            self._build_entity_list(HOME_ASSISTANT.current_states)
         else:
-            Clock.schedule_once(lambda dt: self.refresh(), 0.8)
+            self._show_loading()
+            self.refresh()
         return super().on_pre_enter(*args)
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -136,10 +149,28 @@ class HomeAssistantScreen(PiHomeScreen):
         """Fetch all HA states in a background thread, then rebuild the UI."""
         def _fetch():
             states = HOME_ASSISTANT.get_all_states()
-            if states is not None:
-                Clock.schedule_once(lambda dt: self._build_entity_list(states), 0)
+            Clock.schedule_once(lambda dt: self._on_fetch_result(states), 0)
 
         Thread(target=_fetch, daemon=True).start()
+
+    def _on_fetch_result(self, states):
+        """Main-thread handler for a background state fetch."""
+        if states is None:
+            # Network-level failure — HA configured but unreachable.
+            self._show_message(
+                '',  # cloud_off
+                'Home Assistant unreachable',
+                'Check the connection, then tap refresh to retry.',
+            )
+        elif not HOME_ASSISTANT.ha_is_available:
+            self._show_message(
+                '',  # settings
+                'Home Assistant not configured',
+                'Add your HA host and token in Settings.',
+            )
+        else:
+            HOME_ASSISTANT.current_states = states
+            self._build_entity_list(states)
 
     def on_tab_devices(self):
         """Switch to the Devices tab."""
@@ -147,17 +178,20 @@ class HomeAssistantScreen(PiHomeScreen):
             return
         self.view_mode = 'devices'
         if HOME_ASSISTANT.current_states:
-            Clock.schedule_once(
-                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0
-            )
+            self._build_entity_list(HOME_ASSISTANT.current_states)
         else:
-            Clock.schedule_once(lambda dt: self.refresh(), 0)
+            self._show_loading()
+            self.refresh()
 
     def on_tab_listeners(self):
         """Switch to the Listeners tab."""
         if self.view_mode == 'listeners':
             return
         self.view_mode = 'listeners'
+        # Cancel any in-flight device build and force a rebuild next time we
+        # return to Devices (its card widgets are about to be cleared).
+        self._build_token += 1
+        self._built_signature = None
         Clock.schedule_once(lambda dt: self._build_listeners_list(), 0)
 
     def on_config_update(self, config):
@@ -178,42 +212,62 @@ class HomeAssistantScreen(PiHomeScreen):
     # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _show_loading(self):
-        """Fill scroll_content with a vertically centred hourglass + text."""
+        """Centred hourglass + 'Loading...' placeholder."""
+        self._show_message('\ue863', 'Loading...', '')   # hourglass_empty
+
+    def _show_message(self, icon_glyph, title, subtitle=''):
+        """Fill scroll_content with a vertically-centred icon + title (+ subtitle).
+
+        Single entry point for every non-list state: loading, no devices,
+        unreachable, unconfigured. Cancels any in-flight build so streamed
+        cards can't land on top of the message.
+        """
+        self._build_token += 1
+        self._built_signature = None
         scroll_content = self.ids.get('scroll_content')
         if scroll_content is None:
             return
         scroll_content.clear_widgets()
+        self._card_registry.clear()
+        self._focusable_cards = []
+        self._focus_idx = -1
 
-        # Top spacer — pushes the icon+text block to approximate vertical centre.
-        # The content area below the header (52dp) + tab strip (36dp) is ~392dp
-        # on a 480px-tall display, so ~dp(130) gets us close to the middle.
-        scroll_content.add_widget(Widget(size_hint_y=None, height=dp(130)))
+        tc = self.text_color
+        # Top spacer pushes the block toward the vertical centre of the ~392dp
+        # content area on a 480px display.
+        scroll_content.add_widget(Widget(size_hint_y=None, height=dp(120)))
 
         icon_lbl = Label(
-            text='\ue863',          # hourglass_empty — Material Icons
+            text=icon_glyph,
             font_name='MaterialIcons',
-            font_size='40sp',
-            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.25),
-            size_hint_y=None,
-            height=dp(52),
-            halign='center',
-            valign='middle',
+            font_size='42sp',
+            color=(tc[0], tc[1], tc[2], 0.22),
+            size_hint_y=None, height=dp(56),
+            halign='center', valign='middle',
         )
         icon_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
         scroll_content.add_widget(icon_lbl)
 
-        text_lbl = Label(
-            text='Loading...',
-            font_name='Nunito',
-            font_size='15sp',
-            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.35),
-            size_hint_y=None,
-            height=dp(30),
-            halign='center',
-            valign='middle',
+        title_lbl = Label(
+            text=title,
+            font_name='Nunito', font_size='15sp',
+            color=(tc[0], tc[1], tc[2], 0.4),
+            size_hint_y=None, height=dp(30),
+            halign='center', valign='middle',
         )
-        text_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
-        scroll_content.add_widget(text_lbl)
+        title_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+        scroll_content.add_widget(title_lbl)
+
+        if subtitle:
+            sub_lbl = Label(
+                text=subtitle,
+                font_name='Nunito', font_size='11sp',
+                color=(tc[0], tc[1], tc[2], 0.28),
+                size_hint_y=None, height=dp(22),
+                halign='center', valign='middle',
+            )
+            sub_lbl.bind(size=lambda w, s: setattr(w, 'text_size', s))
+            scroll_content.add_widget(sub_lbl)
 
     # ── Listeners tab ─────────────────────────────────────────────────────────
 
@@ -326,66 +380,152 @@ class HomeAssistantScreen(PiHomeScreen):
         grid.bind(minimum_height=grid.setter('height'))
         return grid
 
-    def _build_entity_list(self, states: dict):
-        """Populate scroll_content with section headers and 2-column device grids."""
-        scroll_content = self.ids.get('scroll_content')
-        if scroll_content is None:
-            return
+    # ── Section layout ──────────────────────────────────────────────────────────
 
-        scroll_content.clear_widgets()
-        self._card_registry.clear()
+    def _compute_sections(self, states: dict):
+        """Return [(title, [(entity_id, state_dict), ...], row_height), ...].
 
-        def _add_card(entity_id, state_dict, grid):
-            card = make_ha_card(entity_id, state_dict)
-            if card is None:
-                return
-            card.size_hint = (1, 1)
-            card.bind(is_favorite=self._on_favorite_changed)
-            card._focus_callback = self._set_focus_card
-            grid.add_widget(card)
-            self._card_registry[entity_id] = card
+        Favorites first (any supported domain), then the domain GROUPS with the
+        already-placed favorites removed. Purely a function of the data, so two
+        calls with the same devices/favorites produce an identical structure —
+        which _signature() uses to decide whether a rebuild is even needed.
+        """
+        favs = load_ha_favorites()
+        fav_ids = [
+            eid for eid in sorted(favs)
+            if eid in states and _domain_of(eid) in SUPPORTED_DOMAINS
+        ]
+        placed = set(fav_ids)
 
-        # ── Favorites section ──────────────────────────────────────────────────────
-        fav_ids = [eid for eid in sorted(load_ha_favorites()) if eid in states]
+        sections = []
         if fav_ids:
-            scroll_content.add_widget(self._section_label("FAVORITES"))
-            grid = self._make_grid(dp(108))   # dp(108) fits light cards with sliders
-            for eid in fav_ids:
-                _add_card(eid, states[eid], grid)
-            if len(fav_ids) % 2 == 1:
-                grid.add_widget(Widget())
-            scroll_content.add_widget(grid)
-            scroll_content.add_widget(Widget(size_hint_y=None, height=dp(8)))
+            sections.append(("FAVORITES",
+                             [(eid, states[eid]) for eid in fav_ids],
+                             _FAV_ROW_H))
 
-        # ── Domain groups (skip already-shown favorites) ───────────────────────────
-        for section_title, domains, card_cls, row_h in GROUPS:
+        for section_title, domains, _card_cls, row_h in GROUPS:
             entities = [
                 (eid, sdict)
                 for eid, sdict in states.items()
                 if any(eid.startswith(d + '.') for d in domains)
-                and eid not in self._card_registry   # skip favorited
+                and eid not in placed
             ]
-            if not entities:
-                continue
+            if entities:
+                placed.update(eid for eid, _ in entities)
+                sections.append((section_title, entities, row_h))
+        return sections
 
-            scroll_content.add_widget(self._section_label(section_title))
+    @staticmethod
+    def _signature(sections):
+        """Hashable fingerprint of section titles + entity_ids (order-sensitive).
+
+        Ignores state values, so on/off/brightness changes (handled live by
+        _on_state_change) don't trigger a rebuild; only add/remove/favorite
+        changes do.
+        """
+        return tuple(
+            (title, tuple(eid for eid, _ in entities))
+            for title, entities, _row_h in sections
+        )
+
+    def _make_card(self, entity_id, state_dict, favorites):
+        card = make_ha_card(entity_id, state_dict, favorites=favorites)
+        if card is None:
+            return None
+        card.size_hint = (1, 1)
+        card.bind(is_favorite=self._on_favorite_changed)
+        card._focus_callback = self._set_focus_card
+        self._card_registry[entity_id] = card
+        return card
+
+    def _build_entity_list(self, states: dict, preserve_scroll: bool = False):
+        """(Re)build the device dashboard, streaming cards a few per frame.
+
+        Rebuilds only when the set/placement of entities actually changed;
+        otherwise it just pushes fresh state into the existing cards (instant,
+        no flicker, scroll position kept). The heavy work — card widget
+        construction — is spread across frames so the UI never freezes.
+        """
+        scroll_content = self.ids.get('scroll_content')
+        if scroll_content is None:
+            return
+
+        sections = self._compute_sections(states)
+        if not sections:
+            self._show_message('\ue90f',   # lightbulb_outline
+                               'No devices found',
+                               'No supported Home Assistant entities to show.')
+            return
+
+        signature = self._signature(sections)
+        if signature == self._built_signature and self._card_registry:
+            # Same devices as last build — just refresh their state in place.
+            self._sync_existing(states)
+            return
+
+        # A real rebuild. Cancel any in-flight one and start fresh.
+        self._build_token += 1
+        token = self._build_token
+        self._built_signature = signature
+        scroll_content.clear_widgets()
+        self._card_registry.clear()
+        self._focusable_cards = []
+        self._focus_idx = -1
+
+        scroll_y = self.ids.scroll_view.scroll_y if preserve_scroll and 'scroll_view' in self.ids else None
+        favorites = load_ha_favorites()
+
+        # Section headers + empty grids are cheap; add them now so the list has
+        # its full height immediately. Card construction is queued.
+        queue = []
+        for title, entities, row_h in sections:
+            scroll_content.add_widget(self._section_label(title))
             grid = self._make_grid(row_h)
-
-            for entity_id, state_dict in entities:
-                _add_card(entity_id, state_dict, grid)
-
-            # Pad odd column with invisible spacer
-            if len(entities) % 2 == 1:
-                grid.add_widget(Widget())
-
             scroll_content.add_widget(grid)
             scroll_content.add_widget(Widget(size_hint_y=None, height=dp(8)))
+            for eid, sdict in entities:
+                queue.append((grid, eid, sdict))
+            # Trailing marker: pad the odd column of this grid once its cards land.
+            queue.append(('pad', grid, len(entities)))
 
-        # Build focusable list in GROUPS order and select first card
-        self._focusable_cards = list(self._card_registry.values())
-        self._focus_idx = -1
-        if self._focusable_cards:
-            self._set_focus(0)
+        self._build_queue = queue
+        self._drain_build_queue(token, favorites, scroll_y)
+
+    def _drain_build_queue(self, token, favorites, scroll_y):
+        """Process a chunk of the build queue per frame until drained."""
+        if token != self._build_token:
+            return  # superseded by a newer build / message
+        for _ in range(_BUILD_CHUNK):
+            if not self._build_queue:
+                # Done: build the flat focus list and select the first card.
+                self._focusable_cards = list(self._card_registry.values())
+                self._focus_idx = -1
+                if self._focusable_cards:
+                    self._set_focus(0)
+                if scroll_y is not None and 'scroll_view' in self.ids:
+                    self.ids.scroll_view.scroll_y = scroll_y
+                return
+            item = self._build_queue.pop(0)
+            if item[0] == 'pad':
+                _, grid, count = item
+                if count % 2 == 1:
+                    grid.add_widget(Widget())
+                continue
+            grid, eid, sdict = item
+            card = self._make_card(eid, sdict, favorites)
+            if card is not None:
+                grid.add_widget(card)
+        Clock.schedule_once(
+            lambda dt: self._drain_build_queue(token, favorites, scroll_y), 0
+        )
+
+    def _sync_existing(self, states: dict):
+        """Push fresh state into already-built cards without rebuilding."""
+        for eid, card in self._card_registry.items():
+            sdict = states.get(eid)
+            if not isinstance(sdict, dict):
+                continue
+            card.update_state(sdict.get("state", "off"), sdict.get("attributes", {}))
 
     def _on_state_change(self, entity_id: str, state_str: str, state_dict: dict):
         """Called by HA WebSocket listener (possibly on a background thread)."""
@@ -395,10 +535,13 @@ class HomeAssistantScreen(PiHomeScreen):
             Clock.schedule_once(lambda dt: card.update_state(state_str, attributes), 0)
 
     def _on_favorite_changed(self, card, value):
-        """Re-build the list whenever a card is starred or un-starred."""
+        """Re-place a starred/un-starred card. Rebuilds (incrementally, keeping
+        scroll position) since the card moves between the Favorites section and
+        its domain group."""
         if HOME_ASSISTANT.current_states:
             Clock.schedule_once(
-                lambda dt: self._build_entity_list(HOME_ASSISTANT.current_states), 0
+                lambda dt: self._build_entity_list(
+                    HOME_ASSISTANT.current_states, preserve_scroll=True), 0
             )
 
     # ── Rotary encoder ────────────────────────────────────────────────────────

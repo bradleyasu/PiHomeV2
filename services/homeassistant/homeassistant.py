@@ -106,14 +106,25 @@ class HomeAssistant:
             self.configure_connection()
 
             # this thread will monitor for event changes in home assistant
-            self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
             self.event_thread = Thread(target=self._start_loop, daemon=True)
             self.event_thread.start()
-            self.current_states = self.get_all_states()
+            # Initial sensor write + full state fetch are blocking HTTP calls —
+            # keep them off the caller's thread (connect() runs during app
+            # startup on the Kivy main thread).
+            Thread(target=self._initial_sync, daemon=True).start()
         except Exception as e:
             PIHOME_LOGGER.error(f"Error connecting to Home Assistant: {e}")
             self.ha_is_available = False
             return False
+
+    def _initial_sync(self):
+        try:
+            self.set_state(self.PIHOME_CONNECTED_SENSOR, "off")
+            states = self.get_all_states()
+            if states is not None:
+                self.current_states = states
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Home Assistant initial sync failed: {e}")
 
     def _start_loop(self):
         self.event_loop = asyncio.new_event_loop()
@@ -152,7 +163,9 @@ class HomeAssistant:
                 await self._send_message(message)
                 PIHOME_LOGGER.info("Subscribed to Home Assistant events.")
                 self.set_state(self.PIHOME_CONNECTED_SENSOR, "on")
-                self.current_states = self.get_all_states()
+                states = self.get_all_states()
+                if states is not None:
+                    self.current_states = states
                 backoff = 1  # reset backoff on successful connection
 
                 while not self.is_shutting_down:
@@ -329,15 +342,25 @@ class HomeAssistant:
             PIHOME_LOGGER.error("{}, {}".format(self.HA_URL, self.HA_TOKEN))
         return self.ha_is_available
 
+    # Never hang a thread on an unresponsive HA host — LAN calls that take
+    # longer than this are effectively down.
+    REQUEST_TIMEOUT = 8
+
     def make_request(self, endpoint, method = "get", data=None):
         """
-        Make a request to the Home Assistant API.
+        Make a request to the Home Assistant API. Returns None on a
+        network-level failure (timeout, connection refused, DNS).
         """
         method = self.methods[method.lower()]
         # Construct the URL for the request
         url = f"{self.HA_URL}/{endpoint}"
         # Make the request
-        response = method(url, headers=self.headers, json=data)
+        try:
+            response = method(url, headers=self.headers, json=data,
+                              timeout=self.REQUEST_TIMEOUT)
+        except requests.RequestException as e:
+            PIHOME_LOGGER.error(f"Home Assistant request failed ({endpoint}): {e}")
+            return None
         # If the request was successful, return the response
         if response.status_code < 300:
             return response
@@ -363,7 +386,7 @@ class HomeAssistant:
     def update_service(self, domain, state, entity_id, data):
         service = f"{domain}/{state}"
         data["entity_id"] = entity_id
-        print(f"Updating service: {service} with data: {data}")
+        PIHOME_LOGGER.info(f"Home Assistant service call: {service} ({entity_id})")
         response = self.make_request(f"services/{service}", method="post", data=data)
         return response
 
@@ -380,12 +403,19 @@ class HomeAssistant:
 
     def get_all_states(self):
         """
-        Get all states from Home Assistant.
+        Get all states from Home Assistant. Returns None when the fetch
+        failed (unreachable / error), {} only when HA is not configured.
         """
         if not self.ha_is_available:
             return {}
         response = self.make_request("states")
-        arr = response.json()
+        if response is None or response.status_code >= 300:
+            return None
+        try:
+            arr = response.json()
+        except ValueError as e:
+            PIHOME_LOGGER.error(f"Home Assistant states response not JSON: {e}")
+            return None
         states = {}
         for state in arr:
             states[state["entity_id"]] = state

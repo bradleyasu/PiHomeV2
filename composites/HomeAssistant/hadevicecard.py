@@ -19,8 +19,10 @@ from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import (BooleanProperty, ColorProperty, ListProperty,
                               NumericProperty, StringProperty)
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import AsyncImage  # noqa — referenced in hadevicecard.kv
+from kivy.uix.label import Label
 
 from components.Slider.haslider import HASlider          # noqa — registers rule
 from components.Switch.switch import PiHomeSwitch        # noqa — registers rule
@@ -53,18 +55,24 @@ def save_ha_favorites(favs: set):
         PIHOME_LOGGER.error(f"Could not save HA favorites: {e}")
 
 
-# ── Domain → Unicode icon symbol (ArialUnicode) ───────────────────────────────
+# ── Domain → MaterialIcons glyph (codepoints verified against the bundled
+#    theme/fonts/MaterialIcons-Regular.ttf). Rendered with font_name
+#    'MaterialIcons' in the KV. ────────────────────────────────────────────────
 DOMAIN_ICONS = {
-    "light":         "\u2726",   # ✦  four-pointed star      (Dingbats)
-    "switch":        "\u25CF",   # ●  black circle            (Geometric Shapes)
-    "input_boolean": "\u25A3",   # ▣  white sq w/ black sq   (Geometric Shapes)
-    "fan":           "\u2299",   # ⊙  circled dot operator   (Math Operators)
-    "cover":         "\u2195",   # ↕  up-down arrow          (Arrows)
-    "scene":         "\u2605",   # ★  black star             (Misc Symbols)
-    "script":        "\u25B6",   # ▶  play triangle          (Geometric Shapes)
-    "climate":       "\u2600",   # ☀  sun / temperature      (Misc Symbols)
-    "media_player":  "\u266B",   # ♫  beamed musical notes   (Misc Symbols)
+    "light":         "\ue0f0",   # lightbulb
+    "switch":        "\ue63c",   # power
+    "input_boolean": "\ue9f6",   # toggle_on
+    "fan":           "\ue332",   # toys (fan blades)
+    "cover":         "\ue8d5",   # swap_vert
+    "scene":         "\ue65f",   # auto_awesome
+    "script":        "\ue86f",   # code
+    "climate":       "\ue1ff",   # device_thermostat
+    "media_player":  "\ue405",   # music_note
 }
+
+# Favorite star glyphs (MaterialIcons)
+STAR_FILLED  = "\ue838"   # star
+STAR_OUTLINE = "\ue83a"   # star_border
 
 # ── Domains shown on screen ───────────────────────────────────────────────────
 SUPPORTED_DOMAINS = set(DOMAIN_ICONS.keys())
@@ -83,6 +91,26 @@ _HVAC_DEFAULT_COLOR = [0.55, 0.55, 0.55, 1.0]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# HAIconButton — a real tappable icon button for use inside cards.
+#
+# Replaces the old `BoxLayout + on_touch_down: if collide_point` pattern, which
+# fired on touch-DOWN (no press feedback, no way to cancel by sliding off, and
+# it stole taps meant for scrolling). ButtonBehavior grabs the touch and fires
+# on_release only when lifted inside the widget; the KV rule draws a pressed
+# state. `action` is a plain callback assigned after construction.
+# ─────────────────────────────────────────────────────────────────────────────
+class HAIconButton(ButtonBehavior, Label):
+    bg_color    = ColorProperty([1, 1, 1, 0.07])
+    bg_pressed  = ColorProperty([1, 1, 1, 0.18])
+    radius      = NumericProperty(dp(9))
+    action      = None   # assigned post-construction (never as on_* kwarg)
+
+    def on_release(self):
+        if self.action is not None:
+            self.action()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Base card
 # ─────────────────────────────────────────────────────────────────────────────
 class HADeviceCard(BoxLayout):
@@ -97,6 +125,11 @@ class HADeviceCard(BoxLayout):
     is_on       = BooleanProperty(False)
     focused     = BooleanProperty(False)    # True when the rotary encoder targets this card
     is_favorite = BooleanProperty(False)    # True when starred by the user
+
+    # MaterialIcons star glyphs — exposed as properties so the KV star button
+    # can switch between them reactively.
+    star_filled  = StringProperty(STAR_FILLED)
+    star_outline = StringProperty(STAR_OUTLINE)
 
     # Defaults derive from tokens; _apply_theme() re-applies on init/theme change.
     card_color   = ColorProperty(Theme().get_color(Theme().BACKGROUND_SURFACE))
@@ -121,13 +154,19 @@ class HADeviceCard(BoxLayout):
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def load(self, entity_id, state_str, attributes):
-        """Populate card from a Home Assistant state dict."""
+    def load(self, entity_id, state_str, attributes, favorites=None):
+        """Populate card from a Home Assistant state dict.
+
+        *favorites* is an optional pre-loaded set of favorited entity_ids —
+        pass it when building many cards at once to avoid a disk read per card.
+        """
         self.entity_id   = entity_id
         self.domain      = entity_id.split(".")[0] if "." in entity_id else ""
-        self.domain_icon = DOMAIN_ICONS.get(self.domain, "?")
+        self.domain_icon = DOMAIN_ICONS.get(self.domain, "")
         self.entity_name = attributes.get("friendly_name", entity_id)
-        self.is_favorite = entity_id in load_ha_favorites()
+        if favorites is None:
+            favorites = load_ha_favorites()
+        self.is_favorite = entity_id in favorites
         self._programmatic = True
         self._set_state_props(state_str, attributes)
         self._programmatic = False
@@ -497,8 +536,12 @@ class HAMediaCard(HADeviceCard):
 # ─────────────────────────────────────────────────────────────────────────────
 # Factory
 # ─────────────────────────────────────────────────────────────────────────────
-def make_ha_card(entity_id, state_dict):
-    """Return the correct HADeviceCard subclass for *entity_id*, or None."""
+def make_ha_card(entity_id, state_dict, favorites=None):
+    """Return the correct HADeviceCard subclass for *entity_id*, or None.
+
+    *favorites* is an optional pre-loaded set of favorited entity_ids, forwarded
+    to ``load()`` so a bulk build reads the favorites file only once.
+    """
     state_str  = state_dict.get("state", "off")
     attributes = state_dict.get("attributes", {})
     domain     = entity_id.split(".")[0] if "." in entity_id else ""
@@ -518,5 +561,5 @@ def make_ha_card(entity_id, state_dict):
     else:
         return None
 
-    card.load(entity_id, state_str, attributes)
+    card.load(entity_id, state_str, attributes, favorites=favorites)
     return card

@@ -27,15 +27,31 @@ class HASlider(Widget):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
+            # Grab the touch so the drag stays ours even when the finger
+            # wanders outside the widget or an enclosing ScrollView is
+            # watching the same gesture — without this, vertical scrolls
+            # yank slider values and drags get stolen mid-gesture.
+            touch.grab(self)
+            # Tell the host screen this touch is a control interaction, so its
+            # horizontal drag isn't also recognised as a left/right swipe
+            # gesture (which would navigate the card away). See
+            # PiHomeScreen.touch_up.
+            touch.ud['ph_control_touch'] = True
             self._set_from_x(touch.x)
             return True
         return super().on_touch_down(touch)
 
     def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos):
+        if touch.grab_current is self:
             self._set_from_x(touch.x)
             return True
         return super().on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        if touch.grab_current is self:
+            touch.ungrab(self)
+            return True
+        return super().on_touch_up(touch)
 
     def _set_from_x(self, x):
         """Map an absolute x coordinate → value 0-100, accounting for thumb radius."""

@@ -65,6 +65,12 @@ class PiHomeScreen(Screen):
     def touch_up(self, touch):
         if 'line' not in touch.ud:
             return False
+        # An interactive control (slider, switch, …) claimed this touch, so its
+        # drag is a value change, not a screen gesture. Without this guard a
+        # horizontal slider drag also reads as a left/right swipe and navigates
+        # the card away the moment the finger lifts.
+        if touch.ud.get('ph_control_touch'):
+            return False
         g = simplegesture('', list(zip(touch.ud['line'].points[::2], touch.ud['line'].points[1::2])))
         g2 = GESTURE_DATABASE.find(g, minscore=0.70)
         # print(GESTURE_DATABASE.gesture_to_str(g))

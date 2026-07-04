@@ -3,6 +3,23 @@
 #:import AsyncImage kivy.uix.image.AsyncImage
 
 # ─────────────────────────────────────────────────────────────────────────────
+# HAIconButton — tappable icon/label button used for all in-card controls.
+# Fires on release (ButtonBehavior), draws a pressed background, nudges 1px
+# down while held for a tactile cue. Defined in hadevicecard.py.
+# ─────────────────────────────────────────────────────────────────────────────
+<HAIconButton>:
+    halign: 'center'
+    valign: 'middle'
+    text_size: self.size
+    canvas.before:
+        Color:
+            rgba: self.bg_pressed if self.state == 'down' else self.bg_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [self.radius]
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Base rule — applies to all HADeviceCard subclasses via kv inheritance
 # Draws a focus ring when root.focused == True
 # ─────────────────────────────────────────────────────────────────────────────
@@ -45,7 +62,7 @@
         # Domain icon (lit up when on, dim when off)
         Label:
             text: root.domain_icon
-            font_name: 'ArialUnicode'
+            font_name: 'MaterialIcons'
             font_size: '20sp'
             color: root.accent_color if root.is_on else (root.text_color[0], root.text_color[1], root.text_color[2], 0.30)
             size_hint: None, 1
@@ -64,15 +81,16 @@
             size_hint: 1, 1
 
         # Favorite star
-        Label:
-            text: '\u2605' if root.is_favorite else '\u2606'
-            font_name: 'ArialUnicode'
-            font_size: '19sp'
+        HAIconButton:
+            text: root.star_filled if root.is_favorite else root.star_outline
+            font_name: 'MaterialIcons'
+            font_size: '18sp'
             color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            bg_color: 0, 0, 0, 0
+            bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.12
             size_hint: None, 1
-            width: dp(26)
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root.toggle_favorite()
+            width: dp(30)
+            on_release: root.toggle_favorite()
 
         # On / off switch
         PiHomeSwitch:
@@ -89,14 +107,14 @@
         spacing: dp(8)
         opacity: 1 if root.supports_brightness else 0
 
-        # Sun icon
+        # Brightness icon
         Label:
-            text: '\u2600'
-            font_name: 'ArialUnicode'
-            font_size: '14sp'
+            text: '\ue518'
+            font_name: 'MaterialIcons'
+            font_size: '15sp'
             color: root.text_color[0], root.text_color[1], root.text_color[2], 0.40
             size_hint: None, 1
-            width: dp(16)
+            width: dp(18)
 
         # Brightness slider
         HASlider:
@@ -140,7 +158,7 @@
 
         Label:
             text: root.domain_icon
-            font_name: 'ArialUnicode'
+            font_name: 'MaterialIcons'
             font_size: '20sp'
             color: root.accent_color if root.is_on else (root.text_color[0], root.text_color[1], root.text_color[2], 0.30)
             size_hint: None, 1
@@ -158,15 +176,16 @@
             size_hint: 1, 1
 
         # Favorite star
-        Label:
-            text: '\u2605' if root.is_favorite else '\u2606'
-            font_name: 'ArialUnicode'
-            font_size: '19sp'
+        HAIconButton:
+            text: root.star_filled if root.is_favorite else root.star_outline
+            font_name: 'MaterialIcons'
+            font_size: '18sp'
             color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            bg_color: 0, 0, 0, 0
+            bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.12
             size_hint: None, 1
-            width: dp(26)
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root.toggle_favorite()
+            width: dp(30)
+            on_release: root.toggle_favorite()
 
         PiHomeSwitch:
             id: main_switch
@@ -199,7 +218,7 @@
 
         Label:
             text: root.domain_icon
-            font_name: 'ArialUnicode'
+            font_name: 'MaterialIcons'
             font_size: '20sp'
             color: root.accent_color
             size_hint: None, 1
@@ -233,61 +252,46 @@
                 height: dp(14)
 
         # Favorite star
-        Label:
-            text: '\u2605' if root.is_favorite else '\u2606'
-            font_name: 'ArialUnicode'
-            font_size: '19sp'
+        HAIconButton:
+            text: root.star_filled if root.is_favorite else root.star_outline
+            font_name: 'MaterialIcons'
+            font_size: '18sp'
             color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            bg_color: 0, 0, 0, 0
+            bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.12
             size_hint: None, 1
-            width: dp(26)
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root.toggle_favorite()
+            width: dp(30)
+            on_release: root.toggle_favorite()
 
-        # Open ↑ button
-        BoxLayout:
+        # Open (up) button
+        HAIconButton:
             size_hint: None, None
-            size: dp(34), dp(34)
+            size: dp(38), dp(38)
             pos_hint: {'center_y': 0.5}
-            padding: dp(3)
-            canvas.before:
-                Color:
-                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.20
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [dp(9)]
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root._cover_open()
-            Label:
-                text: '\u2191'
-                color: root.accent_color
-                font_name: 'ArialUnicode'
-                font_size: '20sp'
+            text: '\ue5d8'
+            font_name: 'MaterialIcons'
+            font_size: '22sp'
+            color: root.accent_color
+            bg_color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
+            bg_pressed: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.42
+            on_release: root._cover_open()
 
         Widget:
             size_hint: None, 1
             width: dp(6)
 
-        # Close ↓ button
-        BoxLayout:
+        # Close (down) button
+        HAIconButton:
             size_hint: None, None
-            size: dp(34), dp(34)
+            size: dp(38), dp(38)
             pos_hint: {'center_y': 0.5}
-            padding: dp(3)
-            canvas.before:
-                Color:
-                    rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.08
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [dp(9)]
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root._cover_close()
-            Label:
-                text: '\u2193'
-                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
-                font_name: 'ArialUnicode'
-                font_size: '20sp'
+            text: '\ue5db'
+            font_name: 'MaterialIcons'
+            font_size: '22sp'
+            color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
+            bg_color: root.text_color[0], root.text_color[1], root.text_color[2], 0.08
+            bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.22
+            on_release: root._cover_close()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -313,7 +317,7 @@
 
         Label:
             text: root.domain_icon
-            font_name: 'ArialUnicode'
+            font_name: 'MaterialIcons'
             font_size: '20sp'
             color: root.accent_color
             size_hint: None, 1
@@ -331,37 +335,31 @@
             size_hint: 1, 1
 
         # Favorite star
-        Label:
-            text: '\u2605' if root.is_favorite else '\u2606'
-            font_name: 'ArialUnicode'
-            font_size: '19sp'
+        HAIconButton:
+            text: root.star_filled if root.is_favorite else root.star_outline
+            font_name: 'MaterialIcons'
+            font_size: '18sp'
             color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            bg_color: 0, 0, 0, 0
+            bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.12
             size_hint: None, 1
-            width: dp(26)
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root.toggle_favorite()
+            width: dp(30)
+            on_release: root.toggle_favorite()
 
         # Run button
-        BoxLayout:
+        HAIconButton:
             size_hint: None, None
-            size: dp(60), dp(32)
+            size: dp(62), dp(34)
             pos_hint: {'center_y': 0.5}
-            padding: [dp(6), dp(4), dp(6), dp(4)]
-            canvas.before:
-                Color:
-                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [dp(10)]
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root._trigger_run()
-            Label:
-                text: 'Run'
-                color: root.accent_color
-                font_name: 'Nunito'
-                font_size: '12sp'
-                bold: True
+            radius: dp(10)
+            text: 'Run'
+            font_name: 'Nunito'
+            font_size: '12sp'
+            bold: True
+            color: root.accent_color
+            bg_color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
+            bg_pressed: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.42
+            on_release: root._trigger_run()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -389,7 +387,7 @@
 
         Label:
             text: root.domain_icon
-            font_name: 'ArialUnicode'
+            font_name: 'MaterialIcons'
             font_size: '20sp'
             color: root.hvac_action_color if root.is_on else (root.text_color[0], root.text_color[1], root.text_color[2], 0.30)
             size_hint: None, 1
@@ -407,15 +405,16 @@
             size_hint: 1, 1
 
         # Favorite star
-        Label:
-            text: '\u2605' if root.is_favorite else '\u2606'
-            font_name: 'ArialUnicode'
-            font_size: '19sp'
+        HAIconButton:
+            text: root.star_filled if root.is_favorite else root.star_outline
+            font_name: 'MaterialIcons'
+            font_size: '18sp'
             color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+            bg_color: 0, 0, 0, 0
+            bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.12
             size_hint: None, 1
-            width: dp(26)
-            on_touch_down:
-                if self.collide_point(*args[1].pos): root.toggle_favorite()
+            width: dp(30)
+            on_release: root.toggle_favorite()
 
     # ── Temperature info row ────────────────────────────────────────────────────────
     BoxLayout:
@@ -525,7 +524,7 @@
             # Placeholder icon shown when no image is available
             Label:
                 text: root.domain_icon
-                font_name: 'ArialUnicode'
+                font_name: 'MaterialIcons'
                 font_size: '30sp'
                 color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.28
                 opacity: 0 if root.media_img_url else 1
@@ -572,15 +571,16 @@
                 size_hint: 1, 1
 
             # Favorite star
-            Label:
-                text: '\u2605' if root.is_favorite else '\u2606'
-                font_name: 'ArialUnicode'
+            HAIconButton:
+                text: root.star_filled if root.is_favorite else root.star_outline
+                font_name: 'MaterialIcons'
                 font_size: '17sp'
                 color: (1.0, 0.78, 0.08, 1) if root.is_favorite else (root.text_color[0], root.text_color[1], root.text_color[2], 0.25)
+                bg_color: 0, 0, 0, 0
+                bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.12
                 size_hint: None, 1
-                width: dp(24)
-                on_touch_down:
-                    if self.collide_point(*args[1].pos): root.toggle_favorite()
+                width: dp(26)
+                on_release: root.toggle_favorite()
 
         # Media title
         Label:
@@ -618,61 +618,43 @@
             spacing: dp(6)
 
             # Prev
-            BoxLayout:
+            HAIconButton:
                 size_hint: None, None
-                size: dp(28), dp(28)
-                canvas.before:
-                    Color:
-                        rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [dp(8)]
-                on_touch_down:
-                    if self.collide_point(*args[1].pos): root._prev_track()
-                Label:
-                    text: '\u25C4'
-                    font_name: 'ArialUnicode'
-                    font_size: '13sp'
-                    color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
+                size: dp(30), dp(28)
+                radius: dp(8)
+                text: '\ue045'
+                font_name: 'MaterialIcons'
+                font_size: '18sp'
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
+                bg_color: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
+                bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.20
+                on_release: root._prev_track()
 
             # Play / Pause
-            BoxLayout:
+            HAIconButton:
                 size_hint: None, None
-                size: dp(28), dp(28)
-                canvas.before:
-                    Color:
-                        rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.22
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [dp(8)]
-                on_touch_down:
-                    if self.collide_point(*args[1].pos): root._play_pause()
-                Label:
-                    text: '\u25A0' if root.is_playing else '\u25BA'
-                    font_name: 'ArialUnicode'
-                    font_size: '13sp'
-                    color: root.accent_color
+                size: dp(30), dp(28)
+                radius: dp(8)
+                text: '\ue034' if root.is_playing else '\ue037'
+                font_name: 'MaterialIcons'
+                font_size: '19sp'
+                color: root.accent_color
+                bg_color: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.22
+                bg_pressed: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.45
+                on_release: root._play_pause()
 
             # Next
-            BoxLayout:
+            HAIconButton:
                 size_hint: None, None
-                size: dp(28), dp(28)
-                canvas.before:
-                    Color:
-                        rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [dp(8)]
-                on_touch_down:
-                    if self.collide_point(*args[1].pos): root._next_track()
-                Label:
-                    text: '\u25BA'
-                    font_name: 'ArialUnicode'
-                    font_size: '13sp'
-                    color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
+                size: dp(30), dp(28)
+                radius: dp(8)
+                text: '\ue044'
+                font_name: 'MaterialIcons'
+                font_size: '18sp'
+                color: root.text_color[0], root.text_color[1], root.text_color[2], 0.70
+                bg_color: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
+                bg_pressed: root.text_color[0], root.text_color[1], root.text_color[2], 0.20
+                on_release: root._next_track()
 
             Widget:
                 size_hint: 1, 1
@@ -685,12 +667,12 @@
             spacing: dp(6)
 
             Label:
-                text: '\u266A'
-                font_name: 'ArialUnicode'
-                font_size: '13sp'
+                text: '\ue050'
+                font_name: 'MaterialIcons'
+                font_size: '15sp'
                 color: root.text_color[0], root.text_color[1], root.text_color[2], 0.40
                 size_hint: None, 1
-                width: dp(16)
+                width: dp(18)
 
             HASlider:
                 id: volume_slider

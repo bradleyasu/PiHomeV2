@@ -59,4 +59,7 @@ class PiHomeSwitch(Widget):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
+            # Mark this as a control interaction so the host screen doesn't also
+            # read the touch as a swipe gesture (see PiHomeScreen.touch_up).
+            touch.ud['ph_control_touch'] = True
             self.enabled = not self.enabled
