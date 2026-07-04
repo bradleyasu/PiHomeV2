@@ -1,4 +1,5 @@
 import math
+import time
 from datetime import datetime, timezone
 from random import uniform
 
@@ -137,6 +138,11 @@ class WeatherWidget(Widget):
         self._apply_theme_colors()
         self._clock_event = None
         self._last_alert_keys = []
+        # (time_label, insight) pairs on the current alert cards, so the
+        # relative "ends in / starts in" text can be refreshed without
+        # rebuilding the carousel.
+        self._alert_time_labels = []
+        self._last_alert_time_refresh = 0.0
 
         # Ambient overlay precipitation particles
         self._overlay_particles = []
@@ -491,6 +497,9 @@ class WeatherWidget(Widget):
 
         new_keys = [self._get_alert_key(i) for i in relevant]
         if new_keys == self._last_alert_keys and self.alert_count == len(relevant):
+            # No data change, but the countdown text is relative to now —
+            # keep it (and the upcoming -> active wording) ticking.
+            self._refresh_alert_times()
             return  # no change
         self._last_alert_keys = new_keys
 
@@ -502,6 +511,7 @@ class WeatherWidget(Widget):
         # Clear existing slides
         carousel.clear_widgets()
         dots_box.clear_widgets()
+        self._alert_time_labels = []
 
         self.alert_count = len(relevant)
 
@@ -683,6 +693,7 @@ class WeatherWidget(Widget):
         )
         time_lbl.bind(size=lambda w, s: setattr(w, 'text_size', (w.width, None)))
         footer.add_widget(time_lbl)
+        self._alert_time_labels.append((time_lbl, insight))
 
         if insight.origin:
             origin_lbl = Label(
@@ -702,6 +713,25 @@ class WeatherWidget(Widget):
 
         container.add_widget(card)
         return container
+
+    def _refresh_alert_times(self, min_interval=60):
+        """Recompute the relative time text on the existing alert cards.
+
+        Cards only rebuild when the alert data changes, but 'ends in 48h' /
+        'Starts in 3h' is relative to now — without this it would stay frozen
+        at whatever it said when the card was built. Called from the 1 Hz
+        update tick, throttled to once per *min_interval* seconds (the text
+        has at best minute granularity).
+        """
+        now = time.time()
+        if now - self._last_alert_time_refresh < min_interval:
+            return
+        self._last_alert_time_refresh = now
+        for lbl, insight in self._alert_time_labels:
+            try:
+                lbl.text = self._format_alert_time(insight)
+            except Exception as e:
+                PIHOME_LOGGER.error(f"WeatherWidget: alert time refresh failed: {e}")
 
     def _format_alert_time(self, insight):
         """Format a human-readable time string for an alert."""
