@@ -1,4 +1,5 @@
 #:kivy 2.0.0
+#:import dp kivy.metrics.dp
 
 <SimpleButton>:
     size_hint: None, None
@@ -7,16 +8,65 @@
         Scale:
             origin: self.center
             xyz: [self.zoom, self.zoom, 1]
+
+        # Soft drop shadow — the button sits slightly "raised" off the surface,
+        # settling down while pressed.
         Color:
-            rgba: self.background_color
+            rgba: 0, 0, 0, (0.10 if self.state == 'down' else 0.25)
+        RoundedRectangle:
+            size: self.size
+            pos: self.x, self.y - dp(2)
+            radius: [self.radius]
+
+        # Base fill (darkens while pressed)
+        Color:
+            rgba: (self.background_color[0] * 0.84, self.background_color[1] * 0.84, self.background_color[2] * 0.84, self.background_color[3]) if self.state == 'down' else self.background_color
         RoundedRectangle:
             size: self.size
             pos: self.pos
+            radius: [self.radius]
+
+        # Top-edge light — a subtle highlight confined to the top of the
+        # button (falloff baked into the texture); fades when pressed so the
+        # button reads as pushed in.
+        Color:
+            rgba: 1, 1, 1, (0.04 if self.state == 'down' else 0.16)
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [self.radius]
+            texture: self.gloss_texture
+
+        # Bottom-edge shade — equal-sized dark falloff mirroring the top light
+        Color:
+            rgba: 0, 0, 0, 0.14
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [self.radius]
+            texture: self.shade_texture
+
+        # Pressed-only inner shade from the top (inset cue)
+        Color:
+            rgba: 0, 0, 0, (0.15 if self.state == 'down' else 0)
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [self.radius]
+            texture: self.gloss_texture
+
+        # Crisp edge — outline in a darker shade of the fill
+        Color:
+            rgba: self.background_color[0] * 0.6, self.background_color[1] * 0.6, self.background_color[2] * 0.6, 0.9
+        Line:
+            rounded_rectangle: (self.x, self.y, self.width, self.height, self.radius)
+            width: 1
         PopMatrix:
-    
-    Label: 
+
+    Label:
         text: root.text
-        pos: root.pos
+        # 1dp downward nudge while pressed — tactile "key travel" cue
+        pos: root.x, root.y - (dp(1) if root.state == 'down' else 0)
         font_size: '16sp'
         font_name: 'Nunito'
         size_hint: None, None
