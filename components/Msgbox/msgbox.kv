@@ -26,22 +26,13 @@
             size: self.width, self.height
             radius: [dp(16)]
 
-        # Layer 1: full card in accent color (gives us properly rounded top corners)
+        # Card body (accent identity comes from the title icon, not a top band)
         Color:
-            rgba: self.accent_color[0], self.accent_color[1], self.accent_color[2], self.card_opacity
+            rgba: self.card_color[0], self.card_color[1], self.card_color[2], self.card_opacity
         RoundedRectangle:
             pos: self.pos
             size: self.size
             radius: [dp(16)]
-
-        # Layer 2: card body overdraw in card color, only bottom corners rounded,
-        # leaving exactly dp(8) of accent color visible at the top
-        Color:
-            rgba: self.card_color[0], self.card_color[1], self.card_color[2], self.card_opacity
-        RoundedRectangle:
-            pos: self.x, self.y
-            size: self.width, self.height - dp(8)
-            radius: [dp(8), dp(8), dp(16), dp(16)]
 
         # Elevation border over the whole card
         Color:

@@ -45,20 +45,13 @@
             spacing: 0
 
             canvas.before:
-                # Step 1: full card in accent color — correctly curved top corners
-                Color:
-                    rgba: root.accent_color
-                RoundedRectangle:
-                    size: self.size
-                    pos: self.pos
-                    radius: [dp(20)]
-                # Step 2: dark card overlay — same radius on all corners so the
-                # top rounding matches, revealing a clean accent band at the top
+                # Card body (accent identity comes from the priority badge and
+                # confirm button, not a top band)
                 Color:
                     rgba: root.card_color
                 RoundedRectangle:
-                    size: self.width, self.height - dp(10)
-                    pos: self.x, self.y
+                    size: self.size
+                    pos: self.pos
                     radius: [dp(20)]
 
             # Card content
