@@ -1,4 +1,6 @@
+import json
 import math
+import os
 import time
 from datetime import datetime, timezone
 from random import uniform
@@ -13,6 +15,7 @@ from kivy.properties import Property, BooleanProperty, ColorProperty, StringProp
 from kivy.metrics import dp, sp
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.carousel import Carousel
@@ -29,6 +32,29 @@ from util.phlog import PIHOME_LOGGER
 from util.tools import get_semi_transparent_gaussian_blur_png_from_color
 
 Builder.load_file("./composites/Weather/weatherwidget.kv")
+
+# Persisted set of alert keys the user has dismissed. Lives in the shared,
+# gitignored cache dir; entries are pruned once their alert is no longer active
+# so the file self-cleans.
+_DISMISSED_ALERTS_FILE = "cache/weather_dismissed_alerts.json"
+
+
+class AlertDismissButton(ButtonBehavior, Label):
+    """Small tappable 'X' on an alert card. Fires on_release (assigned after
+    construction). ButtonBehavior grabs the touch so a tap can't be misread as
+    a carousel swipe or a screen gesture."""
+    on_dismiss = None
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            # Not a screen swipe gesture (see PiHomeScreen.touch_up).
+            touch.ud['ph_control_touch'] = True
+        return super().on_touch_down(touch)
+
+    def on_release(self):
+        if self.on_dismiss is not None:
+            self.on_dismiss()
+
 
 class WeatherWidget(Widget):
     theme = Theme()
@@ -138,6 +164,8 @@ class WeatherWidget(Widget):
         self._apply_theme_colors()
         self._clock_event = None
         self._last_alert_keys = []
+        # Alerts the user has hidden — persisted across launches.
+        self._dismissed_keys = self._load_dismissed()
         # (time_label, insight) pairs on the current alert cards, so the
         # relative "ends in / starts in" text can be refreshed without
         # rebuilding the carousel.
@@ -488,11 +516,56 @@ class WeatherWidget(Widget):
                 str(insight.start_time), str(insight.end_time),
                 insight.title)
 
+    def _dismiss_key(self, insight):
+        """Stable string identity for persisting a dismissal (survives rebuilds
+        and relaunches; a re-issued alert has different start/end times so it
+        reappears rather than staying hidden)."""
+        return "|".join(str(p) for p in self._get_alert_key(insight))
+
+    def _load_dismissed(self):
+        try:
+            with open(_DISMISSED_ALERTS_FILE, "r") as f:
+                data = json.load(f)
+            return set(data) if isinstance(data, list) else set()
+        except (FileNotFoundError, json.JSONDecodeError):
+            return set()
+        except Exception as e:
+            PIHOME_LOGGER.error(f"WeatherWidget: failed to load dismissed alerts: {e}")
+            return set()
+
+    def _save_dismissed(self):
+        try:
+            os.makedirs(os.path.dirname(_DISMISSED_ALERTS_FILE), exist_ok=True)
+            with open(_DISMISSED_ALERTS_FILE, "w") as f:
+                json.dump(sorted(self._dismissed_keys), f)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"WeatherWidget: failed to save dismissed alerts: {e}")
+
+    def _dismiss_alert(self, insight):
+        """Hide a single alert. Persists so it stays hidden across relaunches
+        until the alert itself ends."""
+        self._dismissed_keys.add(self._dismiss_key(insight))
+        self._save_dismissed()
+        # Force a rebuild so the dismissed card is removed immediately.
+        self._last_alert_keys = None
+        self._update_alerts()
+
     def _update_alerts(self):
         """Sync the alert carousel with current WEATHER.insights."""
         insights = WEATHER.insights
         # Show active and upcoming alerts, sorted by severity (most severe first)
-        relevant = [i for i in insights if i.is_active or i.is_upcoming]
+        all_relevant = [i for i in insights if i.is_active or i.is_upcoming]
+
+        # Forget dismissals whose alert is no longer relevant, so the file
+        # self-cleans and a later re-issue isn't silently suppressed.
+        live_keys = {self._dismiss_key(i) for i in all_relevant}
+        stale = self._dismissed_keys - live_keys
+        if stale:
+            self._dismissed_keys -= stale
+            self._save_dismissed()
+
+        relevant = [i for i in all_relevant
+                    if self._dismiss_key(i) not in self._dismissed_keys]
         relevant = Insight.sort_by_severity(relevant, descending=True)
 
         new_keys = [self._get_alert_key(i) for i in relevant]
@@ -650,12 +723,27 @@ class WeatherWidget(Widget):
             bold=True,
             color=sev_color,
             size_hint_x=None,
-            width=dp(70),
+            width=dp(64),
             halign='right',
             valign='middle',
         )
-        badge.text_size = (dp(70), None)
+        badge.text_size = (dp(64), None)
         header.add_widget(badge)
+
+        # Dismiss (X) — hides this alert until it ends
+        dismiss_btn = AlertDismissButton(
+            text="",   # close
+            font_name='MaterialIcons',
+            font_size=sp(18),
+            color=(self.text_color[0], self.text_color[1], self.text_color[2], 0.55),
+            size_hint_x=None,
+            width=dp(26),
+            halign='center',
+            valign='middle',
+        )
+        dismiss_btn.text_size = (dp(26), None)
+        dismiss_btn.on_dismiss = lambda ins=insight: self._dismiss_alert(ins)
+        header.add_widget(dismiss_btn)
 
         card.add_widget(header)
 
