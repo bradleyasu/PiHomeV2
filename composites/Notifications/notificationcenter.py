@@ -64,6 +64,8 @@ class NotificationCenter(FloatLayout):
         self.size_hint = (1, 1)
         self.pos = (0, 0)
         self._notifications = []          # list of notification dicts
+        # Periodic relative-timestamp refresh; runs only while the panel is open.
+        self._ts_refresh_ev = None
         # The badge stays hidden until the Home startup animation finishes
         # (signalled via on_startup_complete), then pops in.
         self._startup_done = False
@@ -211,6 +213,17 @@ class NotificationCenter(FloatLayout):
             row.clear_cb = (lambda nid=n["id"]: self.dismiss(nid))
             box.add_widget(row)
 
+    def _refresh_timestamps(self, *_):
+        """Recompute every row's relative 'when issued' label.
+
+        Rows compute the label at construction, so a panel reopened later would
+        otherwise still show e.g. 'just now' on old notifications.
+        """
+        if "rows_box" not in self.ids:
+            return
+        for row in self.ids.rows_box.children:
+            row.refresh_timestamp()
+
     def _update_badge(self):
         if "badge" not in self.ids:
             return
@@ -287,6 +300,11 @@ class NotificationCenter(FloatLayout):
         if self.count <= 0:
             return
         self.panel_open = True
+        # Bring the relative timestamps up to date, and keep them ticking while
+        # the panel stays open ('just now' -> '1m ago' -> ...).
+        self._refresh_timestamps()
+        if self._ts_refresh_ev is None:
+            self._ts_refresh_ev = Clock.schedule_interval(self._refresh_timestamps, 30)
         self.panel_width = self._compute_panel_width()
         Animation.cancel_all(self, "panel_x", "dim_opacity")
         Animation(panel_x=Window.width - self.panel_width,
@@ -294,6 +312,9 @@ class NotificationCenter(FloatLayout):
 
     def close_panel(self):
         self.panel_open = False
+        if self._ts_refresh_ev is not None:
+            self._ts_refresh_ev.cancel()
+            self._ts_refresh_ev = None
         Animation.cancel_all(self, "panel_x", "dim_opacity")
         Animation(panel_x=Window.width, dim_opacity=0,
                   t="in_quad", d=0.24).start(self)

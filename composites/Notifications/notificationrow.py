@@ -36,7 +36,8 @@ def _format_ts(ts):
 
     Relative for recent notifications ('just now', '5m ago', '3h ago',
     '2d ago'); absolute date for anything older than a week ('Jun 15').
-    Computed when the row is built (rows rebuild whenever the list changes).
+    Computed when the row is built and recomputed via refresh_timestamp()
+    (the center calls it on panel open and periodically while open).
     """
     try:
         ts = float(ts)
@@ -98,7 +99,8 @@ class NotificationRow(ButtonBehavior, BoxLayout):
 
         self.title = notification.get("title", "") or ""
         self.description = notification.get("description", "") or ""
-        self.timestamp_text = _format_ts(notification.get("ts"))
+        self._ts = notification.get("ts")
+        self.timestamp_text = _format_ts(self._ts)
 
         level = notification.get("level", "info")
         theme = Theme()
@@ -111,6 +113,10 @@ class NotificationRow(ButtonBehavior, BoxLayout):
         else:
             self.glyph = _LEVEL_GLYPHS.get(level, _DEFAULT_GLYPH)
             self.has_icon = False
+
+    def refresh_timestamp(self):
+        """Recompute the relative 'when issued' label from the stored epoch ts."""
+        self.timestamp_text = _format_ts(self._ts)
 
     def on_release(self):
         # ButtonBehavior only fires this when the press was NOT consumed by the
