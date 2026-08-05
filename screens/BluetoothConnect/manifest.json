@@ -1,0 +1,106 @@
+{
+    "module": "BluetoothConnect.bluetoothconnect",
+    "name": "BluetoothConnectScreen",
+    "id": "_bluetoothconnect",
+    "label": "Bluetooth",
+    "settingsLabel": "Bluetooth Connect",
+    "settingsIndex": 45,
+    "description": "Pair custom BLE hardware (Arduino Nano 33 BLE and friends) and bind its commands to PiHome events",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 45,
+    "icon": "screens/BluetoothConnect/icon.png",
+    "dependencies": ["bleak>=0.22.3"],
+    "services": ["ble_service"],
+    "settings": [
+        {
+            "type": "title",
+            "title": "Bluetooth"
+        },
+        {
+            "type": "bool",
+            "title": "Enabled",
+            "desc": "Enable the Bluetooth service. When off, PiHome never powers the BLE radio",
+            "section": "bluetoothconnect",
+            "key": "enabled"
+        },
+        {
+            "type": "numeric",
+            "title": "Max Devices",
+            "desc": "Maximum simultaneous BLE connections (1-4). A Pi 3 shares its radio with WiFi, so keep this low",
+            "section": "bluetoothconnect",
+            "key": "max_devices"
+        },
+        {
+            "type": "numeric",
+            "title": "Scan Duration",
+            "desc": "How long the discovery scan runs when you tap SCAN, in seconds (default 8)",
+            "section": "bluetoothconnect",
+            "key": "scan_seconds"
+        },
+        {
+            "type": "numeric",
+            "title": "Command Debounce",
+            "desc": "Ignore a repeat of the same command from the same device within this many milliseconds (default 250)",
+            "section": "bluetoothconnect",
+            "key": "debounce_ms"
+        },
+        {
+            "type": "bool",
+            "title": "Notify On Command",
+            "desc": "Show a toast whenever a command arrives. Useful while setting up bindings",
+            "section": "bluetoothconnect",
+            "key": "notify_on_command"
+        },
+        {
+            "type": "title",
+            "title": "Security"
+        },
+        {
+            "type": "string",
+            "title": "Pair Key",
+            "desc": "Optional shared word. PiHome sends it on connect and ignores the device until it answers 'AUTH ok'. Sent in the clear over the air, so it only guards against accidental or casual connections",
+            "section": "bluetoothconnect",
+            "key": "pair_key"
+        },
+        {
+            "type": "title",
+            "title": "GATT Contract (advanced)"
+        },
+        {
+            "type": "string",
+            "title": "Adapter",
+            "desc": "BlueZ adapter name on Linux, e.g. hci0. Leave blank for the default. Ignored on macOS",
+            "section": "bluetoothconnect",
+            "key": "adapter"
+        },
+        {
+            "type": "string",
+            "title": "Service UUID",
+            "desc": "Must match your sketch. Change it on both sides to isolate your devices from other PiHome installs",
+            "section": "bluetoothconnect",
+            "key": "service_uuid"
+        },
+        {
+            "type": "string",
+            "title": "TX Characteristic UUID",
+            "desc": "Notify characteristic the device sends commands on (device to PiHome)",
+            "section": "bluetoothconnect",
+            "key": "tx_uuid"
+        },
+        {
+            "type": "string",
+            "title": "RX Characteristic UUID",
+            "desc": "Write characteristic PiHome sends text to (PiHome to device)",
+            "section": "bluetoothconnect",
+            "key": "rx_uuid"
+        },
+        {
+            "type": "string",
+            "title": "Info Characteristic UUID",
+            "desc": "Optional read characteristic holding the device's friendly name",
+            "section": "bluetoothconnect",
+            "key": "info_uuid"
+        }
+    ]
+}

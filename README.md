@@ -129,6 +129,7 @@ PiHome uses a manifest-driven screen discovery system. Each screen lives in its 
 | **Uber Eats** | Live order tracking |
 | **Cocktails** | Recipe search from TheCocktailDB |
 | **Whiteboard** | Freehand drawing canvas |
+| **Bluetooth** | Pair custom BLE hardware and bind its commands to PiHome events |
 | **Settings** | Configuration panel (PIN-protected) |
 | **Dev Tools** | Development and debugging utilities |
 
@@ -139,6 +140,7 @@ PiHome uses a manifest-driven screen discovery system. Each screen lives in its 
 3. Create your Python module and Kivy layout file
 4. Optionally add an `audio/` subdirectory with `.mp3`, `.wav`, or `.ogg` sound effects (auto-discovered as `myscreen.<filename>`)
 5. Optionally add an `events/` subdirectory with custom `PihomeEvent` subclasses (auto-discovered and available via MQTT, HTTP, and WebSocket)
+6. Optionally add a `services/` subdirectory for always-on background work, and list the module names in the manifest's `services` array
 
 #### manifest.json
 
@@ -202,6 +204,8 @@ PiHome uses a manifest-driven screen discovery system. Each screen lives in its 
 | `settingsLabel` | No | Override the label shown in the Settings screen |
 | `settingsIndex` | No | Sort order in the Settings screen (default: `9999`) |
 | `settings` | No | Array of setting definitions (see below) |
+| `dependencies` | No | Array of pip requirement strings this screen needs (e.g. `["bleak>=0.22.3"]`). Missing ones are installed automatically at startup; a restart is required to use them |
+| `services` | No | Array of module names under `services/` to start at boot (e.g. `["ble_service"]`). Use for work that must run even when the screen is closed |
 
 **Setting Types:**
 
@@ -742,6 +746,237 @@ ws.send(JSON.stringify({type: "status", depth: "advanced"}));
 ### MQTT
 
 Publish JSON event payloads to your configured MQTT topic. Configure the broker in Settings or `base.ini` under `[mqtt]`.
+
+## Bluetooth (Custom Hardware)
+
+The **Bluetooth** screen lets you build your own hardware - a button box, a knob, a motion sensor, a doorbell - and have it fire PiHome events over Bluetooth Low Energy. No PiHome code changes are needed: you pair the device on the touchscreen, then bind the command tokens it sends to any PiHome event.
+
+PiHome is the BLE **central**; your board is the **peripheral**. Anything that can act as a BLE peripheral works, but the reference target is an **Arduino Nano 33 BLE** or **Nano 33 BLE Sense** running the **ArduinoBLE** library.
+
+The link is held by a background service, so your hardware keeps working no matter which screen PiHome is showing - or whether the screen is open at all.
+
+**Setup:**
+
+1. Enable the integration in Settings -> Bluetooth Connect (it is off by default and the radio is never touched until you turn it on)
+2. Flash the sketch below to your board
+3. Open the Bluetooth screen, tap **SCAN**, and tap your device to pair it
+4. Watch the **Recent Commands** panel to see the tokens your sketch sends
+5. Bind those tokens to events (see below)
+
+### GATT Contract
+
+Your sketch and PiHome must agree on these UUIDs. They are the defaults; you can change all four under Settings -> Bluetooth Connect if you want your devices isolated from another PiHome install.
+
+| Role | UUID | Properties |
+|------|------|------------|
+| PiHome Service | `87e85cbe-0094-417b-963b-aa888c375c36` | Advertised by your device |
+| TX (device -> PiHome) | `eb96a621-c93b-4cca-b6c3-d79215350f65` | Notify |
+| RX (PiHome -> device) | `6f7bf96c-3b16-4032-af4d-2fb9631cfdd1` | Write |
+| Info (friendly name) | `5e29bcac-6f3f-4971-8dc5-65aa536e1792` | Read (optional) |
+
+### Wire Protocol
+
+Newline-terminated UTF-8 text in both directions. Keep each line short: a BLE notification carries only `MTU - 3` bytes, and ArduinoBLE's default MTU of 23 leaves **20 usable bytes**. PiHome reassembles fragments, so a long line still arrives intact - but one line per `writeValue()` is the reliable pattern.
+
+A line is either a bare token or a `token:value` pair:
+
+```
+button_a          -> command "button_a", no value
+dial:80           -> command "dial", value "80"
+temp=21.5         -> command "temp", value "21.5"
+```
+
+Command tokens are lowercased and trimmed, so casing in your sketch does not have to match the binding. Repeats of the same token from the same device inside the debounce window (250 ms by default) are ignored, so a bouncing button fires once.
+
+### Binding Commands to Events
+
+A token does nothing until you bind it. Bindings are managed with the `bluetooth_bind` event over HTTP, MQTT, or WebSocket, and persist in `cache/bluetooth_bindings.json`.
+
+```bash
+curl -X POST http://pihome:8989 \
+  -H "Content-Type: application/json" \
+  -d '{"type": "bluetooth_bind",
+       "command": "button_a",
+       "description": "Desk button",
+       "event": {"type": "app", "app": "_home"}}'
+```
+
+Any `$1` in the bound event is replaced with the value the device sent - the same convention `shell` uses - so a physical knob sending `dial:80` can drive a real setting:
+
+```bash
+curl -X POST http://pihome:8989 \
+  -H "Content-Type: application/json" \
+  -d '{"type": "bluetooth_bind",
+       "command": "dial",
+       "event": {"type": "brightness", "level": "$1"}}'
+```
+
+You can test a binding with no hardware connected at all, which is the fastest way to get the event right before you start soldering:
+
+```bash
+curl -X POST http://pihome:8989 -H "Content-Type: application/json" \
+  -d '{"type": "bluetooth_command", "command": "button_a"}'
+```
+
+**Bluetooth Events:**
+
+| Type | Description |
+|------|-------------|
+| `bluetooth_bind` | Bind a command token to a PiHome event. Fields: `command`, `event`, optional `device`, `description` |
+| `bluetooth_unbind` | Remove a binding. Fields: `command`, optional `device` |
+| `bluetooth_bindings_list` | List all bindings |
+| `bluetooth_command` | Fire a binding manually, as if the device had sent it. Fields: `command`, optional `value`, `device` |
+| `bluetooth_devices_list` | List paired devices with live connection state |
+| `bluetooth_forget` | Un-pair a device. Fields: `address` |
+| `bluetooth_send` | Send a line of text to a connected device, e.g. to light an LED. Fields: `text`, optional `address` |
+
+Omit `device` on a binding to accept the token from any paired device; set it to a device address to scope the binding to one piece of hardware.
+
+### Arduino Sketch
+
+A complete Nano 33 BLE / Nano 33 BLE Sense sketch: one button that sends `button_a`, and an LED that PiHome can drive with `bluetooth_send`. Requires the **Arduino Mbed OS Nano Boards** core and the **ArduinoBLE** library (1.3.0 or newer).
+
+```cpp
+#include <ArduinoBLE.h>
+
+// ── The PiHome GATT contract - must match Settings > Bluetooth Connect ──
+#define PIHOME_SERVICE_UUID "87e85cbe-0094-417b-963b-aa888c375c36"
+#define PIHOME_TX_UUID      "eb96a621-c93b-4cca-b6c3-d79215350f65"
+#define PIHOME_RX_UUID      "6f7bf96c-3b16-4032-af4d-2fb9631cfdd1"
+#define PIHOME_INFO_UUID    "5e29bcac-6f3f-4971-8dc5-65aa536e1792"
+
+const char* DEVICE_NAME = "PiHome Remote";
+const char* PAIR_KEY    = "";      // leave blank unless set in PiHome Settings
+const int   BUTTON_PIN  = 2;       // button to GND, uses the internal pull-up
+
+BLEService              pihomeService(PIHOME_SERVICE_UUID);
+BLECharacteristic       txChar(PIHOME_TX_UUID, BLERead | BLENotify, 32);
+BLECharacteristic       rxChar(PIHOME_RX_UUID, BLEWrite | BLEWriteWithoutResponse, 32);
+BLEStringCharacteristic infoChar(PIHOME_INFO_UUID, BLERead, 24);
+
+bool          authed    = false;
+int           lastState = HIGH;
+unsigned long lastEdge  = 0;
+char          rxLine[64];
+uint8_t       rxLen = 0;
+
+// Send one command line to PiHome.
+void sendCommand(const char* line) {
+  if (!txChar.subscribed()) return;              // PiHome is not listening yet
+  if (PAIR_KEY[0] != '\0' && !authed) return;    // waiting on the pair key
+  char buf[24];
+  int n = snprintf(buf, sizeof(buf), "%s\n", line);
+  txChar.writeValue((const uint8_t*)buf, n);
+  BLE.poll();                                    // let the notification go out
+}
+
+// Handle one complete line sent by PiHome.
+void handleLine(char* line) {
+  if (strncmp(line, "AUTH ", 5) == 0) {
+    if (strcmp(line + 5, PAIR_KEY) == 0) {
+      authed = true;
+      txChar.writeValue((const uint8_t*)"AUTH ok\n", 8);
+    }
+    return;
+  }
+  if (strcmp(line, "led:on")  == 0) digitalWrite(LED_BUILTIN, HIGH);
+  if (strcmp(line, "led:off") == 0) digitalWrite(LED_BUILTIN, LOW);
+}
+
+// PiHome chunks its writes to 20 bytes, so buffer until a newline arrives.
+void onRxWritten(BLEDevice central, BLECharacteristic ch) {
+  const uint8_t* data = ch.value();
+  int len = ch.valueLength();
+  for (int i = 0; i < len; i++) {
+    char c = (char)data[i];
+    if (c == '\n' || c == '\r') {
+      if (rxLen > 0) { rxLine[rxLen] = '\0'; handleLine(rxLine); rxLen = 0; }
+    } else if (rxLen < sizeof(rxLine) - 1) {
+      rxLine[rxLen++] = c;
+    }
+  }
+}
+
+void onDisconnected(BLEDevice central) {
+  authed = false;
+  rxLen  = 0;
+  BLE.advertise();          // ArduinoBLE stops advertising while connected
+}
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  if (!BLE.begin()) {
+    while (1);              // radio failed to start
+  }
+
+  infoChar.writeValue(DEVICE_NAME);
+  pihomeService.addCharacteristic(txChar);
+  pihomeService.addCharacteristic(rxChar);
+  pihomeService.addCharacteristic(infoChar);
+  BLE.addService(pihomeService);
+
+  rxChar.setEventHandler(BLEWritten, onRxWritten);
+  BLE.setEventHandler(BLEDisconnected, onDisconnected);
+
+  // A 128-bit service UUID uses 18 of the 31 advertising bytes, so the name
+  // must go in the scan response. Putting both in the advertising packet
+  // overflows it and the device never shows up in a scan.
+  BLEAdvertisingData advData;
+  advData.setAdvertisedService(pihomeService);
+  BLE.setAdvertisingData(advData);
+
+  BLEAdvertisingData scanData;
+  scanData.setLocalName(DEVICE_NAME);
+  BLE.setScanResponseData(scanData);
+
+  BLE.advertise();
+}
+
+void loop() {
+  BLE.poll();
+
+  int state = digitalRead(BUTTON_PIN);
+  if (state != lastState && millis() - lastEdge > 50) {
+    lastEdge  = millis();
+    lastState = state;
+    if (state == LOW) {
+      sendCommand("button_a");
+    }
+  }
+}
+```
+
+To add more controls, call `sendCommand()` with a new token and bind it - for example `sendCommand("button_b")`, or a value form built with `snprintf`:
+
+```cpp
+char msg[24];
+snprintf(msg, sizeof(msg), "dial:%d", value);
+sendCommand(msg);
+```
+
+### Security
+
+Be deliberate about what you bind. BLE traffic here is **unencrypted and unauthenticated**:
+
+- PiHome only accepts commands from devices you explicitly paired on the touchscreen - an unpaired device that connects is ignored
+- The optional **Pair Key** is a shared word PiHome writes on connect and expects the device to answer with `AUTH ok`. It is sent in the clear over the air, so it guards against accidental or casual connections, not a determined attacker. Keep it under 14 characters so it arrives in a single write
+- Changing the service UUID on both sides is a practical way to keep your devices from being found at all
+- Devices cannot send arbitrary event JSON. They can only trigger tokens you have bound, so a binding is the complete list of what a device is allowed to do
+
+Treat a BLE token like a physical wall switch: do not bind one to something you would not want a guest to be able to press.
+
+### Troubleshooting
+
+- **The device never appears in a scan.** Almost always the advertising packet overflowed - the friendly name must go in the scan response, not alongside the 128-bit UUID (see the sketch). Devices found but not advertising the PiHome service are shown dimmed in the scan dialog to help you spot this
+- **Paired but never connects.** Check the sketch is still advertising after a disconnect, and that the TX characteristic UUID matches
+- **Commands never arrive.** Make sure your sketch ends each line with `\n` and guards on `txChar.subscribed()`
+- **Nothing works on first boot.** The `bleak` package installs automatically at startup, but a **restart is required** before it can be used. The screen says so when this is the case
+- **On the Pi**, Bluetooth must be unblocked and running: `sudo rfkill unblock bluetooth` and `sudo systemctl enable --now bluetooth`. If you have `dtoverlay=disable-bt` in `/boot/config.txt` (sometimes added to free the hardware serial port) there is no adapter at all and this screen cannot work
+- **On macOS**, grant Bluetooth permission to the app running PiHome under System Settings -> Privacy & Security -> Bluetooth, or scans silently return nothing
+- **Device addresses differ per host.** macOS reports a per-host CoreBluetooth UUID rather than a MAC address, so a `cache/bluetooth_devices.json` written on a Mac will not match on the Pi. Re-pair on each machine
+- **Keep it to a few devices.** A Pi 3 shares one radio between WiFi and Bluetooth; more than about 4 concurrent links costs you throughput and dropped notifications. The **Max Devices** setting caps this at 4
 
 ## Rotary Encoder (Optional)
 

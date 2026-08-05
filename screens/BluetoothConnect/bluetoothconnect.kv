@@ -1,0 +1,219 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<BluetoothConnectScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+
+        # ── Header ──────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(44)
+            padding: dp(54), 0, dp(12), 0
+            spacing: dp(8)
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+                Color:
+                    rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.06
+                Rectangle:
+                    size: self.width, dp(1)
+                    pos: self.x, self.y
+
+            Label:
+                text: root.header_glyph
+                font_name: "MaterialIcons"
+                font_size: sp(20)
+                color: root.accent_color
+                size_hint_x: None
+                width: dp(26)
+                halign: "center"
+                valign: "middle"
+                text_size: self.size
+
+            Label:
+                text: "BLUETOOTH"
+                font_name: "Nunito"
+                font_size: sp(12)
+                bold: True
+                color: root.text_color
+                size_hint_x: None
+                width: dp(96)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Label:
+                text: root.header_status
+                font_name: "Nunito"
+                font_size: sp(10)
+                color: root.muted_color
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Widget:
+                size_hint: None, None
+                size: dp(8), dp(8)
+                pos_hint: {"center_y": 0.5}
+                canvas:
+                    Color:
+                        rgba: root.status_color
+                    Ellipse:
+                        pos: self.pos
+                        size: self.size
+
+        # ── Body ────────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 1
+
+            # ── Left: paired devices ────────────────────────────────────
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.54
+                padding: dp(12), dp(10), dp(8), dp(10)
+                spacing: dp(6)
+
+                Label:
+                    text: root.devices_title
+                    font_name: "Nunito"
+                    font_size: sp(10)
+                    bold: True
+                    color: root.muted_color
+                    size_hint_y: None
+                    height: dp(16)
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                # Empty / degraded state. Opacity only -- a disabled widget
+                # would swallow touches for everything underneath it.
+                Label:
+                    text: root.status_text
+                    font_name: "Nunito"
+                    font_size: sp(11)
+                    color: root.muted_color
+                    size_hint_y: None
+                    height: dp(64) if root.status_text else 0
+                    opacity: 1 if root.status_text else 0
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
+
+                ScrollView:
+                    id: device_scroll
+                    do_scroll_x: False
+                    bar_width: dp(3)
+                    bar_color: root.accent_color
+                    scroll_type: ["bars", "content"]
+
+                    BoxLayout:
+                        id: device_box
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: dp(2)
+
+                # ── Scan button ─────────────────────────────────────────
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(38)
+                    on_touch_down: root.scan_tapped(self, args[1])
+                    canvas.before:
+                        Color:
+                            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.16
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [dp(8)]
+
+                    Label:
+                        text: root.scan_glyph
+                        font_name: "MaterialIcons"
+                        font_size: sp(16)
+                        color: root.accent_color
+                        size_hint_x: None
+                        width: dp(30)
+                        halign: "right"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.scan_text
+                        font_name: "Nunito"
+                        font_size: sp(11)
+                        bold: True
+                        color: root.accent_color
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+                        padding: dp(8), 0
+
+            # ── Divider ─────────────────────────────────────────────────
+            Widget:
+                size_hint_x: None
+                width: dp(1)
+                canvas:
+                    Color:
+                        rgba: root.text_color[0], root.text_color[1], root.text_color[2], 0.07
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+            # ── Right: live command log ─────────────────────────────────
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.46
+                padding: dp(8), dp(10), dp(12), dp(10)
+                spacing: dp(6)
+
+                Label:
+                    text: "RECENT COMMANDS"
+                    font_name: "Nunito"
+                    font_size: sp(10)
+                    bold: True
+                    color: root.muted_color
+                    size_hint_y: None
+                    height: dp(16)
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                Label:
+                    text: root.log_hint
+                    font_name: "Nunito"
+                    font_size: sp(9)
+                    color: root.muted_color
+                    size_hint_y: None
+                    height: dp(30) if root.log_hint else 0
+                    opacity: 1 if root.log_hint else 0
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.size
+
+                ScrollView:
+                    do_scroll_x: False
+                    bar_width: dp(3)
+                    bar_color: root.accent_color
+                    scroll_type: ["bars", "content"]
+
+                    BoxLayout:
+                        id: log_box
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: dp(1)
