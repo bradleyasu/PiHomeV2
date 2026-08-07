@@ -1,6 +1,6 @@
 [Unit]
 Description=PiHome Smart Home Interface
-After=network-online.target sound.target pihome-splash.service
+After=network-online.target sound.target bluetooth.service pihome-splash.service
 Wants=network-online.target
 
 [Service]

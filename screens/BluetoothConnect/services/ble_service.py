@@ -29,6 +29,7 @@ import asyncio
 import collections
 import json
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -77,6 +78,11 @@ _RECENT_MAX = 50
 _BACKOFF_MIN = 5
 _BACKOFF_MAX = 60
 
+# Gaps between attempts to power the adapter on after the user enables
+# Bluetooth. Spread out because at boot PiHome can beat bluetoothd to the punch,
+# and a single immediate try would give up before the daemon is ready.
+_POWER_RETRY_DELAYS = (5, 15, 30)
+
 
 class BleService:
 
@@ -104,6 +110,12 @@ class BleService:
         self._disconnect_events = {}
         self._authed = set()
         self._debounce = {}       # (address, command) -> monotonic ts
+
+        # Adapter power-on state. Reset whenever the user disables Bluetooth so
+        # re-enabling always gets a fresh set of attempts.
+        self._power_done = False
+        self._power_attempts = 0
+        self._power_next_at = 0.0
 
         if self.available:
             self._thread = threading.Thread(
@@ -218,9 +230,16 @@ class BleService:
             try:
                 cfg = self._cfg()
                 if cfg["enabled"]:
+                    await self._ensure_adapter_powered()
                     self._reconcile(cfg)
-                elif self._workers:
-                    await self._teardown()
+                else:
+                    # Turning Bluetooth back on should get a fresh set of
+                    # power-on attempts rather than inheriting stale state.
+                    self._power_done = False
+                    self._power_attempts = 0
+                    self._power_next_at = 0.0
+                    if self._workers:
+                        await self._teardown()
             except Exception as e:
                 PIHOME_LOGGER.error(f"Bluetooth: supervisor error: {e}")
             await self._sleep(2)
@@ -242,6 +261,89 @@ class BleService:
                 if not task.done():
                     task.cancel()
                 self._workers.pop(address, None)
+
+    # ── Adapter power ────────────────────────────────────────────────────────
+
+    async def _ensure_adapter_powered(self):
+        """Power the Bluetooth radio on, now that the user has opted in.
+
+        Enabling the screen in Settings *is* the opt-in, so acting on it is
+        doing what the user just asked -- unlike powering the radio at boot on
+        every install, which is why the installer deliberately does not.
+
+        Runs in an executor: bluetoothctl and rfkill are blocking subprocesses
+        and this is the BLE event loop.
+        """
+        if self._power_done or not sys.platform.startswith("linux"):
+            return
+
+        now = time.monotonic()
+        if now < self._power_next_at:
+            return
+        if self._power_attempts >= len(_POWER_RETRY_DELAYS):
+            self._power_done = True     # give up until Bluetooth is re-enabled
+            return
+
+        self._power_next_at = now + _POWER_RETRY_DELAYS[self._power_attempts]
+        self._power_attempts += 1
+
+        loop = asyncio.get_running_loop()
+        try:
+            powered = await loop.run_in_executor(None, self._power_on_adapter)
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Bluetooth: powering the adapter on failed: {e}")
+            powered = False
+        if powered:
+            self._power_done = True
+
+    @staticmethod
+    def _power_on_adapter():
+        """Unblock and power the adapter. Returns True when it is usable.
+
+        Best effort throughout -- every failure here is survivable, and the
+        scan path already reports an unusable adapter with a remedy attached.
+        """
+        def run(args):
+            return subprocess.run(args, stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT, text=True, timeout=10)
+
+        try:
+            show = run(["bluetoothctl", "show"])
+        except Exception as e:
+            PIHOME_LOGGER.info(f"Bluetooth: bluetoothctl not usable yet ({e})")
+            return False
+
+        output = show.stdout or ""
+        if "Powered: yes" in output:
+            return True                     # already on, say nothing
+        if "No default controller" in output:
+            # No amount of powering on will conjure an adapter.
+            PIHOME_LOGGER.warn(
+                "Bluetooth: no controller present. Check that bluetooth.service "
+                "is running and that dtoverlay=disable-bt is not set in config.txt."
+            )
+            return False
+
+        try:
+            run(["rfkill", "unblock", "bluetooth"])
+        except Exception:
+            pass                            # often already unblocked, or no rfkill
+
+        try:
+            result = run(["bluetoothctl", "power", "on"])
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Bluetooth: 'bluetoothctl power on' failed: {e}")
+            return False
+
+        if "succeeded" in (result.stdout or "").lower():
+            PIHOME_LOGGER.info("Bluetooth: adapter powered on")
+            return True
+
+        PIHOME_LOGGER.warn(
+            "Bluetooth: could not power the adapter on "
+            f"({(result.stdout or '').strip()}). PiHome may not be running as root."
+        )
+        return False
 
     async def _teardown(self):
         for address, task in list(self._workers.items()):

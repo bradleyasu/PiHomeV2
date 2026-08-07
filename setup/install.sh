@@ -394,6 +394,29 @@ phase_system_dependencies() {
         sudo apt-get -y install \
             build-essential git autoconf automake libtool libopenblas-dev
 
+    run_logged "Installing Bluetooth stack" \
+        sudo apt-get -y install bluez
+
+    # Start the daemon, but deliberately do NOT power the radio on here. PiHome
+    # powers it on demand when the user enables the Bluetooth screen, so the
+    # majority of installs that never use it leave the radio -- and on a Pi 3
+    # the antenna it shares with WiFi -- untouched. It also avoids fighting
+    # anyone who disabled Bluetooth on purpose to free the hardware UART.
+    if sudo systemctl enable --now bluetooth >> "$LOG_FILE" 2>&1; then
+        print_success "Bluetooth service enabled"
+    else
+        print_warning "Could not enable the bluetooth service - the Bluetooth screen will not work until it is running"
+    fi
+
+    # dtoverlay=disable-bt removes the adapter entirely and nothing at runtime
+    # can undo it, so surface it now while someone is still reading the output.
+    for bootcfg in /boot/firmware/config.txt /boot/config.txt; do
+        if [ -f "$bootcfg" ] && grep -qE '^[[:space:]]*dtoverlay=disable-bt' "$bootcfg"; then
+            print_warning "dtoverlay=disable-bt is set in ${bootcfg} - this Pi has no Bluetooth adapter. Remove that line and reboot if you want the Bluetooth screen"
+            break
+        fi
+    done
+
     mark_phase_complete "$phase_id"
 }
 
