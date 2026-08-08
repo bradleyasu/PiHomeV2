@@ -92,6 +92,10 @@ class BleService:
         self._async_stop = None
         self._connect_lock = None
         self._scan_lock = None
+        self._scan_cancel = None
+        # True from the moment a scan is requested until it owns the radio, so
+        # reconnect workers hold off instead of starting a competing discovery.
+        self._scan_wanted = False
 
         self._devices = self._load_json(_DEVICES_FILE, {})    # address -> {address, name, paired_at}
         self._bindings = self._load_json(_BINDINGS_FILE, {})  # "device|command" -> binding
@@ -225,6 +229,7 @@ class BleService:
         self._async_stop = asyncio.Event()
         self._connect_lock = asyncio.Lock()
         self._scan_lock = asyncio.Lock()
+        self._scan_cancel = asyncio.Event()
 
         while not self._async_stop.is_set():
             try:
@@ -370,7 +375,10 @@ class BleService:
         while not self._async_stop.is_set():
             # Active discovery destabilizes existing links on a Pi 3's combo
             # chip, so hold off while a scan is running.
-            if self._scan_lock.locked():
+            # Defer to a user scan, including one that is merely queued -- the
+            # lookup below is itself an 8s discovery session, and two of those
+            # at once on BlueZ deliver advertisements to neither.
+            if self._scan_lock.locked() or self._scan_wanted:
                 await self._sleep(1)
                 continue
 
@@ -380,9 +388,12 @@ class BleService:
 
             client = None
             try:
-                device = await BleakScanner.find_device_by_address(
-                    address, timeout=8.0, **self._kw(cfg)
-                )
+                # find_device_by_address() scans. It MUST hold the same lock as
+                # the discovery UI or the two collide and both come back empty.
+                async with self._scan_lock:
+                    device = await BleakScanner.find_device_by_address(
+                        address, timeout=8.0, **self._kw(cfg)
+                    )
                 # BlueZ serializes connects badly -- two at once yields
                 # org.bluez.Error.InProgress.
                 async with self._connect_lock:
@@ -798,12 +809,20 @@ class BleService:
     def start_scan(self, seconds=None, on_found=None, on_complete=None):
         """Begin a discovery scan. Returns immediately; callbacks land on the
         Kivy main thread, matching the NanoleafDiscovery contract."""
-        if not self.available or self._scanning:
+        if not self.available:
+            self._last_error = "Bluetooth support is not installed"
+            return False
+        if self._scanning:
+            # Be specific. The old message blamed the Bluetooth setting, which
+            # sent people into Settings to check something that was already on.
+            self._last_error = "A scan is already running - try again shortly"
             return False
         cfg = self._cfg()
         if not cfg["enabled"]:
+            self._last_error = "Bluetooth is disabled in Settings"
             return False
 
+        self._last_error = ""
         self._scanning = True
         self._notify()
         started = self._submit(
@@ -835,16 +854,19 @@ class BleService:
             if on_found is not None:
                 Clock.schedule_once(lambda dt, e=entry: on_found(e), 0)
 
+        self._scan_wanted = True
         try:
+            self._scan_cancel.clear()
             # Deliberately no server-side service_uuids filter: on BlueZ it
             # drops devices that put the 128-bit UUID in the scan response
             # rather than the advertising payload, and it would hide the
             # misconfigured devices this UI exists to diagnose. Filter in
             # `detected` instead and show the rest dimmed.
             async with self._scan_lock:
+                self._scan_wanted = False
                 scanner = BleakScanner(detection_callback=detected, **self._kw(cfg))
                 await scanner.start()
-                await self._sleep(seconds)
+                await self._scan_sleep(seconds)
                 try:
                     await scanner.stop()
                 except Exception:
@@ -854,6 +876,7 @@ class BleService:
             self._last_error = self._friendly(e)
             PIHOME_LOGGER.error(f"Bluetooth: scan failed: {e}")
         finally:
+            self._scan_wanted = False
             self._scanning = False
             self._notify()
             if on_complete is not None:
@@ -861,11 +884,33 @@ class BleService:
                     lambda dt, d=list(found.values()): on_complete(d), 0
                 )
 
+    async def _scan_sleep(self, seconds):
+        """Hold the scan window open, waking early on shutdown or stop_scan()."""
+        stop = asyncio.ensure_future(self._async_stop.wait())
+        cancel = asyncio.ensure_future(self._scan_cancel.wait())
+        try:
+            await asyncio.wait({stop, cancel}, timeout=seconds,
+                               return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            stop.cancel()
+            cancel.cancel()
+
     def stop_scan(self):
-        """Best effort -- the scan window ends on its own shortly after."""
-        if self._scanning and self._async_stop is not None:
-            self._scanning = False
-            self._notify()
+        """End the scan for real, rather than just clearing the flag.
+
+        The scan runs on the BLE loop, so the stop has to be signalled there.
+        Flipping self._scanning here (as this used to) let a second scan start
+        while the first still owned the radio -- and two concurrent BlueZ
+        discovery sessions deliver advertisements to neither of them.
+        self._scanning is cleared by _scan()'s finally, so it stays truthful.
+        """
+        loop = self._loop
+        if loop is None or loop.is_closed() or self._scan_cancel is None:
+            return
+        try:
+            loop.call_soon_threadsafe(self._scan_cancel.set)
+        except Exception:
+            pass
 
     # ── Snapshot + listeners ─────────────────────────────────────────────────
 
