@@ -406,6 +406,17 @@ class BleService:
                     device = await BleakScanner.find_device_by_address(
                         address, timeout=8.0, **self._kw(cfg)
                     )
+                    if device is None:
+                        # The stored address may simply not exist any more --
+                        # a peripheral using a resolvable private address
+                        # rotates it every few minutes. Re-find it by service
+                        # UUID and name instead of giving up.
+                        moved = await self._rediscover(address, cfg)
+                        if moved:
+                            # The allowlist now points at the new address, so
+                            # retire this worker; the supervisor starts a fresh
+                            # one for the new address on its next tick.
+                            return
 
                 # BlueZ refuses Connect() while discovery is still active and
                 # reports it as org.bluez.Error.InProgress. bleak stops the
@@ -516,6 +527,65 @@ class BleService:
                         self._save_json(_DEVICES_FILE, self._devices)
         except Exception:
             pass
+
+    async def _rediscover(self, address, cfg):
+        """Find a paired device whose BLE address has changed.
+
+        A peripheral advertising a resolvable private address rotates it by
+        design, so the address we paired with stops existing and every connect
+        to it is doomed. Identify the device by the PiHome service UUID plus
+        its stored name instead, and adopt the new address.
+
+        Returns the new address if it moved, else None. Caller must already
+        hold _scan_lock.
+        """
+        with self._lock:
+            entry = self._devices.get(address)
+        if not entry:
+            return None
+        want_name = (entry.get("name") or "").strip().lower()
+
+        found = {}
+
+        def detected(dev, adv):
+            uuids = {str(u).lower() for u in (adv.service_uuids or [])}
+            if cfg["service_uuid"] not in uuids:
+                return              # not one of ours
+            name = (dev.name or adv.local_name or "").strip().lower()
+            if want_name and name and name != want_name:
+                return              # someone else's PiHome hardware
+            found[dev.address] = name
+
+        try:
+            scanner = BleakScanner(detection_callback=detected, **self._kw(cfg))
+            await scanner.start()
+            await asyncio.sleep(6)
+            try:
+                await scanner.stop()
+            except Exception:
+                pass
+        except Exception as e:
+            PIHOME_LOGGER.error(f"Bluetooth: re-discovery scan failed: {e}")
+            return None
+
+        for new_address in found:
+            if new_address == address:
+                return None         # same address, nothing moved
+            PIHOME_LOGGER.warn(
+                f"Bluetooth: '{entry.get('name')}' has moved from {address} to "
+                f"{new_address} (rotating BLE address) -- adopting the new one"
+            )
+            with self._lock:
+                self._devices.pop(address, None)
+                entry["address"] = new_address
+                self._devices[new_address] = entry
+                self._save_json(_DEVICES_FILE, self._devices)
+            self._state.pop(address, None)
+            self._stale_cleared.discard(address)
+            self._recovery_step.pop(address, None)
+            self._notify()
+            return new_address
+        return None
 
     async def _clear_stale_link(self, address):
         """Escalating recovery for a BlueZ adapter stuck on InProgress.
