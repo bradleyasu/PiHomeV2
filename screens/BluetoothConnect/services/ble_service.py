@@ -406,8 +406,14 @@ class BleService:
                     device = await BleakScanner.find_device_by_address(
                         address, timeout=8.0, **self._kw(cfg)
                     )
-                # BlueZ serializes connects badly -- two at once yields
-                # org.bluez.Error.InProgress.
+
+                # BlueZ refuses Connect() while discovery is still active and
+                # reports it as org.bluez.Error.InProgress. bleak stops the
+                # scanner above, but StopDiscovery is asynchronous, so connect
+                # immediately afterwards can land in that window. Let
+                # bluetoothd finish winding the scan down first.
+                await asyncio.sleep(1.0)
+
                 async with self._connect_lock:
                     client = BleakClient(
                         device or address,
@@ -454,6 +460,11 @@ class BleService:
                 backoff = _BACKOFF_MAX  # no point retrying hard against wrong firmware
             except Exception as e:
                 self._mark(address, connected=False, error=self._friendly(e))
+                # Log the raw error, not just the friendly one. The exact D-Bus
+                # text is the only thing that distinguishes these failures.
+                PIHOME_LOGGER.error(
+                    f"Bluetooth: connect to {address} failed: {e.__class__.__name__}: {e}"
+                )
                 text = str(e).lower()
                 if "inprogress" in text or "in progress" in text:
                     # BlueZ still has an operation pending for this device.
@@ -547,24 +558,12 @@ class BleService:
                 f"connected={'Connected: yes' in info} (recovery step {step})"
             )
 
-            if step == 0:
-                # Cheapest and most targeted: drop a leftover link.
-                run(["bluetoothctl", "disconnect", address])
-            elif step == 1:
-                # A stuck discovery session blocks every later scan, and this
-                # is the case "disconnect" alone can never fix.
-                run(["bluetoothctl", "scan", "off"])
-                run(["bluetoothctl", "disconnect", address])
-            else:
-                # Last resort. Bouncing the adapter clears discovery, links and
-                # any half-finished operation in one go.
-                PIHOME_LOGGER.warn(
-                    "Bluetooth: power-cycling the adapter to clear a wedged BlueZ state"
-                )
-                run(["bluetoothctl", "power", "off"])
-                time.sleep(1.5)
-                run(["bluetoothctl", "power", "on"])
-                time.sleep(1.5)
+            # Both of these are cheap, idempotent and safe to repeat. There is
+            # deliberately NO adapter power-cycle here: doing that on a retry
+            # loop resets the radio faster than a connection can complete, so
+            # it prevents the very recovery it is trying to cause.
+            run(["bluetoothctl", "scan", "off"])
+            run(["bluetoothctl", "disconnect", address])
         except Exception as e:
             PIHOME_LOGGER.info(f"Bluetooth: recovery step {step} for {address}: {e}")
 
