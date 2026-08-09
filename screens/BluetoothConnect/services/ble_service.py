@@ -29,7 +29,6 @@ import asyncio
 import collections
 import json
 import os
-import subprocess
 import sys
 import threading
 import time
@@ -78,11 +77,6 @@ _RECENT_MAX = 50
 _BACKOFF_MIN = 5
 _BACKOFF_MAX = 60
 
-# Gaps between attempts to power the adapter on after the user enables
-# Bluetooth. Spread out because at boot PiHome can beat bluetoothd to the punch,
-# and a single immediate try would give up before the daemon is ready.
-_POWER_RETRY_DELAYS = (5, 15, 30)
-
 
 class BleService:
 
@@ -92,10 +86,6 @@ class BleService:
         self._async_stop = None
         self._connect_lock = None
         self._scan_lock = None
-        self._scan_cancel = None
-        # True from the moment a scan is requested until it owns the radio, so
-        # reconnect workers hold off instead of starting a competing discovery.
-        self._scan_wanted = False
 
         self._devices = self._load_json(_DEVICES_FILE, {})    # address -> {address, name, paired_at}
         self._bindings = self._load_json(_BINDINGS_FILE, {})  # "device|command" -> binding
@@ -114,16 +104,6 @@ class BleService:
         self._disconnect_events = {}
         self._authed = set()
         self._debounce = {}       # (address, command) -> monotonic ts
-        # Addresses whose leftover BlueZ link we have already cleared this run.
-        self._stale_cleared = set()
-        # address -> how many escalating recovery attempts we have made.
-        self._recovery_step = {}
-
-        # Adapter power-on state. Reset whenever the user disables Bluetooth so
-        # re-enabling always gets a fresh set of attempts.
-        self._power_done = False
-        self._power_attempts = 0
-        self._power_next_at = 0.0
 
         if self.available:
             self._thread = threading.Thread(
@@ -233,22 +213,14 @@ class BleService:
         self._async_stop = asyncio.Event()
         self._connect_lock = asyncio.Lock()
         self._scan_lock = asyncio.Lock()
-        self._scan_cancel = asyncio.Event()
 
         while not self._async_stop.is_set():
             try:
                 cfg = self._cfg()
                 if cfg["enabled"]:
-                    await self._ensure_adapter_powered()
                     self._reconcile(cfg)
-                else:
-                    # Turning Bluetooth back on should get a fresh set of
-                    # power-on attempts rather than inheriting stale state.
-                    self._power_done = False
-                    self._power_attempts = 0
-                    self._power_next_at = 0.0
-                    if self._workers:
-                        await self._teardown()
+                elif self._workers:
+                    await self._teardown()
             except Exception as e:
                 PIHOME_LOGGER.error(f"Bluetooth: supervisor error: {e}")
             await self._sleep(2)
@@ -270,89 +242,6 @@ class BleService:
                 if not task.done():
                     task.cancel()
                 self._workers.pop(address, None)
-
-    # ── Adapter power ────────────────────────────────────────────────────────
-
-    async def _ensure_adapter_powered(self):
-        """Power the Bluetooth radio on, now that the user has opted in.
-
-        Enabling the screen in Settings *is* the opt-in, so acting on it is
-        doing what the user just asked -- unlike powering the radio at boot on
-        every install, which is why the installer deliberately does not.
-
-        Runs in an executor: bluetoothctl and rfkill are blocking subprocesses
-        and this is the BLE event loop.
-        """
-        if self._power_done or not sys.platform.startswith("linux"):
-            return
-
-        now = time.monotonic()
-        if now < self._power_next_at:
-            return
-        if self._power_attempts >= len(_POWER_RETRY_DELAYS):
-            self._power_done = True     # give up until Bluetooth is re-enabled
-            return
-
-        self._power_next_at = now + _POWER_RETRY_DELAYS[self._power_attempts]
-        self._power_attempts += 1
-
-        loop = asyncio.get_running_loop()
-        try:
-            powered = await loop.run_in_executor(None, self._power_on_adapter)
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Bluetooth: powering the adapter on failed: {e}")
-            powered = False
-        if powered:
-            self._power_done = True
-
-    @staticmethod
-    def _power_on_adapter():
-        """Unblock and power the adapter. Returns True when it is usable.
-
-        Best effort throughout -- every failure here is survivable, and the
-        scan path already reports an unusable adapter with a remedy attached.
-        """
-        def run(args):
-            return subprocess.run(args, stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT, text=True, timeout=10)
-
-        try:
-            show = run(["bluetoothctl", "show"])
-        except Exception as e:
-            PIHOME_LOGGER.info(f"Bluetooth: bluetoothctl not usable yet ({e})")
-            return False
-
-        output = show.stdout or ""
-        if "Powered: yes" in output:
-            return True                     # already on, say nothing
-        if "No default controller" in output:
-            # No amount of powering on will conjure an adapter.
-            PIHOME_LOGGER.warn(
-                "Bluetooth: no controller present. Check that bluetooth.service "
-                "is running and that dtoverlay=disable-bt is not set in config.txt."
-            )
-            return False
-
-        try:
-            run(["rfkill", "unblock", "bluetooth"])
-        except Exception:
-            pass                            # often already unblocked, or no rfkill
-
-        try:
-            result = run(["bluetoothctl", "power", "on"])
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Bluetooth: 'bluetoothctl power on' failed: {e}")
-            return False
-
-        if "succeeded" in (result.stdout or "").lower():
-            PIHOME_LOGGER.info("Bluetooth: adapter powered on")
-            return True
-
-        PIHOME_LOGGER.warn(
-            "Bluetooth: could not power the adapter on "
-            f"({(result.stdout or '').strip()}). PiHome may not be running as root."
-        )
-        return False
 
     async def _teardown(self):
         for address, task in list(self._workers.items()):
@@ -379,10 +268,7 @@ class BleService:
         while not self._async_stop.is_set():
             # Active discovery destabilizes existing links on a Pi 3's combo
             # chip, so hold off while a scan is running.
-            # Defer to a user scan, including one that is merely queued -- the
-            # lookup below is itself an 8s discovery session, and two of those
-            # at once on BlueZ deliver advertisements to neither.
-            if self._scan_lock.locked() or self._scan_wanted:
+            if self._scan_lock.locked():
                 await self._sleep(1)
                 continue
 
@@ -392,39 +278,11 @@ class BleService:
 
             client = None
             try:
-                # A PiHome restart leaves bluetoothd holding the previous
-                # process's link. While it does, the device is not advertising
-                # (so the scan below cannot find it) and every connect returns
-                # InProgress. Clear it once, before the first attempt.
-                if address not in self._stale_cleared:
-                    self._stale_cleared.add(address)
-                    await self._clear_stale_link(address)
-
-                # find_device_by_address() scans. It MUST hold the same lock as
-                # the discovery UI or the two collide and both come back empty.
-                async with self._scan_lock:
-                    device = await BleakScanner.find_device_by_address(
-                        address, timeout=8.0, **self._kw(cfg)
-                    )
-                    if device is None:
-                        # The stored address may simply not exist any more --
-                        # a peripheral using a resolvable private address
-                        # rotates it every few minutes. Re-find it by service
-                        # UUID and name instead of giving up.
-                        moved = await self._rediscover(address, cfg)
-                        if moved:
-                            # The allowlist now points at the new address, so
-                            # retire this worker; the supervisor starts a fresh
-                            # one for the new address on its next tick.
-                            return
-
-                # BlueZ refuses Connect() while discovery is still active and
-                # reports it as org.bluez.Error.InProgress. bleak stops the
-                # scanner above, but StopDiscovery is asynchronous, so connect
-                # immediately afterwards can land in that window. Let
-                # bluetoothd finish winding the scan down first.
-                await asyncio.sleep(1.0)
-
+                device = await BleakScanner.find_device_by_address(
+                    address, timeout=8.0, **self._kw(cfg)
+                )
+                # BlueZ serializes connects badly -- two at once yields
+                # org.bluez.Error.InProgress.
                 async with self._connect_lock:
                     client = BleakClient(
                         device or address,
@@ -455,9 +313,6 @@ class BleService:
                     self._authed.add(address)
 
                 backoff = _BACKOFF_MIN
-                # Healthy again: if trouble returns later, start from the
-                # cheapest remedy rather than jumping straight to a power cycle.
-                self._recovery_step.pop(address, None)
                 self._mark(address, connected=True, error="", last_seen=time.time())
                 PIHOME_LOGGER.info(f"Bluetooth: connected to {address}")
 
@@ -471,22 +326,6 @@ class BleService:
                 backoff = _BACKOFF_MAX  # no point retrying hard against wrong firmware
             except Exception as e:
                 self._mark(address, connected=False, error=self._friendly(e))
-                # Log the raw error, not just the friendly one. The exact D-Bus
-                # text is the only thing that distinguishes these failures.
-                PIHOME_LOGGER.error(
-                    f"Bluetooth: connect to {address} failed: {e.__class__.__name__}: {e}"
-                )
-                text = str(e).lower()
-                if "inprogress" in text or "in progress" in text:
-                    # BlueZ still has an operation pending for this device.
-                    # Retrying straight away just earns the same error, so
-                    # clear the link and give bluetoothd room to settle.
-                    PIHOME_LOGGER.warn(
-                        f"Bluetooth: {address} is stuck in BlueZ (InProgress) -- "
-                        "clearing the link and backing off"
-                    )
-                    await self._clear_stale_link(address)
-                    backoff = max(backoff, 20)
             finally:
                 self._clients.pop(address, None)
                 self._assemblers.pop(address, None)
@@ -528,115 +367,6 @@ class BleService:
         except Exception:
             pass
 
-    async def _rediscover(self, address, cfg):
-        """Find a paired device whose BLE address has changed.
-
-        A peripheral advertising a resolvable private address rotates it by
-        design, so the address we paired with stops existing and every connect
-        to it is doomed. Identify the device by the PiHome service UUID plus
-        its stored name instead, and adopt the new address.
-
-        Returns the new address if it moved, else None. Caller must already
-        hold _scan_lock.
-        """
-        with self._lock:
-            entry = self._devices.get(address)
-        if not entry:
-            return None
-        want_name = (entry.get("name") or "").strip().lower()
-
-        found = {}
-
-        def detected(dev, adv):
-            uuids = {str(u).lower() for u in (adv.service_uuids or [])}
-            if cfg["service_uuid"] not in uuids:
-                return              # not one of ours
-            name = (dev.name or adv.local_name or "").strip().lower()
-            if want_name and name and name != want_name:
-                return              # someone else's PiHome hardware
-            found[dev.address] = name
-
-        try:
-            scanner = BleakScanner(detection_callback=detected, **self._kw(cfg))
-            await scanner.start()
-            await asyncio.sleep(6)
-            try:
-                await scanner.stop()
-            except Exception:
-                pass
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Bluetooth: re-discovery scan failed: {e}")
-            return None
-
-        for new_address in found:
-            if new_address == address:
-                return None         # same address, nothing moved
-            PIHOME_LOGGER.warn(
-                f"Bluetooth: '{entry.get('name')}' has moved from {address} to "
-                f"{new_address} (rotating BLE address) -- adopting the new one"
-            )
-            with self._lock:
-                self._devices.pop(address, None)
-                entry["address"] = new_address
-                self._devices[new_address] = entry
-                self._save_json(_DEVICES_FILE, self._devices)
-            self._state.pop(address, None)
-            self._stale_cleared.discard(address)
-            self._recovery_step.pop(address, None)
-            self._notify()
-            return new_address
-        return None
-
-    async def _clear_stale_link(self, address):
-        """Escalating recovery for a BlueZ adapter stuck on InProgress.
-
-        That error has two unrelated causes and the remedy for one does nothing
-        for the other:
-
-          * a leftover CONNECTION from a previous PiHome process, or
-          * a leftover DISCOVERY session, which makes every StartDiscovery
-            fail with the same error.
-
-        bleak cannot clear either -- a BleakClient that never connected has
-        nothing to disconnect -- so go through bluetoothctl, which talks to the
-        bluetoothd actually holding the state. Each attempt escalates, and the
-        real BlueZ state is logged every time so a stuck adapter is diagnosable
-        rather than guesswork.
-        """
-        if not sys.platform.startswith("linux"):
-            return
-        step = self._recovery_step.get(address, 0)
-        self._recovery_step[address] = step + 1
-        loop = asyncio.get_running_loop()
-        try:
-            await loop.run_in_executor(None, self._bluez_recover, address, step)
-        except Exception as e:
-            PIHOME_LOGGER.info(f"Bluetooth: recovery step {step} for {address}: {e}")
-
-    @staticmethod
-    def _bluez_recover(address, step):
-        def run(args, timeout=15):
-            return subprocess.run(args, stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT, text=True, timeout=timeout)
-        try:
-            show = (run(["bluetoothctl", "show"]).stdout or "")
-            info = (run(["bluetoothctl", "info", address]).stdout or "")
-            PIHOME_LOGGER.info(
-                f"Bluetooth: BlueZ state for {address} -- "
-                f"powered={'Powered: yes' in show} "
-                f"discovering={'Discovering: yes' in show} "
-                f"connected={'Connected: yes' in info} (recovery step {step})"
-            )
-
-            # Both of these are cheap, idempotent and safe to repeat. There is
-            # deliberately NO adapter power-cycle here: doing that on a retry
-            # loop resets the radio faster than a connection can complete, so
-            # it prevents the very recovery it is trying to cause.
-            run(["bluetoothctl", "scan", "off"])
-            run(["bluetoothctl", "disconnect", address])
-        except Exception as e:
-            PIHOME_LOGGER.info(f"Bluetooth: recovery step {step} for {address}: {e}")
-
     def _on_disconnected(self, address):
         """bleak callback, on the loop thread. Must not await or reconnect."""
         event = self._disconnect_events.get(address)
@@ -650,10 +380,6 @@ class BleService:
         low = text.lower()
         if "turned off" in low or "not ready" in low:
             return "Bluetooth adapter is off or blocked"
-        if "inprogress" in low or "in progress" in low:
-            # Recoverable: the worker clears the link and retries, so say that
-            # rather than leaving a raw D-Bus error on screen looking terminal.
-            return "Bluetooth busy -- clearing a stale link, retrying shortly"
         if "not found" in low:
             return "Device not found -- out of range or powered off"
         return text
@@ -970,20 +696,12 @@ class BleService:
     def start_scan(self, seconds=None, on_found=None, on_complete=None):
         """Begin a discovery scan. Returns immediately; callbacks land on the
         Kivy main thread, matching the NanoleafDiscovery contract."""
-        if not self.available:
-            self._last_error = "Bluetooth support is not installed"
-            return False
-        if self._scanning:
-            # Be specific. The old message blamed the Bluetooth setting, which
-            # sent people into Settings to check something that was already on.
-            self._last_error = "A scan is already running - try again shortly"
+        if not self.available or self._scanning:
             return False
         cfg = self._cfg()
         if not cfg["enabled"]:
-            self._last_error = "Bluetooth is disabled in Settings"
             return False
 
-        self._last_error = ""
         self._scanning = True
         self._notify()
         started = self._submit(
@@ -1015,19 +733,16 @@ class BleService:
             if on_found is not None:
                 Clock.schedule_once(lambda dt, e=entry: on_found(e), 0)
 
-        self._scan_wanted = True
         try:
-            self._scan_cancel.clear()
             # Deliberately no server-side service_uuids filter: on BlueZ it
             # drops devices that put the 128-bit UUID in the scan response
             # rather than the advertising payload, and it would hide the
             # misconfigured devices this UI exists to diagnose. Filter in
             # `detected` instead and show the rest dimmed.
             async with self._scan_lock:
-                self._scan_wanted = False
                 scanner = BleakScanner(detection_callback=detected, **self._kw(cfg))
                 await scanner.start()
-                await self._scan_sleep(seconds)
+                await self._sleep(seconds)
                 try:
                     await scanner.stop()
                 except Exception:
@@ -1037,7 +752,6 @@ class BleService:
             self._last_error = self._friendly(e)
             PIHOME_LOGGER.error(f"Bluetooth: scan failed: {e}")
         finally:
-            self._scan_wanted = False
             self._scanning = False
             self._notify()
             if on_complete is not None:
@@ -1045,33 +759,11 @@ class BleService:
                     lambda dt, d=list(found.values()): on_complete(d), 0
                 )
 
-    async def _scan_sleep(self, seconds):
-        """Hold the scan window open, waking early on shutdown or stop_scan()."""
-        stop = asyncio.ensure_future(self._async_stop.wait())
-        cancel = asyncio.ensure_future(self._scan_cancel.wait())
-        try:
-            await asyncio.wait({stop, cancel}, timeout=seconds,
-                               return_when=asyncio.FIRST_COMPLETED)
-        finally:
-            stop.cancel()
-            cancel.cancel()
-
     def stop_scan(self):
-        """End the scan for real, rather than just clearing the flag.
-
-        The scan runs on the BLE loop, so the stop has to be signalled there.
-        Flipping self._scanning here (as this used to) let a second scan start
-        while the first still owned the radio -- and two concurrent BlueZ
-        discovery sessions deliver advertisements to neither of them.
-        self._scanning is cleared by _scan()'s finally, so it stays truthful.
-        """
-        loop = self._loop
-        if loop is None or loop.is_closed() or self._scan_cancel is None:
-            return
-        try:
-            loop.call_soon_threadsafe(self._scan_cancel.set)
-        except Exception:
-            pass
+        """Best effort -- the scan window ends on its own shortly after."""
+        if self._scanning and self._async_stop is not None:
+            self._scanning = False
+            self._notify()
 
     # ── Snapshot + listeners ─────────────────────────────────────────────────
 

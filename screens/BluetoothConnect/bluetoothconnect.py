@@ -280,10 +280,7 @@ class BluetoothConnectScreen(PiHomeScreen):
         started = BLE_SERVICE.start_scan(
             on_found=self._on_device_found, on_complete=self._on_scan_complete)
         if not started:
-            # The service knows exactly why; guessing "is Bluetooth enabled?"
-            # sends people to check a setting that is usually already on.
-            status.text = (BLE_SERVICE.get_snapshot().get("error")
-                           or "Could not start a scan")
+            status.text = "Could not start a scan - is Bluetooth enabled?"
 
     def _redraw_panel(self, widget):
         widget.canvas.before.clear()
