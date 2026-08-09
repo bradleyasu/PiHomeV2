@@ -116,6 +116,8 @@ class BleService:
         self._debounce = {}       # (address, command) -> monotonic ts
         # Addresses whose leftover BlueZ link we have already cleared this run.
         self._stale_cleared = set()
+        # address -> how many escalating recovery attempts we have made.
+        self._recovery_step = {}
 
         # Adapter power-on state. Reset whenever the user disables Bluetooth so
         # re-enabling always gets a fresh set of attempts.
@@ -436,6 +438,9 @@ class BleService:
                     self._authed.add(address)
 
                 backoff = _BACKOFF_MIN
+                # Healthy again: if trouble returns later, start from the
+                # cheapest remedy rather than jumping straight to a power cycle.
+                self._recovery_step.pop(address, None)
                 self._mark(address, connected=True, error="", last_seen=time.time())
                 PIHOME_LOGGER.info(f"Bluetooth: connected to {address}")
 
@@ -502,33 +507,66 @@ class BleService:
             pass
 
     async def _clear_stale_link(self, address):
-        """Ask BlueZ to drop any link or pending connect for this address.
+        """Escalating recovery for a BlueZ adapter stuck on InProgress.
 
-        bleak cannot do this -- a BleakClient that never connected has nothing
-        to disconnect -- so go through bluetoothctl, which talks to the same
-        bluetoothd that is holding the stale state.
+        That error has two unrelated causes and the remedy for one does nothing
+        for the other:
+
+          * a leftover CONNECTION from a previous PiHome process, or
+          * a leftover DISCOVERY session, which makes every StartDiscovery
+            fail with the same error.
+
+        bleak cannot clear either -- a BleakClient that never connected has
+        nothing to disconnect -- so go through bluetoothctl, which talks to the
+        bluetoothd actually holding the state. Each attempt escalates, and the
+        real BlueZ state is logged every time so a stuck adapter is diagnosable
+        rather than guesswork.
         """
         if not sys.platform.startswith("linux"):
             return
+        step = self._recovery_step.get(address, 0)
+        self._recovery_step[address] = step + 1
         loop = asyncio.get_running_loop()
         try:
-            await loop.run_in_executor(None, self._bluez_disconnect, address)
+            await loop.run_in_executor(None, self._bluez_recover, address, step)
         except Exception as e:
-            PIHOME_LOGGER.info(f"Bluetooth: stale-link cleanup for {address}: {e}")
+            PIHOME_LOGGER.info(f"Bluetooth: recovery step {step} for {address}: {e}")
 
     @staticmethod
-    def _bluez_disconnect(address):
+    def _bluez_recover(address, step):
+        def run(args, timeout=15):
+            return subprocess.run(args, stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT, text=True, timeout=timeout)
         try:
-            result = subprocess.run(
-                ["bluetoothctl", "disconnect", address],
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, timeout=10,
+            show = (run(["bluetoothctl", "show"]).stdout or "")
+            info = (run(["bluetoothctl", "info", address]).stdout or "")
+            PIHOME_LOGGER.info(
+                f"Bluetooth: BlueZ state for {address} -- "
+                f"powered={'Powered: yes' in show} "
+                f"discovering={'Discovering: yes' in show} "
+                f"connected={'Connected: yes' in info} (recovery step {step})"
             )
-            out = (result.stdout or "").strip()
-            if "successful" in out.lower():
-                PIHOME_LOGGER.info(f"Bluetooth: cleared a stale BlueZ link for {address}")
-        except Exception:
-            pass        # no bluetoothctl, or nothing was connected -- both fine
+
+            if step == 0:
+                # Cheapest and most targeted: drop a leftover link.
+                run(["bluetoothctl", "disconnect", address])
+            elif step == 1:
+                # A stuck discovery session blocks every later scan, and this
+                # is the case "disconnect" alone can never fix.
+                run(["bluetoothctl", "scan", "off"])
+                run(["bluetoothctl", "disconnect", address])
+            else:
+                # Last resort. Bouncing the adapter clears discovery, links and
+                # any half-finished operation in one go.
+                PIHOME_LOGGER.warn(
+                    "Bluetooth: power-cycling the adapter to clear a wedged BlueZ state"
+                )
+                run(["bluetoothctl", "power", "off"])
+                time.sleep(1.5)
+                run(["bluetoothctl", "power", "on"])
+                time.sleep(1.5)
+        except Exception as e:
+            PIHOME_LOGGER.info(f"Bluetooth: recovery step {step} for {address}: {e}")
 
     def _on_disconnected(self, address):
         """bleak callback, on the loop thread. Must not await or reconnect."""
