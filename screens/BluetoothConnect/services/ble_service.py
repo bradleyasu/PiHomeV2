@@ -278,9 +278,14 @@ class BleService:
 
             client = None
             try:
-                device = await BleakScanner.find_device_by_address(
-                    address, timeout=8.0, **self._kw(cfg)
-                )
+                # find_device_by_address() runs its own BlueZ discovery. It has
+                # to hold the same lock the UI scan uses, or the two overlap and
+                # BlueZ rejects the second with org.bluez.Error.InProgress. The
+                # check at the top of this loop guards one direction only.
+                async with self._scan_lock:
+                    device = await BleakScanner.find_device_by_address(
+                        address, timeout=8.0, **self._kw(cfg)
+                    )
                 # BlueZ serializes connects badly -- two at once yields
                 # org.bluez.Error.InProgress.
                 async with self._connect_lock:
