@@ -114,6 +114,8 @@ class BleService:
         self._disconnect_events = {}
         self._authed = set()
         self._debounce = {}       # (address, command) -> monotonic ts
+        # Addresses whose leftover BlueZ link we have already cleared this run.
+        self._stale_cleared = set()
 
         # Adapter power-on state. Reset whenever the user disables Bluetooth so
         # re-enabling always gets a fresh set of attempts.
@@ -388,6 +390,14 @@ class BleService:
 
             client = None
             try:
+                # A PiHome restart leaves bluetoothd holding the previous
+                # process's link. While it does, the device is not advertising
+                # (so the scan below cannot find it) and every connect returns
+                # InProgress. Clear it once, before the first attempt.
+                if address not in self._stale_cleared:
+                    self._stale_cleared.add(address)
+                    await self._clear_stale_link(address)
+
                 # find_device_by_address() scans. It MUST hold the same lock as
                 # the discovery UI or the two collide and both come back empty.
                 async with self._scan_lock:
@@ -439,6 +449,17 @@ class BleService:
                 backoff = _BACKOFF_MAX  # no point retrying hard against wrong firmware
             except Exception as e:
                 self._mark(address, connected=False, error=self._friendly(e))
+                text = str(e).lower()
+                if "inprogress" in text or "in progress" in text:
+                    # BlueZ still has an operation pending for this device.
+                    # Retrying straight away just earns the same error, so
+                    # clear the link and give bluetoothd room to settle.
+                    PIHOME_LOGGER.warn(
+                        f"Bluetooth: {address} is stuck in BlueZ (InProgress) -- "
+                        "clearing the link and backing off"
+                    )
+                    await self._clear_stale_link(address)
+                    backoff = max(backoff, 20)
             finally:
                 self._clients.pop(address, None)
                 self._assemblers.pop(address, None)
@@ -480,6 +501,35 @@ class BleService:
         except Exception:
             pass
 
+    async def _clear_stale_link(self, address):
+        """Ask BlueZ to drop any link or pending connect for this address.
+
+        bleak cannot do this -- a BleakClient that never connected has nothing
+        to disconnect -- so go through bluetoothctl, which talks to the same
+        bluetoothd that is holding the stale state.
+        """
+        if not sys.platform.startswith("linux"):
+            return
+        loop = asyncio.get_running_loop()
+        try:
+            await loop.run_in_executor(None, self._bluez_disconnect, address)
+        except Exception as e:
+            PIHOME_LOGGER.info(f"Bluetooth: stale-link cleanup for {address}: {e}")
+
+    @staticmethod
+    def _bluez_disconnect(address):
+        try:
+            result = subprocess.run(
+                ["bluetoothctl", "disconnect", address],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, timeout=10,
+            )
+            out = (result.stdout or "").strip()
+            if "successful" in out.lower():
+                PIHOME_LOGGER.info(f"Bluetooth: cleared a stale BlueZ link for {address}")
+        except Exception:
+            pass        # no bluetoothctl, or nothing was connected -- both fine
+
     def _on_disconnected(self, address):
         """bleak callback, on the loop thread. Must not await or reconnect."""
         event = self._disconnect_events.get(address)
@@ -493,6 +543,10 @@ class BleService:
         low = text.lower()
         if "turned off" in low or "not ready" in low:
             return "Bluetooth adapter is off or blocked"
+        if "inprogress" in low or "in progress" in low:
+            # Recoverable: the worker clears the link and retries, so say that
+            # rather than leaving a raw D-Bus error on screen looking terminal.
+            return "Bluetooth busy -- clearing a stale link, retrying shortly"
         if "not found" in low:
             return "Device not found -- out of range or powered off"
         return text
