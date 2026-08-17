@@ -205,6 +205,7 @@ from kivy.properties import (
 )
 
 from interface.pihomescreen import PiHomeScreen
+from theme.theme import Theme
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 
@@ -216,20 +217,23 @@ class MyScreenScreen(PiHomeScreen):
     """One-line description of this screen."""
 
     # ── Theme colors ──
-    # These property names are recognized by on_config_update() in the base
-    # class and are automatically synced to the current theme (dark/light).
-    bg_color     = ColorProperty([0.10, 0.10, 0.12, 1])
-    header_color = ColorProperty([0.14, 0.14, 0.16, 1])
-    text_color   = ColorProperty([1, 1, 1, 1])
-    muted_color  = ColorProperty([1, 1, 1, 0.45])
-    accent_color = ColorProperty([0.25, 0.52, 1.0, 1])
-    status_color = ColorProperty([0.45, 0.45, 0.45, 1])
+    # These property names are recognized by on_config_update() in the base class
+    # and are automatically synced to the current theme (dark/light). Derive the
+    # DEFAULTS from the theme too — screens are created lazily, so a hardcoded
+    # literal would paint the wrong color on first open (see gotcha #13).
+    _th = Theme()
+    bg_color      = ColorProperty(_th.get_color(_th.BACKGROUND_PRIMARY))
+    header_color  = ColorProperty(_th.get_color(_th.BACKGROUND_SECONDARY))
+    text_color    = ColorProperty(_th.get_color(_th.TEXT_PRIMARY))
+    muted_color   = ColorProperty(_th.get_color(_th.TEXT_SECONDARY))
+    accent_color  = ColorProperty(_th.get_color(_th.ACCENT_PRIMARY))
+    status_color  = ColorProperty(_th.get_color(_th.TEXT_SECONDARY))
 
-    # Optional derived colors (auto-calculated if defined):
-    # card_color    = ColorProperty(...)  # header_color with 0.85 alpha
-    # sidebar_color = ColorProperty(...)  # header_color * 0.80
-    # divider_color = ColorProperty(...)  # header_color * 0.60
-    # row_bg_color  = ColorProperty(...)  # header_color with 0.70 alpha
+    # Optional derived colors (auto-calculated by the base class if defined):
+    # card_color    = ColorProperty(_th.get_color(_th.BACKGROUND_SURFACE))
+    # row_bg_color  = ColorProperty(_th.get_color(_th.BACKGROUND_SURFACE))
+    # divider_color = ColorProperty(_th.get_color(_th.BACKGROUND_BORDER))
+    # sidebar_color = ColorProperty(_th.get_color(_th.BACKGROUND_SECONDARY))
 
     # ── Screen-specific properties ──
     # Define StringProperty, NumericProperty, etc. here for KV bindings.
@@ -267,9 +271,13 @@ class MyScreenScreen(PiHomeScreen):
     # ── Lifecycle ──
 
     def on_enter(self, *args):
+        super().on_enter(*args)
         self._load_config()
+        # Apply the theme BEFORE building any widgets — a lazily-created screen
+        # may have missed the startup reload_all() (gotcha #13). Widgets built
+        # after this call pick up the correct colors.
+        super().on_config_update(CONFIG)
         self._start_work()
-        return super().on_enter(*args)
 
     def on_pre_leave(self, *args):
         self._stop_work()
@@ -450,6 +458,86 @@ MY_SERVICE = MyService()      # module-level singleton
 - **Shutdown is optional.** If the instance exposes `shutdown()` or `stop()`, the loader calls it on app exit; otherwise the `daemon=True` thread dies with the process.
 - **Disabling/removing the screen removes the service** — disabled manifests are skipped, so the service never starts.
 - **Degrade gracefully when a pip dependency is missing.** Declare deps in the manifest's `dependencies` array; they auto-install but require a restart, so wrap the import (`try/except`) and expose an `available` flag, since the first boot may run before the dep is present.
+
+**User-defined automation rules — use `util/rulestore.py`, never hand-roll it:**
+
+If your screen lets the user bind *"when X happens, fire this PiHome event"* (a printer
+finishing, a power threshold, a button press), the persistence, validation, enable/disable,
+cooldown, last-fired tracking, placeholder substitution and main-thread dispatch are already
+written. Create one `RuleStore` and keep only your trigger detection:
+
+```python
+from util.rulestore import RuleStore
+
+RULES = RuleStore(
+    key="myscreen",                        # stable id, used by automations_list
+    label="My Screen",                     # section header on the Automations screen
+    path="cache/myscreen_rules.json",      # always under cache/ (gotcha #12)
+    glyph="",                        # MaterialIcons codepoint for the row
+    describe=lambda r: f"On {r['state']}",  # human text for the TRIGGER
+    create_event="myscreen_state_alert",    # the event that creates one of these
+)
+
+# ... in your service, when the trigger actually occurs:
+RULES.fire_matching("state", "FINISH", {"job": name, "progress": pct})
+```
+
+Your three management events then become one-liners over `RULES.upsert(rule, validate=...)`,
+`RULES.list()` and `RULES.remove(rid)`. Do validation of your own fields in the `validate`
+hook; the store already rejects a missing/malformed nested `event`.
+
+- **Constructing a store registers it** in `util.rulestore.RULE_STORES`, which is what the
+  **Automations** screen (`screens/Automations/`) and the `automations_list` event enumerate.
+  Registration happens on import, so removing your screen directory simply removes its
+  section — no screen imports another screen's service.
+- **Rules gain `enabled` and `last_fired`** automatically, defaulted in on load, so an
+  existing rules file is read unchanged.
+- **`fire()` is fire-and-forget** and safe from any thread. Use **`fire_and_wait()`** only
+  when you must return the action's own response to the caller (e.g. a manual "run this now"
+  over HTTP).
+- **Placeholders:** `substitute()` accepts named keys (`$job`, `$progress`) *and* positional
+  `$1` (the older ShellEvent/Bluetooth convention). Pass `{"1": value}` for the latter.
+- **Keying:** rules are keyed by `id` (auto-generated when omitted). Pass `key_fn` if your
+  store needs a composite key — Bluetooth uses `device|command` so one token can be bound
+  per-device with a `*` wildcard fallback.
+
+Reference implementations: `screens/BambuLab/services/bambu_service.py` (simple state match),
+`screens/EmporiumPower/services/emporia_service.py` (edge latch kept in its own state file),
+`screens/BluetoothConnect/services/ble_service.py` (composite key). Tests:
+`util/test_rulestore.py`.
+
+**Where to put the store, and what the user gets:**
+
+- **Create it in the *service* module, not the screen module.** The rules must be evaluated
+  when the screen is closed — that is the entire point — and a service declared in the
+  manifest's `services` array is imported at boot by `util/screen_services.py`. (A store
+  defined at screen-module scope also registers at startup, since `load_screens()` imports
+  every screen module eagerly, but then your trigger detection has nowhere to live.)
+- **A `disabled: true` manifest skips the screen module entirely**, so its store never
+  registers and its section disappears from Automations. Note screen **events** are still
+  discovered for disabled screens, so gate any hardware behind an `enabled` config flag.
+- **You get the Automations screen for free.** Constructing the store is the whole
+  integration — listing, test-fire, enable/disable and delete all work with no UI code. Give
+  `describe` and `glyph` some thought: `describe(rule)` is the user-facing sentence
+  ("Printer goes COMPLETE", "Whole Home goes above 3000W"), and the action line beside it is
+  generated by `describe_event()` from the stored event.
+- **Always set `create_event`.** Rules can only be *created* by sending an event, so the
+  Automations empty state lists every registered store's `create_event` by name — that list
+  is the only place a user discovers what to send. Omit it and your screen silently stops
+  telling anyone how to use it. It is also returned by `automations_list` for API clients.
+
+**Event naming convention** — follow the existing trio so the API stays predictable:
+
+| Purpose | Type | Notes |
+|---------|------|-------|
+| Create/update | `<screen>_<thing>_alert` | `id` optional; resending the same `id` updates |
+| List | `<screen>_<thing>_alerts_list` | |
+| Delete | `<screen>_<thing>_alert_remove` | 404 when the id doesn't exist |
+| Test-fire (optional) | `<screen>_<thing>_test` | Very cheap, and the only way to verify a rule without waiting for the real trigger — worth adding |
+
+Aggregated **read** across every store is already provided by the global `automations_list`
+event; you don't write one. Note there is currently **no** event for enable/disable — that
+toggle exists only on the Automations screen.
 
 **Boolean config values** are stored as strings in `base.ini`:
 ```python
@@ -638,6 +726,8 @@ Screens automatically support dark/light mode via standard `ColorProperty` names
 |----------|-------------|---------|
 | `bg_color` | `BACKGROUND_PRIMARY` | Main background |
 | `header_color` | `BACKGROUND_SECONDARY` | Header/toolbar background |
+| `surface_color` | `BACKGROUND_SURFACE` | Raised surface (cards, rows) |
+| `border_color` | `BACKGROUND_BORDER` | Hairlines, dividers |
 | `text_color` | `TEXT_PRIMARY` | Primary text |
 | `muted_color` | `TEXT_SECONDARY` | Secondary/dimmed text |
 | `accent_color` | `ACCENT_PRIMARY` | Accent highlights |
@@ -646,15 +736,32 @@ Screens automatically support dark/light mode via standard `ColorProperty` names
 **Derived colors** (auto-calculated if the property exists on your class):
 | Property | Derivation |
 |----------|------------|
-| `card_color` | `header_color` RGB with 0.85 alpha |
-| `sidebar_color` | `header_color` RGB * 0.80 |
-| `divider_color` | `header_color` RGB * 0.60 |
-| `row_bg_color` | `header_color` RGB with 0.70 alpha |
+| `card_color` | `BACKGROUND_SURFACE` RGB at alpha 1.0 |
+| `sidebar_color` | `BACKGROUND_SECONDARY` |
+| `divider_color` | `BACKGROUND_BORDER` RGB at alpha 1.0 |
+| `row_bg_color` | `BACKGROUND_SURFACE` RGB with 0.70 alpha |
+
+Elevation uses the explicit `BACKGROUND_SURFACE`/`BACKGROUND_BORDER` tokens rather than
+multiplying `header_color` — multiplying only elevates correctly on dark backgrounds, so
+the old approach broke light mode.
+
+`on_config_update()` also **cascades to every descendant** (`self.walk(restrict=True)`),
+calling each widget's `on_config_update(config)` if it has one, else its `_apply_theme()`.
+So a custom composite only has to define one of those hooks to be re-themed for free — see
+`composites/Notifications/notificationcenter.py` or `composites/Weather/weatherwidget.py`.
+
+Widgets you build dynamically and hand colors to at construction (list rows, chips) capture
+those values and are *not* updated by the cascade unless they define a hook. The usual fix is
+to rebuild them in your screen's `on_config_update` — see `_rebuild_rows()` in
+`composites/Notifications/notificationcenter.py`.
 
 **Theme the screen on first entry — don't rely on literal `ColorProperty` defaults.**
-Screens are **lazily instantiated** (created the first time they're navigated to), so
-the startup `reload_all()` that themes every screen (`main.py`) runs *before* your screen
-exists and never touches it. If your `ColorProperty` defaults are hardcoded literals, the
+**`reload_all()` never runs at startup.** Screens *are* constructed eagerly
+(`PihomeScreenManager.load_screens()` imports every module and instantiates every class at
+boot), but nothing themes them afterwards: `reload_all()` is only called from
+`reload_configuration()` on a settings change, and from the theme/settings/DevTools events —
+all user-triggered. So a screen keeps whatever its `ColorProperty` defaults were until the
+user changes a setting or the theme. If your `ColorProperty` defaults are hardcoded literals, the
 screen paints those wrong colors on first open and only snaps to the real theme after some
 *later* `reload_all()` fires (e.g. the user visits Settings and comes back). The fix is two
 parts, both required:
@@ -677,7 +784,9 @@ parts, both required:
    ```
    (`from util.configuration import CONFIG`.) If you build child widgets dynamically and pass
    them `color=self.text_color` etc., they must be built *after* this call or they'll capture
-   the stale default. EmporiumPower (`screens/EmporiumPower/emporiumpower.py`) is the reference.
+   the stale default. **Calendar (`screens/Calendar/calendar.py`) is the reference** — see its
+   class-scope defaults and its `on_enter`. `screens/Automations/automations.py` follows the
+   same shape. (EmporiumPower does *not* implement this pattern; don't copy it for theming.)
 
 **For custom colors beyond the standard set:**
 ```python
@@ -690,10 +799,13 @@ def on_config_update(self, config):
     super().on_config_update(config)
 ```
 
-**Available theme tokens:**
-- Backgrounds: `BACKGROUND_PRIMARY`, `BACKGROUND_SECONDARY`
+**Available theme tokens** (the full set — see `theme/theme.py`):
+- Backgrounds: `BACKGROUND_PRIMARY`, `BACKGROUND_SECONDARY`, `BACKGROUND_SURFACE`, `BACKGROUND_BORDER`
+- Colors: `COLOR_PRIMARY`, `COLOR_SECONDARY`
+- Accent: `ACCENT_PRIMARY`
 - Text: `TEXT_PRIMARY`, `TEXT_SECONDARY`, `TEXT_DANGER`, `TEXT_SUCCESS`
-- Buttons: `BUTTON_PRIMARY`, `BUTTON_SECONDARY`, `BUTTON_DANGER`, `BUTTON_SUCCESS`
+- Buttons: `BUTTON_PRIMARY`, `BUTTON_SECONDARY`, `BUTTON_DANGER`, `BUTTON_SUCCESS`,
+  `BUTTON_PRIMARY_ACCENT`, `BUTTON_SECONDARY_ACCENT`, `BUTTON_PRIMARY_TEXT`, `BUTTON_SECONDARY_TEXT`
 - Alerts: `ALERT_DANGER`, `ALERT_WARNING`, `ALERT_INFO`, `ALERT_SUCCESS`
 - Switch: `SWITCH_ACTIVE`, `SWITCH_INACTIVE`
 
@@ -711,11 +823,15 @@ Reusable widgets in the `components/` directory:
 | `CircleButton` | `from components.Button.circlebutton import CircleButton` | Circular icon button with ripple animation |
 | `NetworkImage` | `from components.Image.networkimage import NetworkImage` | Image widget that loads from a URL |
 | `Toast` | `from util.helpers import toast` | Notification popup: `toast("msg", "info", 3)` |
-| `Switch` | `from components.Switch.switch import PiSwitch` | Toggle switch widget |
-| `NumberStepper` | `from components.NumberStepper.numberstepper import NumberStepper` | Increment/decrement number input |
+| `PiHomeSwitch` | `from components.Switch.switch import PiHomeSwitch` | Toggle switch. `PiHomeSwitch(size=(dp(46), dp(26)), on_change=cb)` — `on_change` is consumed by `__init__`, so it is safe as a kwarg (unlike `on_*` properties, gotcha #11) |
+| `NumberStepper` | `from components.NumberStepper.numberstepper import NumberStepper` | Increment/decrement number input. `NumberStepper(on_change=cb, value=1, min_val=0, max_val=30, unit="d")` |
 | `DatePicker` | `from components.DatePicker.datepicker import DatePicker` | Date selection widget |
-| `Slider` | `from components.Slider.` | Custom slider controls |
-| `VideoPlayer` | `from components.VideoPlayer.` | Video playback widget |
+| `Empty` | `from components.Empty.empty import Empty` | Empty-state placeholder: `Empty(icon="⊘", message="...", subtitle="...")`. Its icon Label uses `ArialUnicode`, so pass a Unicode symbol, **not** a MaterialIcons codepoint |
+| `Msgbox` | `from components.Msgbox.msgbox import MSGBOX_FACTORY, MSGBOX_TYPES, MSGBOX_BUTTONS` | Modal dialog / confirm: `MSGBOX_FACTORY.show(title=..., message=..., type=MSGBOX_TYPES["WARNING"], buttons=MSGBOX_BUTTONS["YES_NO"], on_yes=cb)`. Themes itself on each show |
+| `Slider` | `from components.Slider.haslider import HASlider` / `from components.Slider.slidecontrol import SlideControl` | Custom slider controls |
+
+Verify an import before relying on this table — `components/VideoPlayer/` is currently empty
+despite the directory existing.
 
 ---
 
@@ -735,7 +851,7 @@ PiHome must run on Raspberry Pi 3+ (quad-core ARM, 1GB RAM). Keep these rules in
 ## Anti-Patterns and Gotchas
 
 1. **No f-strings in KV files** — Kivy's parser breaks on Python 3.12+. Use `StringProperty` computed in Python instead.
-2. **`super().on_config_update(config)` must be called LAST** — it applies theme colors, which should happen after your custom config logic.
+2. **`super().on_config_update(config)` must be called LAST — inside your `on_config_update` override** — it applies theme colors, which should happen after your custom config logic. This is *not* in tension with calling it **early inside `on_enter`** (gotcha #13): there you are deliberately invoking the base class's theming pass up front, before any widgets are built.
 3. **`super().on_enter()` and `super().on_pre_leave()` must be called** — they manage `is_open` state and screen tracking.
 4. **Always stop threads in `on_pre_leave`** — failing to do so causes resource leaks and stale UI updates.
 5. **Lambda variable capture** — use default args: `lambda dt, x=x: func(x)`, NOT `lambda dt: func(x)`.
@@ -744,25 +860,67 @@ PiHome must run on Raspberry Pi 3+ (quad-core ARM, 1GB RAM). Keep these rules in
 8. **`text_size: self.size`** is required in KV for `halign`/`valign` to work on Labels.
 9. **MaterialIcons** Always make sure that icons are used correctly and fonts are not mixed. Attempting to reference a MaterialIcon from a label with a different font will not work. Also **verify the codepoint actually exists in the bundled font** before using it — a missing glyph renders as a tofu square (□). Check with:
    ```bash
-   python3 -c "from fontTools.ttLib import TTFont; f=TTFont('theme/fonts/MaterialIcons-Regular.ttf'); g=f.getBestCmap().get(0xe3e7); print('present' if g else 'MISSING')"
+   venv/bin/python -c "from fontTools.ttLib import TTFont; f=TTFont('theme/fonts/MaterialIcons-Regular.ttf'); g=f.getBestCmap().get(0xe3e7); print('present' if g else 'MISSING')"
+   ```
+   **Then verify what actually landed in the file.** Pasting a raw glyph character into a
+   source file can silently write an *empty string* — the icon just never appears, with no
+   error anywhere. Prefer the `""` escape form, and audit a whole directory with:
+   ```bash
+   venv/bin/python -c "
+   import glob,re
+   from fontTools.ttLib import TTFont
+   cmap=TTFont('theme/fonts/MaterialIcons-Regular.ttf').getBestCmap()
+   for p in glob.glob('screens/MyScreen/*.py')+glob.glob('screens/MyScreen/*.kv'):
+       s=open(p,encoding='utf-8').read()
+       for m in re.finditer(r'text: \"\"|glyph=\"\"', s): print('EMPTY icon string in',p)
+       for ch in s:
+           if 0xE000<=ord(ch)<=0xF8FF and not cmap.get(ord(ch)):
+               print('MISSING glyph U+%04X in %s'%(ord(ch),p))"
    ```
 10. **Disabled / full-screen widgets swallow touches** — Kivy's `Widget.on_touch_down` returns `True` (consuming the event) for any **`disabled`** widget the touch collides with. So a `disabled`, full-screen overlay (e.g. an empty/error-state `Label` left on top with default `size_hint: (1, 1)`) silently eats **every** touch beneath it — scrolling and taps appear completely dead even though the widgets below are fine. For hidden overlays, toggle `opacity` only (do **not** also set `disabled`), size the overlay to its content, or remove it from the tree when inactive. Remember the **last child of a `FloatLayout` is topmost**, so overlays sit above everything.
 11. **Never pass an `on_*` custom-callback property in a widget's constructor** — Kivy's `EventDispatcher.__init__` treats **any** kwarg starting with `on_` as an *event binding* (`self.bind(on_x=...)`), NOT as setting a property value. So `MyRow(on_pressed=cb)` binds `cb` to the `on_pressed` property-change event and leaves `self.on_pressed == None` — your tap/select callback silently never fires. **Assign it after construction instead:** `row = MyRow(...); row.on_pressed = cb`. (This is why existing tappable rows like `Cocktail`'s `DrinkListItem` set `on_pressed` post-construction.) Tip: avoid naming a plain callback property `on_*` at all — but if you do, never set it via kwarg.
 12. **Write persistent files to `cache/`, never the project root.** Any file a screen persists across launches — JSON state, response caches, **auth tokens / secrets** — goes in the shared `cache/` directory (relative to cwd, e.g. `_FILE = "cache/myscreen_state.json"`), matching `cocktail_cache.json`, `ha_favorites.json`, `favorite_events.json`. This directory is **gitignored** (`/cache/`), so writing secrets anywhere else (like next to `base.ini` in the root) risks committing them. Before searching for *where* to put a persistent file, grep existing screens (`grep -rn "cache/" --include="*.py"`) instead of assuming. Call `os.makedirs(os.path.dirname(path), exist_ok=True)` before writing so a fresh checkout works. (Small per-screen save files in the screen's own dir, like HexGame's `game_state.json`, also exist — but use `cache/` for caches, tokens, and shared/secret state.)
-13. **Lazily-created screens paint un-themed on first open** — hardcoded literal `ColorProperty` defaults show until a *later* theme refresh (e.g. visiting Settings) fixes them. Derive defaults from `Theme()` and apply the theme in `on_enter` (build dynamic child widgets only after). See **Theme System → "Theme the screen on first entry"** for the full pattern.
+13. **Screens paint un-themed until the first settings change** — `reload_all()` is never called at startup (only from `reload_configuration()` and the theme/settings/DevTools events), so hardcoded literal `ColorProperty` defaults show until a *later* theme refresh (e.g. visiting Settings) fixes them. Derive defaults from `Theme()` and apply the theme in `on_enter` (build dynamic child widgets only after). See **Theme System → "Theme the screen on first entry"** for the full pattern.
 14. **`PiTextInput` doesn't theme its own background — white-on-white in dark mode.** `PiTextInput._apply_theme()` sets only the text/cursor/hint colors; the app-wide `<PiTextInput>` rule strips the default 9-patch image, so the field falls back to a solid **white** `background_color`. Always set the background yourself: clear `background_normal`/`background_active` (`= ""`) and paint a theme-driven fill, e.g. `ti.background_color = list(self.text_color[:3]) + [0.10]` (a faint panel that works in both modes), matching `screens/Settings/settings.kv`. Add a little `padding` too.
 
 ---
 
 ## Verifying a Screen
 
-The Kivy GUI **cannot be launched headlessly on macOS** (SDL2 needs a real display + OpenGL; the `dummy` video driver has no GL and there is no mock window provider — attempting it aborts with "Unable to get a Window"). Don't burn time trying. What you *can* check without the GUI:
+Use `venv/bin/python` for every check — the system `python3` has no Kivy.
 
-- **Syntax:** `python3 -m py_compile screens/<Dir>/*.py`
+The Kivy GUI cannot run **truly headless** (SDL2 needs a real display + OpenGL; the `dummy`
+video driver has no GL, and attempting it aborts with "Unable to get a Window"). But on a Mac
+with a real display attached, a normal windowed run works fine, so a screen *can* be rendered
+and screenshotted automatically.
+
+**Without opening a window:**
+
+- **Syntax:** `venv/bin/python -m py_compile screens/<Dir>/*.py`
 - **Manifest:** validate it is parseable JSON.
-- **KV parse + widget registration + imports:** import the screen module with the interpreter that has Kivy installed, e.g. `python3 -c "import screens.<Dir>.<file>; print('OK')"`. This catches KV syntax errors, bad sibling imports, and unregistered custom widgets — but note that **instantiating** widgets or rendering canvas/text needs a real GL context, so it will fail headlessly. Don't try to instantiate the screen or call canvas/`CoreLabel` rendering in a headless check.
+- **KV parse + widget registration + imports:** `venv/bin/python -c "import screens.<Dir>.<file>; print('OK')"`.
+  Catches KV syntax errors, bad sibling imports, and unregistered custom widgets.
+- **Pure logic:** keep parsing/state/formatting in a Kivy-free module and unit-test it
+  (`screens/BambuLab/bambustate.py` + `tests/test_core.py`, `screens/BluetoothConnect/protocol.py`,
+  `screens/Calendar/calstore.py`, `util/rulestore.py`).
 
-Leave actual visual and interaction testing to the user running the real app (Pi or Mac desktop). Confirm the non-visual checks above, then hand off.
+**Render smoke test** (catches layout errors, missing `ids`, bad row construction — things an
+import check cannot):
+
+```python
+app.sm.current = "_myscreen"      # REQUIRED: nothing is drawn if the screen isn't current
+Clock.schedule_once(lambda dt: self.screen.on_enter(), 0.3)
+Clock.schedule_once(self._shot, 2.5)          # let layout settle before capturing
+...
+Window.screenshot(name="/tmp/shot.png")       # writes /tmp/shot0001.png (it appends a counter)
+```
+
+A **black screenshot means nothing was being drawn** — almost always a screen that was added
+to the `ScreenManager` but never made `current`, not a capture problem. Also print
+`widget.size`/`pos` for a few children: on a Retina Mac the window is 2x (1600x960 for the
+800x480 layout), so `dp()` values appear doubled.
+
+Leave real interaction testing (touch, rotary, hardware) to the user on the Pi.
 
 ---
 
@@ -770,9 +928,13 @@ Leave actual visual and interaction testing to the user running the real app (Pi
 
 Use these as examples when building new screens:
 
-- **BambuLab** (`screens/BambuLab/`) — Full-featured: MQTT, camera streaming, threading, multi-page stats, rotary encoder, property observers
+- **BambuLab** (`screens/BambuLab/`) — Full-featured: always-on service + MQTT, camera streaming, threading, multi-page stats, rotary encoder, property observers, rule store
+- **Calendar** (`screens/Calendar/`) — **the theming reference** (theme-derived defaults + `on_enter`), service/pure-logic/screen split, headless tests
+- **Automations** (`screens/Automations/`) — dynamic row list with tap/toggle/delete, Msgbox confirm, empty state, aggregating across services
+- **TaskManagerScreen** (`screens/TaskManagerScreen/`) — persisted list with custom row widget + delete confirm
 - **Home** (`screens/Home/`) — Animations, gestures, multiple widgets, wallpaper management
-- **MusicPlayer** (`screens/MusicPlayer/`) — Audio playback, shaders, carousel, drawer animation
+- **Spotify** (`screens/Spotify/`) — OAuth2 flow with a QR pairing panel, media playback controls
+- **ShaderTest** (`screens/ShaderTest/`) — GLSL shader usage
 - **Cocktail** (`screens/Cocktail/`) — API-driven search, dynamic UI construction
 - **Settings** (`screens/Settings/`) — Config panel rendering from manifests
 
@@ -791,6 +953,12 @@ Use these as examples when building new screens:
 | Helpers (toast, get_app) | `util/helpers.py` |
 | Poller | `networking/poller.py` |
 | Virtual keyboard | `components/Keyboard/keyboard.py` |
+| Modal / confirm dialog | `components/Msgbox/msgbox.py` |
 | Event base class & factory | `events/pihomeevent.py` |
+| Thread marshalling (`run_on_main_thread`) | `util/helpers.py` |
+| Automation rule store | `util/rulestore.py` |
+| Legacy rule-store adapters (AirPlay, HA) | `util/rule_adapters.py` |
+| Screen service loader | `util/screen_services.py` |
+| Screen dependency auto-install | `util/dependencies.py` |
 | Main app | `main.py` |
 | Persistent state / cache / token files | `cache/` (project root, gitignored) |

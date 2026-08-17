@@ -5,10 +5,15 @@ which screen is open), and evaluates user-defined threshold rules. When a device
 live watts crosses a rule's limit (rising or falling edge, with a per-rule
 cooldown), the rule's nested PiHome event is fired.
 
+Rules live in a shared :class:`~util.rulestore.RuleStore` (persistence, enable/
+disable, cooldown, last-fired and firing); this service only detects the
+threshold crossing and keeps the rising/falling-edge latch in its own state file.
 Rules are managed via JSON events (see screens/EmporiumPower/events/) over
-MQTT/HTTP/WebSocket. Rules and per-rule latch state are persisted under cache/ so
-they survive restarts. The EmporiumPower screen consumes this service's snapshot
-instead of running its own poller (single PyEmVue instance, no token-file races).
+MQTT/HTTP/WebSocket and appear on the Automations screen. The EmporiumPower
+screen consumes this service's snapshot instead of running its own poller
+(single PyEmVue instance, no token-file races).
+
+The fired event may interpolate ``$device`` ``$watts`` ``$limit`` ``$direction``.
 """
 
 import json
@@ -21,6 +26,7 @@ from kivy.clock import Clock
 
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
+from util.rulestore import RuleStore
 
 try:
     from pyemvue import PyEmVue
@@ -31,8 +37,25 @@ except Exception:  # ImportError or any transitive import error
     Unit = None
 
 _TOKEN_FILE = "cache/emporia_tokens.json"
-_RULES_FILE = "cache/emporia_alerts.json"
 _STATE_FILE = "cache/emporia_alerts_state.json"
+
+
+def _describe(rule):
+    """Human-readable trigger text for the Automations screen."""
+    return (f"{rule.get('device', '?')} goes {rule.get('direction', 'above')} "
+            f"{rule.get('limit', '?')}W")
+
+
+# Rule storage, validation, cooldown and firing all live in the shared store —
+# this service only detects the threshold crossing.
+RULES = RuleStore(
+    key="emporia",
+    label="Power",
+    path="cache/emporia_alerts.json",
+    glyph="",          # flash_on
+    describe=_describe,
+    create_event="emporia_power_alert",
+)
 
 # Channel numbers Emporia uses for the whole-home (summed mains) total.
 _MAIN_CHANNELS = ("1,2,3", "1,2,3,4")
@@ -52,7 +75,6 @@ class EmporiaService:
     def __init__(self):
         self._vue = None
         self._vue_lock = threading.Lock()       # serialize all PyEmVue calls
-        self._rules_lock = threading.Lock()
         self._stop = threading.Event()
 
         self._all_gids = []
@@ -66,8 +88,9 @@ class EmporiaService:
                           "cost": self._cost, "today_by_key": self._today_by_key}
         self._listeners = []
 
-        self._rules = self._load_json(_RULES_FILE, {})    # id -> rule dict
-        self._state = self._load_json(_STATE_FILE, {})    # id -> {was_over, last_fired}
+        # Rule persistence/firing lives in RULES (the shared store); _state holds
+        # only the rising/falling-edge latch, which is trigger state, not rule state.
+        self._state = self._load_json(_STATE_FILE, {})    # id -> {was_over}
 
         self._thread = threading.Thread(target=self._run, daemon=True, name="emporia-service")
         self._thread.start()
@@ -296,16 +319,14 @@ class EmporiaService:
     # ── Rule evaluation (rising/falling edge + cooldown) ──
 
     def _evaluate_rules(self, watts_by_name):
-        now = time.time()
-        with self._rules_lock:
-            rules = list(self._rules.values())
+        """Detect threshold crossings; the store owns cooldown and firing."""
+        rules = RULES.list()["body"]["rules"]
         changed = False
         for rule in rules:
             rid = rule.get("id")
             dev = str(rule.get("device", "")).strip().lower()
             try:
                 limit = float(rule.get("limit", 0))
-                cooldown = float(rule.get("cooldown", 300))
             except (TypeError, ValueError):
                 continue
             direction = str(rule.get("direction", "above")).lower()
@@ -315,14 +336,18 @@ class EmporiaService:
 
             watts = watts_by_name[dev]
             now_over = watts >= limit
-            st = self._state.get(rid) or {"was_over": now_over, "last_fired": 0}
+            st = self._state.get(rid) or {"was_over": now_over}
             was_over = st.get("was_over", now_over)
 
             crossed = (direction == "above" and not was_over and now_over) or \
                       (direction == "below" and was_over and not now_over)
-            if crossed and (now - st.get("last_fired", 0) >= cooldown):
-                self._fire(rule, watts)
-                st["last_fired"] = now
+            if crossed:
+                RULES.fire(rule, {
+                    "device": rule.get("device"),
+                    "watts": f"{watts:.0f}",
+                    "limit": f"{limit:.0f}",
+                    "direction": direction,
+                })
 
             st["was_over"] = now_over
             self._state[rid] = st
@@ -330,76 +355,53 @@ class EmporiaService:
         if changed:
             self._save_json(_STATE_FILE, self._state)
 
-    def _fire(self, rule, watts):
-        event = rule.get("event")
-        if not isinstance(event, dict):
-            PIHOME_LOGGER.error(f"Emporia alert '{rule.get('id')}': no valid 'event' dict to fire")
-            return
-        PIHOME_LOGGER.info(
-            f"Emporia alert '{rule.get('id')}' fired: {rule.get('device')} "
-            f"{rule.get('direction')} {rule.get('limit')}W (now {watts:.0f}W)"
-        )
-
-        def _do(dt):
-            try:
-                # Imported lazily to avoid a circular import at module load.
-                from events.pihomeevent import PihomeEventFactory
-                PihomeEventFactory.create_event_from_dict(dict(event)).execute()
-            except Exception as e:
-                PIHOME_LOGGER.error(f"Emporia alert '{rule.get('id')}': action failed: {e}")
-
-        Clock.schedule_once(_do, 0)  # actions often touch the UI — run on main thread
-
     # ── Public rule API (called by the rule-management events) ──
 
     def add_or_update_rule(self, rule):
-        rid = str(rule.get("id") or "").strip()
-        if not rid:
-            return self._err("'id' is required")
-        if not rule.get("device"):
-            return self._err("'device' is required")
-        if rule.get("limit") is None:
-            return self._err("'limit' (watts) is required")
-        if not isinstance(rule.get("event"), dict):
-            return self._err("'event' must be a nested event object")
-        direction = str(rule.get("direction", "above")).lower()
-        if direction not in ("above", "below"):
-            return self._err("'direction' must be 'above' or 'below'")
-        try:
-            limit = float(rule["limit"])
-            cooldown = float(rule.get("cooldown", 300))
-        except (TypeError, ValueError):
-            return self._err("'limit' and 'cooldown' must be numbers")
+        """Validate the threshold fields, then hand persistence to the shared store."""
+        def _validate(stored):
+            if not stored.get("id"):
+                return "'id' is required"
+            if not stored.get("device"):
+                return "'device' is required"
+            if stored.get("limit") is None:
+                return "'limit' (watts) is required"
+            if stored.get("direction") not in ("above", "below"):
+                return "'direction' must be 'above' or 'below'"
+            return None
 
-        stored = {"id": rid, "device": str(rule["device"]), "limit": limit,
-                  "direction": direction, "cooldown": cooldown, "event": rule["event"]}
-        with self._rules_lock:
-            self._rules[rid] = stored
-            self._save_json(_RULES_FILE, self._rules)
-            # Reset latch so a stale state can't suppress or spuriously fire the new rule.
+        # Preserve this store's own defaults (300s cooldown, "above").
+        prepared = dict(rule)
+        prepared["direction"] = str(rule.get("direction", "above")).lower()
+        if rule.get("cooldown") is None:
+            prepared["cooldown"] = 300
+        try:
+            if prepared.get("limit") is not None:
+                prepared["limit"] = float(prepared["limit"])
+        except (TypeError, ValueError):
+            return {"code": 400, "body": {
+                "status": "error", "message": "'limit' must be a number"}}
+        if prepared.get("device") is not None:
+            prepared["device"] = str(prepared["device"])
+
+        response = RULES.upsert(prepared, validate=_validate)
+        if response["code"] == 200:
+            # Reset the latch so stale edge state can't suppress or spuriously
+            # fire the rule that was just saved.
+            rid = response["body"]["id"]
             self._state.pop(rid, None)
             self._save_json(_STATE_FILE, self._state)
-        return {"code": 200, "body": {"status": "success",
-                "message": f"Emporia alert '{rid}' saved", "rule": stored}}
+        return response
 
     def remove_rule(self, rid):
-        rid = str(rid or "").strip()
-        with self._rules_lock:
-            existed = self._rules.pop(rid, None) is not None
-            self._state.pop(rid, None)
-            self._save_json(_RULES_FILE, self._rules)
+        response = RULES.remove(rid)
+        if response["code"] == 200:
+            self._state.pop(str(rid).strip(), None)
             self._save_json(_STATE_FILE, self._state)
-        msg = f"Emporia alert '{rid}' removed" if existed else f"Emporia alert '{rid}' not found"
-        return {"code": 200, "body": {"status": "success", "message": msg}}
+        return response
 
     def list_rules(self):
-        with self._rules_lock:
-            rules = list(self._rules.values())
-        return {"code": 200, "body": {"status": "success", "rules": rules}}
-
-    @staticmethod
-    def _err(message):
-        return {"code": 400, "body": {"status": "error", "message": message}}
+        return RULES.list()
 
     # ── Snapshot / listeners (consumed by the screen) ──
 

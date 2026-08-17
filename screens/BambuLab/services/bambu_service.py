@@ -6,11 +6,14 @@ state-alert rules. When the printer enters a state a rule is bound to — PRINTI
 COMPLETE, FAILED, an HMS/print error, or going on/offline — that rule's nested
 PiHome event is fired.
 
-Rules are managed via JSON events (see screens/BambuLab/events/) over
-MQTT/HTTP/WebSocket and persisted under cache/ so they survive restarts. The
-BambuLab screen consumes this service's snapshot instead of running its own MQTT
-client (one connection to the printer's on-board broker, and state keeps flowing
-while you are on another screen — which is the whole point of the rules).
+Rules live in a shared :class:`~util.rulestore.RuleStore` (persistence, enable/
+disable, cooldown, last-fired and firing), so this service only has to decide
+*when* a trigger has occurred. They are managed via JSON events (see
+screens/BambuLab/events/) over MQTT/HTTP/WebSocket, and appear on the Automations
+screen. The BambuLab screen consumes this service's snapshot instead of running
+its own MQTT client (one connection to the printer's on-board broker, and state
+keeps flowing while you are on another screen — which is the whole point of the
+rules).
 
 Transitions are edge-triggered and the first report after each connect is a
 baseline that never fires, so a network blip or a restart cannot replay a stale
@@ -19,20 +22,19 @@ is missed.
 """
 
 import json
-import os
 import ssl
 import threading
 import time
-import uuid
 
 from kivy.clock import Clock
 
 from screens.BambuLab.bambustate import (
     TRIGGERS, new_snapshot, normalize_trigger, parse_print, placeholder_values,
-    substitute, triggers_fired,
+    state_label, triggers_fired,
 )
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
+from util.rulestore import RuleStore
 
 try:
     import paho.mqtt.client as _mqtt_lib
@@ -41,8 +43,6 @@ try:
 except ImportError:
     _MQTT_AVAILABLE = False
     _MQTT_V2 = False
-
-_RULES_FILE = "cache/bambulab_state_rules.json"
 
 _MQTT_PORT = 8883
 _MQTT_USER = "bblp"
@@ -63,17 +63,33 @@ _IDLE_POLL = 10
 _CONFIG_POLL = 10
 
 
+def _describe(rule):
+    """Human-readable trigger text for the Automations screen."""
+    trigger = rule.get("state", "?")
+    return "Printer goes " + state_label(trigger)
+
+
+# Rule storage, validation, cooldown and firing all live in the shared store —
+# this service only decides *when* a trigger has occurred.
+RULES = RuleStore(
+    key="bambulab",
+    label="BambuLab",
+    path="cache/bambulab_state_rules.json",
+    glyph="",          # print
+    describe=_describe,
+    create_event="bambulab_state_alert",
+)
+
+
 class BambuService:
     def __init__(self):
         self._stop = threading.Event()
-        self._rules_lock = threading.Lock()
         self._snapshot_lock = threading.Lock()
 
         self._mqtt_client = None
         self._device_serial = None      # auto-detected from the MQTT topic
         self._reconnect = threading.Event()   # set to force-drop the current session
         self._session_ok = False        # did the broker accept the current session?
-        self._last_fired = {}           # rule id -> monotonic timestamp
 
         self._snapshot = new_snapshot()
         self._listeners = []
@@ -81,8 +97,6 @@ class BambuService:
         self._ip = self._access_code = self._serial = ""
         self._enabled = False
         self._read_config()
-
-        self._rules = self._load_json(_RULES_FILE, {})   # id -> rule dict
 
         self._thread = threading.Thread(target=self._run, daemon=True, name="bambulab-service")
         self._thread.start()
@@ -119,25 +133,6 @@ class BambuService:
         """Drop the current MQTT session; the supervisor loop reconnects immediately."""
         self._reconnect.set()
         self._disconnect_client()
-
-    # ── Persistence ──
-
-    def _load_json(self, path, default):
-        try:
-            if os.path.exists(path):
-                with open(path) as f:
-                    return json.load(f) or default
-        except Exception as e:
-            PIHOME_LOGGER.error(f"BambuLab service: failed to read {path}: {e}")
-        return default
-
-    def _save_json(self, path, data):
-        try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w") as f:
-                json.dump(data, f, indent=2)
-        except Exception as e:
-            PIHOME_LOGGER.error(f"BambuLab service: failed to write {path}: {e}")
 
     # ── Supervisor loop ──
 
@@ -338,92 +333,24 @@ class BambuService:
     def fire_trigger(self, trigger, snapshot=None):
         """Fire every rule bound to ``trigger``. Returns the number fired."""
         snap = snapshot if snapshot is not None else self.get_snapshot()
-        with self._rules_lock:
-            rules = [r for r in self._rules.values() if r.get("state") == trigger]
-        if not rules:
-            return 0
-
-        now = time.monotonic()
-        count = 0
-        for rule in rules:
-            rid = rule.get("id")
-            cooldown = rule.get("cooldown") or 0
-            if cooldown:
-                last = self._last_fired.get(rid, 0)
-                if last and now - last < cooldown:
-                    PIHOME_LOGGER.info(
-                        f"BambuLab alert '{rid}': suppressed by cooldown ({cooldown}s)"
-                    )
-                    continue
-            self._last_fired[rid] = now
-            self._fire(rule, snap)
-            count += 1
-        return count
-
-    def _fire(self, rule, snap):
-        event = rule.get("event")
-        if not isinstance(event, dict):
-            PIHOME_LOGGER.error(
-                f"BambuLab alert '{rule.get('id')}': no valid 'event' dict to fire"
-            )
-            return
-        PIHOME_LOGGER.info(
-            f"BambuLab alert '{rule.get('id')}' fired on state {rule.get('state')}"
-        )
-        payload = substitute(event, placeholder_values(snap))
-
-        def _do(dt):
-            try:
-                # Imported lazily to avoid a circular import at module load.
-                from events.pihomeevent import PihomeEventFactory
-                PihomeEventFactory.create_event_from_dict(payload).execute()
-            except Exception as e:
-                PIHOME_LOGGER.error(f"BambuLab alert '{rule.get('id')}': action failed: {e}")
-
-        Clock.schedule_once(_do, 0)  # actions often touch the UI — run on main thread
+        return RULES.fire_matching("state", trigger, placeholder_values(snap))
 
     # ── Public rule API (called by the rule-management events) ──
 
     def add_or_update_rule(self, rule):
+        """Validate the trigger, then hand persistence to the shared store."""
         state = normalize_trigger(rule.get("state"))
         if state is None:
-            return self._err(f"'state' must be one of: {', '.join(TRIGGERS)}")
-        if not isinstance(rule.get("event"), dict):
-            return self._err("'event' must be a nested event object")
-        try:
-            cooldown = float(rule.get("cooldown") or 0)
-        except (TypeError, ValueError):
-            return self._err("'cooldown' must be a number of seconds")
-
-        rid = str(rule.get("id") or "").strip() or str(uuid.uuid4())
-        stored = {"id": rid, "state": state, "cooldown": cooldown, "event": rule["event"]}
-        with self._rules_lock:
-            self._rules[rid] = stored
-            self._save_json(_RULES_FILE, self._rules)
-        self._last_fired.pop(rid, None)
-        return {"code": 200, "body": {"status": "success",
-                "message": f"BambuLab state alert '{rid}' saved for state {state}",
-                "id": rid, "rule": stored}}
+            return {"code": 400, "body": {
+                "status": "error",
+                "message": f"'state' must be one of: {', '.join(TRIGGERS)}"}}
+        return RULES.upsert(dict(rule, state=state))
 
     def remove_rule(self, rid):
-        rid = str(rid or "").strip()
-        with self._rules_lock:
-            existed = self._rules.pop(rid, None) is not None
-            if existed:
-                self._save_json(_RULES_FILE, self._rules)
-        self._last_fired.pop(rid, None)
-        msg = (f"BambuLab state alert '{rid}' removed" if existed
-               else f"BambuLab state alert '{rid}' not found")
-        return {"code": 200, "body": {"status": "success", "message": msg}}
+        return RULES.remove(rid)
 
     def list_rules(self):
-        with self._rules_lock:
-            rules = list(self._rules.values())
-        return {"code": 200, "body": {"status": "success", "rules": rules}}
-
-    @staticmethod
-    def _err(message):
-        return {"code": 400, "body": {"status": "error", "message": message}}
+        return RULES.list()
 
     # ── Snapshot / listeners (consumed by the screen) ──
 

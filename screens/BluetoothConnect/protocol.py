@@ -121,21 +121,15 @@ def substitute(event, value):
     Same convention as ShellEvent.replace_vars (events/shellevent.py), so a
     binding can forward the device's value into the action it fires, e.g.
     binding 'dial' to {"type": "brightness", "level": "$1"}.
+
+    Thin wrapper over the shared rule-store substitution, which handles both this
+    positional form and named ``$name`` keys.
     """
-    payload = copy.deepcopy(event)
+    from util.rulestore import substitute as _substitute
+
     if value is None:
-        return payload
-    return _replace(payload, str(value))
-
-
-def _replace(node, value):
-    if isinstance(node, dict):
-        return {k: _replace(v, value) for k, v in node.items()}
-    if isinstance(node, list):
-        return [_replace(v, value) for v in node]
-    if isinstance(node, str):
-        return node.replace("$1", value)
-    return node
+        return copy.deepcopy(event)
+    return _substitute(event, {"1": value})
 
 
 def normalize_uuid(value, fallback):

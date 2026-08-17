@@ -1,0 +1,117 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<AutomationRow>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: max(dp(62), label_box.minimum_height + dp(18))
+    padding: dp(10), dp(6)
+    spacing: dp(8)
+    # A disabled rule is dimmed rather than hidden, so it stays discoverable.
+    opacity: 1 if root.enabled else 0.45
+
+    canvas.before:
+        Color:
+            rgba: root.row_bg_color
+        RoundedRectangle:
+            pos: self.x + dp(6), self.y + dp(3)
+            size: self.width - dp(12), self.height - dp(6)
+            radius: [dp(10)]
+        # Reset GL color state for Pi's OpenGL ES 2.0 batcher.
+        Color:
+            rgba: 1, 1, 1, 1
+
+    # ── Source glyph ──────────────────────────────────────────────────────────
+    Label:
+        text: root.glyph
+        font_name: "MaterialIcons"
+        font_size: sp(22)
+        color: root.glyph_color
+        size_hint_x: None
+        width: dp(38)
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
+
+    # ── Trigger / action / last fired ─────────────────────────────────────────
+    BoxLayout:
+        id: label_box
+        orientation: "vertical"
+        spacing: dp(1)
+        padding: 0, dp(2)
+        size_hint_y: None
+        height: self.minimum_height
+        pos_hint: {"center_y": 0.5}
+
+        Label:
+            text: root.trigger
+            font_name: "Nunito"
+            font_size: sp(13)
+            bold: True
+            color: root.text_color
+            halign: "left"
+            valign: "middle"
+            shorten: True
+            shorten_from: "right"
+            size_hint_y: None
+            height: self.texture_size[1]
+            text_size: self.width, None
+
+        Label:
+            text: root.action
+            font_name: "Nunito"
+            font_size: sp(11)
+            color: root.muted_color
+            halign: "left"
+            valign: "top"
+            shorten: True
+            shorten_from: "right"
+            size_hint_y: None
+            height: self.texture_size[1] if root.action else 0
+            opacity: 1 if root.action else 0
+            text_size: self.width, None
+
+        Label:
+            text: root.last_fired
+            font_name: "Nunito"
+            font_size: sp(10)
+            color: root.muted_color
+            halign: "left"
+            valign: "top"
+            size_hint_y: None
+            height: self.texture_size[1] if root.last_fired else 0
+            opacity: 0.75 if root.last_fired else 0
+            text_size: self.width, None
+
+    # ── Enable/disable switch (hidden for stores that don't support it) ───────
+    AnchorLayout:
+        id: switch_holder
+        anchor_x: "center"
+        anchor_y: "center"
+        size_hint_x: None
+        width: dp(56) if root.can_toggle else 0
+        opacity: 1 if root.can_toggle else 0
+
+    # ── Delete — grabs its own touch so the row tap won't also fire ───────────
+    Button:
+        id: delete_btn
+        size_hint: None, None
+        size: dp(34), dp(34)
+        pos_hint: {"center_y": 0.5}
+        text: ""
+        font_name: "MaterialIcons"
+        font_size: sp(19)
+        color: root.danger_color
+        background_normal: ""
+        background_down: ""
+        background_color: 0, 0, 0, 0
+        on_release: root._do_delete()
+        canvas.before:
+            Color:
+                rgba: root.danger_color[0], root.danger_color[1], root.danger_color[2], 0.12
+            Ellipse:
+                pos: self.x + dp(2), self.y + dp(2)
+                size: self.width - dp(4), self.height - dp(4)
+            Color:
+                rgba: 1, 1, 1, 1

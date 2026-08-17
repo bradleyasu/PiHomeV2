@@ -13,7 +13,9 @@ Holds three things:
   * ``substitute``, which injects snapshot values into a rule's nested event.
 """
 
-import copy
+# Placeholder substitution is shared with every other rule store; re-exported
+# here so this module stays the single import for BambuLab's state logic.
+from util.rulestore import substitute  # noqa: F401
 
 # ── Colors ─────────────────────────────────────────────────────────────────────
 
@@ -196,38 +198,6 @@ def placeholder_values(snapshot):
         "nozzle":      "{:.0f}".format(snap.get("nozzle", 0.0) or 0.0),
         "bed":         "{:.0f}".format(snap.get("bed", 0.0) or 0.0),
     }
-
-
-def substitute(event, values):
-    """Deep-copy ``event`` and replace every ``$name`` placeholder in it.
-
-    Same convention as ShellEvent.replace_vars (events/shellevent.py) and
-    BluetoothConnect's protocol.substitute, but keyed by name rather than "$1"
-    so one rule can report several fields at once.
-
-    Longest keys are replaced first so "$layer_total" is not clobbered by
-    "$layer".
-    """
-    payload = copy.deepcopy(event)
-    if not values:
-        return payload
-    ordered = sorted(values.items(), key=lambda kv: len(kv[0]), reverse=True)
-    return _replace(payload, ordered)
-
-
-def _replace(node, ordered):
-    if isinstance(node, dict):
-        return {k: _replace(v, ordered) for k, v in node.items()}
-    if isinstance(node, list):
-        return [_replace(v, ordered) for v in node]
-    if isinstance(node, str):
-        text = node
-        for name, value in ordered:
-            token = "$" + name
-            if token in text:
-                text = text.replace(token, value)
-        return text
-    return node
 
 
 # ── Formatting helpers (shared by the screen and by placeholders) ──────────────

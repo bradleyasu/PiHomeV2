@@ -37,6 +37,7 @@ from kivy.clock import Clock
 
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
+from util.rulestore import RuleStore
 
 from screens.BluetoothConnect.protocol import (
     AUTH_OK,
@@ -48,7 +49,6 @@ from screens.BluetoothConnect.protocol import (
     chunk,
     normalize_uuid,
     parse_command,
-    substitute,
 )
 
 try:
@@ -63,7 +63,27 @@ except Exception:  # ImportError, or any transitive import error
     BleakScanner = None
 
 _DEVICES_FILE = "cache/bluetooth_devices.json"
-_BINDINGS_FILE = "cache/bluetooth_bindings.json"
+
+
+def _describe(rule):
+    """Human-readable trigger text for the Automations screen."""
+    device = rule.get("device")
+    where = f" from {device}" if device else ""
+    return f"Command '{rule.get('command', '?')}'{where}"
+
+
+# Bindings are keyed by device|command rather than by id, so a token can be bound
+# per-device with a "*" wildcard fallback (see _resolve). Everything else —
+# persistence, enable/disable, last-fired, firing — comes from the shared store.
+BINDINGS = RuleStore(
+    key="bluetooth",
+    label="Bluetooth",
+    path="cache/bluetooth_bindings.json",
+    glyph="",          # bluetooth
+    describe=_describe,
+    key_fn=lambda r: f"{r.get('device') or '*'}|{r.get('command')}",
+    create_event="bluetooth_bind",
+)
 
 # Seconds of silence after which a partial line is flushed anyway. Forgetting
 # the trailing "\n" is the most common first-sketch mistake; this makes it work
@@ -88,7 +108,6 @@ class BleService:
         self._scan_lock = None
 
         self._devices = self._load_json(_DEVICES_FILE, {})    # address -> {address, name, paired_at}
-        self._bindings = self._load_json(_BINDINGS_FILE, {})  # "device|command" -> binding
 
         self._state = {}          # address -> live connection state
         self._recent = collections.deque(maxlen=_RECENT_MAX)
@@ -513,12 +532,13 @@ class BleService:
             if entry is not None:
                 entry["result"] = "unbound"
                 self._notify()
+            known = BINDINGS.list()["body"]["rules"]
             return {
                 "code": 404,
                 "body": {
                     "status": "error",
                     "message": message,
-                    "commands": sorted({b["command"] for b in self._bindings.values()}),
+                    "commands": sorted({b["command"] for b in known}),
                 },
             }
 
@@ -529,16 +549,19 @@ class BleService:
                 self._notify()
             return self._err(f"Binding '{token}' has no valid event")
 
-        try:
-            from events.pihomeevent import PihomeEventFactory
-            payload = substitute(event, value)
-            response = PihomeEventFactory.create_event_from_dict(payload).execute_safe()
-        except Exception as e:
-            PIHOME_LOGGER.error(f"Bluetooth: command '{token}' failed: {e}")
+        # "$1" is this store's placeholder convention (shared with ShellEvent);
+        # the store also accepts named keys, so both work. fire_and_wait so the
+        # caller still gets the action's own response — this is how a binding is
+        # tested before any hardware exists.
+        fired, response = BINDINGS.fire_and_wait(binding, {"1": value})
+        if not fired:
             if entry is not None:
-                entry["result"] = f"failed: {e}"
+                entry["result"] = "disabled"
                 self._notify()
-            return self._err(f"Command '{token}' failed: {e}")
+            return {"code": 200, "body": {
+                "status": "success",
+                "message": f"Command '{token}' is disabled",
+                "command": token, "value": value}}
 
         if entry is not None:
             entry["result"] = "fired " + str(event.get("type", "?"))
@@ -557,12 +580,11 @@ class BleService:
 
     def _resolve(self, token, address):
         """Exact device binding wins over the wildcard."""
-        with self._lock:
-            if address:
-                binding = self._bindings.get(f"{address}|{token}")
-                if binding:
-                    return binding
-            return self._bindings.get(f"*|{token}")
+        if address:
+            binding = BINDINGS.get(f"{address}|{token}")
+            if binding:
+                return binding
+        return BINDINGS.get(f"*|{token}")
 
     # ── Bindings ─────────────────────────────────────────────────────────────
 
@@ -570,45 +592,38 @@ class BleService:
         token = str(command or "").strip().lower()
         if not token:
             return self._err("'command' is required")
-        if not isinstance(event, dict):
-            return self._err("'event' must be a nested event object")
-        if not event.get("type"):
-            return self._err("'event' must contain a 'type'")
 
-        target = str(device).strip() if device else None
-        binding = {
+        response = BINDINGS.upsert({
             "command": token,
-            "device": target,
+            "device": str(device).strip() if device else None,
             "description": str(description).strip() if description else "",
             "event": event,
-        }
-        with self._lock:
-            self._bindings[f"{target or '*'}|{token}"] = binding
-            self._save_json(_BINDINGS_FILE, self._bindings)
+        })
+        if response["code"] != 200:
+            return response
         self._notify()
         return {
             "code": 200,
             "body": {"status": "success",
-                     "message": f"Bound command '{token}'", "binding": binding},
+                     "message": f"Bound command '{token}'",
+                     "binding": response["body"]["rule"]},
         }
 
     def unbind(self, command, device=None):
         token = str(command or "").strip().lower()
         if not token:
             return self._err("'command' is required")
-        key = f"{str(device).strip() if device else '*'}|{token}"
-        with self._lock:
-            existed = self._bindings.pop(key, None) is not None
-            if existed:
-                self._save_json(_BINDINGS_FILE, self._bindings)
+        response = BINDINGS.remove(f"{str(device).strip() if device else '*'}|{token}")
         self._notify()
-        message = f"Removed binding '{token}'" if existed else f"No binding '{token}'"
-        return {"code": 200, "body": {"status": "success", "message": message}}
+        if response["code"] != 200:
+            return {"code": 404, "body": {
+                "status": "error", "message": f"No binding '{token}'"}}
+        return {"code": 200, "body": {
+            "status": "success", "message": f"Removed binding '{token}'"}}
 
     def list_bindings(self):
-        with self._lock:
-            bindings = list(self._bindings.values())
-        return {"code": 200, "body": {"status": "success", "bindings": bindings}}
+        return {"code": 200, "body": {
+            "status": "success", "bindings": BINDINGS.list()["body"]["rules"]}}
 
     # ── Paired devices ───────────────────────────────────────────────────────
 

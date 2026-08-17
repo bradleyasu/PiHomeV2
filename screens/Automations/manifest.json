@@ -1,0 +1,12 @@
+{
+    "module": "Automations.automations",
+    "name": "AutomationsScreen",
+    "id": "_automations",
+    "label": "Automations",
+    "description": "View, test, disable and delete every automation rule",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 60,
+    "icon": "screens/Automations/icon.png",
+    "settings": []
+}
