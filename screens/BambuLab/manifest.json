@@ -10,6 +10,8 @@
     "requires_pin": false,
     "index": 10,
     "icon": "screens/BambuLab/icon.png",
+    "dependencies": ["paho-mqtt==1.6.1"],
+    "services": ["bambu_service"],
     "settings": [
         {
             "type": "title",

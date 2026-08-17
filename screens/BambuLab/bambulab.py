@@ -1,11 +1,17 @@
 """BambuLabScreen — BambuLab 3D printer monitor for PiHome.
 
+Printer state comes from ``services/bambu_service.py``, an always-on singleton
+that owns the MQTT connection and pushes snapshots here; this screen renders
+them and owns the camera stream. Keeping MQTT out of the screen is what lets
+state-alert rules (screens/BambuLab/events/) fire while another screen is open.
+
 Local Network Protocols
 ------------------------
 BambuLab printers expose two local APIs used by this screen:
 
   MQTT  port 8883 (TLS) — real-time status: temperatures, progress, layers,
                            ETA, filament, speed, and printer state.
+                           Handled by the service, not here.
   RTSPS port 322        — live H.264 camera stream (RTSP over TLS).
 
 Required printer settings
@@ -20,13 +26,10 @@ Required PiHome settings (set via Settings → BambuLab)
 
 Rotary Encoder
   Turn        → cycle the right-side stat panel focus (Job → Temps → Speed/Filament)
-  Short press → force MQTT reconnect
+  Short press → force reconnect (MQTT + camera)
   Long press  → go back to previous screen
 """
 
-import datetime
-import json
-import ssl
 import threading
 import time
 
@@ -39,20 +42,18 @@ from kivy.properties import (
 )
 
 try:
-    import paho.mqtt.client as _mqtt_lib
-    _MQTT_AVAILABLE = True
-    _MQTT_V2 = hasattr(_mqtt_lib, 'CallbackAPIVersion')
-except ImportError:
-    _MQTT_AVAILABLE = False
-    _MQTT_V2 = False
-
-try:
     from ffpyplayer.player import MediaPlayer as _MediaPlayer
     _FF_AVAILABLE = True
 except ImportError:
     _FF_AVAILABLE = False
 
 from interface.pihomescreen import PiHomeScreen
+from screens.BambuLab.bambustate import (
+    ACCENT as _ACCENT, COLOR_ACCENT as _COLOR_ACCENT, COLOR_ERROR as _COLOR_ERROR,
+    COLOR_IDLE as _COLOR_IDLE, COLOR_PAUSE as _COLOR_PAUSE,
+    format_eta, format_finish, format_temp, resolve_state_color,
+)
+from screens.BambuLab.services.bambu_service import BAMBU_SERVICE
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 
@@ -60,42 +61,7 @@ Builder.load_file("./screens/BambuLab/bambulab.kv")
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-_MQTT_PORT    = 8883
-_RTSP_PORT    = 322
-_MQTT_USER    = "bblp"
-_REPORT_TOPIC  = "device/{serial}/report"
-_REQUEST_TOPIC = "device/{serial}/request"
-
-# Interval between periodic pushall requests (seconds).
-# P1P has performance constraints — Bambu recommends no more than once per 5 min.
-_PUSHALL_INTERVAL = 300
-
-# BambuLab brand green
-_ACCENT = (0.0, 0.68, 0.26, 1.0)
-
-_STATE_LABELS = {
-    "IDLE":    "IDLE",
-    "RUNNING": "PRINTING",
-    "PAUSE":   "PAUSED",
-    "FINISH":  "COMPLETE",
-    "FAILED":  "FAILED",
-    "OFFLINE": "OFFLINE",
-}
-
-# Pre-allocated color lists — avoids creating new list objects on every MQTT message
-_COLOR_ACCENT      = list(_ACCENT)
-_COLOR_IDLE        = [0.45, 0.45, 0.45, 1]
-_COLOR_PAUSE       = [0.95, 0.65, 0.10, 1]
-_COLOR_FAILED      = [0.85, 0.25, 0.25, 1]
-_COLOR_FINISH      = [0.20, 0.60, 0.95, 1]
-_COLOR_ERROR       = [0.85, 0.25, 0.25, 1]
-
-_STATE_COLORS = {
-    "RUNNING": _COLOR_ACCENT,
-    "PAUSE":   _COLOR_PAUSE,
-    "FAILED":  _COLOR_FAILED,
-    "FINISH":  _COLOR_FINISH,
-}
+_RTSP_PORT = 322
 
 
 # ── Screen ─────────────────────────────────────────────────────────────────────
@@ -169,14 +135,10 @@ class BambuLabScreen(PiHomeScreen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mqtt_client   = None
-        self._mqtt_thread   = None
-        self._mqtt_stop     = threading.Event()
         self._camera_thread = None
         self._camera_stop   = threading.Event()
         self._camera_player = None
         self._camera_tex    = None   # reused texture to avoid per-frame allocation
-        self._device_serial = None   # auto-detected from MQTT topic
         self._load_config()
 
     # ── Property observers (keep formatted strings in sync) ────────────────────
@@ -202,12 +164,7 @@ class BambuLabScreen(PiHomeScreen):
     def _update_bed_text(self):
         self.bed_text = self._format_temp(self.temp_bed, self.temp_bed_target)
 
-    @staticmethod
-    def _format_temp(current, target) -> str:
-        """Show 'current / target' when actively heating to a setpoint, else just current."""
-        if target and target > 0:
-            return f"{current:.0f}\u00b0 / {target:.0f}\u00b0C"
-        return f"{current:.1f}\u00b0C"
+    _format_temp = staticmethod(format_temp)
 
     def on_print_progress(self, inst, val):
         self.progress_text = f"{int(val)}%"
@@ -219,28 +176,11 @@ class BambuLabScreen(PiHomeScreen):
         self.eta_text = self._format_eta(val)
         self._update_finish_text(val)
 
-    @staticmethod
-    def _format_eta(minutes) -> str:
-        """Format remaining minutes as 'ETA  Xh Ym' for long prints, 'ETA  N min' otherwise."""
-        m = int(minutes)
-        if m <= 0:
-            return "\u2014"
-        if m < 60:
-            return f"ETA  {m} min"
-        hours, mins = divmod(m, 60)
-        if mins == 0:
-            return f"ETA  {hours}h"
-        return f"ETA  {hours}h {mins}m"
+    _format_eta = staticmethod(format_eta)
 
     def _update_finish_text(self, minutes):
         """Compute the estimated wall-clock finish time, e.g. 'Done 3:42 PM'."""
-        m = int(minutes)
-        if m <= 0 or self.gcode_state != "RUNNING":
-            self.finish_text = ""
-            return
-        finish = datetime.datetime.now() + datetime.timedelta(minutes=m)
-        # %-I strips the leading zero from the hour (Linux/macOS). Pi runs Linux.
-        self.finish_text = "Done " + finish.strftime("%-I:%M %p")
+        self.finish_text = format_finish(minutes, self.gcode_state)
 
     def on_layer_current(self, inst, val):
         self.layer_text = (
@@ -274,6 +214,9 @@ class BambuLabScreen(PiHomeScreen):
     def on_config_update(self, config):
         old_ip, old_code, old_serial = self._ip, self._access_code, self._serial
         self._load_config()
+        # The service re-reads its own settings and reconnects if needed; the
+        # screen only has to restart the camera it owns.
+        BAMBU_SERVICE.reload()
         if self.is_open:
             creds_changed = (
                 self._ip != old_ip
@@ -281,353 +224,106 @@ class BambuLabScreen(PiHomeScreen):
                 or self._serial != old_serial
             )
             if creds_changed:
-                self._stop_mqtt()
                 self._stop_camera()
-                Clock.schedule_once(lambda dt: self._connect(), 1.0)
+                Clock.schedule_once(lambda dt: self._start_camera_if_enabled(), 1.0)
         super().on_config_update(config)
 
     # ── Lifecycle ──────────────────────────────────────────────────────────────
 
     def on_enter(self, *args):
         self._load_config()
-        self._connect()
+        # Render whatever the always-on service already knows, then follow it.
+        self._apply_snapshot(BAMBU_SERVICE.get_snapshot())
+        BAMBU_SERVICE.add_listener(self._apply_snapshot)
+        self._start_camera_if_enabled()
         return super().on_enter(*args)
 
     def on_pre_leave(self, *args):
-        self._stop_mqtt()
+        # Only the camera is screen-scoped — the MQTT service keeps running so
+        # state alerts still fire while another screen is open.
+        BAMBU_SERVICE.remove_listener(self._apply_snapshot)
         self._stop_camera()
         return super().on_pre_leave(*args)
 
-    def _connect(self):
+    def _start_camera_if_enabled(self):
         if not self._enabled:
-            self._set_state("disconnected", "Disabled")
             return
         if not self._ip or not self._access_code or not self._serial:
-            self._set_state("error", "Not Configured")
             PIHOME_LOGGER.warn("BambuLab: missing connection settings (ip/access_code/serial)")
             return
-        self._start_mqtt()
         if self.camera_enabled:
             self._start_camera()
         else:
             self.camera_status = "Camera Disabled"
 
-    # ── MQTT ───────────────────────────────────────────────────────────────────
+    # ── Snapshot rendering ─────────────────────────────────────────────────────
 
-    def _start_mqtt(self):
-        if not _MQTT_AVAILABLE:
-            PIHOME_LOGGER.error("BambuLab: paho-mqtt not installed — run: pip install paho-mqtt")
-            self._set_state("error", "paho-mqtt missing")
-            return
-        if self._mqtt_thread and self._mqtt_thread.is_alive():
-            return  # previous thread still shutting down, don't spawn a second
-        self._mqtt_stop.clear()
-        self._mqtt_thread = threading.Thread(target=self._mqtt_run, daemon=True, name="bambulab-mqtt")
-        self._mqtt_thread.start()
+    def _apply_snapshot(self, snap):
+        """Map the service's snapshot dict onto this screen's Kivy properties.
 
-    def _stop_mqtt(self):
-        self._mqtt_stop.set()
-        if self._mqtt_client:
-            try:
-                self._mqtt_client.disconnect()
-            except Exception:
-                pass
-        self._mqtt_client = None
-
-    def _mqtt_run(self):
+        Runs on the main thread (the service marshals via Clock). Property
+        observers turn these into the formatted display strings the KV binds to.
+        """
         try:
-            if _MQTT_V2:
-                client = _mqtt_lib.Client(
-                    callback_api_version=_mqtt_lib.CallbackAPIVersion.VERSION1,
-                    client_id="pihome_bambulab",
-                )
-            else:
-                client = _mqtt_lib.Client(client_id="pihome_bambulab")
+            self.connection_state = snap["connection_state"]
+            self.connection_label = self._connection_label(snap)
+            self.status_color = self._connection_color(snap["connection_state"])
 
-            client.username_pw_set(_MQTT_USER, self._access_code)
+            self.gcode_state = snap["gcode_state"]
+            self.state_label = snap["state_label"]
+            self.state_color = resolve_state_color(snap["gcode_state"])
+            self.job_name = snap["job_name"]
 
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-            client.tls_set_context(ctx)
+            self.print_progress = snap["progress"]
+            self.layer_current  = snap["layer_current"]
+            self.layer_total    = snap["layer_total"]
+            self.eta_minutes    = snap["eta_minutes"]
 
-            client.on_connect    = self._on_mqtt_connect
-            client.on_disconnect = self._on_mqtt_disconnect
-            client.on_message    = self._on_mqtt_message
+            self.temp_nozzle        = snap["nozzle"]
+            self.temp_nozzle_target = snap["nozzle_target"]
+            self.temp_bed           = snap["bed"]
+            self.temp_bed_target    = snap["bed_target"]
+            self.temp_chamber       = snap["chamber"]
+            self.print_speed        = snap["speed"]
 
-            self._mqtt_client = client
-            client.connect(self._ip, _MQTT_PORT, keepalive=60)
+            self.filament_type = snap["filament_type"]
+            color = snap["filament_color"]
+            if color:
+                self.filament_color = color
+            self.filament_has_color = bool(color)
 
-            last_pushall = time.monotonic()
-            while not self._mqtt_stop.is_set():
-                client.loop(timeout=1.0)
-                # Periodically re-request full state (important for P1 series
-                # which only sends changed fields in normal reports)
-                now = time.monotonic()
-                if now - last_pushall >= _PUSHALL_INTERVAL:
-                    last_pushall = now
-                    self._send_pushall(client)
+            self.has_alert   = snap["alert_active"]
+            self.alert_text  = snap["alert_text"]
+            self.alert_color = list(_COLOR_ERROR if snap["alert_severe"] else _COLOR_PAUSE)
 
+            # gcode_state is set above, but finish_text also depends on it and is
+            # only recomputed by the eta observer — refresh it explicitly.
+            self._update_finish_text(self.eta_minutes)
         except Exception as e:
-            PIHOME_LOGGER.error(f"BambuLab: MQTT thread error: {e}")
-            Clock.schedule_once(lambda dt: self._set_state("error", "Connection Failed"), 0)
+            PIHOME_LOGGER.error(f"BambuLab: error applying snapshot: {e}")
 
-    def _send_pushall(self, client):
-        """Ask the printer to push a full status snapshot."""
-        serial = self._device_serial or self._serial
-        topic = _REQUEST_TOPIC.format(serial=serial)
-        payload = json.dumps({
-            "pushing": {
-                "sequence_id": "0",
-                "command": "pushall",
-                "version": 1,
-                "push_target": 1,
-            }
-        })
-        client.publish(topic, payload)
-        PIHOME_LOGGER.info(f"BambuLab: sent pushall request to {serial}")
+    def _connection_label(self, snap):
+        """Explain *why* we are disconnected when the reason is a config problem.
 
-    def _on_mqtt_connect(self, client, userdata, flags, rc):
-        if self._mqtt_stop.is_set():
-            return
-        if rc == 0:
-            # Subscribe with single-level wildcard so we receive reports even
-            # if the configured serial doesn't exactly match the printer's
-            # device ID (the broker runs on the printer itself, so only that
-            # printer's messages will arrive).
-            client.subscribe("device/+/report")
-            PIHOME_LOGGER.info("BambuLab: MQTT connected, subscribed to device/+/report")
-            Clock.schedule_once(lambda dt: self._set_state("connected", "Connected"), 0)
-            # Request full status snapshot so we get all fields immediately
-            self._send_pushall(client)
-        else:
-            PIHOME_LOGGER.error(f"BambuLab: MQTT connect refused (rc={rc})")
-            Clock.schedule_once(lambda dt: self._set_state("error", f"Auth Failed (rc={rc})"), 0)
+        Kept to 12 characters or fewer — the header slot is a fixed dp(86) wide.
+        """
+        if snap["connection_state"] == "connected":
+            return "CONNECTED"
+        if not self._enabled:
+            return "DISABLED"
+        if not self._ip or not self._access_code or not self._serial:
+            return "NO CONFIG"
+        if not BAMBU_SERVICE.available:
+            return "NO MQTT LIB"
+        return snap["connection_label"]
 
-    def _on_mqtt_disconnect(self, client, userdata, rc):
-        if self._mqtt_stop.is_set():
-            return
-        PIHOME_LOGGER.warn(f"BambuLab: MQTT disconnected (rc={rc})")
-        Clock.schedule_once(lambda dt: self._set_state("disconnected", "Disconnected"), 0)
-
-    def _on_mqtt_message(self, client, userdata, msg):
-        if self._mqtt_stop.is_set():
-            return  # screen is inactive — discard
-        try:
-            payload = json.loads(msg.payload.decode())
-        except Exception as e:
-            PIHOME_LOGGER.error(f"BambuLab: MQTT JSON parse error: {e}")
-            return
-
-        # Auto-detect the real device serial from the topic so that pushall
-        # requests target the correct device even if the config serial is wrong.
-        # Topic format: device/<serial>/report
-        parts = msg.topic.split("/")
-        if len(parts) >= 2 and parts[0] == "device":
-            detected = parts[1]
-            if detected != self._device_serial:
-                PIHOME_LOGGER.info(f"BambuLab: detected device serial {detected}")
-                self._device_serial = detected
-
-        p = payload.get("print")
-        if p and isinstance(p, dict):
-            Clock.schedule_once(lambda dt, data=p: self._apply_print_data(data), 0)
-
-    def _set_state(self, state, label=""):
-        self.connection_state = state
-        self.connection_label = state.upper()
+    @staticmethod
+    def _connection_color(state):
         if state == "connected":
-            self.status_color = _COLOR_ACCENT
-        elif state == "error":
-            self.status_color = _COLOR_ERROR
-        else:
-            self.status_color = _COLOR_IDLE
-
-    @staticmethod
-    def _safe_int(value, fallback):
-        """Convert value to int, returning fallback on None or error."""
-        if value is None:
-            return fallback
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return fallback
-
-    @staticmethod
-    def _safe_float(value, fallback):
-        """Convert value to float, returning fallback on None or error."""
-        if value is None:
-            return fallback
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return fallback
-
-    def _apply_print_data(self, p: dict):
-        try:
-            state = p.get("gcode_state")
-            if state is not None:
-                state_changed = state != self.gcode_state
-                self.gcode_state = state
-                self.state_label = _STATE_LABELS.get(state, state)
-                self.state_color = self._resolve_state_color(state)
-                # Finish time depends on whether we're RUNNING — refresh on change
-                if state_changed:
-                    self._update_finish_text(self.eta_minutes)
-
-            self.print_progress = self._safe_int(p.get("mc_percent"), self.print_progress)
-            self.layer_current  = self._safe_int(p.get("layer_num"), self.layer_current)
-            self.layer_total    = self._safe_int(p.get("total_layer_num"), self.layer_total)
-            self.eta_minutes    = self._safe_int(p.get("mc_remaining_time"), self.eta_minutes)
-            self.temp_nozzle        = self._safe_float(p.get("nozzle_temper"), self.temp_nozzle)
-            self.temp_bed           = self._safe_float(p.get("bed_temper"), self.temp_bed)
-            self.temp_nozzle_target = self._safe_float(p.get("nozzle_target_temper"), self.temp_nozzle_target)
-            self.temp_bed_target    = self._safe_float(p.get("bed_target_temper"), self.temp_bed_target)
-            # chamber_temper was removed in recent firmware; fall back to
-            # the nested device → ctc → info → temp path used by X1C.
-            chamber = p.get("chamber_temper")
-            if chamber is None:
-                try:
-                    chamber = p["device"]["ctc"]["info"]["temp"]
-                except (KeyError, TypeError):
-                    pass
-            self.temp_chamber   = self._safe_float(chamber, self.temp_chamber)
-            self.print_speed    = self._safe_int(p.get("spd_mag"), self.print_speed)
-
-            job = p.get("subtask_name") or p.get("gcode_file")
-            if job:
-                self.job_name = job
-
-            # Filament from the currently active tray
-            ams_data = p.get("ams")
-            if isinstance(ams_data, dict):
-                self._apply_filament(ams_data, p.get("vt_tray"))
-
-            # Health-management (HMS) alerts + print errors. Only update when the
-            # printer included these keys in this report (P1 sends deltas).
-            if "hms" in p or "print_error" in p:
-                self._apply_alerts(p.get("hms"), p.get("print_error", 0))
-        except Exception as e:
-            PIHOME_LOGGER.error(f"BambuLab: error applying print data: {e}")
-
-    def _apply_alerts(self, hms, print_error):
-        """Surface printer health alerts as a banner.
-
-        HMS entries are pairs of 32-bit ints (``attr``, ``code``). We format the
-        canonical ``XXXX_XXXX_XXXX_XXXX`` code (lookup-able on the Bambu wiki) and
-        derive a severity from the high word of ``code`` to color the banner.
-        Exact human-readable text isn't in the payload, so we show the code.
-        """
-        severity_rank = {1: 3, 2: 2, 3: 1, 4: 0}  # fatal > serious > common > info
-        codes = []
-        worst = -1
-        if isinstance(hms, list):
-            for item in hms:
-                if not isinstance(item, dict):
-                    continue
-                attr = self._safe_int(item.get("attr"), 0)
-                code = self._safe_int(item.get("code"), 0)
-                if attr == 0 and code == 0:
-                    continue
-                sev = (code >> 16) & 0xFFFF
-                worst = max(worst, severity_rank.get(sev, 1))
-                codes.append(
-                    "{:04X}_{:04X}_{:04X}_{:04X}".format(
-                        (attr >> 16) & 0xFFFF, attr & 0xFFFF,
-                        (code >> 16) & 0xFFFF, code & 0xFFFF,
-                    )
-                )
-
-        perr = self._safe_int(print_error, 0)
-
-        if not codes and perr == 0:
-            self.has_alert = False
-            self.alert_text = ""
-            return
-
-        if perr != 0 and not codes:
-            self.alert_text = f"Print Error  0x{perr:08X}"
-            self.alert_color = list(_COLOR_ERROR)
-        else:
-            first = codes[0]
-            extra = f"  (+{len(codes) - 1} more)" if len(codes) > 1 else ""
-            self.alert_text = f"HMS  {first}{extra}"
-            # Serious/fatal -> red, common/info -> amber
-            self.alert_color = list(_COLOR_ERROR if worst >= 2 else _COLOR_PAUSE)
-        self.has_alert = True
-
-    def _apply_filament(self, ams_data: dict, vt_tray):
-        """Resolve the active spool to a human-readable name and color swatch.
-
-        The printer reports the loaded slot in ``tray_now`` (0-3 for AMS slots,
-        254/255 for the external spool). We select that tray rather than the
-        first non-empty one so the display matches what is actually printing.
-        """
-        tray_now = str(ams_data.get("tray_now", "255"))
-        active = None
-
-        if tray_now in ("254", "255"):
-            # External (vt_tray) spool
-            if isinstance(vt_tray, dict) and vt_tray.get("tray_type"):
-                active = vt_tray
-        else:
-            for ams_unit in ams_data.get("ams", []):
-                for tray in ams_unit.get("tray", []):
-                    if str(tray.get("id")) == tray_now and tray.get("tray_type"):
-                        active = tray
-                        break
-                if active:
-                    break
-
-        # Fallback: first loaded tray if the active slot couldn't be resolved
-        if active is None:
-            for ams_unit in ams_data.get("ams", []):
-                for tray in ams_unit.get("tray", []):
-                    if tray.get("tray_type"):
-                        active = tray
-                        break
-                if active:
-                    break
-
-        if active is None:
-            return
-
-        # Prefer the descriptive sub-brand ("PLA Matte"), fall back to type ("PLA")
-        name = (active.get("tray_sub_brands") or active.get("tray_type") or "").strip()
-        if name:
-            self.filament_type = name
-
-        rgba = self._hex_to_rgba(active.get("tray_color", ""))
-        if rgba:
-            self.filament_color = rgba
-            self.filament_has_color = True
-        else:
-            self.filament_has_color = False
-
-    @staticmethod
-    def _hex_to_rgba(hexstr: str):
-        """Convert a Bambu 'RRGGBBAA' hex string to an opaque [r,g,b,1] list.
-
-        Returns None for empty/transparent values (e.g. an unloaded slot) so the
-        swatch can be hidden.
-        """
-        hexstr = (hexstr or "").strip()
-        if len(hexstr) < 6:
-            return None
-        try:
-            r = int(hexstr[0:2], 16) / 255.0
-            g = int(hexstr[2:4], 16) / 255.0
-            b = int(hexstr[4:6], 16) / 255.0
-            a = int(hexstr[6:8], 16) / 255.0 if len(hexstr) >= 8 else 1.0
-        except ValueError:
-            return None
-        if a == 0:
-            return None  # fully transparent — treat as "no color"
-        # Force opaque so the swatch is always visible regardless of source alpha
-        return [r, g, b, 1.0]
-
-    def _resolve_state_color(self, state: str) -> list:
-        return _STATE_COLORS.get(state, _COLOR_IDLE)
+            return _COLOR_ACCENT
+        if state == "error":
+            return _COLOR_ERROR
+        return _COLOR_IDLE
 
     # ── Camera ─────────────────────────────────────────────────────────────────
 
@@ -740,9 +436,9 @@ class BambuLabScreen(PiHomeScreen):
 
     def on_rotary_pressed(self):
         """Force reconnect."""
-        self._stop_mqtt()
+        BAMBU_SERVICE.reconnect()
         self._stop_camera()
-        Clock.schedule_once(lambda dt: self._connect(), 0.5)
+        Clock.schedule_once(lambda dt: self._start_camera_if_enabled(), 0.5)
         return True
 
     def on_rotary_long_pressed(self):
