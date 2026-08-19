@@ -1,0 +1,329 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rows, cards and chips for the LIFX screen.
+# Labels either hug their text (width: texture_size, no text_size) or have a
+# fixed width WITH text_size — never both, which collapses to one character.
+# ─────────────────────────────────────────────────────────────────────────────
+
+<IconButton>:
+    font_name: "MaterialIcons"
+    font_size: sp(17)
+    size_hint: None, 1
+    width: dp(30)
+    halign: "center"
+    valign: "middle"
+    text_size: self.size
+    opacity: 0.55 if self.state == "normal" else 1.0
+
+
+<SwatchButton>:
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 0.25
+        RoundedRectangle:
+            pos: self.x + dp(1), self.y - dp(1)
+            size: self.size
+            radius: [dp(6)]
+        Color:
+            rgba: root.swatch_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(6)]
+        Color:
+            rgba: 1, 1, 1, 0.35 if self.state == "down" else 0.0
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(6)]
+        # Reset GL colour state for the Pi's OpenGL ES 2.0 batcher.
+        Color:
+            rgba: 1, 1, 1, 1
+
+
+<ModeTab>:
+    orientation: "horizontal"
+    spacing: dp(5)
+    padding: dp(8), 0
+    canvas.before:
+        Color:
+            rgba: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.14) if root.active else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(7)]
+        Color:
+            rgba: 1, 1, 1, 1
+
+    Widget:
+        size_hint_x: None
+        width: dp(1)
+
+    Label:
+        text: root.icon
+        font_name: "MaterialIcons"
+        font_size: sp(15)
+        color: root.accent_color if root.active else root.muted_color
+        size_hint_x: None
+        width: dp(20)
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
+
+    Label:
+        text: root.label
+        font_name: "Nunito"
+        font_size: sp(11)
+        bold: True
+        color: root.accent_color if root.active else root.muted_color
+        size_hint_x: None
+        width: self.texture_size[0]
+        valign: "middle"
+
+    Widget:
+
+
+<RoomHeaderRow>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(38)
+    padding: dp(8), 0, dp(8), 0
+    spacing: dp(6)
+    canvas.before:
+        Color:
+            rgba: root.row_bg_color if root.selected else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.x + dp(4), self.y + dp(2)
+            size: self.width - dp(8), self.height - dp(4)
+            radius: [dp(8)]
+        # Selection bar
+        Color:
+            rgba: root.accent_color if root.selected else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.x + dp(4), self.y + dp(7)
+            size: dp(3), self.height - dp(14)
+            radius: [dp(1.5)]
+        Color:
+            rgba: 1, 1, 1, 1
+
+    Widget:
+        size_hint_x: None
+        width: dp(4)
+
+    Label:
+        text: root.room_display
+        font_name: "Nunito"
+        font_size: sp(11)
+        bold: True
+        color: root.text_color
+        size_hint_x: 1
+        halign: "left"
+        valign: "middle"
+        text_size: self.size
+        shorten: True
+        shorten_from: "right"
+
+    Label:
+        text: root.subtitle
+        font_name: "Nunito"
+        font_size: sp(9)
+        color: root.muted_color
+        size_hint_x: None
+        width: dp(44)
+        halign: "right"
+        valign: "middle"
+        text_size: self.size
+
+    AnchorLayout:
+        id: switch_holder
+        size_hint_x: None
+        width: dp(44)
+        anchor_x: "center"
+        anchor_y: "center"
+
+
+<BulbRow>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(42)
+    padding: dp(8), 0, dp(8), 0
+    spacing: dp(8)
+    opacity: 1.0 if root.online else 0.45
+    canvas.before:
+        Color:
+            rgba: root.row_bg_color if root.selected else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.x + dp(4), self.y + dp(2)
+            size: self.width - dp(8), self.height - dp(4)
+            radius: [dp(8)]
+        Color:
+            rgba: root.accent_color if root.selected else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.x + dp(4), self.y + dp(9)
+            size: dp(3), self.height - dp(18)
+            radius: [dp(1.5)]
+        Color:
+            rgba: 1, 1, 1, 1
+
+    # Indent under the room header
+    Widget:
+        size_hint_x: None
+        width: dp(14)
+
+    # Colour dot: the bulb's actual colour, dimmed when it is off
+    Widget:
+        size_hint: None, None
+        size: dp(13), dp(13)
+        pos_hint: {"center_y": 0.5}
+        canvas:
+            Color:
+                rgba: (root.dot_color[0], root.dot_color[1], root.dot_color[2], 1) if root.is_on else (root.muted_color[0], root.muted_color[1], root.muted_color[2], 0.35)
+            Ellipse:
+                pos: self.pos
+                size: self.size
+            Color:
+                rgba: 1, 1, 1, 0.20 if root.is_on else 0.0
+            Line:
+                circle: self.center_x, self.center_y, dp(6.5)
+                width: dp(1)
+            Color:
+                rgba: 1, 1, 1, 1
+
+    Label:
+        text: root.label
+        font_name: "Nunito"
+        font_size: sp(12)
+        color: root.text_color
+        size_hint_x: 1
+        halign: "left"
+        valign: "middle"
+        text_size: self.size
+        shorten: True
+        shorten_from: "right"
+
+    Label:
+        text: root.level
+        font_name: "Nunito"
+        font_size: sp(10)
+        color: root.muted_color
+        size_hint_x: None
+        width: dp(34)
+        halign: "right"
+        valign: "middle"
+        text_size: self.size
+
+    AnchorLayout:
+        id: switch_holder
+        size_hint_x: None
+        width: dp(42)
+        anchor_x: "center"
+        anchor_y: "center"
+
+
+<SceneCard>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(56)
+    padding: dp(10), dp(6), dp(4), dp(6)
+    spacing: dp(8)
+    canvas.before:
+        Color:
+            rgba: root.card_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(10)]
+        Color:
+            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.30 if self.state == "down" else 0.0
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(10)]
+        Color:
+            rgba: 1, 1, 1, 1
+
+    BoxLayout:
+        orientation: "vertical"
+        spacing: dp(3)
+
+        Label:
+            text: root.label
+            font_name: "Nunito"
+            font_size: sp(12)
+            bold: True
+            color: root.text_color
+            size_hint_y: None
+            height: dp(17)
+            halign: "left"
+            valign: "middle"
+            text_size: self.size
+            shorten: True
+            shorten_from: "right"
+
+        BoxLayout:
+            orientation: "horizontal"
+            spacing: dp(5)
+            size_hint_y: None
+            height: dp(12)
+
+            BoxLayout:
+                id: swatch_strip
+                orientation: "horizontal"
+                spacing: dp(3)
+                size_hint_x: None
+                width: dp(52)
+
+            Label:
+                text: root.source
+                font_name: "Nunito"
+                font_size: sp(8)
+                color: root.muted_color
+                size_hint_x: None
+                width: self.texture_size[0]
+                valign: "middle"
+
+            Widget:
+
+    IconButton:
+        text: "\ue872"   # delete
+        color: root.muted_color
+        size_hint_x: None
+        width: dp(26)
+        on_release: root.do_delete()
+
+
+<KelvinChip>:
+    orientation: "vertical"
+    size_hint: None, None
+    size: dp(70), dp(36)
+    canvas.before:
+        Color:
+            rgba: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.22) if root.active else root.row_bg_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(8)]
+        Color:
+            rgba: 1, 1, 1, 1
+
+    Label:
+        text: root.label
+        font_name: "Nunito"
+        font_size: sp(9)
+        bold: True
+        color: root.accent_color if root.active else root.text_color
+        halign: "center"
+        valign: "bottom"
+        text_size: self.size
+
+    Label:
+        text: str(int(root.kelvin)) + "K"
+        font_name: "Nunito"
+        font_size: sp(8)
+        color: root.muted_color
+        halign: "center"
+        valign: "top"
+        text_size: self.size

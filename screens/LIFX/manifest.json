@@ -1,0 +1,92 @@
+{
+    "module": "LIFX.lifx",
+    "name": "LIFXScreen",
+    "id": "_lifx",
+    "label": "LIFX",
+    "settingsLabel": "LIFX",
+    "settingsIndex": 21,
+    "description": "Discover and control LIFX bulbs by room - power, brightness, colour, white temperature and scenes",
+    "hidden": false,
+    "requires_pin": false,
+    "index": 21,
+    "icon": "screens/LIFX/icon.png",
+    "services": ["lifx_service"],
+    "settings": [
+        {
+            "type": "title",
+            "title": "LIFX"
+        },
+        {
+            "type": "bool",
+            "title": "Enabled",
+            "desc": "Discover and control LIFX bulbs on this network",
+            "section": "lifx",
+            "key": "enabled"
+        },
+        {
+            "type": "numeric",
+            "title": "Discovery Interval",
+            "desc": "Minutes between background scans for bulbs (default 5)",
+            "section": "lifx",
+            "key": "discovery_interval"
+        },
+        {
+            "type": "numeric",
+            "title": "Refresh Interval",
+            "desc": "Seconds between state checks while the LIFX screen is open (default 5)",
+            "section": "lifx",
+            "key": "refresh_interval"
+        },
+        {
+            "type": "numeric",
+            "title": "Transition Time",
+            "desc": "Fade time in milliseconds for power and colour changes (default 400)",
+            "section": "lifx",
+            "key": "transition_ms"
+        },
+        {
+            "type": "options",
+            "title": "Room Source",
+            "desc": "Group uses the groups you named in the LIFX app (recommended). Location uses your LIFX home.",
+            "section": "lifx",
+            "key": "room_source",
+            "options": ["Group", "Location"]
+        },
+        {
+            "type": "title",
+            "title": "Scenes"
+        },
+        {
+            "type": "string",
+            "title": "LIFX Cloud Token",
+            "desc": "Optional. Personal access token from cloud.lifx.com/settings - imports the scenes you built in the LIFX app. Leave blank to use locally saved scenes only.",
+            "section": "lifx",
+            "key": "cloud_token"
+        },
+        {
+            "type": "numeric",
+            "title": "Cloud Scene Sync",
+            "desc": "Minutes between cloud scene refreshes (default 60, 0 for startup only)",
+            "section": "lifx",
+            "key": "cloud_sync_interval"
+        },
+        {
+            "type": "title",
+            "title": "Advanced"
+        },
+        {
+            "type": "string",
+            "title": "Broadcast Address",
+            "desc": "Leave blank to auto-detect. Set to e.g. 192.168.1.255 if discovery misses bulbs on a segmented network.",
+            "section": "lifx",
+            "key": "broadcast_address"
+        },
+        {
+            "type": "numeric",
+            "title": "Reply Timeout",
+            "desc": "Milliseconds to wait for a bulb to reply before retrying (default 600)",
+            "section": "lifx",
+            "key": "timeout_ms"
+        }
+    ]
+}

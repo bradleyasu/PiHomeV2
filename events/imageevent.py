@@ -1,4 +1,6 @@
 import json
+
+from kivy.clock import Clock
 from events.pihomeevent import PihomeEvent
 from interface.pihomescreenmanager import PIHOME_SCREEN_MANAGER
 from util.const import _DISPLAY_IMAGE_SCREEN, _HOME_SCREEN
@@ -24,7 +26,7 @@ class ImageEvent(PihomeEvent):
         screen.image = prepare_display_image(self.image_url)
         screen.reload_interval = self.reload_interval
         if self.timeout > 0:
-            screen.set_timeout(self.timeout, _HOME_SCREEN)
+            Clock.schedule_once(lambda _: screen.go_back(), self.timeout)
         PIHOME_SCREEN_MANAGER.goto(_DISPLAY_IMAGE_SCREEN)
         return {
             "code": 200,

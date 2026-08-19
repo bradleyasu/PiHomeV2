@@ -1,0 +1,294 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LIFX — 800x480. Header (44) over a body split into a 268dp room/bulb rail and
+# a control panel for whatever is currently selected.
+# No f-strings here: display strings are computed as StringProperty in Python.
+# ─────────────────────────────────────────────────────────────────────────────
+
+<LIFXScreen>:
+    canvas.before:
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+
+        # ── Header ───────────────────────────────────────────────────────
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(44)
+            padding: dp(54), 0, dp(8), 0
+            spacing: dp(8)
+            canvas.before:
+                Color:
+                    rgba: root.header_color
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+                Color:
+                    rgba: root.divider_color
+                Rectangle:
+                    size: self.width, dp(1)
+                    pos: self.x, self.y
+
+            Label:
+                text: "\ue0f0"
+                font_name: "MaterialIcons"
+                font_size: sp(20)
+                color: root.accent_color
+                size_hint_x: None
+                width: dp(26)
+                halign: "center"
+                valign: "middle"
+                text_size: self.size
+
+            Label:
+                text: "LIFX"
+                font_name: "Nunito"
+                font_size: sp(12)
+                bold: True
+                color: root.text_color
+                size_hint_x: None
+                width: self.texture_size[0]
+                valign: "middle"
+
+            Widget:
+
+            Label:
+                text: root.status_text
+                font_name: "Nunito"
+                font_size: sp(10)
+                color: root.muted_color
+                size_hint_x: None
+                width: dp(230)
+                halign: "right"
+                valign: "middle"
+                text_size: self.size
+                shorten: True
+                shorten_from: "left"
+
+            IconButton:
+                text: "\ue5d5"
+                color: root.accent_color
+                size_hint_x: None
+                width: dp(32)
+                on_release: root.rescan()
+
+            Widget:
+                size_hint: None, None
+                size: dp(8), dp(8)
+                pos_hint: {"center_y": 0.5}
+                canvas:
+                    Color:
+                        rgba: root.status_color
+                    Ellipse:
+                        pos: self.pos
+                        size: self.size
+                    Color:
+                        rgba: 1, 1, 1, 1
+
+        # ── Body ─────────────────────────────────────────────────────────
+        # Python swaps `content` out for an empty state when no bulbs exist.
+        BoxLayout:
+            id: body
+            orientation: "horizontal"
+
+            BoxLayout:
+                id: content
+                orientation: "horizontal"
+
+                # ── Left rail: rooms and bulbs ───────────────────────────
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_x: None
+                    width: dp(268)
+
+                    ScrollView:
+                        id: rows_scroll
+                        do_scroll_x: False
+                        bar_width: dp(3)
+                        bar_color: root.accent_color
+                        scroll_type: ["bars", "content"]
+
+                        BoxLayout:
+                            id: rows_box
+                            orientation: "vertical"
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: 0, dp(6), 0, dp(6)
+                            spacing: dp(2)
+
+                    Label:
+                        text: root.footer_text
+                        font_name: "Nunito"
+                        font_size: sp(9)
+                        color: root.muted_color
+                        size_hint_y: None
+                        height: dp(26)
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                # ── Divider ──────────────────────────────────────────────
+                Widget:
+                    size_hint_x: None
+                    width: dp(1)
+                    canvas:
+                        Color:
+                            rgba: root.divider_color
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                        Color:
+                            rgba: 1, 1, 1, 1
+
+                # ── Right panel: controls for the selection ──────────────
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: dp(14), dp(10), dp(14), dp(8)
+                    spacing: dp(8)
+
+                    # Selection header
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(38)
+                        spacing: dp(8)
+
+                        BoxLayout:
+                            orientation: "vertical"
+
+                            Label:
+                                text: root.sel_title
+                                font_name: "Nunito"
+                                font_size: sp(16)
+                                bold: True
+                                color: root.text_color
+                                halign: "left"
+                                valign: "bottom"
+                                text_size: self.size
+                                shorten: True
+                                shorten_from: "right"
+
+                            Label:
+                                text: root.sel_subtitle
+                                font_name: "Nunito"
+                                font_size: sp(9)
+                                color: root.muted_color
+                                halign: "left"
+                                valign: "top"
+                                text_size: self.size
+
+                        AnchorLayout:
+                            id: master_holder
+                            size_hint_x: None
+                            width: dp(60)
+                            anchor_x: "right"
+                            anchor_y: "center"
+
+                    # Mode tabs
+                    BoxLayout:
+                        id: tab_strip
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(34)
+                        spacing: dp(6)
+
+                    # Active mode panel, swapped by add_widget/remove_widget.
+                    # Never opacity + disabled: a disabled full-size panel
+                    # swallows every touch beneath it.
+                    BoxLayout:
+                        id: mode_holder
+                        orientation: "vertical"
+
+                    # Brightness
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(44)
+                        spacing: dp(10)
+
+                        Label:
+                            text: "\ue518"
+                            font_name: "MaterialIcons"
+                            font_size: sp(19)
+                            color: root.muted_color
+                            size_hint_x: None
+                            width: dp(26)
+                            halign: "center"
+                            valign: "middle"
+                            text_size: self.size
+
+                        HASlider:
+                            id: brightness_slider
+                            fill_color: root.accent_color
+                            size_hint_x: 1
+                            size_hint_y: None
+                            height: dp(28)
+                            pos_hint: {"center_y": 0.5}
+                            on_value: root.on_brightness_slider(self.value)
+
+                        Label:
+                            text: root.bri_text
+                            font_name: "Nunito"
+                            font_size: sp(12)
+                            bold: True
+                            color: root.text_color
+                            size_hint_x: None
+                            width: dp(46)
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
+
+
+# ── Empty state ──────────────────────────────────────────────────────────────
+<LifxEmptyState>:
+    orientation: "vertical"
+    spacing: dp(10)
+    padding: dp(40)
+
+    Widget:
+
+    Label:
+        text: "\ue0f0"
+        font_name: "MaterialIcons"
+        font_size: sp(52)
+        color: root.muted_color
+        size_hint_y: None
+        height: dp(64)
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
+
+    Label:
+        text: root.title_text
+        font_name: "Nunito"
+        font_size: sp(15)
+        bold: True
+        color: root.text_color
+        size_hint_y: None
+        height: dp(24)
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
+
+    Label:
+        text: root.subtitle_text
+        font_name: "Nunito"
+        font_size: sp(11)
+        color: root.muted_color
+        size_hint_y: None
+        height: dp(40)
+        halign: "center"
+        valign: "top"
+        text_size: self.size
+
+    Widget:

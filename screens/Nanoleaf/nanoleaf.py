@@ -31,7 +31,7 @@ from kivy.uix.modalview import ModalView
 from kivy.uix.scrollview import ScrollView
 
 from interface.pihomescreen import PiHomeScreen
-from screens.Nanoleaf.colorwheel import ColorWheel
+from components.ColorWheel.colorwheel import ColorWheel
 from screens.Nanoleaf.nanoleaf_api import NanoleafAPI
 from screens.Nanoleaf.nanoleaf_discovery import NanoleafDiscovery
 from screens.Nanoleaf.panel_canvas import PanelCanvas
