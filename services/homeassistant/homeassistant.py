@@ -11,6 +11,14 @@ from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
 from kivy.clock import Clock
 
+# Home Assistant reports one of these whenever a device is briefly unreachable,
+# an integration reloads, or HA itself restarts.  They are not real states: a
+# water heater that flaps eco -> unavailable -> eco never actually left eco, and
+# counting that round trip as two transitions is what re-fires a rule long after
+# the device last changed.  Treated as "no known state" throughout.
+TRANSIENT_STATES = ("unavailable", "unknown", "none", "")
+
+
 class HaReactListener:
     """A persistent HA state-change listener that fires a PiHome event as
     its action.  Serialised to / from ha_listeners.pihome as plain JSON."""
@@ -21,7 +29,7 @@ class HaReactListener:
         self.state     = state   # None = fire on ANY state change
         self.action    = action  # dict — executed via PihomeEventFactory
 
-    def matches(self, entity_id, new_state, old_state=None):
+    def matches(self, entity_id, new_state, previous_state=None):
         """Edge-triggered match: did this entity's state *just* change?
 
         Home Assistant emits ``state_changed`` for attribute-only updates too,
@@ -31,12 +39,20 @@ class HaReactListener:
         the new state would re-fire the action on every one of them, so require
         an actual transition.
 
-        ``old_state`` is None when the entity has no previous state (it was
-        just added, or HA restarted) — that is treated as a real transition.
+        ``previous_state`` is the last *meaningful* state the service saw for
+        this entity, not necessarily the raw ``old_state`` off the wire — see
+        :meth:`HomeAssistant._baseline_state`.  It is None only when the entity
+        has never been seen at all, which counts as a real transition.
+
+        A move *into* a transient state is ignored unless the rule explicitly
+        watches for it, so "device dropped offline for a minute" is not
+        reported as a state change.
         """
         if self.entity_id != entity_id:
             return False
-        if old_state is not None and old_state == new_state:
+        if new_state in TRANSIENT_STATES and self.state != new_state:
+            return False  # went unavailable/unknown; nobody asked about that
+        if previous_state is not None and previous_state == new_state:
             return False  # attribute-only update, state string unchanged
         if self.state is None:
             return True
@@ -84,6 +100,10 @@ class HomeAssistant:
         self.listeners = []  # instance list — avoids class-level sharing
         self.ha_react_listeners = []  # instance list — avoids class-level sharing
         self._listeners_loaded = False
+        # entity_id -> last non-transient state string.  This, not the raw
+        # old_state off the wire, is the baseline react listeners edge against,
+        # so an unavailable blip cannot manufacture a fake transition.
+        self._last_known_states = {}
         # Load persisted react listeners immediately, independent of the HA
         # network connection.  This must happen before any path that can
         # serialize (e.g. the atexit handler) so an unreachable HA server at
@@ -137,6 +157,7 @@ class HomeAssistant:
             states = self.get_all_states()
             if states is not None:
                 self.current_states = states
+                self._seed_known_states(states)
         except Exception as e:
             PIHOME_LOGGER.error(f"Home Assistant initial sync failed: {e}")
 
@@ -180,6 +201,7 @@ class HomeAssistant:
                 states = self.get_all_states()
                 if states is not None:
                     self.current_states = states
+                    self._seed_known_states(states)
                 backoff = 1  # reset backoff on successful connection
 
                 while not self.is_shutting_down:
@@ -292,6 +314,33 @@ class HomeAssistant:
             # subsequently overwritten with an empty list.
             PIHOME_LOGGER.error(f"Failed to deserialize HA react listeners: {e}")
 
+    # ── Edge detection ─────────────────────────────────────────────────────
+
+    def _seed_known_states(self, states):
+        """Prime the edge-detection baseline from a full state fetch.
+
+        Without this, a PiHome restart forgets every entity's state, so the
+        first ``state_changed`` for an entity that has been sitting in the same
+        state for days looks like a fresh transition and re-fires its rules.
+        Uses setdefault so a live event that already arrived always wins.
+        """
+        if not states:
+            return
+        for entity_id, st in states.items():
+            value = st.get("state") if isinstance(st, dict) else None
+            if value is not None and value not in TRANSIENT_STATES:
+                self._last_known_states.setdefault(entity_id, value)
+
+    def _baseline_state(self, entity_id, old_state_str):
+        """The state a react listener should compare against.
+
+        Prefers the last non-transient state we recorded, so an
+        ``eco -> unavailable -> eco`` round trip edges against "eco" (no
+        change) rather than against "unavailable" (a spurious change).  Falls
+        back to the event's own old_state for an entity we have never seen.
+        """
+        return self._last_known_states.get(entity_id, old_state_str)
+
     # ── Connection ─────────────────────────────────────────────────────────
 
     def _handle_message(self, data):
@@ -309,6 +358,14 @@ class HomeAssistant:
                 return
 
             old_state_str = old.get("state") if isinstance(old, dict) else None
+            new_state_str = state.get("state")
+
+            # Snapshot the baseline BEFORE recording this state, then record it
+            # (transient states are deliberately not recorded, so they never
+            # become a baseline).
+            baseline = self._baseline_state(entity_id, old_state_str)
+            if new_state_str not in TRANSIENT_STATES:
+                self._last_known_states[entity_id] = new_state_str
 
             self.current_states[entity_id] = state
             try:
@@ -322,11 +379,12 @@ class HomeAssistant:
 
             # Fire any matching HA-react listeners
             for react in list(self.ha_react_listeners):
-                if react.matches(entity_id, state["state"], old_state_str):
+                if react.matches(entity_id, new_state_str, baseline):
                     try:
                         PIHOME_LOGGER.info(
                             f"HaReactListener {react.id}: firing for "
-                            f"{entity_id}: {old_state_str} -> {state['state']}"
+                            f"{entity_id}: {baseline} -> {new_state_str} "
+                            f"(raw old_state: {old_state_str})"
                         )
                         Clock.schedule_once(
                             lambda _dt, a=react.action:
