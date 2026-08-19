@@ -21,9 +21,23 @@ class HaReactListener:
         self.state     = state   # None = fire on ANY state change
         self.action    = action  # dict — executed via PihomeEventFactory
 
-    def matches(self, entity_id, new_state):
+    def matches(self, entity_id, new_state, old_state=None):
+        """Edge-triggered match: did this entity's state *just* change?
+
+        Home Assistant emits ``state_changed`` for attribute-only updates too,
+        so an entity sitting in one state while its attributes tick (a water
+        heater holding "eco" while ``current_temperature`` updates) produces a
+        steady stream of events whose state string never moved.  Comparing only
+        the new state would re-fire the action on every one of them, so require
+        an actual transition.
+
+        ``old_state`` is None when the entity has no previous state (it was
+        just added, or HA restarted) — that is treated as a real transition.
+        """
         if self.entity_id != entity_id:
             return False
+        if old_state is not None and old_state == new_state:
+            return False  # attribute-only update, state string unchanged
         if self.state is None:
             return True
         return self.state == new_state
@@ -285,6 +299,17 @@ class HomeAssistant:
         if "event" in data and "event_type" in data["event"] and data["event"]["event_type"] == "state_changed":
             entity_id = data["event"]["data"]["entity_id"]
             state = data["event"]["data"]["new_state"]
+            old = data["event"]["data"].get("old_state")
+
+            # new_state is None when the entity was removed — there is no state
+            # to publish, so drop it from the cache and stop here rather than
+            # letting every downstream consumer trip over the None.
+            if not isinstance(state, dict):
+                self.current_states.pop(entity_id, None)
+                return
+
+            old_state_str = old.get("state") if isinstance(old, dict) else None
+
             self.current_states[entity_id] = state
             try:
                 PihomeEventFactory.create_event("state_changed", id=entity_id, state=state["state"], data=state).execute()
@@ -297,11 +322,11 @@ class HomeAssistant:
 
             # Fire any matching HA-react listeners
             for react in list(self.ha_react_listeners):
-                if react.matches(entity_id, state["state"]):
+                if react.matches(entity_id, state["state"], old_state_str):
                     try:
                         PIHOME_LOGGER.info(
                             f"HaReactListener {react.id}: firing for "
-                            f"{entity_id} → {state['state']}"
+                            f"{entity_id}: {old_state_str} -> {state['state']}"
                         )
                         Clock.schedule_once(
                             lambda _dt, a=react.action:
