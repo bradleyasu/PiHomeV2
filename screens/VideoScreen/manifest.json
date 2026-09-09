@@ -1,0 +1,13 @@
+{
+    "module": "VideoScreen.videoscreen",
+    "name": "VideoScreenScreen",
+    "id": "_video",
+    "label": "Video",
+    "description": "Plays video and live streams from YouTube, any yt-dlp-supported site, direct media URLs or local files",
+    "hidden": true,
+    "requires_pin": false,
+    "index": 9999,
+    "icon": "screens/VideoScreen/icon.png",
+    "dependencies": ["yt-dlp", "python-mpv"],
+    "settings": []
+}

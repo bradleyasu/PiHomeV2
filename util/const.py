@@ -19,6 +19,7 @@ MQTT_COMMANDS = {
 
 _DISPLAY_SCREEN = "_display"
 _DISPLAY_IMAGE_SCREEN = "_display_image"
+_VIDEO_SCREEN = "_video"
 _DEVTOOLS_SCREEN = "_devtools"
 _HOME_SCREEN = "_home"
 _SETTINGS_SCREEN = "_settings"

@@ -1,0 +1,80 @@
+#:kivy 2.0.0
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+<VideoScreenScreen>:
+    canvas.before:
+        # Solid black behind everything: mpv letterboxes into the full frame,
+        # and the bars should read as part of the video, not as the theme.
+        Color:
+            rgba: root.bg_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+        # The decoded frame. Drawn fully transparent until the first frame
+        # arrives, otherwise an untextured Rectangle paints solid white.
+        Color:
+            rgba: (1, 1, 1, 1) if root.video_texture else (0, 0, 0, 0)
+        Rectangle:
+            texture: root.video_texture
+            size: self.size
+            pos: self.pos
+
+    FloatLayout:
+        size_hint: 1, 1
+
+        # -- Status / error overlay --------------------------------------
+        # Opacity only, never `disabled`: a disabled full-screen widget eats
+        # every touch beneath it (CLAUDE.md gotcha #10).
+        BoxLayout:
+            orientation: "vertical"
+            spacing: dp(8)
+            size_hint: 0.8, None
+            height: self.minimum_height
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            opacity: 1 if root.show_status else 0
+
+            Label:
+                text: root.status_text
+                font_name: "Nunito"
+                font_size: sp(18)
+                bold: True
+                color: root.text_color
+                size_hint_y: None
+                height: self.texture_size[1]
+                halign: "center"
+                valign: "middle"
+                text_size: self.width, None
+
+            Label:
+                text: root.title_text
+                font_name: "Nunito"
+                font_size: sp(13)
+                color: root.muted_color
+                size_hint_y: None
+                height: self.texture_size[1] if root.title_text else 0
+                halign: "center"
+                valign: "middle"
+                text_size: self.width, None
+                shorten: True
+                shorten_from: "right"
+
+        # -- Progress bar ------------------------------------------------
+        # Hidden for live streams and while seeking is meaningless (duration 0).
+        Widget:
+            size_hint: 1, None
+            height: dp(3)
+            pos_hint: {"x": 0, "y": 0}
+            opacity: 1 if root.progress > 0 else 0
+            canvas:
+                Color:
+                    rgba: 1, 1, 1, 0.18
+                Rectangle:
+                    size: self.width, self.height
+                    pos: self.pos
+                Color:
+                    rgba: root.accent_color
+                Rectangle:
+                    size: self.width * root.progress, self.height
+                    pos: self.pos
