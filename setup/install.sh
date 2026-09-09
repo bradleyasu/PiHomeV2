@@ -161,6 +161,102 @@ run_logged() {
     done
 }
 
+# Run a command in the background with logging + spinner; returns its exit code.
+_spin_run() {
+    local description="$1"
+    shift
+
+    print_step "$description"
+    if [ "$VERBOSE" = true ]; then
+        "$@" 2>&1 | tee -a "$LOG_FILE" &
+    else
+        "$@" >> "$LOG_FILE" 2>&1 &
+    fi
+    local pid=$!
+
+    if [ "$VERBOSE" = false ]; then
+        spin $pid "$description"
+    fi
+
+    local exit_code=0
+    wait $pid || exit_code=$?
+    return $exit_code
+}
+
+# Return 0 if apt has an installation candidate for $1 on this release.
+apt_has_package() {
+    local candidate
+    candidate=$(apt-cache policy "$1" 2>/dev/null | awk -F': ' '/^  Candidate:/ {print $2}')
+    [ -n "$candidate" ] && [ "$candidate" != "(none)" ]
+}
+
+# Echo the first of the given package names that this release actually ships.
+# Debian renames sonamed runtime packages between releases -- libmpv is
+# libmpv1 on Buster/Bullseye but libmpv2 from Bookworm onward (mpv 0.35 bumped
+# the soname) -- so the correct name has to be discovered, not hardcoded.
+apt_first_available() {
+    local pkg
+    for pkg in "$@"; do
+        if apt_has_package "$pkg"; then
+            echo "$pkg"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Install a group of apt packages, tolerating names this release doesn't have.
+#
+# apt-get aborts the ENTIRE install line when any single package name is
+# unknown, so one renamed package used to take all of its line-mates down with
+# it. That is exactly how an install could finish "successfully" with no
+# ffmpeg, no mplayer and no mpv: only "libmpv1" was wrong, and choosing [S]kip
+# at the prompt dropped the other three too.
+#
+# The batch is attempted first so apt still does its own dependency and
+# Provides resolution; only if that fails do we retry one package at a time,
+# so the damage is limited to the names that are genuinely unusable -- and
+# those are reported by name in the final summary instead of vanishing.
+apt_install_group() {
+    local description="$1"
+    shift
+
+    # Leading apt flags (--no-install-recommends and friends) have to be kept
+    # apart from the package names, or the per-package retry below would try
+    # to install the flag as though it were a package.
+    local opts=()
+    while [ $# -gt 0 ] && [[ "$1" == -* ]]; do
+        opts+=("$1")
+        shift
+    done
+
+    if _spin_run "$description" sudo apt-get -y install ${opts[@]+"${opts[@]}"} "$@"; then
+        print_step_done "$description"
+        return 0
+    fi
+
+    # Clear the in-progress line without printing [ok] -- this batch failed.
+    printf "\r%80s\r" ""
+    print_warning "${description}: batch install failed, retrying package-by-package"
+
+    local pkg
+    local failed=()
+    for pkg in "$@"; do
+        if _spin_run "${description}: ${pkg}" sudo apt-get -y install ${opts[@]+"${opts[@]}"} "$pkg"; then
+            print_step_done "${description}: ${pkg}"
+        else
+            printf "\r%80s\r" ""
+            failed+=("$pkg")
+        fi
+    done
+
+    if [ ${#failed[@]} -gt 0 ]; then
+        print_warning "${description}: could not install: ${failed[*]} (see ${LOG_FILE})"
+        return 1
+    fi
+    return 0
+}
+
 # Prompt user for yes/no (curl-pipe safe)
 confirm() {
     local prompt="$1" default="${2:-y}"
@@ -347,30 +443,25 @@ phase_system_dependencies() {
     run_logged "Updating package lists" \
         sudo apt-get -y update
 
-    run_logged "Installing core packages" \
-        sudo apt-get -y install \
+    apt_install_group "Installing core packages" \
             python3-setuptools git-core python3-dev python3-pip
 
-    run_logged "Installing graphics libraries" \
-        sudo apt-get -y install \
+    apt_install_group "Installing graphics libraries" \
             pkg-config libgl1-mesa-dev libgles2-mesa-dev \
             mesa-common-dev libfreetype6-dev libdrm-dev libgbm-dev \
             libudev-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev \
             libmtdev-dev libmtdev1 xclip xsel
 
-    run_logged "Installing GStreamer" \
-        sudo apt-get -y install \
+    apt_install_group "Installing GStreamer" \
             libgstreamer1.0-dev \
             gstreamer1.0-plugins-bad gstreamer1.0-plugins-base \
             gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
             gstreamer1.0-alsa gstreamer1.0-pulseaudio
 
-    run_logged "Installing SDL2 development libraries" \
-        sudo apt-get -y install \
+    apt_install_group "Installing SDL2 development libraries" \
             libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
 
-    run_logged "Installing display/input libraries" \
-        sudo apt-get -y install \
+    apt_install_group "Installing display/input libraries" \
             gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev \
             libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev \
             libwayland-bin libwayland-dev libxi-dev libxinerama-dev \
@@ -378,24 +469,38 @@ phase_system_dependencies() {
             x11proto-randr-dev x11proto-scrnsaver-dev \
             x11proto-video-dev x11proto-xinerama-dev
 
-    run_logged "Installing media packages" \
-        sudo apt-get -y install \
-            ffmpeg mplayer mpv libmpv1
+    # libmpv is the shared library python-mpv dlopens for the Video screen.
+    # Its package name changed across Debian releases (libmpv1 -> libmpv2 in
+    # Bookworm), and naming the wrong one fails the whole line, so resolve
+    # whichever this release actually ships.
+    local libmpv_pkg
+    libmpv_pkg=$(apt_first_available libmpv2 libmpv1 || true)
+    if [ -z "$libmpv_pkg" ]; then
+        print_warning "No libmpv runtime package found (tried libmpv2, libmpv1) - the Video screen will not be able to play anything"
+    fi
 
-    run_logged "Installing audio support" \
-        sudo apt-get -y install \
+    apt_install_group "Installing media packages" \
+            ffmpeg mplayer mpv ${libmpv_pkg}
+
+    # Verify using the exact lookup python-mpv performs. Without this, a
+    # missing library stays invisible until someone opens the Video screen and
+    # gets "libmpv not installed" with no clue why.
+    if python3 -c "import ctypes.util, sys; sys.exit(0 if ctypes.util.find_library('mpv') else 1)" >> "$LOG_FILE" 2>&1; then
+        print_success "libmpv present and loadable${libmpv_pkg:+ ($libmpv_pkg)}"
+    else
+        print_warning "libmpv is not loadable - the Video screen will report 'libmpv not installed'. Fix with: sudo apt-get install -y libmpv2 || sudo apt-get install -y libmpv1"
+    fi
+
+    apt_install_group "Installing audio support" \
             libportaudio2 python3-cffi libasound2-dev
 
-    run_logged "Installing image processing" \
-        sudo apt-get -y install \
+    apt_install_group "Installing image processing" \
             libopenjp2-7
 
-    run_logged "Installing build tools" \
-        sudo apt-get -y install \
+    apt_install_group "Installing build tools" \
             build-essential git autoconf automake libtool libopenblas-dev
 
-    run_logged "Installing Bluetooth stack" \
-        sudo apt-get -y install bluez
+    apt_install_group "Installing Bluetooth stack" bluez
 
     # Start the daemon, but deliberately do NOT power the radio on here. PiHome
     # powers it on demand when the user enables the Bluetooth screen, so the
@@ -496,8 +601,8 @@ phase_build_airplay() {
     print_header 5 "$TOTAL_PHASES" "Building AirPlay support"
 
     # AirPlay-specific dependencies
-    run_logged "Installing AirPlay build dependencies" \
-        sudo apt-get -y install --no-install-recommends \
+    apt_install_group "Installing AirPlay build dependencies" \
+            --no-install-recommends \
             libpopt-dev libconfig-dev libasound2-dev avahi-daemon \
             libavahi-client-dev libssl-dev libsoxr-dev libplist-dev \
             libsodium-dev uuid-dev libgcrypt-dev xxd libplist-utils \
@@ -690,8 +795,7 @@ phase_boot_splash() {
     print_header 8 "$TOTAL_PHASES" "Configuring boot splash"
 
     # Install fbi (framebuffer imageviewer)
-    run_logged "Installing fbi" \
-        sudo apt-get -y install fbi
+    apt_install_group "Installing fbi" fbi
 
     # Install splash service
     sudo cp "$PIHOME_DIR/setup/pihome-splash.service" /etc/systemd/system/
