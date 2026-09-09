@@ -24,6 +24,7 @@ from screens.VideoScreen.resolver import (  # noqa: E402
     format_selector,
     parse_output,
     resolve,
+    sanitize_title,
 )
 from screens.VideoScreen.player import normalize_audio_device  # noqa: E402
 
@@ -65,8 +66,32 @@ class TestFormatSelector(unittest.TestCase):
     def test_every_rung_is_present_and_ordered(self):
         sel = format_selector(480)
         rungs = sel.split("/")
-        self.assertEqual(len(rungs), 6)
+        self.assertEqual(len(rungs), 8)
         self.assertEqual(rungs[-1], "b")
+
+    def test_has_a_rung_that_works_for_live(self):
+        """YouTube live audio is audio-only HLS with ext=mp4, never m4a.
+
+        Without a bare "+ba" rung every live stream fails with "Requested
+        format is not available".
+        """
+        rungs = format_selector(480).split("/")
+        bare = [r for r in rungs if r.endswith("+ba")]
+        self.assertTrue(bare, "no rung selects audio without an ext filter")
+        # And it must be near the top, or a live stream falls through to the
+        # muxed rungs, which live streams never have.
+        self.assertLessEqual(rungs.index(bare[0]), 1)
+
+    def test_split_rung_precedes_bare_muxed_fallback(self):
+        """A live stream offers no muxed formats, so "b" can never match it."""
+        rungs = format_selector(480).split("/")
+        split = max(i for i, r in enumerate(rungs) if r.endswith("+ba"))
+        muxed = min(i for i, r in enumerate(rungs) if r.startswith("b[height"))
+        self.assertLess(split, muxed)
+
+    def test_live_capable_rungs_still_prefer_avc1(self):
+        rungs = format_selector(480).split("/")
+        self.assertIn("avc1", rungs[1])
 
     def test_respects_custom_cap(self):
         self.assertIn("height<=720", format_selector(720))
@@ -143,6 +168,26 @@ class TestParseOutput(unittest.TestCase):
 
 
 class TestFriendlyError(unittest.TestCase):
+    def test_format_failure_is_not_reported_as_unavailable(self):
+        """The live-stream bug: this message contains "not available" and was
+        being reported to the user as "Video unavailable"."""
+        self.assertEqual(
+            _friendly_error("ERROR: [youtube] x: Requested format is not available. "
+                            "Use --list-formats for a list of available formats"),
+            "No compatible video format",
+        )
+
+    def test_live_specific_messages(self):
+        self.assertEqual(
+            _friendly_error("ERROR: [youtube] x: This live stream recording is not available."),
+            "Live stream has ended")
+        self.assertEqual(
+            _friendly_error("ERROR: [youtube] x: This live event has ended."),
+            "Live stream has ended")
+        self.assertEqual(
+            _friendly_error("ERROR: [youtube] x: This live event will begin in 3 hours."),
+            "Live stream has not started")
+
     def test_known_cases(self):
         self.assertEqual(_friendly_error("ERROR: Private video. Sign in"), "Video is private")
         self.assertEqual(_friendly_error("ERROR: Video unavailable"), "Video unavailable")
@@ -192,6 +237,48 @@ class TestResolutionModel(unittest.TestCase):
         self.assertTrue(Resolution("v", "a").is_split)
         self.assertFalse(Resolution("v").is_split)
         self.assertFalse(Resolution("v", "").is_split)
+
+
+class TestSanitizeTitle(unittest.TestCase):
+    """Titles are arbitrary text from the source and go straight to a Label."""
+
+    def test_strips_emoji(self):
+        # The real title that exposed this, from YouTube's lofi live stream.
+        self.assertEqual(
+            sanitize_title("lofi hip hop radio \U0001F4DA beats to relax/study to"),
+            "lofi hip hop radio beats to relax/study to")
+
+    def test_keeps_accents_and_cjk(self):
+        self.assertEqual(sanitize_title("Caf\u00e9 na\u00efve"), "Caf\u00e9 na\u00efve")
+        self.assertEqual(sanitize_title("\u6771\u4eac"), "\u6771\u4eac")
+
+    def test_strips_private_use_so_titles_cannot_inject_icons(self):
+        self.assertEqual(sanitize_title("hi \ue88a there"), "hi there")
+
+    def test_collapses_whitespace_left_behind(self):
+        self.assertEqual(sanitize_title("a \U0001F4DA  b"), "a b")
+
+    def test_empty_and_none(self):
+        self.assertEqual(sanitize_title(""), "")
+        self.assertEqual(sanitize_title(None), "")
+
+    def test_everything_kept_is_actually_drawable(self):
+        """Whatever survives must exist in a bundled font, or it paints tofu."""
+        try:
+            from fontTools.ttLib import TTFont
+        except ImportError:
+            self.skipTest("fontTools not installed")
+        root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        cmap = TTFont(os.path.join(root, "theme", "fonts", "arial-unicode-ms.ttf")).getBestCmap()
+        sample = ("Big Buck Bunny 60fps 4K \U0001F4DA \u2014 Caf\u00e9 \u6771\u4eac "
+                  "\u2019quoted\u2019 100\u00b0 \u2192 \u2705 \ue88a ok")
+        for ch in sanitize_title(sample):
+            if ch == " ":
+                continue
+            self.assertIsNotNone(
+                cmap.get(ord(ch)),
+                "sanitize_title kept U+%04X (%r), which no bundled font can draw"
+                % (ord(ch), ch))
 
 
 class TestMpvOptionNames(unittest.TestCase):

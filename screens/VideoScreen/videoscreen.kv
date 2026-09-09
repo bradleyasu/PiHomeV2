@@ -49,7 +49,9 @@
 
             Label:
                 text: root.title_text
-                font_name: "Nunito"
+                # Titles are arbitrary text from the source; ArialUnicode
+                # covers accents and CJK, which Nunito does not.
+                font_name: "ArialUnicode"
                 font_size: sp(13)
                 color: root.muted_color
                 size_hint_y: None

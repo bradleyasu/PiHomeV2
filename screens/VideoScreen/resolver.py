@@ -63,6 +63,41 @@ class Resolution:
         )
 
 
+# Character ranges no bundled PiHome font can draw. Neither Nunito nor
+# arial-unicode-ms contains emoji, and YouTube titles are full of them -- an
+# uncovered codepoint renders as a tofu box (CLAUDE.md gotcha #5). Accents,
+# CJK and typographic punctuation ARE covered by ArialUnicode, so only the
+# symbol/emoji ranges and the private-use area (which would collide with
+# MaterialIcons glyphs) are stripped.
+_UNDRAWABLE = (
+    (0x2190, 0x21FF),    # arrows
+    (0x2600, 0x27BF),    # misc symbols and dingbats
+    (0x2B00, 0x2BFF),    # misc symbols and arrows
+    (0xE000, 0xF8FF),    # private use (MaterialIcons lives here)
+    (0xFE00, 0xFE0F),    # variation selectors
+    (0x1F000, 0x1FAFF),  # emoji and pictographs
+)
+
+
+def sanitize_title(text):
+    """Strip characters no bundled font can render, and collapse whitespace.
+
+    Titles come from arbitrary uploads, so they reach the Label as-is; without
+    this a title like "lofi hip hop radio [emoji] beats" paints a tofu box on
+    the panel.
+    """
+    if not text:
+        return ""
+    kept = []
+    for ch in text:
+        cp = ord(ch)
+        if cp == 0x200D or cp > 0x1FFFF:          # ZWJ, and anything exotic
+            continue
+        if any(lo <= cp <= hi for lo, hi in _UNDRAWABLE):
+            continue
+        kept.append(ch)
+    return re.sub(r"\s+", " ", "".join(kept)).strip()
+
 def classify(source):
     """Return LOCAL, DIRECT or EXTRACT for *source*.
 
@@ -101,13 +136,21 @@ def format_selector(max_height=480):
     return "/".join([
         # Ideal: hardware-decodable video at panel height, separate AAC audio.
         "bv*[vcodec^=avc1][height<=%d][fps<=%d]+ba[ext=m4a]" % (cap, _FPS_CAP),
+        # Same, but any audio container. Required for live: YouTube serves
+        # live audio as audio-only HLS with ext=mp4, never m4a, so an
+        # m4a-only rung can never match a live stream.
+        "bv*[vcodec^=avc1][height<=%d][fps<=%d]+ba" % (cap, _FPS_CAP),
         # Same height, allow 50/60fps rather than dropping resolution.
-        "bv*[vcodec^=avc1][height<=%d]+ba[ext=m4a]" % cap,
+        "bv*[vcodec^=avc1][height<=%d]+ba" % cap,
         # Nothing at the cap: allow a taller avc1 stream, mpv will downscale.
-        "bv*[vcodec^=avc1][height<=%d][fps<=%d]+ba[ext=m4a]" % (relax, _FPS_CAP),
-        # Progressive (already muxed) H.264.
+        "bv*[vcodec^=avc1][height<=%d][fps<=%d]+ba" % (relax, _FPS_CAP),
+        # Progressive (already muxed) H.264 -- still preferred over a split
+        # non-avc1 pair, because only H.264 decodes in hardware on a Pi 3B.
         "b[vcodec^=avc1][height<=%d]" % relax,
-        # Live HLS and anything else that offers no separate streams.
+        # Last resorts, any codec. The split form has to come before the muxed
+        # one: a live stream offers NO muxed formats at all, so a bare "b"
+        # cannot match one however far down the ladder it sits.
+        "bv*[height<=%d]+ba" % relax,
         "b[height<=%d]" % relax,
         "b",
     ])
@@ -164,7 +207,8 @@ def parse_output(stdout):
     # yt-dlp emits the video URL first, then audio, for a "video+audio" match.
     video = urls[0]
     audio = urls[1] if len(urls) > 1 else None
-    return Resolution(video, audio, title=title, is_live=is_live, duration=duration)
+    return Resolution(video, audio, title=sanitize_title(title),
+                      is_live=is_live, duration=duration)
 
 
 def resolve(source, max_height=480, ytdlp="yt-dlp", timeout=45, cookies=None):
@@ -180,7 +224,7 @@ def resolve(source, max_height=480, ytdlp="yt-dlp", timeout=45, cookies=None):
         live = source.lower().split("?", 1)[0].endswith((".m3u8", ".mpd"))
         if kind == LOCAL and not os.path.exists(source):
             raise RuntimeError("File not found: {}".format(source))
-        return Resolution(source, None, title=title, is_live=live)
+        return Resolution(source, None, title=sanitize_title(title), is_live=live)
 
     cmd = build_command(source, max_height=max_height, ytdlp=ytdlp, cookies=cookies)
     try:
@@ -210,11 +254,24 @@ def _friendly_error(stderr):
     if not text:
         return "Could not load video"
     lowered = text.lower()
+    # Specific causes first: several of these also contain the generic
+    # "not available", which previously swallowed them and reported a healthy
+    # live stream as "Video unavailable".
+    if "requested format is not available" in lowered:
+        return "No compatible video format"
+    if "live stream recording is not available" in lowered:
+        return "Live stream has ended"
+    if "live event has ended" in lowered:
+        return "Live stream has ended"
+    if "live event will begin" in lowered or "premieres in" in lowered:
+        return "Live stream has not started"
+    if "not currently live" in lowered:
+        return "Channel is not live"
     if "private video" in lowered:
         return "Video is private"
     if "video unavailable" in lowered or "not available" in lowered:
         return "Video unavailable"
-    if "sign in" in lowered or "age" in lowered and "confirm" in lowered:
+    if "sign in" in lowered or ("age" in lowered and "confirm" in lowered):
         return "Video requires sign-in"
     if "unsupported url" in lowered:
         return "Unsupported link"

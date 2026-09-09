@@ -37,6 +37,43 @@ selector pins `vcodec^=avc1` and caps frame rate at 30.
 854 px wide, already wider than the display. Raising the cap costs decode budget
 without adding a visible pixel.
 
+## Live streams
+
+Live works, but the format shape is completely different from a VOD and the
+selector has to account for it. `yt-dlp -F` on a YouTube live stream returns:
+
+```
+233 mp4 audio only  m3u8 | audio only          Default, low
+234 mp4 audio only  m3u8 | audio only          Default, high
+231 mp4 854x480  30 m3u8 | avc1.4D401F  video only
+232 mp4 1280x720 30 m3u8 | avc1.4D401F  video only
+```
+
+Two things follow, and both broke the first implementation:
+
+1. **There are no muxed formats at all.** Every format is video-only or
+   audio-only, so a bare `b` (best *combined*) rung can never match a live
+   stream, however far down the ladder it sits.
+2. **Live audio is `ext=mp4`, never `m4a`.** Any rung ending `+ba[ext=m4a]`
+   fails, so the selector needs a bare `+ba` rung high up.
+
+Together those produced `Requested format is not available`, which -- because
+it contains the substring "not available" -- was then reported to the user as
+the thoroughly misleading **"Video unavailable"**.
+
+Live streams are otherwise handled like any other split-stream source: mpv
+plays the two HLS playlists as one timeline via `audio-files`, verified in
+sync at `avsync +0`. `duration` is 0 for live, which is what hides the
+progress bar.
+
+Note that YouTube rotates the video ID of a 24/7 stream, so a saved
+`watch?v=...` link eventually resolves to an ended broadcast
+("This live stream recording is not available"). Prefer the channel form:
+
+```
+https://www.youtube.com/@lofigirl/live
+```
+
 ## Settings
 
 This screen is hidden, and `screens/Settings/settings.py` skips hidden manifests,
