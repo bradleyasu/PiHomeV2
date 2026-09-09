@@ -194,5 +194,56 @@ class TestResolutionModel(unittest.TestCase):
         self.assertFalse(Resolution("v", "").is_split)
 
 
+class TestMpvOptionNames(unittest.TestCase):
+    """Every mpv option player.py sets must actually exist.
+
+    Shipping "sw-fast" (mpv's render.h prose spells --sws-fast that way) made
+    the whole player abort with MPV_ERROR_OPTION_NOT_FOUND (-5). Option names
+    are strings mpv only validates at runtime, so check them here instead.
+    Skipped when the mpv binary isn't installed, e.g. in CI.
+    """
+
+    def _known_options(self):
+        import shutil
+        import subprocess
+        if not shutil.which("mpv"):
+            self.skipTest("mpv not installed")
+        out = subprocess.run(
+            ["mpv", "--list-options"], stdout=subprocess.PIPE, timeout=30
+        ).stdout.decode("utf-8", "replace")
+        names = set()
+        for line in out.splitlines():
+            parts = line.split()
+            if parts and parts[0].startswith("--"):
+                names.add(parts[0][2:].split("=")[0])
+        return names
+
+    def _referenced_options(self):
+        import re
+        path = os.path.join(os.path.dirname(__file__), "..", "player.py")
+        with open(path, encoding="utf-8") as f:
+            src = f.read()
+        names = set(re.findall(r'^\s*\("([a-z0-9\-]+)",', src, re.M))
+        m = re.search(r"_mpv\.MPV\((.*?)\)\n", src, re.S)
+        if m:
+            names |= {
+                k.replace("_", "-")
+                for k in re.findall(r"(\w+)\s*=", m.group(1))
+                if k not in ("log_handler", "loglevel")
+            }
+        names |= set(re.findall(r'self\._mpv\["([a-z0-9\-]+)"\]\s*=', src))
+        return names
+
+    def test_all_option_names_exist(self):
+        known = self._known_options()
+        referenced = self._referenced_options()
+        self.assertTrue(referenced, "found no option names to check - regex drifted?")
+        unknown = sorted(n for n in referenced if n not in known)
+        self.assertEqual(unknown, [], "mpv does not have these options: %s" % unknown)
+
+    def test_sw_fast_typo_never_returns(self):
+        self.assertNotIn("sw-fast", self._referenced_options())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

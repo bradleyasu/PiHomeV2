@@ -168,37 +168,50 @@ class VideoPlayer:
         self._stopping = False
         self._alloc_buffer()
 
-        opts = dict(
-            vo="libmpv",
-            hwdec=hwdec or "auto-safe",
-            audio_device=normalize_audio_device(audio_device),
-            # We resolve URLs ourselves, so mpv must not spawn its own yt-dlp.
-            ytdl=False,
-            # 1GB of RAM on a Pi 3B: keep the demuxer buffer modest. Live HLS
-            # still needs a real cache to ride out network jitter.
-            cache="yes",
-            cache_secs=max(2, int(cache_secs)),
-            demuxer_max_bytes="24MiB",
-            demuxer_max_back_bytes="8MiB",
-            # Skip rather than stall when a frame arrives late.
-            framedrop="vo",
-            # Nothing composites over the video, so keep the CPU renderer lean.
-            sw_fast=True,
-            osc=False,
-            osd_level=0,
-            input_default_bindings=False,
-            input_vo_keyboard=False,
-            terminal=False,
-        )
-        if loop:
-            opts["loop_file"] = "inf"
-
+        # Only options that genuinely cannot be changed after
+        # mpv_initialize() go to the constructor, because python-mpv sets
+        # constructor kwargs with mpv_set_option_string and ONE unknown name
+        # aborts the whole player with MPV_ERROR_OPTION_NOT_FOUND (-5). Both
+        # of these have existed for the life of libmpv.
         try:
             # loglevel gates mpv_request_log_messages; without it python-mpv
             # defaults to 'terminal-default' and floods PIHOME_LOGGER.
-            self._mpv = _mpv.MPV(log_handler=self._log, loglevel="error", **opts)
+            self._mpv = _mpv.MPV(
+                log_handler=self._log, loglevel="error",
+                vo="libmpv", terminal=False,
+            )
         except Exception as e:
             raise RuntimeError("Could not start player: {}".format(e))
+
+        # Everything else is tuning: applied one at a time and allowed to fail.
+        # mpv adds and retires options between releases, and PiHome cannot
+        # test against the Pi's exact build, so an option this mpv doesn't
+        # recognise must degrade playback rather than prevent it. Writing
+        # through options/ (python-mpv's __setitem__) applies to the next file
+        # loaded, which is why this can run before play().
+        tuning = [
+            ("hwdec", hwdec or "auto-safe"),
+            ("audio-device", normalize_audio_device(audio_device)),
+            # We resolve URLs ourselves, so mpv must not spawn its own yt-dlp.
+            ("ytdl", "no"),
+            # 1GB of RAM on a Pi 3B: keep the demuxer buffer modest. Live HLS
+            # still needs a real cache to ride out network jitter.
+            ("cache", "yes"),
+            ("cache-secs", max(2, int(cache_secs))),
+            ("demuxer-max-bytes", "24MiB"),
+            ("demuxer-max-back-bytes", "8MiB"),
+            # Skip rather than stall when a frame arrives late.
+            ("framedrop", "vo"),
+            # Nothing composites over the video, so keep the CPU renderer lean.
+            # NOTE: the option is --sws-fast. mpv's own render.h prose calls it
+            # "sw-fast", which is not a real option name and produced the -5.
+            ("sws-fast", "yes"),
+            ("osc", "no"),
+            ("osd-level", 0),
+        ]
+        if loop:
+            tuning.append(("loop-file", "inf"))
+        self._apply_options(tuning)
 
         try:
             self._ctx = _mpv.MpvRenderContext(self._mpv, "sw")
@@ -230,6 +243,27 @@ class VideoPlayer:
         if resolution.audio_url:
             self._mpv["audio-files"] = [resolution.audio_url]
         self._mpv.play(resolution.video_url)
+
+    def _apply_options(self, options):
+        """Set mpv options individually, skipping any this build rejects.
+
+        Returns the list of option names that were not applied. A skipped
+        option is always a tuning concession, never a correctness one -- the
+        video still plays, it just may buffer or scale less efficiently.
+        """
+        skipped = []
+        for name, value in options:
+            try:
+                self._mpv[name] = value
+            except Exception as e:
+                skipped.append("{} ({})".format(name, type(e).__name__))
+        if skipped:
+            PIHOME_LOGGER.warn(
+                "VideoScreen: this mpv build rejected option(s): {}".format(
+                    ", ".join(skipped)
+                )
+            )
+        return skipped
 
     def stop(self):
         """Tear down the render context and player. Safe to call repeatedly."""
