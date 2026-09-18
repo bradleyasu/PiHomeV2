@@ -14,6 +14,7 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 )
 
+from screens.BambuLab.hmsdb import HMS_DB  # noqa: E402
 from screens.BambuLab.bambustate import (  # noqa: E402
     format_alerts,
     format_eta,
@@ -213,13 +214,30 @@ class TestFormatAlerts(unittest.TestCase):
     def test_print_error_only(self):
         out = format_alerts(None, 0x0300_4001)
         self.assertTrue(out["active"])
-        self.assertEqual(out["text"], "Print Error  0x03004001")
+        self.assertEqual(out["code"], "0x03004001")
         self.assertTrue(out["severe"])
+        # This code is in the bundled dictionary, so the banner gets the blurb.
+        self.assertEqual(out["text"], HMS_DB.describe_error(0x0300_4001))
+        self.assertTrue(out["text"])
+
+    def test_unknown_print_error_falls_back_to_the_code(self):
+        out = format_alerts(None, 0xDEAD_BEEF)
+        self.assertEqual(out["text"], "Print Error  0xDEADBEEF")
 
     def test_hms_code_formatting(self):
+        """An unknown code keeps the old code-only banner line."""
         out = format_alerts([{"attr": 0x0C000200, "code": 0x00030001}], 0)
+        self.assertEqual(out["code"], "0C00_0200_0003_0001")
         self.assertEqual(out["text"], "HMS  0C00_0200_0003_0001")
         self.assertFalse(out["severe"])          # severity 3 = common -> amber
+
+    def test_hms_known_code_is_described(self):
+        # 0700_2000_0002_0001 -> "AMS A Slot 1 filament has run out. ..."
+        out = format_alerts([{"attr": 0x07002000, "code": 0x00020001}], 0)
+        self.assertEqual(out["code"], "0700_2000_0002_0001")
+        self.assertIn("filament has run out", out["text"])
+        self.assertIn("0700_2000_0002_0001", out["detail"])
+        self.assertIn("filament has run out", out["detail"])
 
     def test_hms_severity_fatal_is_severe(self):
         out = format_alerts([{"attr": 0x0C000200, "code": 0x00010001}], 0)
@@ -228,10 +246,53 @@ class TestFormatAlerts(unittest.TestCase):
     def test_multiple_codes_are_counted(self):
         out = format_alerts([{"attr": 1, "code": 0x00020001},
                              {"attr": 2, "code": 0x00030001}], 0)
-        self.assertIn("(+1 more)", out["text"])
+        self.assertEqual(out["more"], "+1")
+        self.assertEqual(len(out["codes"]), 2)
+
+    def test_print_error_joins_the_detail_behind_an_hms_code(self):
+        out = format_alerts([{"attr": 0x07002000, "code": 0x00020001}], 0x0300_4001)
+        self.assertEqual(out["code"], "0700_2000_0002_0001")   # HMS keeps priority
+        self.assertEqual(out["more"], "+1")
+        self.assertIn("0x03004001", out["detail"])
+
+    def test_detail_notes_an_undescribed_code(self):
+        out = format_alerts([{"attr": 0x0C000200, "code": 0x00030001}], 0)
+        self.assertIn("0C00_0200_0003_0001", out["detail"])
+        self.assertIn("No description", out["detail"])
 
     def test_zero_pairs_are_ignored(self):
         self.assertFalse(format_alerts([{"attr": 0, "code": 0}], 0)["active"])
+
+
+class TestHmsDatabase(unittest.TestCase):
+    """The bundled dictionary is a committed snapshot — guard its shape."""
+
+    def test_bundled_snapshot_is_loaded(self):
+        self.assertGreater(HMS_DB.count, 1000)
+        self.assertGreater(HMS_DB.version, 0)
+
+    def test_lookup_ignores_underscores_and_case(self):
+        expected = HMS_DB.describe_hms("0700200000020001")
+        self.assertTrue(expected)
+        self.assertEqual(HMS_DB.describe_hms("0700_2000_0002_0001"), expected)
+        self.assertEqual(HMS_DB.describe_hms("0700_2000_0002_0001".lower()), expected)
+
+    def test_unknown_code_is_empty(self):
+        self.assertEqual(HMS_DB.describe_hms("FFFF_FFFF_FFFF_FFFF"), "")
+        self.assertEqual(HMS_DB.describe_error(0xDEADBEEF), "")
+
+    def test_error_lookup_accepts_int_or_string(self):
+        expected = HMS_DB.describe_error(0x0300_4001)
+        self.assertTrue(expected)
+        self.assertEqual(HMS_DB.describe_error("03004001"), expected)
+        self.assertEqual(HMS_DB.describe_error("0x03004001"), expected)
+
+    def test_every_description_is_ascii(self):
+        """Nunito has no glyphs outside ASCII — non-ASCII renders as tofu."""
+        doc = HMS_DB._load()
+        for table in ("hms", "error"):
+            for code, text in doc[table].items():
+                self.assertTrue(text.isascii(), f"{table} {code}: {text!r}")
 
 
 class TestFilament(unittest.TestCase):

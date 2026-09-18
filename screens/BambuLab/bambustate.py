@@ -17,6 +17,9 @@ Holds three things:
 # here so this module stays the single import for BambuLab's state logic.
 from util.rulestore import substitute  # noqa: F401
 
+# Code -> English sentence lookups for HMS / print-error codes. Also Kivy-free.
+from screens.BambuLab.hmsdb import HMS_DB
+
 # ── Colors ─────────────────────────────────────────────────────────────────────
 
 # BambuLab brand green
@@ -134,7 +137,10 @@ def new_snapshot():
         "filament_type": "—",
         "filament_color": None,
         "alert_active": False,
-        "alert_text": "",
+        "alert_text": "",       # human sentence (falls back to the code)
+        "alert_code": "",       # primary code, XXXX_XXXX_XXXX_XXXX or 0xNNNNNNNN
+        "alert_more": "",       # "+2" when several codes are raised at once
+        "alert_detail": "",     # every code + description, for the tap-through
         "alert_severe": True,
         # True once a real report has been applied. The service uses this to
         # establish a baseline without firing rules on the first message.
@@ -194,7 +200,10 @@ def placeholder_values(snapshot):
         "eta":         str(eta),
         "eta_text":    format_eta(eta),
         "finish":      format_finish(eta, snap.get("gcode_state")),
+        # $error is the human blurb; $error_code keeps the raw HMS code so a
+        # rule's notification can still carry something searchable.
         "error":       str(snap.get("alert_text", "")),
+        "error_code":  str(snap.get("alert_code", "")),
         "nozzle":      "{:.0f}".format(snap.get("nozzle", 0.0) or 0.0),
         "bed":         "{:.0f}".format(snap.get("bed", 0.0) or 0.0),
     }
@@ -308,6 +317,9 @@ def parse_print(p, snapshot):
         alerts = format_alerts(p.get("hms"), p.get("print_error", 0))
         snap["alert_active"] = alerts["active"]
         snap["alert_text"]   = alerts["text"]
+        snap["alert_code"]   = alerts["code"]
+        snap["alert_more"]   = alerts["more"]
+        snap["alert_detail"] = alerts["detail"]
         snap["alert_severe"] = alerts["severe"]
 
     snap["seeded"] = True
@@ -318,9 +330,15 @@ def format_alerts(hms, print_error):
     """Summarize printer health alerts for the banner.
 
     HMS entries are pairs of 32-bit ints (``attr``, ``code``). We format the
-    canonical ``XXXX_XXXX_XXXX_XXXX`` code (lookup-able on the Bambu wiki) and
-    derive a severity from the high word of ``code``. Exact human-readable text
-    isn't in the payload, so we show the code.
+    canonical ``XXXX_XXXX_XXXX_XXXX`` code and resolve it against the bundled
+    description dictionary (``hmsdb``), so the banner can show "AMS A Slot 1
+    filament has run out." rather than a hex string the user has to look up.
+    Severity still comes from the high word of ``code``.
+
+    Returns the banner line (``text``), the primary ``code`` behind it, a
+    ``more`` badge when several faults are raised at once, and a ``detail``
+    block listing every code with its description for the tap-through dialog.
+    Codes missing from the dictionary fall back to showing the raw code.
     """
     severity_rank = {1: 3, 2: 2, 3: 1, 4: 0}  # fatal > serious > common > info
     codes = []
@@ -345,17 +363,39 @@ def format_alerts(hms, print_error):
     perr = safe_int(print_error, 0)
 
     if not codes and perr == 0:
-        return {"active": False, "text": "", "severe": True, "codes": []}
+        return {"active": False, "text": "", "code": "", "more": "",
+                "detail": "", "severe": True, "codes": []}
 
-    if perr != 0 and not codes:
-        return {"active": True, "text": f"Print Error  0x{perr:08X}",
-                "severe": True, "codes": []}
+    # (display code, description) for everything currently raised. HMS entries
+    # keep precedence over the print error, matching the banner's history.
+    entries = [(c, HMS_DB.describe_hms(c)) for c in codes]
+    if perr != 0:
+        entries.append((f"0x{perr:08X}", HMS_DB.describe_error(perr)))
 
-    first = codes[0]
-    extra = f"  (+{len(codes) - 1} more)" if len(codes) > 1 else ""
-    return {"active": True, "text": f"HMS  {first}{extra}",
-            # Serious/fatal -> red, common/info -> amber
-            "severe": worst >= 2, "codes": codes}
+    primary_code, primary_desc = entries[0]
+    label = "HMS" if codes else "Print Error"
+
+    return {
+        "active": True,
+        # The blurb when we have one; otherwise the old code-only line.
+        "text": primary_desc or f"{label}  {primary_code}",
+        "code": primary_code,
+        "more": f"+{len(entries) - 1}" if len(entries) > 1 else "",
+        "detail": describe_alerts(entries),
+        # Serious/fatal -> red, common/info -> amber. A print error on its own
+        # has no severity word, so it stays red as before.
+        "severe": worst >= 2 if codes else True,
+        "codes": codes,
+    }
+
+
+def describe_alerts(entries):
+    """Render ``(code, description)`` pairs as the tap-through detail block."""
+    blocks = []
+    for code, desc in entries:
+        blocks.append(f"{code}\n{desc}" if desc else
+                      f"{code}\n(No description available for this code.)")
+    return "\n\n".join(blocks)
 
 
 def resolve_filament(ams_data, vt_tray):

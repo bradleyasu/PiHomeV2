@@ -5,7 +5,10 @@
 <MsgboxCard>:
     orientation: 'vertical'
     size_hint: None, None
-    size: dp(440), dp(200)
+    # Height follows the message so multi-line bodies aren't clipped. dp(159) is
+    # the fixed chrome (padding + title + divider + button row + spacing); the
+    # clamp keeps one- and two-line dialogs at exactly the old dp(200).
+    size: dp(440), min(dp(380), max(dp(200), dp(159) + msg.height))
     padding: dp(24), dp(24), dp(24), dp(16)
     spacing: dp(10)
     opacity: self.card_opacity
@@ -85,12 +88,14 @@
 
     # ── Message body (centered) ────────────────────────────────────────────
     Label:
+        id: msg
         text: root.message
         font_name: 'Nunito'
         font_size: '14sp'
         color: root.text_secondary
         text_size: self.width, None
-        size_hint_y: 1
+        size_hint_y: None
+        height: max(dp(41), self.texture_size[1])
         halign: 'center'
         valign: 'middle'
 

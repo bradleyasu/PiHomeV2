@@ -24,6 +24,11 @@ Required PiHome settings (set via Settings → BambuLab)
   - serial        : Printer serial number (Settings or Bambu Studio)
   - camera_enabled: Toggle to connect to the RTSPS camera stream
 
+Fault descriptions
+  HMS and print-error codes are resolved to English sentences by ``hmsdb`` from
+  Bambu's published dictionary (bundled snapshot + weekly background refresh).
+  The banner shows the blurb; tapping it reveals the raw code for lookup.
+
 Rotary Encoder
   Turn        → cycle the right-side stat panel focus (Job → Temps → Speed/Filament)
   Short press → force reconnect (MQTT + camera)
@@ -40,6 +45,8 @@ from kivy.properties import (
     BooleanProperty, ColorProperty, NumericProperty,
     ObjectProperty, StringProperty,
 )
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
 
 try:
     from ffpyplayer.player import MediaPlayer as _MediaPlayer
@@ -47,12 +54,14 @@ try:
 except ImportError:
     _FF_AVAILABLE = False
 
+from components.Msgbox.msgbox import MSGBOX_BUTTONS, MSGBOX_FACTORY, MSGBOX_TYPES
 from interface.pihomescreen import PiHomeScreen
 from screens.BambuLab.bambustate import (
     ACCENT as _ACCENT, COLOR_ACCENT as _COLOR_ACCENT, COLOR_ERROR as _COLOR_ERROR,
     COLOR_IDLE as _COLOR_IDLE, COLOR_PAUSE as _COLOR_PAUSE,
     format_eta, format_finish, format_temp, resolve_state_color,
 )
+from screens.BambuLab.hmsdb import HMS_DB
 from screens.BambuLab.services.bambu_service import BAMBU_SERVICE
 from util.configuration import CONFIG
 from util.phlog import PIHOME_LOGGER
@@ -62,6 +71,13 @@ Builder.load_file("./screens/BambuLab/bambulab.kv")
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 _RTSP_PORT = 322
+
+
+# ── Widgets ────────────────────────────────────────────────────────────────────
+
+class AlertBanner(ButtonBehavior, BoxLayout):
+    """Tappable one-line fault banner. Layout and behavior live in the KV rule."""
+    pass
 
 
 # ── Screen ─────────────────────────────────────────────────────────────────────
@@ -126,10 +142,16 @@ class BambuLabScreen(PiHomeScreen):
     connection_label = StringProperty("DISCONNECTED")
     camera_label     = StringProperty("No Camera Feed")
 
-    # Printer alerts (HMS health-management + print errors)
-    has_alert   = BooleanProperty(False)
-    alert_text  = StringProperty("")
-    alert_color = ColorProperty([0.85, 0.25, 0.25, 1])
+    # Printer alerts (HMS health-management + print errors). alert_text is the
+    # human blurb resolved from Bambu's published code dictionary (hmsdb); the
+    # raw code stays available on the banner's tap-through dialog.
+    has_alert    = BooleanProperty(False)
+    alert_text   = StringProperty("")
+    alert_code   = StringProperty("")
+    alert_more   = StringProperty("")     # "+2" badge when several are raised
+    alert_detail = StringProperty("")
+    alert_severe = BooleanProperty(True)
+    alert_color  = ColorProperty([0.85, 0.25, 0.25, 1])
 
     # ──────────────────────────────────────────────────────────────────────────
 
@@ -233,6 +255,10 @@ class BambuLabScreen(PiHomeScreen):
     def on_enter(self, *args):
         self._load_config()
         # Render whatever the always-on service already knows, then follow it.
+        # Pick up new fault descriptions published since the bundled snapshot.
+        # No-ops unless the cached copy is over a week old; runs in its own thread.
+        HMS_DB.refresh_async()
+
         self._apply_snapshot(BAMBU_SERVICE.get_snapshot())
         BAMBU_SERVICE.add_listener(self._apply_snapshot)
         self._start_camera_if_enabled()
@@ -292,15 +318,30 @@ class BambuLabScreen(PiHomeScreen):
                 self.filament_color = color
             self.filament_has_color = bool(color)
 
-            self.has_alert   = snap["alert_active"]
-            self.alert_text  = snap["alert_text"]
-            self.alert_color = list(_COLOR_ERROR if snap["alert_severe"] else _COLOR_PAUSE)
+            self.has_alert    = snap["alert_active"]
+            self.alert_text   = snap["alert_text"]
+            self.alert_code   = snap.get("alert_code", "")
+            self.alert_more   = snap.get("alert_more", "")
+            self.alert_detail = snap.get("alert_detail", "")
+            self.alert_severe = bool(snap["alert_severe"])
+            self.alert_color  = list(_COLOR_ERROR if snap["alert_severe"] else _COLOR_PAUSE)
 
             # gcode_state is set above, but finish_text also depends on it and is
             # only recomputed by the eta observer — refresh it explicitly.
             self._update_finish_text(self.eta_minutes)
         except Exception as e:
             PIHOME_LOGGER.error(f"BambuLab: error applying snapshot: {e}")
+
+    def show_alert_detail(self):
+        """Banner tap -> full fault text plus the raw code(s) for lookup."""
+        if not self.has_alert or not self.alert_detail:
+            return
+        MSGBOX_FACTORY.show(
+            title="Printer Alert",
+            message=self.alert_detail,
+            type=MSGBOX_TYPES["ERROR"] if self.alert_severe else MSGBOX_TYPES["WARNING"],
+            buttons=MSGBOX_BUTTONS["OK"],
+        )
 
     def _connection_label(self, snap):
         """Explain *why* we are disconnected when the reason is a config problem.
